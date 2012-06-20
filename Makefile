@@ -1,5 +1,7 @@
 
 try:
 	git submodule update
-	cd JSX && make setup && make web
+	cd JSX && git checkout origin/master && make setup && make web
 	cp -r JSX/try/* .
+	perl -i -pe 's/"try"/"try-on-web"/' tree.generated.json
+

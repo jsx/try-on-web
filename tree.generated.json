@@ -1,6 +1,6 @@
 {
    "" : {
-      "try" : {
+      "try-on-web" : {
          "example" : {
             "fireworks.js" : "/try/example/fireworks.js",
             "shooting.js" : "/try/example/shooting.js",
@@ -92,6 +92,7 @@
             "point.jsx" : "/try/source-map/point.jsx",
             "fizzbuzz.jsx" : "/try/source-map/fizzbuzz.jsx",
             "point.jsx.js" : "/try/source-map/point.jsx.js",
+            "index.html" : "/try/source-map/index.html",
             "import.jsx" : "/try/source-map/import.jsx",
             "hello.jsx.js.mapping" : "/try/source-map/hello.jsx.js.mapping",
             "add.jsx.js" : "/try/source-map/add.jsx.js",

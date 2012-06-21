@@ -32,6 +32,13 @@ function $__jsx_lazy_init(obj, prop, func) {
 	});
 }
 
+/**
+ * sideeffect().a /= b
+ */
+function $__jsx_div_assign(obj, prop, divisor) {
+	return obj[prop] = (obj[prop] / divisor) | 0;
+}
+
 /*
  * global functions called by JSX as Number.* (renamed so that they do not conflict with local variable names)
  */
@@ -110,7 +117,7 @@ var Fib$fib1$I = Fib.fib1$I;
  * @return {!number}
  */
 Fib.fib2$N = function (n) {
-	return n <= 2 ? 1 : Fib$fib2$N(n - 1) + Fib$fib2$N(n - 2);
+	return (n <= 2 ? 1 : Fib$fib2$N(n - 1) + Fib$fib2$N(n - 2));
 };
 
 var Fib$fib2$N = Fib.fib2$N;
@@ -138,7 +145,7 @@ Fib.fib3$I = function (n) {
 		prevValue = value;
 		value = t;
 	}
-	return value;
+	return (value | 0);
 };
 
 var Fib$fib3$I = Fib.fib3$I;
@@ -286,7 +293,7 @@ TestCase.prototype.async$F$LAsyncContext$V$F$LAsyncContext$V$I = function (testB
 	async = new AsyncContext$LTestCase$SF$LAsyncContext$V$I(this, (function (v) {
 		if (! (typeof v !== "undefined")) {
 			debugger;
-			throw new Error("[/Users/gfx/repo/try-on-web/JSX/lib/common/test-case.jsx:147] detected misuse of 'undefined' as type 'string'");
+			throw new Error("[/Users/fuji.goro/repo/try-on-web/JSX/lib/common/test-case.jsx:147] detected misuse of 'undefined' as type 'string'");
 		}
 		return v;
 	}(this._currentName)), timeoutHandler, timeoutMS);

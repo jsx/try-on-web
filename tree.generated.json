@@ -362,6 +362,7 @@
                "011.localvar.jsx" : "/try/t/run/011.localvar.jsx",
                "045.class-inheritance.jsx" : "/try/t/run/045.class-inheritance.jsx",
                "074.labelled-break.jsx" : "/try/t/run/074.labelled-break.jsx",
+               "171.fused-div-of-int.jsx" : "/try/t/run/171.fused-div-of-int.jsx",
                "025.regexp.jsx" : "/try/t/run/025.regexp.jsx",
                "014.break-loop.jsx" : "/try/t/run/014.break-loop.jsx",
                "148.null-in-cond-expr.jsx" : "/try/t/run/148.null-in-cond-expr.jsx",
@@ -490,6 +491,7 @@
                   "foo.jsx" : "/try/t/run/117.avoid-import-conflict-using-as/foo.jsx",
                   "bar.jsx" : "/try/t/run/117.avoid-import-conflict-using-as/bar.jsx"
                },
+               "170.cast-int-in-return.jsx" : "/try/t/run/170.cast-int-in-return.jsx",
                "062.import-as.jsx" : "/try/t/run/062.import-as.jsx",
                "106.switch-maybeundefined.jsx" : "/try/t/run/106.switch-maybeundefined.jsx",
                "157.deduct-closure-type-in-new.jsx" : "/try/t/run/157.deduct-closure-type-in-new.jsx",

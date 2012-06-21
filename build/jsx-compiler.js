@@ -1,17 +1,17 @@
 (function(){var global = this;function debug(){return debug};function require(p, parent){ var path = require.resolve(p) , mod = require.modules[path]; if (!mod) throw new Error('failed to require "' + p + '" from ' + parent); if (!mod.exports) { mod.exports = {}; mod.call(mod.exports, mod, mod.exports, require.relative(path), global); } return mod.exports;}require.modules = {};require.resolve = function(path){ var orig = path , reg = path + '.js' , index = path + '/index.js'; return require.modules[reg] && reg || require.modules[index] && index || orig;};require.register = function(path, fn){ require.modules[path] = fn;};require.relative = function(parent) { return function(p){ if ('debug' == p) return debug; if ('.' != p.charAt(0)) return require(p); var path = parent.split('/') , segs = p.split('/'); path.pop(); for (var i = 0; i < segs.length; i++) { var seg = segs[i]; if ('..' == seg) path.pop(); else if ('.' != seg) path.push(seg); } return require(path.join('/'), parent); };};require.register("browser-platform.js", function(module, exports, require, global){
 /*
  * Copyright (c) 2012 DeNA Co., Ltd.
- * 
+ *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to
  * deal in the Software without restriction, including without limitation the
  * rights to use, copy, modify, merge, publish, distribute, sublicense, and/or
  * sell copies of the Software, and to permit persons to whom the Software is
  * furnished to do so, subject to the following conditions:
- * 
+ *
  * The above copyright notice and this permission notice shall be included in
  * all copies or substantial portions of the Software.
- * 
+ *
  * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
  * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
  * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
@@ -37,8 +37,8 @@ if (!Function.prototype.bind) {
 			throw new TypeError("Function.prototype.bind - what is trying to be bound is not callable");
 		}
 
-		var aArgs = Array.prototype.slice.call(arguments, 1), 
-				fToBind = this, 
+		var aArgs = Array.prototype.slice.call(arguments, 1),
+				fToBind = this,
 				fNOP = function () {},
 				fBound = function () {
 					return fToBind.apply(this instanceof fNOP
@@ -54,6 +54,8 @@ if (!Function.prototype.bind) {
 	};
 }
 
+var debug = (location.hash === "#debug");
+
 var BrowserPlatform = exports.BrowserPlatform = Platform.extend({
 	constructor: function(root) {
 		this._root = root;
@@ -61,7 +63,7 @@ var BrowserPlatform = exports.BrowserPlatform = Platform.extend({
 		this._content = {};
 
 		this._map = JSON.parse(this.load(root + "/tree.generated.json"));
-		
+
 		this._prefix = document.location.pathname.replace(/\/[^\/]+$/, "");
 	},
 
@@ -70,9 +72,11 @@ var BrowserPlatform = exports.BrowserPlatform = Platform.extend({
 	},
 
 	_findPath: function (path) {
-		path = (this._prefix + "/" + path).replace(/[^\/]+\/\.\.\//g, "");
+		var absPath = (this._prefix + "/" + path).
+			replace(/[^\/]+\/\.\.\//g, "").
+			replace(/\/\/+/g, "/");
 
-		var parts = path.split('/');
+		var parts = absPath.split('/');
 		var cur = this._map;
 		while(parts.length > 0) {
 			var t = cur[parts.shift()];
@@ -81,6 +85,12 @@ var BrowserPlatform = exports.BrowserPlatform = Platform.extend({
 			}
 			cur = t;
 		}
+
+		if(debug) {
+			console.debug("[D] find path=%s (absPath=%s) -> %s",
+					path, absPath, JSON.stringify(cur));
+		}
+
 		return cur;
 	},
 

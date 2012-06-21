@@ -67,6 +67,7 @@
             "browser-platform.js" : "/try/src/browser-platform.js",
             "jssourcemap.js" : "/try/src/jssourcemap.js",
             "js" : {
+               "profiler.js" : "/try/src/js/profiler.js",
                "runtest.js" : "/try/src/js/runtest.js",
                "bootstrap.js" : "/try/src/js/bootstrap.js"
             },
@@ -471,6 +472,7 @@
                "064.JSX_file" : {
                   "foo.jsx" : "/try/t/run/064.JSX_file/foo.jsx"
                },
+               "172.profile.jsx" : "/try/t/run/172.profile.jsx",
                "149.logical-ops-on-non-boolean.jsx" : "/try/t/run/149.logical-ops-on-non-boolean.jsx",
                "095.func-arg-is-overloaded-func.jsx" : "/try/t/run/095.func-arg-is-overloaded-func.jsx",
                "107.try-catch-finally.jsx" : "/try/t/run/107.try-catch-finally.jsx",

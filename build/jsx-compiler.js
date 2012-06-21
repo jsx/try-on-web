@@ -354,8 +354,15 @@ var ClassDefinition = exports.ClassDefinition = Class.extend({
 		this._members = members;
 		this._objectTypesUsed = objectTypesUsed;
 		this._optimizerStash = {};
-		for (var i = 0; i < this._members.length; ++i)
+		for (var i = 0; i < this._members.length; ++i) {
 			this._members[i].setClassDef(this);
+			if (this._members[i] instanceof MemberFunctionDefinition) {
+				this._members[i].forEachClosure(function setClassDef(funcDef) {
+					funcDef.setClassDef(this);
+					return funcDef.forEachClosure(setClassDef.bind(this));
+				}.bind(this));
+			}
+		}
 	},
 
 	serialize: function () {
@@ -3388,8 +3395,8 @@ var PropertyExpression = exports.PropertyExpression = UnaryExpression.extend({
 			return false;
 		}
 		if (exprType.resolveIfMayBeUndefined().equals(Type.variantType)) {
-			this._type = Type.variantType;
-			return true;
+			context.errors.push(new CompileError(this._identifierToken, "property of a variant should be referred to by using the [] operator"));
+			return false;
 		}
 		var classDef = exprType.getClassDef();
 		if (classDef == null) {
@@ -4589,6 +4596,7 @@ var _ConstructorInvocationStatementEmitter = exports._ConstructorInvocationState
 			this._emitter._emit("Error.call(this);\n", token);
 			this._emitter._emit("this.message = ", token);
 			this._emitter._getExpressionEmitterFor(this._statement.getArguments()[0]).emit(_BinaryExpressionEmitter._operatorPrecedence["="]);
+			this._emitter._emit(";\n", token);
 		} else {
 			this._emitter._emitCallArguments(token, ctorName + ".call(this", this._statement.getArguments(), argTypes);
 			this._emitter._emit(";\n", token);
@@ -4622,7 +4630,13 @@ var _ReturnStatementEmitter = exports._ReturnStatementEmitter = _StatementEmitte
 		var expr = this._statement.getExpr();
 		if (expr != null) {
 			this._emitter._emit("return ", null);
+			if (this._emitter._enableProfiler) {
+				this._emitter._emit("$__jsx_profiler.exit(", null);
+			}
 			this._emitter._emitRHSOfAssignment(this._statement.getExpr(), this._emitter._emittingFunction.getReturnType());
+			if (this._emitter._enableProfiler) {
+				this._emitter._emit(")", null);
+			}
 			this._emitter._emit(";\n", null);
 		} else {
 			this._emitter._emit("return;\n", this._statement.getToken());
@@ -4864,6 +4878,11 @@ var _TryStatementEmitter = exports._TryStatementEmitter = _StatementEmitter.exte
 		var catchStatements = this._statement.getCatchStatements();
 		if (catchStatements.length != 0) {
 			this._emitter._emit(" catch (" + this._emittingLocalName + ") {\n", null);
+			if (this._emitter._enableProfiler) {
+				this._emitter._advanceIndent();
+				this._emitter._emit("$__jsx_profiler.resume($__jsx_profiler_ctx);\n", null);
+				this._emitter._reduceIndent();
+			}
 			this._emitter._emitStatements(catchStatements);
 			if (! catchStatements[catchStatements.length - 1].getLocal().getType().equals(Type.variantType)) {
 				this._emitter._advanceIndent();
@@ -6218,8 +6237,13 @@ var JavaScriptEmitter = exports.JavaScriptEmitter = Class.extend({
 	setEnableRunTimeTypeCheck: function (enable) {
 		this._enableRunTimeTypeCheck = enable;
 	},
+
 	setEnableSourceMap : function (enable) {
 		this._enableSourceMap = enable;
+	},
+
+	setEnableProfiler: function (enable) {
+		this._enableProfiler = enable;
 	},
 
 	emit: function (classDefs) {
@@ -6352,8 +6376,11 @@ var JavaScriptEmitter = exports.JavaScriptEmitter = Class.extend({
 	},
 
 	getOutput: function (sourceFile, entryPoint) {
-		var output = this._output + "\n" +
-			"}());\n";
+		var output = this._output + "\n";
+		if (this._enableProfiler) {
+			output += this._platform.load(this._platform.getRoot() + "/src/js/profiler.js");
+		}
+		output += "})();\n";
 		if (entryPoint != null) {
 			output = this._platform.addLauncher(this, this._encodeFilename(sourceFile), output, entryPoint);
 		}
@@ -6452,6 +6479,17 @@ var JavaScriptEmitter = exports.JavaScriptEmitter = Class.extend({
 		try {
 			this._emittingFunction = funcDef;
 
+			if (this._enableProfiler) {
+				this._emit(
+					"var $__jsx_profiler_ctx = $__jsx_profiler.enter("
+					+ Util.encodeStringLiteral(
+						(funcDef.getClassDef() != null ? funcDef.getClassDef().getOutputClassName() : "<<unnamed>>")
+						+ ((funcDef.flags() & ClassDefinition.IS_STATIC) != 0 ? "." : ".prototype.")
+						+ this._mangleFunctionName(funcDef.getNameToken() != null ? funcDef.name() : "<<unnamed>>", funcDef.getArgumentTypes()))
+					+ ");\n",
+					null);
+			}
+
 			// emit reference to this for closures
 			// if funDef is NOT in another closure
 			if (funcDef.getClosures().length != 0 && (funcDef.flags() & ClassDefinition.IS_STATIC) == 0)
@@ -6476,6 +6514,12 @@ var JavaScriptEmitter = exports.JavaScriptEmitter = Class.extend({
 			var statements = funcDef.getStatements();
 			for (var i = 0; i < statements.length; ++i)
 				this._emitStatement(statements[i]);
+
+			if (this._enableProfiler) {
+				if (statements.length == 0 || ! (statements[statements.length - 1] instanceof ReturnStatement)) {
+					this._emit("$__jsx_profiler.exit();\n", null);
+				}
+			}
 
 		} finally {
 			this._emittingFunction = prevEmittingFunction;

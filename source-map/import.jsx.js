@@ -51,12 +51,22 @@ var $__jsx_ObjectToString = Object.prototype.toString;
 var $__jsx_ObjectHasOwnProperty = Object.prototype.hasOwnProperty;
 
 /*
+ * profiler object, initialized afterwards
+ */
+function $__jsx_profiler() {
+}
+
+/*
  * public interface to JSX code
  */
 JSX.require = function (path) {
 	var m = $__jsx_classMap[path];
 	return m !== undefined ? m : null;
-}
+};
+
+JSX.getProfileResults = function () {
+	return ($__jsx_profiler.getResults || function () { return {}; })();
+};
 /**
  * class _Main extends Object
  * @constructor
@@ -293,7 +303,7 @@ TestCase.prototype.async$F$LAsyncContext$V$F$LAsyncContext$V$I = function (testB
 	async = new AsyncContext$LTestCase$SF$LAsyncContext$V$I(this, (function (v) {
 		if (! (typeof v !== "undefined")) {
 			debugger;
-			throw new Error("[/Users/fuji.goro/repo/try-on-web/JSX/lib/common/test-case.jsx:147] detected misuse of 'undefined' as type 'string'");
+			throw new Error("[/Users/gfx/repo/try-on-web/JSX/lib/common/test-case.jsx:147] detected misuse of 'undefined' as type 'string'");
 		}
 		return v;
 	}(this._currentName)), timeoutHandler, timeoutMS);
@@ -728,6 +738,6 @@ var $__jsx_classMap = {
 };
 
 
-}());
+})();
 
 //@ sourceMappingURL=import.jsx.js.mapping

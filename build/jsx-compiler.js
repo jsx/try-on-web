@@ -756,6 +756,8 @@ var ClassDefinition = exports.ClassDefinition = Class.extend({
 	isConvertibleTo: function (classDef) {
 		if (this == classDef)
 			return true;
+		if (classDef.className() == "Object")
+			return true;
 		if (this._extendType != null && this._extendType.getClassDef().isConvertibleTo(classDef))
 			return true;
 		for (var i = 0; i < this._implementTypes.length; ++i)
@@ -2784,7 +2786,10 @@ var ArrayLiteralExpression = exports.ArrayLiteralExpression = Expression.extend(
 		} else {
 			for (var i = 0; i < this._exprs.length; ++i) {
 				var elementType = this._exprs[i].getType().resolveIfMayBeUndefined();
-				if (! elementType.equals(Type.nullType)) {
+				if (elementType.equals(Type.nullType)
+					|| elementType.equals(Type.undefinedType)) {
+					// skip
+				} else {
 					if (elementType.equals(Type.integerType))
 						elementType = Type.numberType;
 					var instantiatedClass = context.instantiateTemplate(context.errors, new TemplateInstantiationRequest(this._token, "Array", [ elementType ]));
@@ -2800,7 +2805,7 @@ var ArrayLiteralExpression = exports.ArrayLiteralExpression = Expression.extend(
 			}
 		}
 		// check type of the elements
-		var expectedType = this._type.getClassDef().getTypeArguments()[0];
+		var expectedType = this._type.getClassDef().getTypeArguments()[0].toMayBeUndefinedType();
 		for (var i = 0; i < this._exprs.length; ++i) {
 			var elementType = this._exprs[i].getType();
 			if (! elementType.isConvertibleTo(expectedType)) {
@@ -9358,6 +9363,9 @@ var Parser = exports.Parser = Class.extend({
 		if (token.getValue() == "variant") {
 			this._errors.push(new CompileError(token, "cannot use 'variant' as a class name"));
 			return null;
+		} else if (token.getValue() == "MayBeUndefined") {
+			this._errors.push(new CompileError(token, "cannot use 'MayBeUndefined' as a class name"));
+			return null;
 		}
 		var imprt = this.lookupImportAlias(token.getValue());
 		if (imprt != null) {
@@ -9785,6 +9793,10 @@ var Parser = exports.Parser = Class.extend({
 		while (this._expectOpt("[") != null) {
 			if ((token = this._expect("]")) == null)
 				return false;
+			if (typeDecl instanceof MayBeUndefinedType) {
+				this._newError("MayBeUndefined.<T> cannot be an array, should be: T[]");
+				return null;
+			}
 			typeDecl = this._registerArrayTypeOf(token, typeDecl);
 		}
 		return typeDecl;
@@ -9874,10 +9886,10 @@ var Parser = exports.Parser = Class.extend({
 			if (token == null)
 				return null;
 		} while (token.getValue() == ",");
-		// disallow MayBeUndefined in template types (for the only existing types: MayBeUndefined, Array, Map)
-		if (types[0] instanceof MayBeUndefinedType) {
-			this._newError("type argument for class '" + qualifiedName.getToken().getValue() + "' cannot be a MayBeUndefined type");
-			return null;
+		// check
+		if (qualifiedName.getToken().getValue() == "Array" && types[0] instanceof MayBeUndefinedType) {
+			this._newError("cannot declare Array.<MayBeUndefined.<T>>, should be Array.<T>");
+			return false;
 		}
 		// request template instantiation (deferred)
 		this._templateInstantiationRequests.push(new TemplateInstantiationRequest(token, qualifiedName.getToken().getValue(), types));
@@ -13527,6 +13539,10 @@ var ParsedObjectType = exports.ParsedObjectType = ObjectType.extend({
 		for (var i = 0; i < this._typeArguments.length; ++i) {
 			var actualType = instantiationContext.typemap[this._typeArguments[i].toString()];
 			typeArgs[i] = actualType != undefined ? actualType : this._typeArguments[i];
+			// special handling for Array.<T> (T should not be MayBeUndefinedType)
+			if (typeArgs[i] instanceof MayBeUndefinedType && this._qualifiedName.getToken().getValue() == "Array") {
+				typeArgs[i] = typeArgs[i].getBaseType();
+			}
 		}
 		instantiationContext.request.getInstantiationRequests().push(
 			new TemplateInstantiationRequest(this._qualifiedName.getToken(), this._qualifiedName.getToken().getValue(), typeArgs));

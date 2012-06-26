@@ -108,18 +108,27 @@
                "bootstrap.css" : "/try/assets/css/bootstrap.css",
                "bootstrap-responsive.min.css" : "/try/assets/css/bootstrap-responsive.min.css",
                "bootstrap.min.css" : "/try/assets/css/bootstrap.min.css",
+               "jquery.treeTable.css" : "/try/assets/css/jquery.treeTable.css",
                "bootstrap-responsive.css" : "/try/assets/css/bootstrap-responsive.css"
             },
             "js" : {
-               "source-map.js" : "/try/assets/js/source-map.js",
-               "source-map-inspector.js" : "/try/assets/js/source-map-inspector.js",
+               "jquery.treeTable.js" : "/try/assets/js/jquery.treeTable.js",
                "web.js" : "/try/assets/js/web.js",
                "jslexer.js" : "/try/assets/js/jslexer.js",
-               "bootstrap.js" : "/try/assets/js/bootstrap.js",
                "require-simple.js" : "/try/assets/js/require-simple.js",
+               "jquery.js" : "/try/assets/js/jquery.js",
+               "source-map.js" : "/try/assets/js/source-map.js",
+               "source-map-inspector.js" : "/try/assets/js/source-map-inspector.js",
+               "bootstrap.js" : "/try/assets/js/bootstrap.js",
                "bootstrap.min.js" : "/try/assets/js/bootstrap.min.js"
             },
             "img" : {
+               "jquery-treetable" : {
+                  "toggle-collapse-light.png" : "/try/assets/img/jquery-treetable/toggle-collapse-light.png",
+                  "toggle-collapse-dark.png" : "/try/assets/img/jquery-treetable/toggle-collapse-dark.png",
+                  "toggle-expand-light.png" : "/try/assets/img/jquery-treetable/toggle-expand-light.png",
+                  "toggle-expand-dark.png" : "/try/assets/img/jquery-treetable/toggle-expand-dark.png"
+               },
                "glyphicons-halflings.png" : "/try/assets/img/glyphicons-halflings.png",
                "glyphicons-halflings-white.png" : "/try/assets/img/glyphicons-halflings-white.png",
                "debug-console.png" : "/try/assets/img/debug-console.png"
@@ -351,6 +360,7 @@
                "135.ignore.dot-files" : {
                   "foo.jsx" : "/try/t/run/135.ignore.dot-files/foo.jsx"
                },
+               "180.profile-exception-inline.jsx" : "/try/t/run/180.profile-exception-inline.jsx",
                "151.light-lambda-syntax.jsx" : "/try/t/run/151.light-lambda-syntax.jsx",
                "012.new.jsx" : "/try/t/run/012.new.jsx",
                "002.increment.jsx" : "/try/t/run/002.increment.jsx",
@@ -360,6 +370,7 @@
                "087.as_nocheck-to-array.jsx" : "/try/t/run/087.as_nocheck-to-array.jsx",
                "165.int-type-parameter.todo.jsx" : "/try/t/run/165.int-type-parameter.todo.jsx",
                "068.array-length.jsx" : "/try/t/run/068.array-length.jsx",
+               "179.profile-exception.jsx" : "/try/t/run/179.profile-exception.jsx",
                "089.as_nocheck-to-func.jsx" : "/try/t/run/089.as_nocheck-to-func.jsx",
                "052.lambda.jsx" : "/try/t/run/052.lambda.jsx",
                "099.assign-array-element.jsx" : "/try/t/run/099.assign-array-element.jsx",
@@ -370,7 +381,6 @@
                "025.regexp.jsx" : "/try/t/run/025.regexp.jsx",
                "014.break-loop.jsx" : "/try/t/run/014.break-loop.jsx",
                "148.null-in-cond-expr.jsx" : "/try/t/run/148.null-in-cond-expr.jsx",
-               "169.typeof-maybeundefined.jsx" : "/try/t/run/169.typeof-maybeundefined.jsx",
                "142.static-closure.jsx" : "/try/t/run/142.static-closure.jsx",
                "173.interface-or-mixin-as-object.jsx" : "/try/t/run/173.interface-or-mixin-as-object.jsx",
                "079.logical-op.jsx" : "/try/t/run/079.logical-op.jsx",
@@ -427,6 +437,7 @@
                "029.hashfunc.jsx" : "/try/t/run/029.hashfunc.jsx",
                "006.while.jsx" : "/try/t/run/006.while.jsx",
                "081.assert-pass.jsx" : "/try/t/run/081.assert-pass.jsx",
+               "178.funcexpr-in-template-issue-46.jsx" : "/try/t/run/178.funcexpr-in-template-issue-46.jsx",
                "159.curry.jsx" : "/try/t/run/159.curry.jsx",
                "101.for-in-array.jsx" : "/try/t/run/101.for-in-array.jsx",
                "082.detect-assign-of-undefined.jsx" : "/try/t/run/082.detect-assign-of-undefined.jsx",
@@ -447,6 +458,7 @@
                "021.issue1.jsx" : "/try/t/run/021.issue1.jsx",
                "007.do-while.jsx" : "/try/t/run/007.do-while.jsx",
                "104.nested-as.jsx" : "/try/t/run/104.nested-as.jsx",
+               "176.inherit-template.jsx" : "/try/t/run/176.inherit-template.jsx",
                "026.maybeundefined.jsx" : "/try/t/run/026.maybeundefined.jsx",
                "117.avoid-import-conflict-using-as.jsx" : "/try/t/run/117.avoid-import-conflict-using-as.jsx",
                "108.caught-variable-in-closure.jsx" : "/try/t/run/108.caught-variable-in-closure.jsx",
@@ -463,6 +475,7 @@
                "090.fake-class.jsx" : "/try/t/run/090.fake-class.jsx",
                "060.private-class.jsx" : "/try/t/run/060.private-class.jsx",
                "004.opprecedence.jsx" : "/try/t/run/004.opprecedence.jsx",
+               "169.nullable-element.jsx" : "/try/t/run/169.nullable-element.jsx",
                "154.deduct-callback-type.jsx" : "/try/t/run/154.deduct-callback-type.jsx",
                "057.downcast-interface.jsx" : "/try/t/run/057.downcast-interface.jsx",
                "153.assign-vararg-func.jsx" : "/try/t/run/153.assign-vararg-func.jsx",
@@ -494,6 +507,7 @@
                "130.math-abs.jsx" : "/try/t/run/130.math-abs.jsx",
                "010.condop.jsx" : "/try/t/run/010.condop.jsx",
                "097.json.jsx" : "/try/t/run/097.json.jsx",
+               "177.profile-return-void.jsx" : "/try/t/run/177.profile-return-void.jsx",
                "117.avoid-import-conflict-using-as" : {
                   "foo.jsx" : "/try/t/run/117.avoid-import-conflict-using-as/foo.jsx",
                   "bar.jsx" : "/try/t/run/117.avoid-import-conflict-using-as/bar.jsx"
@@ -535,6 +549,7 @@
                "036.variant.jsx" : "/try/t/run/036.variant.jsx",
                "013.static-var.jsx" : "/try/t/run/013.static-var.jsx",
                "084.as_nocheck-to-boolean.jsx" : "/try/t/run/084.as_nocheck-to-boolean.jsx",
+               "176.nonexisting-array-element-vs-object.jsx" : "/try/t/run/176.nonexisting-array-element-vs-object.jsx",
                "008.if.jsx" : "/try/t/run/008.if.jsx",
                "063.import-by-name.jsx" : "/try/t/run/063.import-by-name.jsx",
                "027.hashliteral.jsx" : "/try/t/run/027.hashliteral.jsx",

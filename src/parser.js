@@ -619,6 +619,10 @@ var Parser = exports.Parser = Class.extend({
 		this._errors.push(new CompileError(this._filename, this._lineNumber, this._getColumn(), message));
 	},
 
+	_newDeprecatedWarning: function (message) {
+		this._errors.push(new DeprecatedWarning(this._filename, this._lineNumber, this._getColumn(), message));
+	},
+
 	_advanceToken: function () {
 		this._forwardPos(this._tokenLength);
 		this._tokenLength = 0;
@@ -836,8 +840,8 @@ var Parser = exports.Parser = Class.extend({
 		if (token.getValue() == "variant") {
 			this._errors.push(new CompileError(token, "cannot use 'variant' as a class name"));
 			return null;
-		} else if (token.getValue() == "MayBeUndefined") {
-			this._errors.push(new CompileError(token, "cannot use 'MayBeUndefined' as a class name"));
+		} else if (token.getValue() == "Nullable" || token.getValue() == "MayBeUndefined") {
+			this._errors.push(new CompileError(token, "cannot use 'Nullable' (or MayBeUndefined) as a class name"));
 			return null;
 		}
 		var imprt = this.lookupImportAlias(token.getValue());
@@ -966,16 +970,16 @@ var Parser = exports.Parser = Class.extend({
 		if (className == null)
 			return false;
 		// template
-		var typeArgs = null;
+		this._typeArgs = null;
 		if (this._expectOpt(".") != null) {
 			if (this._expect("<") == null)
 				return false;
-			typeArgs = [];
+			this._typeArgs = [];
 			do {
 				var typeArg = this._expectIdentifier(null);
 				if (typeArg == null)
 					return false;
-				typeArgs.push(typeArg);
+				this._typeArgs.push(typeArg);
 				var token = this._expectOpt([ ",", ">" ]);
 				if (token == null)
 					return false;
@@ -1022,7 +1026,7 @@ var Parser = exports.Parser = Class.extend({
 		while (this._expectOpt("}") == null) {
 			if (! this._expectIsNotEOF())
 				break;
-			var member = this._memberDefinition(flags, typeArgs != null);
+			var member = this._memberDefinition(flags);
 			if (member != null) {
 				for (var i = 0; i < members.length; ++i) {
 					if (member.name() == members[i].name()
@@ -1078,14 +1082,14 @@ var Parser = exports.Parser = Class.extend({
 			return false;
 
 		// done
-		if (typeArgs != null)
-			this._templateClassDefs.push(new TemplateClassDefinition(className.getValue(), flags, typeArgs, this._extendType, this._implementTypes, members, this._objectTypesUsed));
+		if (this._typeArgs != null)
+			this._templateClassDefs.push(new TemplateClassDefinition(className.getValue(), flags, this._typeArgs, this._extendType, this._implementTypes, members, this._objectTypesUsed));
 		else
 			this._classDefs.push(new ClassDefinition(className, className.getValue(), flags, this._extendType, this._implementTypes, members, this._objectTypesUsed));
 		return true;
 	},
 
-	_memberDefinition: function (classFlags, isTemplate) {
+	_memberDefinition: function (classFlags) {
 		var flags = 0;
 		while (true) {
 			var token = this._expect([ "function", "var", "static", "abstract", "override", "final", "const", "native", "__readonly__", "inline" ]);
@@ -1182,7 +1186,7 @@ var Parser = exports.Parser = Class.extend({
 		if (! this._expect(";"))
 			return null;
 		// all non-native, non-template values have initial value
-		if (! isTemplate && initialValue == null && (classFlags & ClassDefinition.IS_NATIVE) == 0)
+		if (this._typeArgs == null && initialValue == null && (classFlags & ClassDefinition.IS_NATIVE) == 0)
 			initialValue = Expression.getDefaultValueExpressionOf(type);
 		return new MemberVariableDefinition(token, name, flags, type, initialValue);
 	},
@@ -1266,8 +1270,8 @@ var Parser = exports.Parser = Class.extend({
 		while (this._expectOpt("[") != null) {
 			if ((token = this._expect("]")) == null)
 				return false;
-			if (typeDecl instanceof MayBeUndefinedType) {
-				this._newError("MayBeUndefined.<T> cannot be an array, should be: T[]");
+			if (typeDecl instanceof NullableType) {
+				this._newError("Nullable.<T> cannot be an array, should be: T[]");
 				return null;
 			}
 			typeDecl = this._registerArrayTypeOf(token, typeDecl);
@@ -1277,30 +1281,38 @@ var Parser = exports.Parser = Class.extend({
 
 	_typeDeclarationNoArrayNoVoid: function () {
 		var typeDecl;
-		var token = this._expectOpt([ "MayBeUndefined", "variant" ]);
-		if (token != null) {
-			switch (token.getValue()) {
-			case "MayBeUndefined":
-				if (this._expect(".") == null
-					|| this._expect("<") == null)
-					return null;
-				var baseType = this._primaryTypeDeclaration();
-				if (baseType == null)
-					return null;
-				if (this._expect(">") == null)
-					return null;
-				typeDecl = baseType.toMayBeUndefinedType();
-				break;
-			case "variant":
-				typeDecl = Type.variantType;
-				break;
-			default:
-				throw new Error("logic flaw");
-			}
-		} else {
-			typeDecl = this._primaryTypeDeclaration();
+		var token = this._expectOpt([ "MayBeUndefined", "Nullable", "variant" ]);
+		if (token == null) {
+			return this._primaryTypeDeclaration();
 		}
-		return typeDecl;
+		switch (token.getValue()) {
+		case "MayBeUndefined":
+			this._newDeprecatedWarning("use of 'MayBeUndefined' is deprerated, use 'Nullable' instead");
+			// falls through
+		case "Nullable":
+			if (this._expect(".") == null
+				|| this._expect("<") == null)
+				return null;
+			var baseType = this._primaryTypeDeclaration();
+			if (baseType == null)
+				return null;
+			if (this._expect(">") == null)
+				return null;
+			if (this._typeArgs != null) {
+				for (var i = 0; i < this._typeArgs.length; ++i) {
+					if (baseType.equals(new ParsedObjectType(new QualifiedName(this._typeArgs[i], null), []))) {
+						return baseType.toNullableType(true); // instantiation using template type
+					}
+				}
+			}
+			return baseType.toNullableType();
+			break;
+		case "variant":
+			return Type.variantType;
+			break;
+		default:
+			throw new Error("logic flaw");
+		}
 	},
 
 	_primaryTypeDeclaration: function () {
@@ -1350,22 +1362,27 @@ var Parser = exports.Parser = Class.extend({
 		}
 		// parse
 		var types = [];
+		var typeIsConcrete = true;
 		do {
 			var type = this._typeDeclaration(false);
 			if (type == null)
 				return null;
 			types.push(type);
+			if (this._isPartOfTypeArg(type))
+				typeIsConcrete = false;
 			var token = this._expect([ ">", "," ]);
 			if (token == null)
 				return null;
 		} while (token.getValue() == ",");
 		// check
-		if (qualifiedName.getToken().getValue() == "Array" && types[0] instanceof MayBeUndefinedType) {
-			this._newError("cannot declare Array.<MayBeUndefined.<T>>, should be Array.<T>");
+		if (qualifiedName.getToken().getValue() == "Array" && types[0] instanceof NullableType) {
+			this._newError("cannot declare Array.<Nullable.<T>>, should be Array.<T>");
 			return false;
 		}
 		// request template instantiation (deferred)
-		this._templateInstantiationRequests.push(new TemplateInstantiationRequest(token, qualifiedName.getToken().getValue(), types));
+		if (typeIsConcrete) {
+			this._templateInstantiationRequests.push(new TemplateInstantiationRequest(token, qualifiedName.getToken().getValue(), types));
+		}
 		// return object type
 		var objectType = new ParsedObjectType(qualifiedName, types);
 		this._objectTypesUsed.push(objectType);
@@ -1446,7 +1463,9 @@ var Parser = exports.Parser = Class.extend({
 	},
 
 	_registerArrayTypeOf: function (token, elementType) {
-		this._templateInstantiationRequests.push(new TemplateInstantiationRequest(token, "Array", [ elementType ]));
+		if (! this._isPartOfTypeArg(elementType)) {
+			this._templateInstantiationRequests.push(new TemplateInstantiationRequest(token, "Array", [ elementType ]));
+		}
 		var arrayType = new ParsedObjectType(new QualifiedName(new Token("Array", true), null), [ elementType ], token);
 		this._objectTypesUsed.push(arrayType);
 		return arrayType;
@@ -2236,8 +2255,8 @@ var Parser = exports.Parser = Class.extend({
 			if (type.equals(Type.undefinedType) || type.equals(Type.nullType)) {
 				this._newError("cannot instantiate an array of " + type.toString());
 				return null;
-			} else if (type instanceof MayBeUndefinedType) {
-				this._newError("cannot instantiate an array of an MayBeUndefined type");
+			} else if (type instanceof NullableType) {
+				this._newError("cannot instantiate an array of an Nullable type");
 				return null;
 			}
 			type = this._registerArrayTypeOf(newToken, type);
@@ -2396,7 +2415,8 @@ var Parser = exports.Parser = Class.extend({
 			case "this":
 				return new ThisExpression(token, null);
 			case "undefined":
-				return new UndefinedExpression(token);
+				this._newDeprecatedWarning("use of 'undefined' is deprerated, use 'null' instead");
+				// falls through
 			case "null":
 				return this._nullLiteral(token);
 			case "false":
@@ -2563,6 +2583,16 @@ var Parser = exports.Parser = Class.extend({
 		return args;
 	},
 
+	_isPartOfTypeArg: function (type) {
+		if (this._typeArgs == null)
+			return false;
+		for (var i = 0; i < this._typeArgs.length; ++i) {
+			if (this._typeArgs[i].getValue() == type.toString())
+				return true;
+		}
+		return false;
+	},
+
 	_getCompletionCandidatesOfTopLevel: function (autoCompleteMatchCb) {
 		return new CompletionCandidatesOfTopLevel(this, autoCompleteMatchCb);
 	},
@@ -2716,7 +2746,7 @@ var _CompletionCandidatesOfProperty = exports._CompletionCandidatesOfProperty = 
 		var type = this._expr.getType();
 		if (type == null)
 			return;
-		type = type.resolveIfMayBeUndefined();
+		type = type.resolveIfNullable();
 		if (type.equals(Type.voidType)
 			|| type.equals(Type.nullType)
 			|| type.equals(Type.variantType)

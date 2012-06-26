@@ -40,12 +40,18 @@ function $__jsx_div_assign(obj, prop, divisor) {
 }
 
 /*
- * global functions called by JSX as Number.* (renamed so that they do not conflict with local variable names)
+ * global functions called by JSX
+ * (enamed so that they do not conflict with local variable names)
  */
 var $__jsx_parseInt = parseInt;
 var $__jsx_parseFloat = parseFloat;
 var $__jsx_isNaN = isNaN;
 var $__jsx_isFinite = isFinite;
+
+var $__jsx_encodeURIComponent = encodeURIComponent;
+var $__jsx_decodeURIComponent = decodeURIComponent;
+var $__jsx_encodeURI = encodeURI;
+var $__jsx_decodeURI = decodeURI;
 
 var $__jsx_ObjectToString = Object.prototype.toString;
 var $__jsx_ObjectHasOwnProperty = Object.prototype.hasOwnProperty;
@@ -64,8 +70,18 @@ JSX.require = function (path) {
 	return m !== undefined ? m : null;
 };
 
+JSX.profilerIsRunning = function () {
+	return $__jsx_profiler.getResults != null;
+};
+
 JSX.getProfileResults = function () {
 	return ($__jsx_profiler.getResults || function () { return {}; })();
+};
+
+JSX.postProfileResults = function (url) {
+	if ($__jsx_profiler.postResults == null)
+		throw new Error("profiler has not been turned on");
+	return $__jsx_profiler.postResults(url);
 };
 /**
  * class _Main extends Object
@@ -224,7 +240,7 @@ function TestCase$() {
 	this._totalPass = 0;
 	this._count = 0;
 	this._pass = 0;
-	this._tests = null;
+	this._tests = undefined;
 	this._currentName = undefined;
 	this._tasks = [  ];
 };
@@ -349,7 +365,7 @@ TestCase.prototype._ok$US = function (name) {
 	/** @type {!string} */
 	var s;
 	++ this._pass;
-	s = (name !== undefined ? " - " + name : "");
+	s = (name != undefined ? " - " + name : "");
 	this._say$S("\t" + "ok " + (this._count + "") + s);
 };
 
@@ -362,7 +378,7 @@ TestCase.prototype._ok$US = function (name) {
 TestCase.prototype._nok$USSXX = function (name, op, got, expected) {
 	/** @type {!string} */
 	var s;
-	s = (name !== undefined ? " - " + name : "");
+	s = (name != undefined ? " - " + name : "");
 	this._say$S("\t" + "not ok " + (this._count + "") + s);
 	this.diag$S("comparing with " + op + s.replace(" - ", " for "));
 	this._dump$SX("got:      ", got);
@@ -382,7 +398,7 @@ TestCase.prototype.fail$S = function (reason) {
  * @param {*} value
  */
 TestCase.prototype._dump$SX = function (tag, value) {
-	if (typeof value === "object" && (function (o) { return o instanceof Object ? o : null; })(value) != null) {
+	if (typeof value === "object" && (function (o) { return o instanceof Object ? o : null; })(value) != undefined) {
 		this.diag$S(tag);
 		console.dir(value);
 	} else {
@@ -417,7 +433,7 @@ TestCase.prototype.note$S = function (message) {
  * @return {!string}
  */
 TestCase.prototype.toString = function () {
-	if (this._tests != null) {
+	if (this._tests != undefined) {
 		return "TestCase[" + this._tests.join(", ") + "]";
 	} else {
 		return "TestCase";
@@ -483,7 +499,7 @@ function AsyncContext$LTestCase$SF$LAsyncContext$V$I(test, name, timeoutHandler,
 	var $this = this;
 	/** @type {TimerHandle} */
 	var id;
-	this._timerId = null;
+	this._timerId = undefined;
 	this._test = test;
 	this._name = name;
 	id = Timer$setTimeout$F$V$I((function () {
@@ -568,14 +584,14 @@ _Matcher.prototype._match$BXXS = function (value, got, expected, op) {
  * @param {*} x
  */
 _Matcher.prototype.toBe$X = function (x) {
-	this._match$BXXS(this._got === x, this._got, x, "==");
+	this._match$BXXS(this._got == x, this._got, x, "==");
 };
 
 /**
  * @param {*} x
  */
 _Matcher.prototype.notToBe$X = function (x) {
-	this._match$BXXS(this._got !== x, this._got, x, "!=");
+	this._match$BXXS(this._got != x, this._got, x, "!=");
 };
 
 /**

@@ -68,8 +68,9 @@
             "jssourcemap.js" : "/try/src/jssourcemap.js",
             "js" : {
                "profiler.js" : "/try/src/js/profiler.js",
-               "runtest.js" : "/try/src/js/runtest.js",
-               "bootstrap.js" : "/try/src/js/bootstrap.js"
+               "web-launcher.js" : "/try/src/js/web-launcher.js",
+               "bootstrap.js" : "/try/src/js/bootstrap.js",
+               "launcher.js" : "/try/src/js/launcher.js"
             },
             "statement.js" : "/try/src/statement.js"
          },
@@ -107,20 +108,28 @@
             "css" : {
                "bootstrap.css" : "/try/assets/css/bootstrap.css",
                "bootstrap-responsive.min.css" : "/try/assets/css/bootstrap-responsive.min.css",
+               "codemirror.css" : "/try/assets/css/codemirror.css",
                "bootstrap.min.css" : "/try/assets/css/bootstrap.min.css",
                "jquery.treeTable.css" : "/try/assets/css/jquery.treeTable.css",
                "bootstrap-responsive.css" : "/try/assets/css/bootstrap-responsive.css"
             },
             "js" : {
                "jquery.treeTable.js" : "/try/assets/js/jquery.treeTable.js",
+               "mode" : {
+                  "clike.js" : "/try/assets/js/mode/clike.js",
+                  "jsx.js" : "/try/assets/js/mode/jsx.js",
+                  "javascript.js" : "/try/assets/js/mode/javascript.js"
+               },
                "web.js" : "/try/assets/js/web.js",
+               "jsx-profiler-result.js" : "/try/assets/js/jsx-profiler-result.js",
                "jslexer.js" : "/try/assets/js/jslexer.js",
                "require-simple.js" : "/try/assets/js/require-simple.js",
                "jquery.js" : "/try/assets/js/jquery.js",
                "source-map.js" : "/try/assets/js/source-map.js",
                "source-map-inspector.js" : "/try/assets/js/source-map-inspector.js",
                "bootstrap.js" : "/try/assets/js/bootstrap.js",
-               "bootstrap.min.js" : "/try/assets/js/bootstrap.min.js"
+               "bootstrap.min.js" : "/try/assets/js/bootstrap.min.js",
+               "codemirror.js" : "/try/assets/js/codemirror.js"
             },
             "img" : {
                "jquery-treetable" : {
@@ -266,6 +275,7 @@
                "137.call-constructor-as-func.jsx" : "/try/t/compile_error/137.call-constructor-as-func.jsx",
                "039.mixin-conflict.jsx" : "/try/t/compile_error/039.mixin-conflict.jsx",
                "135.open-function.jsx" : "/try/t/compile_error/135.open-function.jsx",
+               "142.nested-nullable.jsx" : "/try/t/compile_error/142.nested-nullable.jsx",
                "066.no-return.jsx" : "/try/t/compile_error/066.no-return.jsx",
                "060.import-from-conflict.jsx" : "/try/t/compile_error/060.import-from-conflict.jsx",
                "101.assign-func-of-wrong-return-type.jsx" : "/try/t/compile_error/101.assign-func-of-wrong-return-type.jsx",
@@ -325,7 +335,8 @@
                "048.this_in_static_func.jsx" : "/try/t/compile_error/048.this_in_static_func.jsx"
             },
             "006.jsx" : {
-               "hello.jsx" : "/try/t/006.jsx/hello.jsx"
+               "hello.jsx" : "/try/t/006.jsx/hello.jsx",
+               "dump-args.jsx" : "/try/t/006.jsx/dump-args.jsx"
             },
             "001.lexer.t" : "/try/t/001.lexer.t",
             "004.example.t" : "/try/t/004.example.t",
@@ -350,6 +361,7 @@
                "132.import-alias-in-type-decl" : {
                   "foo.jsx" : "/try/t/run/132.import-alias-in-type-decl/foo.jsx"
                },
+               "181.issue48.jsx" : "/try/t/run/181.issue48.jsx",
                "041.regexp-literal.jsx" : "/try/t/run/041.regexp-literal.jsx",
                "111.comma-in-call-args.jsx" : "/try/t/run/111.comma-in-call-args.jsx",
                "044.literals.jsx" : "/try/t/run/044.literals.jsx",
@@ -409,6 +421,7 @@
                "139.array-of-maybeundefined.jsx" : "/try/t/run/139.array-of-maybeundefined.jsx",
                "119.import-all-into.jsx" : "/try/t/run/119.import-all-into.jsx",
                "155.deduct-closure-type-on-assign.jsx" : "/try/t/run/155.deduct-closure-type-on-assign.jsx",
+               "182.null-expr-in-templates.jsx" : "/try/t/run/182.null-expr-in-templates.jsx",
                "023.funcref.jsx" : "/try/t/run/023.funcref.jsx",
                "164.string-compare.jsx" : "/try/t/run/164.string-compare.jsx",
                "116.map-of-map.jsx" : "/try/t/run/116.map-of-map.jsx",
@@ -540,6 +553,7 @@
                "123.tostring-as-property.jsx" : "/try/t/run/123.tostring-as-property.jsx",
                "105.in.jsx" : "/try/t/run/105.in.jsx",
                "174.undefined-in-array-literal.jsx" : "/try/t/run/174.undefined-in-array-literal.jsx",
+               "183.deduce-compfun-of-sort.jsx" : "/try/t/run/183.deduce-compfun-of-sort.jsx",
                "024.date.jsx" : "/try/t/run/024.date.jsx",
                "055.downcast.jsx" : "/try/t/run/055.downcast.jsx",
                "146.assign-to-property-of-variant.jsx" : "/try/t/run/146.assign-to-property-of-variant.jsx",

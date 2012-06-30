@@ -6233,7 +6233,7 @@ var JavaScriptEmitter = exports.JavaScriptEmitter = Class.extend({
 
 	constructor: function (platform) {
 		this._platform = platform;
-		this._output = this._platform.load(this._platform.getRoot() + "/src/js/bootstrap.js");
+		this._output = "";
 		this._outputEndsWithReturn = this._output.match(/\n$/) != null;
 		this._outputFile = null;
 		this._indent = 0;
@@ -6260,8 +6260,7 @@ var JavaScriptEmitter = exports.JavaScriptEmitter = Class.extend({
 	saveSourceMappingFile: function (platform) {
 		var gen = this._sourceMapGen;
 		if(gen != null) {
-			platform.save(this._sourceMapGen.getSourceMappingFile(),
-								this._sourceMapGen.generate());
+			platform.save(gen.getSourceMappingFile(), gen.generate());
 		}
 	},
 
@@ -6281,7 +6280,13 @@ var JavaScriptEmitter = exports.JavaScriptEmitter = Class.extend({
 		this._enableProfiler = enable;
 	},
 
+	addHeader: function (header) {
+		this._output += header;
+	},
+
 	emit: function (classDefs) {
+		var bootstrap = this._platform.load(this._platform.getRoot() + "/src/js/bootstrap.js");
+		this._output += bootstrap;
 		for (var i = 0; i < classDefs.length; ++i) {
 			classDefs[i].forEachMemberFunction(function onFuncDef(funcDef) {
 				funcDef.forEachClosure(onFuncDef);
@@ -6412,15 +6417,15 @@ var JavaScriptEmitter = exports.JavaScriptEmitter = Class.extend({
 		return filename;
 	},
 
-	getOutput: function (sourceFile, entryPoint) {
+	getOutput: function (sourceFile, entryPoint, executableFor) {
 		var output = this._output + "\n";
 		if (this._enableProfiler) {
 			output += this._platform.load(this._platform.getRoot() + "/src/js/profiler.js");
 		}
-		output += "})();\n";
 		if (entryPoint != null) {
-			output = this._platform.addLauncher(this, this._encodeFilename(sourceFile, "system:"), output, entryPoint);
+			output = this._platform.addLauncher(this, this._encodeFilename(sourceFile, "system:"), output, entryPoint, executableFor);
 		}
+		output += "})();\n";
 		if (this._sourceMapGen) {
 			output += this._sourceMapGen.magicToken();
 		}
@@ -6431,7 +6436,7 @@ var JavaScriptEmitter = exports.JavaScriptEmitter = Class.extend({
 		this._emit(
 			"/**\n" +
 			" * class " + classDef.getOutputClassName() +
-			(classDef.extendType() != null ? " extends " + classDef.extendType().getClassDef().getOutputClassName() + "\n" : "") +
+			(classDef.extendType() != null ? " extends " + classDef.extendType().getClassDef().getOutputClassName() : "") + "\n" +
 			" * @constructor\n" +
 			" */\n" +
 			"function ", null);
@@ -9828,10 +9833,12 @@ var Parser = exports.Parser = Class.extend({
 	},
 
 	_typeDeclaration: function (allowVoid) {
-		if (allowVoid) {
-			var token = this._expectOpt("void");
-			if (token != null)
-				return Type.voidType;
+		if (this._expectOpt("void") != null) {
+			if (! allowVoid) {
+				this._newError("'void' cannot be used here");
+				return null;
+			}
+			return Type.voidType;
 		}
 		var typeDecl = this._typeDeclarationNoArrayNoVoid();
 		if (typeDecl == null)
@@ -9850,39 +9857,47 @@ var Parser = exports.Parser = Class.extend({
 	},
 
 	_typeDeclarationNoArrayNoVoid: function () {
-		var typeDecl;
 		var token = this._expectOpt([ "MayBeUndefined", "Nullable", "variant" ]);
 		if (token == null) {
 			return this._primaryTypeDeclaration();
 		}
 		switch (token.getValue()) {
 		case "MayBeUndefined":
-			this._newDeprecatedWarning("use of 'MayBeUndefined' is deprerated, use 'Nullable' instead");
+			this._newDeprecatedWarning("use of 'MayBeUndefined' is deprecated, use 'Nullable' instead");
 			// falls through
 		case "Nullable":
-			if (this._expect(".") == null
-				|| this._expect("<") == null)
-				return null;
-			var baseType = this._primaryTypeDeclaration();
-			if (baseType == null)
-				return null;
-			if (this._expect(">") == null)
-				return null;
-			if (this._typeArgs != null) {
-				for (var i = 0; i < this._typeArgs.length; ++i) {
-					if (baseType.equals(new ParsedObjectType(new QualifiedName(this._typeArgs[i], null), []))) {
-						return baseType.toNullableType(true); // instantiation using template type
-					}
-				}
-			}
-			return baseType.toNullableType();
-			break;
+			return this._nullableTypeDeclaration();
 		case "variant":
 			return Type.variantType;
-			break;
 		default:
 			throw new Error("logic flaw");
 		}
+	},
+
+	_nullableTypeDeclaration: function () {
+		if (this._expect(".") == null || this._expect("<") == null)
+			return null;
+		var baseType = this._typeDeclaration(false);
+		if (baseType == null)
+			return null;
+		if (this._expect(">") == null)
+			return null;
+		if (baseType.equals(Type.variantType)) {
+			this._newError("variant cannot be declared as nullable (since it is always nullable)");
+			return null;
+		}
+		if (baseType instanceof NullableType) {
+			this._newError("nested Nullable.<T> is forbidden");
+			return null;
+		}
+		if (this._typeArgs != null) {
+			for (var i = 0; i < this._typeArgs.length; ++i) {
+				if (baseType.equals(new ParsedObjectType(new QualifiedName(this._typeArgs[i], null), []))) {
+					return baseType.toNullableType(true);
+				}
+			}
+		}
+		return baseType.toNullableType();
 	},
 
 	_primaryTypeDeclaration: function () {
@@ -11711,7 +11726,7 @@ var ReturnStatement = exports.ReturnStatement = Statement.extend({
 	},
 
 	clone: function () {
-		return new ReturnStatement(this._token, this._expr.clone());
+		return new ReturnStatement(this._token, Util.cloneNullable(this._expr));
 	},
 
 	getToken: function () {
@@ -12166,13 +12181,13 @@ var ForStatement = exports.ForStatement = ContinuableStatement.extend({
 
 	constructor: function (token, label, initExpr, condExpr, postExpr, statements) {
 		ContinuableStatement.prototype.constructor.call(this, token, label, statements);
-		this._initExpr = initExpr;
-		this._condExpr = condExpr;
-		this._postExpr = postExpr;
+		this._initExpr = initExpr; // nullable
+		this._condExpr = condExpr; // nullable
+		this._postExpr = postExpr; // nullable
 	},
 
 	clone: function () {
-		return new ForStatement(this._token, this._label, this._initExpr.clone(), this._condExpr.clone(), this._postExpr.clone(), Util.cloneArray(this._statements));
+		return new ForStatement(this._token, this._label, Util.cloneNullable(this._initExpr), Util.cloneNullable(this._condExpr), Util.cloneNullable(this._postExpr), Util.cloneArray(this._statements));
 	},
 
 	getInitExpr: function () {
@@ -12523,7 +12538,7 @@ var WhileStatement = exports.WhileStatement = ContinuableStatement.extend({
 	},
 
 	clone: function () {
-		return new WhileStatement(this._token, this._label, this._expr.clone(), Util.cloneARray(this._statements));
+		return new WhileStatement(this._token, this._label, this._expr.clone(), Util.cloneArray(this._statements));
 	},
 
 	getExpr: function () {
@@ -13904,6 +13919,10 @@ var Util = exports.Util = Class.extend({
 		for (var i = 0; i < a.length; ++i)
 			r[i] = a[i].clone();
 		return r;
+	},
+
+	$cloneNullable: function (o) {
+		return o == null ? null : o.clone();
 	},
 
 	$serializeArray: function (a) {

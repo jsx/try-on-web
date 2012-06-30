@@ -9,6 +9,14 @@
     <!-- Le fav and touch icons -->
     <link rel="shortcut icon" href="assets/favicon.ico">
 
+    <!-- CodeMirror2 settings -->
+    <link href="assets/css/codemirror.css" rel="stylesheet">
+    <script src="assets/js/codemirror.js"></script>
+    <script src="assets/js/mode/javascript.js"></script>
+    <script src="assets/js/mode/clike.js"></script>
+    <script src="assets/js/mode/jsx.js"></script>
+
+    <!-- JSX compiler and web interface -->
     <script src="build/jsx-compiler.js"></script>
     <script src="assets/js/require-simple.js"></script>
     <script src="assets/js/web.js"></script>
@@ -24,9 +32,10 @@
       .sidebar-nav {
         padding: 9px 0;
       }
-      .console {
-        height: 600px;
-        font-family: "Courier New", monospace;
+
+      .CodeMirror-scroll {
+        height: 30em;
+        width:  28em;
       }
 
       #source-list {
@@ -264,6 +273,9 @@
 <li class="source-file"><a href="t/run/178.funcexpr-in-template-issue-46.jsx" data-path="t/run/178.funcexpr-in-template-issue-46.jsx">178.funcexpr-in-template-issue-46.jsx</a></li>
 <li class="source-file"><a href="t/run/179.profile-exception.jsx" data-path="t/run/179.profile-exception.jsx">179.profile-exception.jsx</a></li>
 <li class="source-file"><a href="t/run/180.profile-exception-inline.jsx" data-path="t/run/180.profile-exception-inline.jsx">180.profile-exception-inline.jsx</a></li>
+<li class="source-file"><a href="t/run/181.issue48.jsx" data-path="t/run/181.issue48.jsx">181.issue48.jsx</a></li>
+<li class="source-file"><a href="t/run/182.null-expr-in-templates.jsx" data-path="t/run/182.null-expr-in-templates.jsx">182.null-expr-in-templates.jsx</a></li>
+<li class="source-file"><a href="t/run/183.deduce-compfun-of-sort.jsx" data-path="t/run/183.deduce-compfun-of-sort.jsx">183.deduce-compfun-of-sort.jsx</a></li>
 <li id="t-lib" class="nav-header">t/lib</li>
 <li class="source-file"><a href="t/lib/001.hello.jsx" data-path="t/lib/001.hello.jsx">001.hello.jsx</a></li>
 <li class="source-file"><a href="t/lib/002.timer.jsx" data-path="t/lib/002.timer.jsx">002.timer.jsx</a></li>
@@ -415,36 +427,32 @@
 <li class="source-file"><a href="t/compile_error/139.nested-maybeundefined.jsx" data-path="t/compile_error/139.nested-maybeundefined.jsx">139.nested-maybeundefined.jsx</a></li>
 <li class="source-file"><a href="t/compile_error/140.array-maybeundefined-t.jsx" data-path="t/compile_error/140.array-maybeundefined-t.jsx">140.array-maybeundefined-t.jsx</a></li>
 <li class="source-file"><a href="t/compile_error/141.maybeundefined-arraytype.jsx" data-path="t/compile_error/141.maybeundefined-arraytype.jsx">141.maybeundefined-arraytype.jsx</a></li>
+<li class="source-file"><a href="t/compile_error/142.nested-nullable.jsx" data-path="t/compile_error/142.nested-nullable.jsx">142.nested-nullable.jsx</a></li>
 
             </ul>
           </div><!--/.well -->
         </div><!--/span-->
         <div class="row">
-            <div class="span5"><textarea class="span5 console" data-path="input" id="input">// write source code here</textarea></div>
-            <div class="span5"><textarea class="span5 console" id="output"></textarea></div>
+          <div class="span5">
+            <textarea data-path="input" id="input">// write source code here</textarea>
+          </div>
+          <div class="span5">
+            <textarea id="output"></textarea>
+          </div>
         </div><!--/span-->
       </div><!--/row-->
 
     </div><!--/.fluid-container-->
 
-    <!-- Le javascript
-    ================================================== -->
-    <!-- Placed at the end of the document so the pages load faster -->
-    <!--
-    <script src="../assets/js/jquery.js"></script>
-    <script src="../assets/js/bootstrap-transition.js"></script>
-    <script src="../assets/js/bootstrap-alert.js"></script>
-    <script src="../assets/js/bootstrap-modal.js"></script>
-    <script src="../assets/js/bootstrap-dropdown.js"></script>
-    <script src="../assets/js/bootstrap-scrollspy.js"></script>
-    <script src="../assets/js/bootstrap-tab.js"></script>
-    <script src="../assets/js/bootstrap-tooltip.js"></script>
-    <script src="../assets/js/bootstrap-popover.js"></script>
-    <script src="../assets/js/bootstrap-button.js"></script>
-    <script src="../assets/js/bootstrap-collapse.js"></script>
-    <script src="../assets/js/bootstrap-carousel.js"></script>
-    <script src="../assets/js/bootstrap-typeahead.js"></script>
-    -->
+    <hr />
+    <div class="container-fluid">
+      <p>
+      Open the JavaScript Console (or Web Inspector) for JSX output.
+      </p>
+      <p>
+      Thanks to <a href="http://codemirror.net/">CodeMirror</a> for the web editor, and to <a href="http://twitter.github.com/bootstrap/">Twitter Bootstrap</a> for the styles.
+      </p>
+    </div>
   </body>
 </html>
 <!-- vim: set tabstop=2 : -->

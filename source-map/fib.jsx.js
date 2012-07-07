@@ -190,7 +190,13 @@ _Main$.prototype = new _Main;
 _Main.main$AS = function (args) {
 	/** @type {!number} */
 	var n;
-	n = (args.length > 0 ? +args[0] : 10);
+	n = (args.length > 0 ? +(function (v) {
+		if (! (v != null)) {
+			debugger;
+			throw new Error("[fib.jsx:42] null access");
+		}
+		return v;
+	}(args[0])) : 10);
 	console.log("fib1(" + (n + "") + ") =", Fib$fib1$I(n));
 	console.log("fib2(" + (n + "") + ") =", Fib$fib2$N(n));
 	console.log("fib3(" + (n + "") + ") =", Fib$fib3$I(n));

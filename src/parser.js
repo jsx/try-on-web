@@ -402,7 +402,7 @@ var Parser = exports.Parser = Class.extend({
 	parse: function (input, errors) {
 		// lexer properties
 		this._input = input;
-		this._lines = this._input.split(/\n/);
+		this._lines = this._input.split(/\r|\n|\r\n/);
 		this._tokenLength = 0;
 		this._lineNumber = 1; // one origin
 		this._columnOffset = 0; // zero origin
@@ -1385,8 +1385,9 @@ var Parser = exports.Parser = Class.extend({
 				return null;
 		} while (token.getValue() == ",");
 		// check
-		if (qualifiedName.getToken().getValue() == "Array" && types[0] instanceof NullableType) {
-			this._newError("cannot declare Array.<Nullable.<T>>, should be Array.<T>");
+		var className = qualifiedName.getToken().getValue();
+		if ((className == "Array" || className == "Map") && types[0] instanceof NullableType) {
+			this._newError("cannot declare " + className + ".<Nullable.<T>>, should be " + className + ".<T>");
 			return false;
 		}
 		// request template instantiation (deferred)
@@ -2262,10 +2263,7 @@ var Parser = exports.Parser = Class.extend({
 			return null;
 		// handle [] (if it has an length parameter, that's the last)
 		while (this._expectOpt("[") != null) {
-			if (type.equals(Type.undefinedType) || type.equals(Type.nullType)) {
-				this._newError("cannot instantiate an array of " + type.toString());
-				return null;
-			} else if (type instanceof NullableType) {
+			if (type instanceof NullableType) {
 				this._newError("cannot instantiate an array of an Nullable type");
 				return null;
 			}
@@ -2350,15 +2348,29 @@ var Parser = exports.Parser = Class.extend({
 	},
 
 	_functionExpr: function (token, nameOfFunctionStatement) {
+		var requireTypeDeclaration = nameOfFunctionStatement != null;
 		if (this._expect("(") == null)
 			return null;
-		var args = this._functionArgumentsExpr(false, nameOfFunctionStatement != null);
+		var args = this._functionArgumentsExpr(false, requireTypeDeclaration);
 		if (args == null)
 			return null;
-		var returnType = null;
-		if (this._expectOpt(":") != null) {
-			if ((returnType = this._typeDeclaration(true)) == null)
+		var parseReturnType = false;
+		if (requireTypeDeclaration) {
+			if (this._expect(":") == null)
 				return null;
+			parseReturnType = true;
+		} else {
+			if (this._expectOpt(":") != null) {
+				parseReturnType = true;
+			}
+		}
+		if (parseReturnType) {
+			var returnType = this._typeDeclaration(true);
+			if (returnType == null) {
+				return null;
+			}
+		} else {
+			returnType = null;
 		}
 		if (this._expect("{") == null)
 			return null;
@@ -2469,9 +2481,7 @@ var Parser = exports.Parser = Class.extend({
 		if (this._expectOpt(":") != null) {
 			if ((type = this._typeDeclaration(false)) == null)
 				return null;
-			if (type.equals(Type.variantType) || type instanceof ObjectType || type instanceof StaticFunctionType) {
-				// ok
-			} else {
+			if (type instanceof PrimitiveType) {
 				this._newError("type '" + type.toString() + "' is not nullable");
 				return null;
 			}
@@ -2759,8 +2769,7 @@ var _CompletionCandidatesOfProperty = exports._CompletionCandidatesOfProperty = 
 		type = type.resolveIfNullable();
 		if (type.equals(Type.voidType)
 			|| type.equals(Type.nullType)
-			|| type.equals(Type.variantType)
-			|| type.equals(Type.undefinedType))
+			|| type.equals(Type.variantType))
 			return;
 		// type with classdef
 		var classDef = type.getClassDef();

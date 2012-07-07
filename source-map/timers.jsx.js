@@ -108,7 +108,7 @@ _Main.main$AS = function (args) {
 	/** @type {TimerHandle} */
 	var id;
 	i = 0;
-	id = undefined;
+	id = null;
 	id = Timer$setInterval$F$V$I((function () {
 		console.log(++ i);
 		if (i === 4) {

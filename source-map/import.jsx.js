@@ -215,7 +215,13 @@ _Main$0$.prototype = new _Main$0;
 _Main$0.main$AS = function (args) {
 	/** @type {!number} */
 	var n;
-	n = (args.length > 0 ? +args[0] : 10);
+	n = (args.length > 0 ? +(function (v) {
+		if (! (v != null)) {
+			debugger;
+			throw new Error("[fib.jsx:42] null access");
+		}
+		return v;
+	}(args[0])) : 10);
 	console.log("fib1(" + (n + "") + ") =", Fib$fib1$I(n));
 	console.log("fib2(" + (n + "") + ") =", Fib$fib2$N(n));
 	console.log("fib3(" + (n + "") + ") =", Fib$fib3$I(n));
@@ -240,8 +246,8 @@ function TestCase$() {
 	this._totalPass = 0;
 	this._count = 0;
 	this._pass = 0;
-	this._tests = undefined;
-	this._currentName = undefined;
+	this._tests = null;
+	this._currentName = null;
 	this._tasks = [  ];
 };
 
@@ -317,9 +323,9 @@ TestCase.prototype.async$F$LAsyncContext$V$F$LAsyncContext$V$I = function (testB
 	/** @type {AsyncContext} */
 	var async;
 	async = new AsyncContext$LTestCase$SF$LAsyncContext$V$I(this, (function (v) {
-		if (! (typeof v !== "undefined")) {
+		if (! (v != null)) {
 			debugger;
-			throw new Error("[/Users/gfx/repo/try-on-web/JSX/lib/common/test-case.jsx:147] detected misuse of 'undefined' as type 'string'");
+			throw new Error("[/Users/gfx/repo/try-on-web/JSX/lib/common/test-case.jsx:147] null access");
 		}
 		return v;
 	}(this._currentName)), timeoutHandler, timeoutMS);
@@ -365,7 +371,13 @@ TestCase.prototype._ok$US = function (name) {
 	/** @type {!string} */
 	var s;
 	++ this._pass;
-	s = (name != undefined ? " - " + name : "");
+	s = (name != null ? " - " + (function (v) {
+		if (! (v != null)) {
+			debugger;
+			throw new Error("[/Users/gfx/repo/try-on-web/JSX/lib/common/test-case.jsx:175] null access");
+		}
+		return v;
+	}(name)) : "");
 	this._say$S("\t" + "ok " + (this._count + "") + s);
 };
 
@@ -378,7 +390,13 @@ TestCase.prototype._ok$US = function (name) {
 TestCase.prototype._nok$USSXX = function (name, op, got, expected) {
 	/** @type {!string} */
 	var s;
-	s = (name != undefined ? " - " + name : "");
+	s = (name != null ? " - " + (function (v) {
+		if (! (v != null)) {
+			debugger;
+			throw new Error("[/Users/gfx/repo/try-on-web/JSX/lib/common/test-case.jsx:186] null access");
+		}
+		return v;
+	}(name)) : "");
 	this._say$S("\t" + "not ok " + (this._count + "") + s);
 	this.diag$S("comparing with " + op + s.replace(" - ", " for "));
 	this._dump$SX("got:      ", got);
@@ -398,7 +416,7 @@ TestCase.prototype.fail$S = function (reason) {
  * @param {*} value
  */
 TestCase.prototype._dump$SX = function (tag, value) {
-	if (typeof value === "object" && (function (o) { return o instanceof Object ? o : null; })(value) != undefined) {
+	if (typeof value === "object" && (function (o) { return o instanceof Object ? o : null; })(value) != null) {
 		this.diag$S(tag);
 		console.dir(value);
 	} else {
@@ -433,7 +451,7 @@ TestCase.prototype.note$S = function (message) {
  * @return {!string}
  */
 TestCase.prototype.toString = function () {
-	if (this._tests != undefined) {
+	if (this._tests != null) {
 		return "TestCase[" + this._tests.join(", ") + "]";
 	} else {
 		return "TestCase";
@@ -499,7 +517,7 @@ function AsyncContext$LTestCase$SF$LAsyncContext$V$I(test, name, timeoutHandler,
 	var $this = this;
 	/** @type {TimerHandle} */
 	var id;
-	this._timerId = undefined;
+	this._timerId = null;
 	this._test = test;
 	this._name = name;
 	id = Timer$setTimeout$F$V$I((function () {
@@ -545,7 +563,7 @@ _Matcher.prototype = new Object;
  * @param {*} got
  */
 function _Matcher$LTestCase$X(test, got) {
-	this._name = undefined;
+	this._name = null;
 	this._test = test;
 	this._got = got;
 };

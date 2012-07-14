@@ -145,7 +145,7 @@ var OperatorExpression = exports.OperatorExpression = Expression.extend({
 
 	assertIsConvertibleTo: function (context, expr, type, mayUnbox) {
 		if (! this.isConvertibleTo(context, expr, type, mayUnbox)) {
-			context.errors.push(new CompileError(this._token, "cannot apply operator '" + this._token.getValue() + "' to type '" + exprType.toString() + "'"));
+			context.errors.push(new CompileError(this._token, "cannot apply operator '" + this._token.getValue() + "' to type '" + expr.getType().toString() + "'"));
 			return false;
 		}
 		return true;
@@ -639,8 +639,13 @@ var MapLiteralExpression = exports.MapLiteralExpression = Expression.extend({
 
 	forEachExpression: function (cb) {
 		for (var i = 0; i < this._elements.length; ++i) {
-			if (! cb(this._elements[i].getExpr(), function (expr) { this._elements[i].setExpr(expr); }.bind(this)))
+			if (! cb(this._elements[i].getExpr(), function (elements, index) {
+				return function (expr) {
+					elements[index].setExpr(expr);
+				};
+			}(this._elements, i))) {
 				return false;
+			}
 		}
 		return true;
 	}
@@ -757,6 +762,10 @@ var UnaryExpression = exports.UnaryExpression = OperatorExpression.extend({
 
 	getExpr: function () {
 		return this._expr;
+	},
+
+	setExpr: function (expr) {
+		this._expr = expr;
 	},
 
 	serialize: function () {
@@ -946,7 +955,7 @@ var AsNoConvertExpression = exports.AsNoConvertExpression = UnaryExpression.exte
 		if (! this._analyze(context))
 			return false;
 		var srcType = this._expr.getType();
-		if ((srcType.equals(Type.nullType) && ! (this._type instanceof ObjectType || this._type instanceof FunctionType))) {
+		if ((srcType.equals(Type.nullType) && ! (this._type instanceof NullableType || this._type instanceof ObjectType || this._type instanceof FunctionType))) {
 			context.errors.push(new CompileError(this._token, "'" + srcType.toString() + "' cannot be treated as a value of type '" + this._type.toString() + "'"));
 			return false;
 		}
@@ -1241,10 +1250,17 @@ var BinaryExpression = exports.BinaryExpression = OperatorExpression.extend({
 		return this._expr1;
 	},
 
+	setFirstExpr: function (expr) {
+		this._expr1 = expr;
+	},
+
 	getSecondExpr: function() {
 		return this._expr2;
 	},
 
+	setSecondExpr: function (expr) {
+		this._expr2 = expr;
+	},
 
 	serialize: function () {
 		return [
@@ -1981,6 +1997,11 @@ var NewExpression = exports.NewExpression = OperatorExpression.extend({
 	},
 
 	analyze: function (context, parentExpr) {
+		// for instantiated code, check is necessary at this moment
+		if (! (this._type instanceof ObjectType)) {
+			context.errors.push(new CompileError(this._token, "cannot instantiate a non-object type: " + this._type.toString()));
+			return false;
+		}
 		var classDef = this._type.getClassDef();
 		if (classDef == null)
 			return false;

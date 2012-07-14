@@ -82,7 +82,31 @@ var _Util = exports._Util = Class.extend({
 		}
 		s += ")";
 		return s;
-	}
+	},
+
+	$classIsNative: function (classDef) {
+		return ! classDef.forEachClassToBase(function (classDef) {
+			if (classDef.className() == "Object"
+				|| (classDef.flags() & ClassDefinition.IS_NATIVE) == 0) {
+				return true;
+			}
+			return false;
+		});
+	},
+
+	$exprHasSideEffects: function (expr) {
+		var onExpr = function (expr) {
+			if (expr instanceof CallExpression
+				|| expr instanceof FunctionExpression
+				|| expr instanceof NewExpression
+				|| expr instanceof AssignmentExpression
+				|| expr instanceof PreIncrementExpression
+				|| expr instanceof PostIncrementExpression)
+				return false;
+			return expr.forEachExpression(onExpr);
+		};
+		return ! expr.forEachExpression(onExpr);
+	},
 
 });
 
@@ -113,6 +137,10 @@ var Optimizer = exports.Optimizer = Class.extend({
 				this._commands.push(new _InlineOptimizeCommand());
 			} else if (cmd == "return-if") {
 				this._commands.push(new _ReturnIfOptimizeCommand());
+			} else if (cmd == "lcse") {
+				this._commands.push(new _LCSEOptimizeCommand());
+			} else if (cmd == "unbox") {
+				this._commands.push(new _UnboxOptimizeCommand());
 			} else if (cmd == "array-length") {
 				this._commands.push(new _ArrayLengthOptimizeCommand());
 			} else if (cmd == "dump-logs") {
@@ -238,6 +266,7 @@ var _FunctionOptimizeCommand = exports._FunctionOptimizeCommand = _OptimizeComma
 
 	constructor: function (identifier) {
 		_OptimizeCommand.prototype.constructor.call(this, identifier);
+		this._excludeNative = false;
 	},
 
 	performOptimization: function () {
@@ -1329,6 +1358,533 @@ var _ReturnIfOptimizeCommand = exports._ReturnIfOptimizeCommand = _FunctionOptim
 				trueExpr,
 				falseExpr,
 				falseExpr.getType()));
+	}
+
+});
+
+var _LCSECachedExpression = exports._LCSECachedExpression = Class.extend({
+
+	constructor: function (origExpr, replaceCb) {
+		this._origExpr = origExpr;
+		this._replaceCb = replaceCb;
+		this._localExpr = null;
+	},
+
+	getOrigExpr: function () {
+		return this._origExpr;
+	},
+
+	getLocalExpr: function (createVarCb /* (type, baseName) -> LocalExpression */) {
+		if (this._localExpr == null) {
+			// rewrite the first occurence of the expression and update cache entry
+			this._localExpr = createVarCb(this._origExpr.getType(), this._origExpr.getIdentifierToken().getValue());
+			this._replaceCb(new AssignmentExpression(new Token("=", false), this._localExpr, this._origExpr));
+		}
+		return this._localExpr;
+	}
+
+});
+
+var _LCSEOptimizeCommand = exports._LCSEOptimizeCommand = _FunctionOptimizeCommand.extend({
+
+	constructor: function () {
+		_FunctionOptimizeCommand.prototype.constructor.call(this, "lcse");
+	},
+
+	optimizeFunction: function (funcDef) {
+		var statements = funcDef.getStatements();
+		if (statements != null) {
+			this._optimizeStatements(funcDef, statements, 0);
+		}
+	},
+
+	_optimizeStatements: function (funcDef, statements) {
+		var statementIndex = 0;
+		while (statementIndex < statements.length) {
+			var exprsToOptimize = [];
+			var setOptimizedExprs = [];
+			while (statementIndex < statements.length) {
+				var statement = statements[statementIndex++];
+				if (statement instanceof ExpressionStatement) {
+					exprsToOptimize.push(statement.getExpr());
+					setOptimizedExprs.push(function (statement) {
+						return function (expr) {
+							statement.setExpr(expr);
+						}
+					}(statement));
+				} else if (statement instanceof ReturnStatement) {
+					var expr = statement.getExpr();
+					if (expr != null) {
+						exprsToOptimize.push(statement.getExpr());
+						setOptimizedExprs.push(function (statement) {
+							return function (expr) {
+								statement.setExpr(expr);
+							}
+						}(statement));
+					}
+					break;
+				} else if (statement instanceof ContinuableStatement) {
+					this._optimizeStatements(funcDef, statement.getStatements(), 0);
+					break;
+				} else {
+					// FIXME add support for other types of statements (for example, IfStatement)
+					// do nothing but continue
+					break;
+				}
+			}
+			// optimize basic block
+			if (exprsToOptimize.length != 0) {
+				this._optimizeExpressions(funcDef, exprsToOptimize);
+				for (var i = 0; i < exprsToOptimize.length; ++i) {
+					setOptimizedExprs[i](exprsToOptimize[i]);
+				}
+			}
+		}
+	},
+
+	_optimizeExpressions: function (funcDef, exprs) {
+		this.log("optimizing expressions starting");
+
+		var cachedExprs = {};
+
+		var getCacheKey = function (expr) {
+			if (expr instanceof PropertyExpression) {
+				var receiverType = expr.getExpr().getType();
+				if (receiverType instanceof ObjectType && _Util.classIsNative(receiverType.getClassDef())) {
+					return null;
+				}
+				var base = getCacheKey(expr.getExpr());
+				if (base == null) {
+					return null;
+				}
+				return base + "." + expr.getIdentifierToken().getValue();
+			} else if (expr instanceof LocalExpression) {
+				return expr.getLocal().getName().getValue();
+			} else if (expr instanceof ThisExpression) {
+				return "this";
+			}
+			return null;
+		}.bind(this);
+
+		var registerCacheable = function (key, expr, replaceCb) {
+			this.log("registering lcse entry for: " + key);
+			cachedExprs[key] = new _LCSECachedExpression(expr, replaceCb);
+		}.bind(this);
+
+		var clearCacheByLocalName = function (name) {
+			this.log("clearing lcse entry for local name: " + name);
+			for (var k in cachedExprs) {
+				if (k.substring(0, name.length + 1) == name + ".") {
+					this.log("  removing: " + k);
+					delete cachedExprs[k];
+				}
+			}
+		}.bind(this);
+
+		var clearCacheByPropertyName = function (name) {
+			this.log("clearing lcse entry for property name: " + name);
+			for (var k in cachedExprs) {
+				var mayPreserve = function onExpr(expr) {
+					if (expr instanceof LocalExpression
+						|| expr instanceof ThisExpression) {
+						return true;
+					}
+					// is PropertyExpression
+					if (expr.getIdentifierToken().getValue() == name) {
+						return false;
+					}
+					return onExpr(expr.getExpr());
+				}(cachedExprs[k].getOrigExpr());
+				if (! mayPreserve) {
+					this.log("  removing: " + k);
+					delete cachedExprs[k];
+				}
+			}
+		}.bind(this);
+
+		var clearCache = function () {
+			this.log("clearing lcse cache");
+			cachedExprs = {};
+		}.bind(this);
+
+		// add an expression to cache
+		var onExpr = function (expr, replaceCb) {
+			// handle special cases first
+			if (expr instanceof AssignmentExpression) {
+				// optimize RHS
+				onExpr(expr.getSecondExpr(), function (receiver) {
+					return function (expr) {
+						receiver.setSecondExpr(expr);
+					};
+				}(expr));
+				// optimize LHS
+				var lhsExpr = expr.getFirstExpr();
+				if (lhsExpr instanceof LocalExpression) {
+					clearCacheByLocalName(lhsExpr.getLocal().getName().getValue());
+				} else if (lhsExpr instanceof PropertyExpression) {
+					onExpr(lhsExpr.getExpr(), function (receiver) {
+						return function (expr) {
+							receiver.setExpr(expr);
+						};
+					}(lhsExpr));
+					if (lhsExpr.getIdentifierToken().getValue() == "length") {
+						// once we support caching array elements, we need to add special care
+					} else {
+						var cacheKey = getCacheKey(lhsExpr);
+						if (cacheKey) {
+							registerCacheable(cacheKey, lhsExpr, function (receiver) {
+								return function (expr) {
+									receiver.setFirstExpr(expr);
+								}
+							}(expr));
+						}
+					}
+				} else {
+					clearCache();
+				}
+				return true;
+			} else if (expr instanceof PreIncrementExpression
+				|| expr instanceof PostIncrementExpression) {
+				// optimize the receiver of LHS, and clear (for now)
+				if (expr.getExpr() instanceof PropertyExpression) {
+					onExpr(expr.getExpr().getExpr(), function (receiver) {
+						return function (expr) {
+							receiver.setExpr(expr);
+						};
+					}(expr.getExpr()));
+				}
+				clearCache();
+				return true;
+			} else if (expr instanceof ConditionalExpression) {
+				// only optimize the condExpr, then clear (for now)
+				onExpr(expr.getCondExpr(), function (receiver) {
+					return function (expr) {
+						receiver.setCondExpr(expr);
+					};
+				}(expr));
+				clearCache();
+				return true;
+			} else if (expr instanceof FunctionExpression) {
+				clearCache();
+				return true;
+			} else if (expr instanceof CallExpression) {
+				// optimize the receiver (not the function) and args, and clear
+				var funcExpr = expr.getExpr();
+				if (funcExpr instanceof LocalExpression) {
+					// nothing to do
+				} else if (funcExpr instanceof PropertyExpression) {
+					onExpr(expr.getExpr().getExpr(), function (receiver) {
+						return function (expr) {
+							receiver.setExpr(expr);
+						}
+					}(expr.getExpr()));
+				} else {
+					clearCache();
+				}
+				var args = expr.getArguments();
+				for (var i = 0; i < args.length; ++i) {
+					onExpr(args[i], function (args, index) {
+						return function (expr) {
+							args[index] = expr;
+						};
+					}(args, i));
+				}
+				clearCache();
+				return true;
+			} else if (expr instanceof NewExpression) {
+				// optimize the args, and clear
+				var args = expr.getArguments();
+				this.log("new expression");
+				for (var i = 0; i < args.length; ++i) {
+					onExpr(args[i], function (args, index) {
+						return function (expr) {
+							args[index] = expr;
+						};
+					}(args, i));
+				}
+				clearCache();
+				return true;
+			}
+			// normal path
+			if (expr instanceof PropertyExpression) {
+				if (expr.getIdentifierToken().getValue() == "length") {
+					// ditto as above comment for "length"
+				} else {
+					var cacheKey = getCacheKey(expr);
+					if (cacheKey) {
+						this.log("rewriting cse for: " + cacheKey);
+						if (cachedExprs[cacheKey]) {
+							replaceCb(
+								cachedExprs[cacheKey].getLocalExpr(function (type, baseName) {
+									var localVar = this.createVar(funcDef, type, baseName);
+									return new LocalExpression(localVar.getName(), localVar);
+								}.bind(this)
+							).clone());
+						} else {
+							registerCacheable(cacheKey, expr, replaceCb);
+						}
+					}
+				}
+			}
+			// recursive
+			return expr.forEachExpression(onExpr);
+		}.bind(this);
+		Util.forEachExpression(onExpr, exprs);
+	}
+
+});
+
+var _UnboxOptimizeCommandStash = exports._UnboxOptimizeCommandStash = Class.extend({
+
+	constructor: function () {
+		this.canUnbox = null;
+	}
+
+});
+
+var _UnboxOptimizeCommand = exports._UnboxOptimizeCommand = _FunctionOptimizeCommand.extend({
+
+	constructor: function () {
+		_FunctionOptimizeCommand.prototype.constructor.call(this, "unbox");
+	},
+
+	_createStash: function () {
+		return new _UnboxOptimizeCommandStash();
+	},
+
+	optimizeFunction: function (funcDef) {
+		if (funcDef.getStatements() == null) {
+			return;
+		}
+		var locals = funcDef.getLocals();
+		// check all the locals that exist _now_, and remove ones that have been optimized
+		for (var i = 0, iMax = locals.length; i < locals.length;) {
+			if (this._optimizeLocal(funcDef, locals[i])) {
+				locals.splice(i, 1);
+			} else {
+				++i;
+			}
+		}
+	},
+
+	_optimizeLocal: function (funcDef, local) {
+		// preconditions
+		if (! (local.getType() instanceof ObjectType)) {
+			return;
+		}
+		var classDef = local.getType().getClassDef();
+		if (_Util.classIsNative(classDef)) {
+			return;
+		}
+		// determine if the local can be unboxed
+		var foundNew = false;
+		var onStatement = function (statement) {
+			var onExpr = function (expr) {
+				if (expr instanceof PropertyExpression) {
+					var baseExpr = expr.getExpr();
+					if (baseExpr instanceof LocalExpression && baseExpr.getLocal() == local) {
+						if (! expr.getType().isAssignable()) {
+							// is a call to member function
+							return false;
+						}
+						// a property of the variable has been accessed, OK!
+						return true;
+					}
+				} else if (expr instanceof LocalExpression) {
+					if (expr.getLocal() == local) {
+						// the variable has been accessed in a way other than those allowed above, FAIL!
+						return false;
+					}
+				} else if (expr instanceof FunctionExpression) {
+					// we need to look into the closure
+					return expr.getFuncDef().forEachStatement(onStatement);
+				}
+				return expr.forEachExpression(onExpr);
+			}.bind(this);
+			// first check the local = new ...
+			var newExpr = this._statementIsConstructingTheLocal(statement, local);
+			if (newExpr != null) {
+				if (! this._newExpressionCanUnbox(newExpr)) {
+					return false;
+				}
+				if (! newExpr.forEachExpression(onExpr)) {
+					return false;
+				}
+				if (! Util.forEachExpression(function (expr) {
+					return ! _Util.exprHasSideEffects(expr);
+				}, newExpr.getArguments())) {
+					return false;
+				}
+				foundNew = true;
+				return true;
+			}
+			// check the rest
+			if (! statement.forEachExpression(onExpr)) {
+				return false;
+			}
+			return statement.forEachStatement(onStatement);
+		}.bind(this);
+		var canUnbox = funcDef.forEachStatement(onStatement);
+		// doit
+		if (canUnbox && foundNew) {
+			this._unboxVariable(funcDef, local);
+			return true;
+		} else {
+			return false;
+		}
+	},
+
+	_newExpressionCanUnbox: function (newExpr) {
+		var ctor = this._getConstructorOfNewExpr(newExpr);
+		if (this.getStash(ctor).canUnbox != null) {
+			return this.getStash(ctor).canUnbox;
+		}
+		return this.getStash(ctor).canUnbox = function () {
+			if (ctor.getLocals().length != 0) {
+				return false;
+			}
+			return ctor.forEachStatement(function (statement) {
+				// only allow list of this.X = ...
+				var assigned = {};
+				if (! (statement instanceof ExpressionStatement)) {
+					return false;
+				}
+				var expr = statement.getExpr();
+				if (! (expr instanceof AssignmentExpression)) {
+					return false;
+				}
+				var lhsExpr = expr.getFirstExpr();
+				if (! (lhsExpr instanceof PropertyExpression && lhsExpr.getExpr() instanceof ThisExpression)) {
+					return false;
+				}
+				var propertyName = lhsExpr.getIdentifierToken().getValue();
+				if (assigned[propertyName]) {
+					return false;
+				}
+				assigned[propertyName] = true;
+				// check rhs
+				return expr.getSecondExpr(function (expr) {
+					if (expr instanceof ThisExpression) {
+						return false;
+					} else if (expr instanceof FunctionExpression) {
+						return false;
+					}
+					return expr.forEachExpression(expr);
+				});
+			}.bind(this));
+		}.call(this);
+	},
+
+	_unboxVariable: function (funcDef, local) {
+		this.log("unboxing " + local.getName().getValue());
+
+		// build map of propetyName => LocalVariable
+		var variableMap = {};
+		local.getType().getClassDef().forEachMemberVariable(function (member) {
+			if ((member.flags() & ClassDefinition.IS_STATIC) == 0) {
+				variableMap[member.name()] = this.createVar(funcDef, member.getType(), local.getName().getValue() + "$" + member.name());
+			}
+			return true;
+		}.bind(this));
+		var createLocalExpressionFor = function (propertyName) {
+			if (! variableMap[propertyName]) {
+				throw new Error("could not find local variable for property name: " + propertyName);
+			}
+			return new LocalExpression(variableMap[propertyName].getName(), variableMap[propertyName]);
+		}.bind(this);
+
+		var buildConstructingStatements = function (dstStatements, dstStatementIndex, newExpr) {
+			var ctor = this._getConstructorOfNewExpr(newExpr);
+			ctor.forEachStatement(function (statement) {
+				var propertyName = statement.getExpr().getFirstExpr().getIdentifierToken().getValue();
+				var rhsExpr = statement.getExpr().getSecondExpr().clone();
+				var onExpr = function (expr, replaceCb) {
+					if (expr instanceof LocalExpression) {
+						for (var argIndex = 0; argIndex < ctor.getArguments().length; ++argIndex) {
+							if (expr.getLocal() == ctor.getArguments()[argIndex]) {
+								// found
+								break;
+							}
+						}
+						if (argIndex == ctor.getArguments().length) {
+							throw new Error("logic flaw, could not find the local in arguments");
+						}
+						replaceCb(newExpr.getArguments()[argIndex].clone());
+					}
+					return expr.forEachExpression(onExpr);
+				}.bind(this);
+				onExpr(rhsExpr, function (expr) {
+					rhsExpr = expr;
+				});
+				dstStatements.splice(dstStatementIndex++, 0, new ExpressionStatement(
+					new AssignmentExpression(new Token("=", false), createLocalExpressionFor(propertyName), rhsExpr)));
+				return true;
+			}.bind(this));
+			return dstStatementIndex;
+		}.bind(this);
+
+		// rewrite the code
+		var onStatements = function (statements) {
+			for (var statementIndex = 0; statementIndex < statements.length;) {
+				var onExpr = function (expr, replaceCb) {
+					if (expr instanceof PropertyExpression
+						&& expr.getExpr() instanceof LocalExpression
+						&& expr.getExpr().getLocal() == local) {
+						// rewrite local.prop
+						replaceCb(createLocalExpressionFor(expr.getIdentifierToken().getValue()));
+						return true;
+					} else if (expr instanceof FunctionExpression) {
+						return expr.getFuncDef().forEachStatement(onStatement);
+					} else if (expr instanceof LocalExpression && expr.getLocal() == local) {
+						throw new Error("logic flaw, unexpected pattern");
+					}
+					expr.forEachExpression(onExpr);
+					return true;
+				}.bind(this);
+				var newExpr = this._statementIsConstructingTheLocal(statements[statementIndex], local);
+				if (newExpr != null) {
+					statements.splice(statementIndex, 1);
+					statementIndex = buildConstructingStatements(statements, statementIndex, newExpr);
+				} else {
+					statements[statementIndex].forEachExpression(onExpr);
+					statements[statementIndex].handleStatements(onStatements);
+					++statementIndex;
+				}
+			}
+			return true;
+		}.bind(this);
+		onStatements(funcDef.getStatements());
+	},
+
+	_statementIsConstructingTheLocal: function (statement, local) {
+		if (! (statement instanceof ExpressionStatement)) {
+			return null;
+		}
+		var expr = statement.getExpr();
+		if (! (expr instanceof AssignmentExpression)) {
+			return null;
+		}
+		var lhsExpr = expr.getFirstExpr();
+		if (! (lhsExpr instanceof LocalExpression)) {
+			return null;
+		}
+		if (lhsExpr.getLocal() != local) {
+			return null;
+		}
+		var rhsExpr = expr.getSecondExpr();
+		if (! (rhsExpr instanceof NewExpression)) {
+			return null;
+		}
+		return rhsExpr;
+	},
+
+	_getConstructorOfNewExpr: function (newExpr) {
+		var ctor = _DetermineCalleeCommand.findCallingFunctionInClass(
+			newExpr.getType().getClassDef(), "constructor", newExpr.getConstructor().getArgumentTypes(), false);
+		if (ctor == null) {
+			throw new Error("could not find matching constructor for " + newExpr.getConstructor().toString());
+		}
+		return ctor;
 	}
 
 });

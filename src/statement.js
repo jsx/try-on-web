@@ -54,6 +54,10 @@ var Statement = exports.Statement = Class.extend({
 		return true;
 	},
 
+	handleStatements: function (cb) {
+		return true;
+	},
+
 	clone: null, // function clone() : Statement
 
 	forEachExpression: null, // function forEachExpression(cb : function (expr, replaceCb) : boolean) : boolean
@@ -180,6 +184,10 @@ var UnaryExpressionStatement = exports.UnaryExpressionStatement = Statement.exte
 		return this._expr;
 	},
 
+	setExpr: function (expr) {
+		this._expr = expr;
+	},
+
 	doAnalyze: function (context) {
 		this._analyzeExpr(context, this._expr);
 		return true;
@@ -230,6 +238,10 @@ var ReturnStatement = exports.ReturnStatement = Statement.extend({
 
 	getExpr: function () {
 		return this._expr;
+	},
+
+	setExpr: function (expr) {
+		this._expr = expr;
 	},
 
 	serialize: function () {
@@ -496,6 +508,18 @@ var ContinuableStatement = exports.ContinuableStatement = LabellableStatement.ex
 		return this._statements;
 	},
 
+	forEachStatement: function (cb) {
+		if (! Util.forEachStatement(cb, this._statements))
+			return false;
+		return true;
+	},
+
+	handleStatements: function (cb) {
+		if (! cb(this._statements))
+			return false;
+		return true;
+	},
+
 	_prepareBlockAnalysis: function (context) {
 		LabellableStatement.prototype._prepareBlockAnalysis.call(this, context);
 		this._lvStatusesOnContinue = null;
@@ -577,12 +601,6 @@ var DoWhileStatement = exports.DoWhileStatement = ContinuableStatement.extend({
 		return true;
 	},
 
-	forEachStatement: function (cb) {
-		if (! Util.forEachStatement(cb, this._statements))
-			return false;
-		return true;
-	},
-
 	forEachExpression: function (cb) {
 		if (! cb(this._expr, function (expr) { this._expr = expr; }.bind(this)))
 			return false;
@@ -653,12 +671,6 @@ var ForInStatement = exports.ForInStatement = ContinuableStatement.extend({
 			this._abortBlockAnalysis(context);
 			throw e;
 		}
-		return true;
-	},
-
-	forEachStatement: function (cb) {
-		if (! Util.forEachStatement(cb, this._statements))
-			return false;
 		return true;
 	},
 
@@ -740,12 +752,6 @@ var ForStatement = exports.ForStatement = ContinuableStatement.extend({
 			this._abortBlockAnalysis(context);
 			throw e;
 		}
-		return true;
-	},
-
-	forEachStatement: function (cb) {
-		if (! Util.forEachStatement(cb, this._statements))
-			return false;
 		return true;
 	},
 
@@ -847,6 +853,14 @@ var IfStatement = exports.IfStatement = Statement.extend({
 		return true;
 	},
 
+	handleStatements: function (cb) {
+		if (! cb(this._onTrueStatements))
+			return false;
+		if (! cb(this._onFalseStatements))
+			return false;
+		return true;
+	},
+
 	forEachExpression: function (cb) {
 		if (! cb(this._expr, function (expr) { this._expr = expr; }.bind(this)))
 			return false;
@@ -914,6 +928,12 @@ var SwitchStatement = exports.SwitchStatement = LabellableStatement.extend({
 
 	forEachStatement: function (cb) {
 		if (! Util.forEachStatement(cb, this._statements))
+			return false;
+		return true;
+	},
+
+	handleStatements: function (cb) {
+		if (! cb(this._statements))
 			return false;
 		return true;
 	},
@@ -1071,12 +1091,6 @@ var WhileStatement = exports.WhileStatement = ContinuableStatement.extend({
 		return true;
 	},
 
-	forEachStatement: function (cb) {
-		if (! Util.forEachStatement(cb, this._statements))
-			return false;
-		return true;
-	},
-
 	forEachExpression: function (cb) {
 		if (! cb(this._expr, function (expr) { this._expr = expr; }.bind(this)))
 			return false;
@@ -1160,6 +1174,16 @@ var TryStatement = exports.TryStatement = Statement.extend({
 		return true;
 	},
 
+	handleStatements: function (cb) {
+		if (! cb(this._tryStatements))
+			return false;
+		if (! cb(this._catchStatements))
+			return false;
+		if (! cb(this._finallyStatements))
+			return false;
+		return true;
+	},
+
 	forEachExpression: function (cb) {
 		return true;
 	}
@@ -1176,6 +1200,7 @@ var CatchStatement = exports.CatchStatement = Statement.extend({
 	},
 
 	clone: function () {
+		// TODO rewrite the references from _statements to _local
 		return new CatchStatement(this._token, this._local.clone(), Util.cloneArray(this._statements));
 	},
 
@@ -1185,6 +1210,11 @@ var CatchStatement = exports.CatchStatement = Statement.extend({
 
 	getLocal: function () {
 		return this._local;
+	},
+
+	setLocal: function (local) {
+		// NOTE: does not rewrite the references to the local from the statements within
+		this._local = local;
 	},
 
 	getStatements: function () {
@@ -1234,6 +1264,10 @@ var CatchStatement = exports.CatchStatement = Statement.extend({
 
 	forEachStatement: function (cb) {
 		return Util.forEachStatement(cb, this._statements);
+	},
+
+	handleStatements: function (cb) {
+		return cb(this._statements);
 	},
 
 	forEachExpression: function (cb) {

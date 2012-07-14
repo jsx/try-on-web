@@ -1,4 +1,3 @@
-(function ($) {
 var profileData = (function () {
   var id = location.search.substring(1);
   if (! id)
@@ -14,7 +13,7 @@ var profileData = (function () {
 }());
 
 // fill profile results
-window.addEventListener("load", function (e) {
+$(document).ready(function () {
   var xhr = new XMLHttpRequest();
   xhr.open("GET", ".profile/results.json", false);
   xhr.send(null);
@@ -25,6 +24,11 @@ window.addEventListener("load", function (e) {
     var option = $('<option>').html(results[i]).attr({ value: results[i] });
     select.append(option);
   }
+  var id = location.search.substring(1);
+  if (id) {
+    select.val(id);
+  }
+
   select.bind("change", function (e) {
     location.href = location.pathname + "?" + e.target.value;
   });
@@ -249,7 +253,6 @@ $(document).ready(function () {
   updateTable("count");
 });
 
-}(jQuery));
 // vim: set expandtab:
 // vim: set tabstop=2:
 // vim: set shiftwidth=2:

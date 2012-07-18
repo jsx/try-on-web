@@ -349,6 +349,7 @@ var ClassDefinition = exports.ClassDefinition = Class.extend({
 	$IS_FAKE: 256, // used for marking a JS non-class object that should be treated like a JSX class instance (e.g. window)
 	$IS_READONLY: 512,
 	$IS_INLINE: 1024,
+	$IS_PURE: 2048, // constexpr (intended for for native functions)
 
 	constructor: function (token, className, flags, extendType, implementTypes, members, objectTypesUsed) {
 		this._token = token;
@@ -4332,17 +4333,23 @@ var SuperExpression = exports.SuperExpression = OperatorExpression.extend({
 
 var NewExpression = exports.NewExpression = OperatorExpression.extend({
 
-	constructor: function (operatorToken, type, args) {
-		OperatorExpression.prototype.constructor.call(this, operatorToken);
-		this._type = type;
-		this._args = args;
-		this._constructor = null;
+	constructor: function (tokenOrThat, type, args) {
+		if (tokenOrThat instanceof NewExpression) {
+			var that = tokenOrThat;
+			OperatorExpression.prototype.constructor.call(this, that);
+			this._type = that._type;
+			this._args = Util.cloneArray(that._args);
+			this._constructor = that._constructor;
+		} else {
+			OperatorExpression.prototype.constructor.call(this, tokenOrThat);
+			this._type = type;
+			this._args = args;
+			this._constructor = null;
+		}
 	},
 
 	clone: function () {
-		var ret = new NewExpression(this._token, this._type, Util.cloneArray(this._args));
-		ret._constructor = this._constructor;
-		return ret;
+		return new NewExpression(this);
 	},
 
 	getQualifiedName: function () {
@@ -6055,15 +6062,15 @@ var _ConditionalExpressionEmitter = exports._ConditionalExpressionEmitter = _Ope
 		var precedence = this._getPrecedence();
 		var ifTrueExpr = this._expr.getIfTrueExpr();
 		if (ifTrueExpr != null) {
-			this._emitter._getExpressionEmitterFor(this._expr.getCondExpr()).emit(precedence);
+			this._emitter._getExpressionEmitterFor(this._expr.getCondExpr()).emit(precedence - 1);
 			this._emitter._emit(" ? ", null);
 			this._emitter._getExpressionEmitterFor(ifTrueExpr).emit(precedence);
 			this._emitter._emit(" : ", null);
 			this._emitter._getExpressionEmitterFor(this._expr.getIfFalseExpr()).emit(precedence);
 		} else {
-			this._emitter._getExpressionEmitterFor(this._expr.getCondExpr()).emit(precedence);
+			this._emitter._getExpressionEmitterFor(this._expr.getCondExpr()).emit(precedence - 1);
 			this._emitter._emit(" || ", null);
-			this._emitter._getExpressionEmitterFor(this._expr.getIfFalseExpr()).emit(precedence);
+			this._emitter._getExpressionEmitterFor(this._expr.getIfFalseExpr()).emit(precedence - 1);
 		}
 	},
 
@@ -7290,18 +7297,92 @@ var _Util = exports._Util = Class.extend({
 	},
 
 	$exprHasSideEffects: function (expr) {
+		// FIXME native array access may have side effects
 		var onExpr = function (expr) {
-			if (expr instanceof CallExpression
-				|| expr instanceof FunctionExpression
+			if (expr instanceof FunctionExpression
 				|| expr instanceof NewExpression
 				|| expr instanceof AssignmentExpression
 				|| expr instanceof PreIncrementExpression
-				|| expr instanceof PostIncrementExpression)
+				|| expr instanceof PostIncrementExpression) {
 				return false;
+			} else if (expr instanceof CallExpression) {
+				var callingFuncDef = _DetermineCalleeCommand.getCallingFuncDef(expr);
+				if (callingFuncDef != null && (callingFuncDef.flags() & ClassDefinition.IS_PURE) != 0) {
+					// fall through (check receiver and arguments)
+				} else {
+					return false;
+				}
+			}
 			return expr.forEachExpression(onExpr);
 		};
-		return ! expr.forEachExpression(onExpr);
+		return ! onExpr(expr);
 	},
+
+	$optimizeBasicBlock: function (funcDef, optimizeExpressions) {
+		function optimizeStatements(statements) {
+			var statementIndex = 0;
+			while (statementIndex < statements.length) {
+				var exprsToOptimize = [];
+				var setOptimizedExprs = [];
+				while (statementIndex < statements.length) {
+					var statement = statements[statementIndex++];
+					if (statement instanceof ExpressionStatement) {
+						exprsToOptimize.push(statement.getExpr());
+						setOptimizedExprs.push(function (statement) {
+							return function (expr) {
+								statement.setExpr(expr);
+							}
+						}(statement));
+					} else if (statement instanceof ReturnStatement) {
+						var expr = statement.getExpr();
+						if (expr != null) {
+							exprsToOptimize.push(statement.getExpr());
+							setOptimizedExprs.push(function (statement) {
+								return function (expr) {
+									statement.setExpr(expr);
+								}
+							}(statement));
+						}
+						break;
+					} else {
+						statement.handleStatements(function (statements) {
+							optimizeStatements(statements);
+							return true;
+						});
+						if (statement instanceof IfStatement) {
+							exprsToOptimize.push(statement.getExpr());
+							setOptimizedExprs.push(function (statement) {
+								return function (expr) {
+									statement.setExpr(expr);
+								};
+							}(statement));
+						} else if (statement instanceof SwitchStatement) {
+							exprsToOptimize.push(statement.getExpr());
+							setOptimizedExprs.push(function (statement) {
+								return function (expr) {
+									statement.setExpr(expr);
+								};
+							}(statement));
+						} else {
+							// TODO implement
+						}
+						break;
+					}
+				}
+				// optimize basic block
+				if (exprsToOptimize.length != 0) {
+					optimizeExpressions(exprsToOptimize);
+					for (var i = 0; i < exprsToOptimize.length; ++i) {
+						setOptimizedExprs[i](exprsToOptimize[i]);
+					}
+				}
+			}
+		}
+		var statements = funcDef.getStatements();
+		if (statements != null) {
+			optimizeStatements(statements);
+		}
+	}
 
 });
 
@@ -7317,6 +7398,16 @@ var Optimizer = exports.Optimizer = Class.extend({
 
 	setup: function (cmds) {
 
+		var determineCallee = function () {
+			var inserted = false;
+			return function () {
+				if (! inserted) {
+					this._commands.push(new _DetermineCalleeCommand());
+					inserted = true;
+				}
+			}.bind(this);
+		}.call(this);
+
 		for (var i = 0; i < cmds.length; ++i) {
 			var cmd = cmds[i];
 			if (cmd == "lto") {
@@ -7327,14 +7418,18 @@ var Optimizer = exports.Optimizer = Class.extend({
 				this._commands.push(new _NoLogCommand());
 			} else if (cmd == "fold-const") {
 				this._commands.push(new _FoldConstantCommand());
+			} else if (cmd == "dce") {
+				determineCallee();
+				this._commands.push(new _DeadCodeEliminationOptimizeCommand());
 			} else if (cmd == "inline") {
-				this._commands.push(new _DetermineCalleeCommand());
+				determineCallee();
 				this._commands.push(new _InlineOptimizeCommand());
 			} else if (cmd == "return-if") {
 				this._commands.push(new _ReturnIfOptimizeCommand());
 			} else if (cmd == "lcse") {
 				this._commands.push(new _LCSEOptimizeCommand());
 			} else if (cmd == "unbox") {
+				determineCallee();
 				this._commands.push(new _UnboxOptimizeCommand());
 			} else if (cmd == "array-length") {
 				this._commands.push(new _ArrayLengthOptimizeCommand());
@@ -7706,10 +7801,12 @@ var _DetermineCalleeCommand = exports._DetermineCalleeCommand = _FunctionOptimiz
 						this._setCallingFuncDef(expr, null);
 					}
 				} else if (expr instanceof NewExpression) {
-					/*
-						For now we do not do anything here, since all objects should be created by the JS new operator,
-						or will fail in operations like obj.func().
-					*/
+					var callingFuncDef = _DetermineCalleeCommand.findCallingFunctionInClass(
+						expr.getType().getClassDef(), "constructor", expr.getConstructor().getArgumentTypes(), false);
+					if (callingFuncDef == null) {
+						throw new Error("could not find matching constructor for " + expr.getConstructor().toString());
+					}
+					this._setCallingFuncDef(expr, callingFuncDef);
 				}
 				return expr.forEachExpression(onExpr.bind(this));
 			}.bind(this));
@@ -7846,9 +7943,8 @@ var _FoldConstantCommand = exports._FoldConstantCommand = _FunctionOptimizeComma
 			// additive expression
 			var firstExpr = expr.getFirstExpr();
 			var secondExpr = expr.getSecondExpr();
-			if (this._isIntegerOrNumberLiteralExpression(firstExpr)) {
-				// type of second expr is checked by the callee
-				this._foldNumericBinaryExpression(expr, replaceCb);
+			if (this._foldNumericBinaryExpression(expr, replaceCb)) {
+				// done
 			} else if (firstExpr instanceof StringLiteralExpression && secondExpr instanceof StringLiteralExpression) {
 				replaceCb(
 					new StringLiteralExpression(
@@ -7902,13 +7998,40 @@ var _FoldConstantCommand = exports._FoldConstantCommand = _FunctionOptimizeComma
 
 	_foldNumericBinaryExpression: function (expr, replaceCb) {
 		// handles BinaryNumberExpression _and_ AdditiveExpression of numbers or integers
+
+		// if both operands are constant, then...
 		if (this._isIntegerOrNumberLiteralExpression(expr.getFirstExpr())
 			&& this._isIntegerOrNumberLiteralExpression(expr.getSecondExpr())) {
-			// ok
-		} else {
-			return;
+			return this._foldNumericBinaryExpressionOfConstants(expr, replaceCb);
 		}
 
+		// if either operand is zero, then...
+		function exprIsZero(expr) {
+			return expr instanceof NumberLiteralExpression && +expr.getToken().getValue() === 0;
+		}
+		switch (expr.getToken().getValue()) {
+		case "+":
+			if (exprIsZero(expr.getFirstExpr())) {
+				replaceCb(expr.getSecondExpr());
+				return true;
+			} else if (exprIsZero(expr.getSecondExpr())) {
+				replaceCb(expr.getFirstExpr());
+				return true;
+			}
+			break;
+		case "-":
+			// TODO should we rewrite "0 - n"?
+			if (exprIsZero(expr.getSecondExpr())) {
+				replaceCb(expr.getFirstExpr());
+				return true;
+			}
+			break;
+		}
+
+		return false;
+	},
+
+	_foldNumericBinaryExpressionOfConstants: function (expr, replaceCb) {
 		switch (expr.getToken().getValue()) {
 
 		// expressions that return number or integer depending on their types
@@ -7928,7 +8051,10 @@ var _FoldConstantCommand = exports._FoldConstantCommand = _FunctionOptimizeComma
 		case "|": this._foldNumericBinaryExpressionAsInteger(expr, replaceCb, function (x, y) { return x | y; }); break;
 		case "^": this._foldNumericBinaryExpressionAsInteger(expr, replaceCb, function (x, y) { return x ^ y; }); break;
 
+		default:
+			return false;
 		}
+		return true;
 	},
 
 	_foldNumericBinaryExpressionAsNumeric: function (expr, replaceCb, calcCb) {
@@ -7990,6 +8116,282 @@ var _FoldConstantCommand = exports._FoldConstantCommand = _FunctionOptimizeComma
 		}
 		return null;
 	}
+
+});
+
+var _DeadCodeEliminationOptimizeCommand = exports._DeadCodeEliminationOptimizeCommand = _FunctionOptimizeCommand.extend({
+
+	constructor: function () {
+		_FunctionOptimizeCommand.prototype.constructor.call(this, "dce");
+	},
+
+	optimizeFunction: function (funcDef) {
+		if (funcDef.getStatements() == null) {
+			return null;
+		}
+		while (this._optimizeFunction(funcDef)
+			 || this._removeExpressionStatementsWithoutSideEffects(funcDef))
+			;
+	},
+
+	_removeExpressionStatementsWithoutSideEffects: function (funcDef) {
+		var shouldRetry = false;
+		(function onStatements(statements) {
+			for (var i = 0; i < statements.length;) {
+				if (statements[i] instanceof ExpressionStatement && ! _Util.exprHasSideEffects(statements[i].getExpr())) {
+					shouldRetry = true;
+					statements.splice(i, 1);
+				} else {
+					statements[i++].handleStatements(onStatements.bind(this));
+				}
+			}
+		}.bind(this))(funcDef.getStatements());
+		return shouldRetry;
+	},
+
+	_optimizeFunction: function (funcDef) {
+		var shouldRetry = false;
+		// use the assignment source, if possible
+		_Util.optimizeBasicBlock(funcDef, function (exprs) {
+			this._delayAssignmentsBetweenLocals(funcDef, exprs);
+			this._eliminateDeadStores(funcDef, exprs);
+		}.bind(this));
+		// remove statements without side-effects
+		(function onStatements(statements) {
+			for (var i = statements.length - 1; i >= 0; --i) {
+				var statement = statements[i];
+				if (statement instanceof ExpressionStatement) {
+					if (! _Util.exprHasSideEffects(statement.getExpr())) {
+						statements.splice(i, 1);
+					}
+				}
+				statement.handleStatements(onStatements);
+			}
+			return true;
+		}).call(null, funcDef.getStatements());
+		// mark the variables that are used (as RHS)
+		var locals = funcDef.getLocals();
+		var localsUsed = new Array(locals.length); // booleans
+		funcDef.forEachStatement(function onStatement(statement) {
+			statement.forEachExpression(function onExpr(expr) {
+				if (expr instanceof AssignmentExpression
+					&& expr.getFirstExpr() instanceof LocalExpression
+					&& expr.getFirstExpr().getType().equals(expr.getSecondExpr().getType())) {
+					// skip lhs of assignment to local that has no effect
+					return onExpr(expr.getSecondExpr());
+				} else if (expr instanceof LocalExpression) {
+					for (var i = 0; i < locals.length; ++i) {
+						if (locals[i] == expr.getLocal()) {
+							break;
+						}
+					}
+					if (i != locals.length) {
+						localsUsed[i] = true;
+					}
+				} else if (expr instanceof FunctionExpression) {
+					expr.getFuncDef().forEachStatement(onStatement);
+				}
+				return expr.forEachExpression(onExpr);
+			});
+			return statement.forEachStatement(onStatement);
+		});
+		// remove locals that are not used
+		var altered = false;
+		for (var localIndex = localsUsed.length - 1; localIndex >= 0; --localIndex) {
+			if (localsUsed[localIndex]) {
+				continue;
+			}
+			// remove assignment to the variable
+			funcDef.forEachStatement(function onStatement(statement) {
+				statement.forEachExpression(function onExpr(expr, replaceCb) {
+					if (expr instanceof AssignmentExpression
+						&& expr.getFirstExpr() instanceof LocalExpression
+						&& expr.getFirstExpr().getLocal() == locals[localIndex]) {
+						var rhsExpr = expr.getSecondExpr();
+						replaceCb(rhsExpr);
+						shouldRetry = true;
+						return onExpr(rhsExpr);
+					} else if (expr instanceof LocalExpression && expr.getLocal() == locals[localIndex]) {
+						throw new Error("logic flaw, found a variable going to be removed being used");
+					} else if (expr instanceof FunctionExpression) {
+						expr.getFuncDef().forEachStatement(onStatement);
+					}
+					return expr.forEachExpression(onExpr);
+				});
+				return statement.forEachStatement(onStatement);
+			});
+			// remove from locals array
+			locals.splice(localIndex, 1);
+		}
+		return shouldRetry;
+	},
+
+	_delayAssignmentsBetweenLocals: function (funcDef, exprs) {
+		// find forms localA = localB, and rewrite the use of localA to localB
+		function setLocal(list, key, value) {
+			for (var i = 0; i < list.length; ++i) {
+				if (list[i][0] == key) {
+					list[i][1] = value;
+					return;
+				}
+			}
+			list.push([key, value]);
+		}
+		function getLocal(list, key) {
+			for (var i = 0; i < list.length; ++i) {
+				if (list[i][0] == key) {
+					return list[i][1];
+				}
+			}
+			return null;
+		}
+		function deleteLocal(list, key) {
+			for (var i = 0; i < list.length; ++i) {
+				if (list[i][0] == key) {
+					list.splice(i, 1);
+					return;
+				}
+			}
+		}
+		function clearLocals(list) {
+			list.splice(0, list.length);
+		}
+		var localsUntouchable = []; // list of [local, boolean]
+		var locals = []; // list of [local, expr]
+		// mark the locals that uses op= (cannot be eliminated by the algorithm applied laterwards)
+		var onExpr = function (expr) {
+			if (expr instanceof AssignmentExpression
+				&& expr.getToken().getValue() != "="
+				&& expr.getFirstExpr() instanceof LocalExpression) {
+				this.log("local variable " + expr.getFirstExpr().getLocal().getName().getValue() + " cannot be rewritten (has fused op)");
+				setLocal(localsUntouchable, expr.getFirstExpr().getLocal(), true);
+			} else if ((expr instanceof PreIncrementExpression || expr instanceof PostIncrementExpression)
+				&& expr.getExpr() instanceof LocalExpression) {
+				this.log("local variable " + expr.getExpr().getLocal().getName().getValue() + " cannot be rewritten (has increment)");
+				setLocal(localsUntouchable, expr.getExpr().getLocal(), true);
+			}
+			return expr.forEachExpression(onExpr);
+		}.bind(this);
+		Util.forEachExpression(onExpr, exprs);
+		// rewrite the locals
+		var onExpr = function (expr, replaceCb) {
+			if (expr instanceof AssignmentExpression) {
+				if (expr.getFirstExpr() instanceof LocalExpression
+					&& ! getLocal(localsUntouchable, expr.getFirstExpr().getLocal())
+					&& expr.getFirstExpr().getType().equals(expr.getSecondExpr().getType())) {
+					onExpr(expr.getSecondExpr(), function (assignExpr) {
+						return function (expr) {
+							assignExpr.setSecondExpr(expr);
+						};
+					}(expr));
+					var lhsLocal = expr.getFirstExpr().getLocal();
+					this.log("resetting cache for: " + lhsLocal.getName().getValue());
+					for (var i = locals.length - 1; i >= 0; --i) {
+						if (locals[i][0] == lhsLocal) {
+							this.log("  clearing itself");
+							locals.splice(i, 1);
+						} else if (locals[i][1] instanceof LocalExpression && locals[i][1].getLocal() == lhsLocal) {
+							this.log("  clearing " + locals[i][0].getName().getValue());
+							locals.splice(i, 1);
+						}
+					}
+					if (expr.getToken().getValue() == "=") {
+						var rhsExpr = expr.getSecondExpr();
+						if (rhsExpr instanceof LocalExpression) {
+							var rhsLocal = rhsExpr.getLocal();
+							if (lhsLocal != rhsLocal && ! getLocal(localsUntouchable, rhsLocal)) {
+								this.log("  set to: " + rhsLocal.getName().getValue());
+								setLocal(locals, lhsLocal, rhsExpr);
+							}
+						} else if (rhsExpr instanceof NullExpression
+							|| rhsExpr instanceof NumberLiteralExpression
+							|| rhsExpr instanceof IntegerLiteralExpression
+							|| rhsExpr instanceof StringLiteralExpression) {
+							this.log("  set to: " + rhsExpr.getToken().getValue());
+							setLocal(locals, lhsLocal, rhsExpr);
+						}
+					}
+					return true;
+				}
+			} else if (expr instanceof LocalExpression) {
+				var cachedExpr = getLocal(locals, expr.getLocal());
+				if (cachedExpr) {
+					replaceCb(cachedExpr.clone());
+					return true;
+				}
+			} else if (expr instanceof CallExpression) {
+				var callingFuncDef = _DetermineCalleeCommand.getCallingFuncDef(expr);
+				if (callingFuncDef != null && (callingFuncDef.flags() & ClassDefinition.IS_PURE) != 0) {
+					// fall through
+				} else {
+					expr.forEachExpression(onExpr);
+					clearLocals(locals);
+					return true;
+				}
+			} else if (expr instanceof NewExpression) {
+				expr.forEachExpression(onExpr);
+				clearLocals(locals);
+				return true;
+			}
+			return expr.forEachExpression(onExpr);
+		}.bind(this);
+		Util.forEachExpression(onExpr, exprs);
+	},
+
+	_eliminateDeadStores: function (funcDef, exprs) {
+		var lastAssignExpr = []; // array of [local, assignExpr, rewriteCb]
+		var onExpr = function (expr, rewriteCb) {
+			if (expr instanceof AssignmentExpression) {
+				if (expr.getToken().getValue() == "="
+					&& expr.getFirstExpr() instanceof LocalExpression) {
+					onExpr(expr.getSecondExpr(), function (assignExpr) {
+						return function (expr) {
+							assignExpr.setSecondExpr(expr);
+						};
+					}(expr));
+					var lhsLocal = expr.getFirstExpr().getLocal();
+					for (var i = 0; i < lastAssignExpr.length; ++i) {
+						if (lastAssignExpr[i][0] == lhsLocal) {
+							break;
+						}
+					}
+					if (i != lastAssignExpr.length) {
+						this.log("eliminating dead store to: " + lhsLocal.getName().getValue());
+						lastAssignExpr[i][2](lastAssignExpr[i][1].getSecondExpr());
+					}
+					lastAssignExpr[i] = [lhsLocal, expr, rewriteCb];
+					return true;
+				}
+			} else if (expr instanceof LocalExpression) {
+				for (var i = 0; i < lastAssignExpr.length; ++i) {
+					if (lastAssignExpr[i][0] == expr.getLocal()) {
+						lastAssignExpr.splice(i, 1);
+						break;
+					}
+				}
+			} else if (expr instanceof CallExpression) {
+				onExpr(expr.getExpr(), function (callExpr) {
+					return function (expr) {
+						callExpr.setExpr(expr);
+					};
+				}(expr));
+				Util.forEachExpression(onExpr, expr.getArguments());
+				var callingFuncDef = _DetermineCalleeCommand.getCallingFuncDef(expr);
+				if (callingFuncDef != null && (callingFuncDef.flags() & ClassDefinition.IS_PURE) != 0) {
+					// ok
+				} else {
+					lastAssignExpr.splice(0, lastAssignExpr.length);
+				}
+				return true;
+			} else if (expr instanceof NewExpression) {
+				Util.forEachExpression(onExpr, expr.getArguments());
+				lastAssignExpr.splice(0, lastAssignExpr.length);
+				return true;
+			}
+			return expr.forEachExpression(onExpr);
+		}.bind(this);
+		Util.forEachExpression(onExpr, exprs);
+	},
 
 });
 
@@ -8587,54 +8989,9 @@ var _LCSEOptimizeCommand = exports._LCSEOptimizeCommand = _FunctionOptimizeComma
 	},
 
 	optimizeFunction: function (funcDef) {
-		var statements = funcDef.getStatements();
-		if (statements != null) {
-			this._optimizeStatements(funcDef, statements, 0);
-		}
-	},
-
-	_optimizeStatements: function (funcDef, statements) {
-		var statementIndex = 0;
-		while (statementIndex < statements.length) {
-			var exprsToOptimize = [];
-			var setOptimizedExprs = [];
-			while (statementIndex < statements.length) {
-				var statement = statements[statementIndex++];
-				if (statement instanceof ExpressionStatement) {
-					exprsToOptimize.push(statement.getExpr());
-					setOptimizedExprs.push(function (statement) {
-						return function (expr) {
-							statement.setExpr(expr);
-						}
-					}(statement));
-				} else if (statement instanceof ReturnStatement) {
-					var expr = statement.getExpr();
-					if (expr != null) {
-						exprsToOptimize.push(statement.getExpr());
-						setOptimizedExprs.push(function (statement) {
-							return function (expr) {
-								statement.setExpr(expr);
-							}
-						}(statement));
-					}
-					break;
-				} else if (statement instanceof ContinuableStatement) {
-					this._optimizeStatements(funcDef, statement.getStatements(), 0);
-					break;
-				} else {
-					// FIXME add support for other types of statements (for example, IfStatement)
-					// do nothing but continue
-					break;
-				}
-			}
-			// optimize basic block
-			if (exprsToOptimize.length != 0) {
-				this._optimizeExpressions(funcDef, exprsToOptimize);
-				for (var i = 0; i < exprsToOptimize.length; ++i) {
-					setOptimizedExprs[i](exprsToOptimize[i]);
-				}
-			}
-		}
+		_Util.optimizeBasicBlock(funcDef, function (exprs) {
+			this._optimizeExpressions(funcDef, exprs);
+		}.bind(this));
 	},
 
 	_optimizeExpressions: function (funcDef, exprs) {
@@ -8706,15 +9063,13 @@ var _LCSEOptimizeCommand = exports._LCSEOptimizeCommand = _FunctionOptimizeComma
 		var onExpr = function (expr, replaceCb) {
 			// handle special cases first
 			if (expr instanceof AssignmentExpression) {
-				// optimize RHS
-				onExpr(expr.getSecondExpr(), function (receiver) {
-					return function (expr) {
-						receiver.setSecondExpr(expr);
-					};
-				}(expr));
-				// optimize LHS
 				var lhsExpr = expr.getFirstExpr();
 				if (lhsExpr instanceof LocalExpression) {
+					onExpr(expr.getSecondExpr(), function (receiver) {
+						return function (expr) {
+							receiver.setSecondExpr(expr);
+						};
+					}(expr));
 					clearCacheByLocalName(lhsExpr.getLocal().getName().getValue());
 				} else if (lhsExpr instanceof PropertyExpression) {
 					onExpr(lhsExpr.getExpr(), function (receiver) {
@@ -8722,6 +9077,11 @@ var _LCSEOptimizeCommand = exports._LCSEOptimizeCommand = _FunctionOptimizeComma
 							receiver.setExpr(expr);
 						};
 					}(lhsExpr));
+					onExpr(expr.getSecondExpr(), function (receiver) {
+						return function (expr) {
+							receiver.setSecondExpr(expr);
+						};
+					}(expr));
 					if (lhsExpr.getIdentifierToken().getValue() == "length") {
 						// once we support caching array elements, we need to add special care
 					} else {
@@ -8899,6 +9259,9 @@ var _UnboxOptimizeCommand = exports._UnboxOptimizeCommand = _FunctionOptimizeCom
 			// first check the local = new ...
 			var newExpr = this._statementIsConstructingTheLocal(statement, local);
 			if (newExpr != null) {
+				if (! newExpr.getType().equals(local.getType())) {
+					return false;
+				}
 				if (! this._newExpressionCanUnbox(newExpr)) {
 					return false;
 				}
@@ -8930,7 +9293,7 @@ var _UnboxOptimizeCommand = exports._UnboxOptimizeCommand = _FunctionOptimizeCom
 	},
 
 	_newExpressionCanUnbox: function (newExpr) {
-		var ctor = this._getConstructorOfNewExpr(newExpr);
+		var ctor = _DetermineCalleeCommand.getCallingFuncDef(newExpr);
 		if (this.getStash(ctor).canUnbox != null) {
 			return this.getStash(ctor).canUnbox;
 		}
@@ -8975,10 +9338,13 @@ var _UnboxOptimizeCommand = exports._UnboxOptimizeCommand = _FunctionOptimizeCom
 
 		// build map of propetyName => LocalVariable
 		var variableMap = {};
-		local.getType().getClassDef().forEachMemberVariable(function (member) {
-			if ((member.flags() & ClassDefinition.IS_STATIC) == 0) {
-				variableMap[member.name()] = this.createVar(funcDef, member.getType(), local.getName().getValue() + "$" + member.name());
-			}
+		local.getType().getClassDef().forEachClassFromBase(function (classDef) {
+			classDef.forEachMemberVariable(function (member) {
+				if ((member.flags() & (ClassDefinition.IS_STATIC | ClassDefinition.IS_ABSTRACT)) == 0) {
+					variableMap[member.name()] = this.createVar(funcDef, member.getType(), local.getName().getValue() + "$" + member.name());
+				}
+				return true;
+			}.bind(this));
 			return true;
 		}.bind(this));
 		var createLocalExpressionFor = function (propertyName) {
@@ -8989,7 +9355,7 @@ var _UnboxOptimizeCommand = exports._UnboxOptimizeCommand = _FunctionOptimizeCom
 		}.bind(this);
 
 		var buildConstructingStatements = function (dstStatements, dstStatementIndex, newExpr) {
-			var ctor = this._getConstructorOfNewExpr(newExpr);
+			var ctor = _DetermineCalleeCommand.getCallingFuncDef(newExpr);
 			ctor.forEachStatement(function (statement) {
 				var propertyName = statement.getExpr().getFirstExpr().getIdentifierToken().getValue();
 				var rhsExpr = statement.getExpr().getSecondExpr().clone();
@@ -9071,15 +9437,6 @@ var _UnboxOptimizeCommand = exports._UnboxOptimizeCommand = _FunctionOptimizeCom
 			return null;
 		}
 		return rhsExpr;
-	},
-
-	_getConstructorOfNewExpr: function (newExpr) {
-		var ctor = _DetermineCalleeCommand.findCallingFunctionInClass(
-			newExpr.getType().getClassDef(), "constructor", newExpr.getConstructor().getArgumentTypes(), false);
-		if (ctor == null) {
-			throw new Error("could not find matching constructor for " + newExpr.getConstructor().toString());
-		}
-		return ctor;
 	}
 
 });
@@ -9094,7 +9451,8 @@ var _ArrayLengthOptimizeCommand = exports._ArrayLengthOptimizeCommand = _Functio
 		funcDef.forEachStatement(function onStatement(statement) {
 			statement.forEachStatement(onStatement.bind(this));
 			if (statement instanceof ForStatement) {
-				var arrayLocal = this._hasLengthExprOfLocalArray(statement.getCondExpr());
+				var condExpr = statement.getCondExpr();
+				var arrayLocal = condExpr != null ? this._hasLengthExprOfLocalArray(condExpr) : null;
 				if (arrayLocal != null) {
 					if (this._lengthIsUnmodifiedInExpr(statement.getCondExpr())
 						&& this._lengthIsUnmodifiedInExpr(statement.getPostExpr())
@@ -10297,7 +10655,7 @@ var Parser = exports.Parser = Class.extend({
 	_memberDefinition: function (classFlags) {
 		var flags = 0;
 		while (true) {
-			var token = this._expect([ "function", "var", "static", "abstract", "override", "final", "const", "native", "__readonly__", "inline" ]);
+			var token = this._expect([ "function", "var", "static", "abstract", "override", "final", "const", "native", "__readonly__", "inline", "__pure__" ]);
 			if (token == null)
 				return null;
 			if (token.getValue() == "const") {
@@ -10344,6 +10702,9 @@ var Parser = exports.Parser = Class.extend({
 				break;
 			case "inline":
 				newFlag = ClassDefinition.IS_INLINE;
+				break;
+			case "__pure__":
+				newFlag = ClassDefinition.IS_PURE;
 				break;
 			default:
 				throw new Error("logic flaw");
@@ -13027,6 +13388,10 @@ var SwitchStatement = exports.SwitchStatement = LabellableStatement.extend({
 
 	getExpr: function () {
 		return this._expr;
+	},
+
+	setExpr: function (expr) {
+		this._expr = expr;
 	},
 
 	getStatements: function () {

@@ -410,7 +410,7 @@ AOBench$.prototype = new AOBench;
  * @param {!number} f
  * @return {!number}
  */
-AOBench.prototype.clamp$N = function (f) {
+AOBench.clamp$N = function (f) {
 	/** @type {!number} */
 	var i;
 	i = f * 255.0;
@@ -420,8 +420,10 @@ AOBench.prototype.clamp$N = function (f) {
 	if (i < 0.0) {
 		i = 0.0;
 	}
-	return Math.round(i);
+	return i | 0;
 };
+
+var AOBench$clamp$N = AOBench.clamp$N;
 
 /**
  * @param {Array.<undefined|vec3>} basis
@@ -580,9 +582,9 @@ AOBench.prototype.render$F$IIIIIV$II = function (fill, w, h) {
 			if (isect.hit) {
 				col = this.ambient_occlusion$LIsect$(isect);
 			}
-			r = col.x * 255.0 | 0;
-			g = col.y * 255.0 | 0;
-			b = col.z * 255.0 | 0;
+			r = AOBench$clamp$N(col.x);
+			g = AOBench$clamp$N(col.y);
+			b = AOBench$clamp$N(col.z);
 			fill(x, y, r, g, b);
 		}
 	}

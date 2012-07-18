@@ -43,6 +43,7 @@
                "js-original.html" : "/try/example/aobench/js-original.html",
                "index.html" : "/try/example/aobench/index.html",
                "README" : "/try/example/aobench/README",
+               "aobench.jsx.js" : "/try/example/aobench/aobench.jsx.js",
                "ambientocclusion.js" : "/try/example/aobench/ambientocclusion.js"
             },
             "fireworks.html" : "/try/example/fireworks.html",
@@ -364,6 +365,7 @@
                "020.arrayliteral.jsx" : "/try/t/run/020.arrayliteral.jsx",
                "019.boolean.jsx" : "/try/t/run/019.boolean.jsx",
                "050.implicit-ctor-call.jsx" : "/try/t/run/050.implicit-ctor-call.jsx",
+               "195.nested-cond.jsx" : "/try/t/run/195.nested-cond.jsx",
                "121.decl-of-variant-array.jsx" : "/try/t/run/121.decl-of-variant-array.jsx",
                "005.for.jsx" : "/try/t/run/005.for.jsx",
                "145.construct-T.jsx" : "/try/t/run/145.construct-T.jsx",

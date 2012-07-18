@@ -677,9 +677,9 @@ Timer$.prototype = new Timer;
  * @return {TimerHandle}
  */
 Timer.setTimeout$F$V$I = function (listener, milliseconds) {
-	var f;
-	f = (function (o) { return typeof(o) === "function" ? o : null; })(js.global.setTimeout);
-	return f(listener, milliseconds);
+	var setTimeout;
+	setTimeout = (function (o) { return typeof(o) === "function" ? o : null; })(js.global.setTimeout);
+	return setTimeout(listener, milliseconds);
 };
 
 var Timer$setTimeout$F$V$I = Timer.setTimeout$F$V$I;
@@ -688,9 +688,9 @@ var Timer$setTimeout$F$V$I = Timer.setTimeout$F$V$I;
  * @param {TimerHandle} timerID
  */
 Timer.clearTimeout$LTimerHandle$ = function (timerID) {
-	var f;
-	f = (function (o) { return typeof(o) === "function" ? o : null; })(js.global.clearTimeout);
-	f(timerID);
+	var clearTimeout;
+	clearTimeout = (function (o) { return typeof(o) === "function" ? o : null; })(js.global.clearTimeout);
+	clearTimeout(timerID);
 };
 
 var Timer$clearTimeout$LTimerHandle$ = Timer.clearTimeout$LTimerHandle$;
@@ -700,9 +700,9 @@ var Timer$clearTimeout$LTimerHandle$ = Timer.clearTimeout$LTimerHandle$;
  * @return {TimerHandle}
  */
 Timer.setInterval$F$V$I = function (listener, milliseconds) {
-	var f;
-	f = (function (o) { return typeof(o) === "function" ? o : null; })(js.global.setInterval);
-	return f(listener, milliseconds);
+	var setInterval;
+	setInterval = (function (o) { return typeof(o) === "function" ? o : null; })(js.global.setInterval);
+	return setInterval(listener, milliseconds);
 };
 
 var Timer$setInterval$F$V$I = Timer.setInterval$F$V$I;
@@ -711,9 +711,9 @@ var Timer$setInterval$F$V$I = Timer.setInterval$F$V$I;
  * @param {TimerHandle} timerID
  */
 Timer.clearInterval$LTimerHandle$ = function (timerID) {
-	var f;
-	f = (function (o) { return typeof(o) === "function" ? o : null; })(js.global.clearInterval);
-	f(timerID);
+	var clearInterval;
+	clearInterval = (function (o) { return typeof(o) === "function" ? o : null; })(js.global.clearInterval);
+	clearInterval(timerID);
 };
 
 var Timer$clearInterval$LTimerHandle$ = Timer.clearInterval$LTimerHandle$;

@@ -5,10 +5,8 @@ This repository is just a deployment place for the JSX web interface.
 
 To maintain this site, type the following command:
 
-    make # build the site
-    git add .
-    git commit -m "build"
-    git push origin gh-pages
+    make      # update the site
+    make ship # add & commit & push
 
 Don't edit files other than `Makefile`, `README.md` and `.gitmodules` because they are automatically generated. Edit http://github.com/jsx/JSX/ instead.
 

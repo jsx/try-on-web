@@ -149,7 +149,19 @@ var vec3$vsub$Lvec3$Lvec3$ = vec3.vsub$Lvec3$Lvec3$;
  * @return {vec3}
  */
 vec3.vcross$Lvec3$Lvec3$ = function (a, b) {
-	return new vec3$NNN(a.y * b.z - a.z * b.y, a.z * b.x - a.x * b.z, a.x * b.y - a.y * b.x);
+	/** @type {!number} */
+	var z$0;
+	/** @type {!number} */
+	var z$1;
+	/** @type {!number} */
+	var x$0;
+	/** @type {!number} */
+	var y$0;
+	/** @type {!number} */
+	var y$1;
+	/** @type {!number} */
+	var x$1;
+	return new vec3$NNN((y$1 = a.y) * (z$1 = b.z) - (z$0 = a.z) * (y$0 = b.y), z$0 * (x$1 = b.x) - (x$0 = a.x) * z$1, x$0 * y$0 - y$1 * x$1);
 };
 
 var vec3$vcross$Lvec3$Lvec3$ = vec3.vcross$Lvec3$Lvec3$;
@@ -170,7 +182,13 @@ var vec3$vdot$Lvec3$Lvec3$ = vec3.vdot$Lvec3$Lvec3$;
  * @return {!number}
  */
 vec3.vlength$Lvec3$ = function (a) {
-	return Math.sqrt(a.x * a.x + a.y * a.y + a.z * a.z);
+	/** @type {!number} */
+	var x$0;
+	/** @type {!number} */
+	var y$0;
+	/** @type {!number} */
+	var z$0;
+	return Math.sqrt((x$0 = a.x) * x$0 + (y$0 = a.y) * y$0 + (z$0 = a.z) * z$0);
 };
 
 var vec3$vlength$Lvec3$ = vec3.vlength$Lvec3$;
@@ -184,7 +202,13 @@ vec3.vnormalize$Lvec3$ = function (a) {
 	var len;
 	/** @type {vec3} */
 	var v;
-	len = Math.sqrt(a.x * a.x + a.y * a.y + a.z * a.z);
+	/** @type {!number} */
+	var x$0;
+	/** @type {!number} */
+	var y$0;
+	/** @type {!number} */
+	var z$0;
+	len = Math.sqrt((x$0 = a.x) * x$0 + (y$0 = a.y) * y$0 + (z$0 = a.z) * z$0);
 	v = new vec3$NNN(a.x, a.y, a.z);
 	if ((len >= 0 ? len : - len) > 1.0e-17) {
 		v.x /= len;
@@ -278,8 +302,6 @@ Sphere.prototype.intersect$LRay$LIsect$ = function (ray, isect) {
 	/** @type {vec3} */
 	var b$1;
 	/** @type {vec3} */
-	var a$1;
-	/** @type {vec3} */
 	var b$2;
 	/** @type {!number} */
 	var rs$x$0;
@@ -287,6 +309,14 @@ Sphere.prototype.intersect$LRay$LIsect$ = function (ray, isect) {
 	var rs$y$0;
 	/** @type {!number} */
 	var rs$z$0;
+	/** @type {vec3} */
+	var org$0;
+	/** @type {vec3} */
+	var dir$0;
+	/** @type {vec3} */
+	var p$0;
+	/** @type {!number} */
+	var radius$0;
 	a$0 = ray.org;
 	b$0 = this.center;
 	rs$x$0 = a$0.x - b$0.x;
@@ -294,17 +324,16 @@ Sphere.prototype.intersect$LRay$LIsect$ = function (ray, isect) {
 	rs$z$0 = a$0.z - b$0.z;
 	b$1 = ray.dir;
 	B = rs$x$0 * b$1.x + rs$y$0 * b$1.y + rs$z$0 * b$1.z;
-	C = rs$x$0 * rs$x$0 + rs$y$0 * rs$y$0 + rs$z$0 * rs$z$0 - this.radius * this.radius;
+	C = rs$x$0 * rs$x$0 + rs$y$0 * rs$y$0 + rs$z$0 * rs$z$0 - (radius$0 = this.radius) * radius$0;
 	D = B * B - C;
 	if (D > 0.0) {
 		t = - B - Math.sqrt(D);
 		if (t > 0.0 && t < isect.t) {
 			isect.t = t;
 			isect.hit = true;
-			isect.p = new vec3$NNN(ray.org.x + ray.dir.x * t, ray.org.y + ray.dir.y * t, ray.org.z + ray.dir.z * t);
-			a$1 = isect.p;
+			p$0 = isect.p = new vec3$NNN((org$0 = ray.org).x + (dir$0 = ray.dir).x * t, org$0.y + dir$0.y * t, org$0.z + dir$0.z * t);
 			b$2 = this.center;
-			n = new vec3$NNN(a$1.x - b$2.x, a$1.y - b$2.y, a$1.z - b$2.z);
+			n = new vec3$NNN(p$0.x - b$2.x, p$0.y - b$2.y, p$0.z - b$2.z);
 			isect.n = vec3$vnormalize$Lvec3$(n);
 		}
 	}
@@ -345,6 +374,10 @@ Plane.prototype.intersect$LRay$LIsect$ = function (ray, isect) {
 	var a$0;
 	/** @type {vec3} */
 	var b$0;
+	/** @type {vec3} */
+	var org$0;
+	/** @type {vec3} */
+	var dir$0;
 	d = - vec3$vdot$Lvec3$Lvec3$(this.p, this.n);
 	a$0 = ray.dir;
 	b$0 = this.n;
@@ -357,7 +390,7 @@ Plane.prototype.intersect$LRay$LIsect$ = function (ray, isect) {
 		isect.hit = true;
 		isect.t = t;
 		isect.n = this.n;
-		isect.p = new vec3$NNN(ray.org.x + t * ray.dir.x, ray.org.y + t * ray.dir.y, ray.org.z + t * ray.dir.z);
+		isect.p = new vec3$NNN((org$0 = ray.org).x + t * (dir$0 = ray.dir).x, org$0.y + t * dir$0.y, org$0.z + t * dir$0.z);
 	}
 };
 
@@ -438,15 +471,21 @@ AOBench.prototype.orthoBasis$ALvec3$Lvec3$ = function (basis, n) {
 	var a$1;
 	/** @type {vec3} */
 	var b$1;
+	/** @type {!number} */
+	var z$0;
+	/** @type {!number} */
+	var y$0;
+	/** @type {!number} */
+	var x$0;
 	basis[2] = n;
 	basis[1] = new vec3$NNN(0.0, 0.0, 0.0);
-	if (n.x < 0.6 && n.x > -0.6) {
+	if ((x$0 = n.x) < 0.6 && x$0 > -0.6) {
 		basis[1].x = 1.0;
 	} else {
-		if (n.y < 0.6 && n.y > -0.6) {
+		if ((y$0 = n.y) < 0.6 && y$0 > -0.6) {
 			basis[1].y = 1.0;
 		} else {
-			if (n.z < 0.6 && n.z > -0.6) {
+			if ((z$0 = n.z) < 0.6 && z$0 > -0.6) {
 				basis[1].z = 1.0;
 			} else {
 				basis[1].x = 1.0;
@@ -502,9 +541,13 @@ AOBench.prototype.ambient_occlusion$LIsect$ = function (isect) {
 	var occIsect;
 	/** @type {!number} */
 	var occ_f;
+	/** @type {vec3} */
+	var p$0;
+	/** @type {vec3} */
+	var n$0;
 	basis = new Array(3);
 	this.orthoBasis$ALvec3$Lvec3$(basis, isect.n);
-	p = new vec3$NNN(isect.p.x + 0.0001 * isect.n.x, isect.p.y + 0.0001 * isect.n.y, isect.p.z + 0.0001 * isect.n.z);
+	p = new vec3$NNN((p$0 = isect.p).x + 0.0001 * (n$0 = isect.n).x, p$0.y + 0.0001 * n$0.y, p$0.z + 0.0001 * n$0.z);
 	occlusion = 0;
 	for (j = 0; j < 8; j++) {
 		for (i = 0; i < 8; i++) {

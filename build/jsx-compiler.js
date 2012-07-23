@@ -1683,7 +1683,7 @@ var TemplateClassDefinition = exports.TemplateClassDefinition = Class.extend({
 		var Parser = require("./parser");
 		// check number of type arguments
 		if (this._typeArgs.length != request.getTypeArguments().length) {
-			errors.push(new CompileError(request.getToken(), "wrong number of template arguments (expected " + this._typeArgs.length + ", got " + request.getTypes().length));
+			errors.push(new CompileError(request.getToken(), "wrong number of template arguments (expected " + this._typeArgs.length + ", got " + request.getTypeArguments().length));
 			return null;
 		}
 		// return one, if already instantiated
@@ -4214,7 +4214,7 @@ var CallExpression = exports.CallExpression = OperatorExpression.extend({
 			context, this._args, this,
 			exprType.getExpectedCallbackTypes(
 				this._args.length,
-				this._expr instanceof PropertyExpression && ! exprType.isAssignable() && this._expr.getExpr() instanceof ClassExpression));
+				! (this._expr instanceof PropertyExpression && ! exprType.isAssignable() && ! (this._expr.getExpr() instanceof ClassExpression))));
 		if (argTypes == null)
 			return false;
 		if (this._expr instanceof PropertyExpression && ! exprType.isAssignable()) {
@@ -6974,7 +6974,7 @@ var JavaScriptEmitter = exports.JavaScriptEmitter = Class.extend({
 				case "Map":
 					return "H" + this._mangleTypeName(typeArgs[0]);
 				default:
-					throw new Error("unexpected template type: " + classDef.getTemplateClassName());
+					// fall through
 				}
 			}
 			return "L" + type.getClassDef().getOutputClassName() + "$";
@@ -8580,39 +8580,40 @@ var _DeadCodeEliminationOptimizeCommand = exports._DeadCodeEliminationOptimizeCo
 		// rewrite the locals
 		var onExpr = function (expr, replaceCb) {
 			if (expr instanceof AssignmentExpression) {
-				if (expr.getFirstExpr() instanceof LocalExpression
-					&& ! getLocal(localsUntouchable, expr.getFirstExpr().getLocal())
-					&& expr.getFirstExpr().getType().equals(expr.getSecondExpr().getType())) {
+				if (expr.getFirstExpr() instanceof LocalExpression) {
 					onExpr(expr.getSecondExpr(), function (assignExpr) {
 						return function (expr) {
 							assignExpr.setSecondExpr(expr);
 						};
 					}(expr));
-					var lhsLocal = expr.getFirstExpr().getLocal();
-					this.log("resetting cache for: " + lhsLocal.getName().getValue());
-					for (var i = locals.length - 1; i >= 0; --i) {
-						if (locals[i][0] == lhsLocal) {
-							this.log("  clearing itself");
-							locals.splice(i, 1);
-						} else if (locals[i][1] instanceof LocalExpression && locals[i][1].getLocal() == lhsLocal) {
-							this.log("  clearing " + locals[i][0].getName().getValue());
-							locals.splice(i, 1);
+					if (! getLocal(localsUntouchable, expr.getFirstExpr().getLocal())
+						&& expr.getFirstExpr().getType().equals(expr.getSecondExpr().getType())) {
+						var lhsLocal = expr.getFirstExpr().getLocal();
+						this.log("resetting cache for: " + lhsLocal.getName().getValue());
+						for (var i = locals.length - 1; i >= 0; --i) {
+							if (locals[i][0] == lhsLocal) {
+								this.log("  clearing itself");
+								locals.splice(i, 1);
+							} else if (locals[i][1] instanceof LocalExpression && locals[i][1].getLocal() == lhsLocal) {
+								this.log("  clearing " + locals[i][0].getName().getValue());
+								locals.splice(i, 1);
+							}
 						}
-					}
-					if (expr.getToken().getValue() == "=") {
-						var rhsExpr = expr.getSecondExpr();
-						if (rhsExpr instanceof LocalExpression) {
-							var rhsLocal = rhsExpr.getLocal();
-							if (lhsLocal != rhsLocal && ! getLocal(localsUntouchable, rhsLocal)) {
-								this.log("  set to: " + rhsLocal.getName().getValue());
+						if (expr.getToken().getValue() == "=") {
+							var rhsExpr = expr.getSecondExpr();
+							if (rhsExpr instanceof LocalExpression) {
+								var rhsLocal = rhsExpr.getLocal();
+								if (lhsLocal != rhsLocal && ! getLocal(localsUntouchable, rhsLocal)) {
+									this.log("  set to: " + rhsLocal.getName().getValue());
+									setLocal(locals, lhsLocal, rhsExpr);
+								}
+							} else if (rhsExpr instanceof NullExpression
+								|| rhsExpr instanceof NumberLiteralExpression
+								|| rhsExpr instanceof IntegerLiteralExpression
+								|| rhsExpr instanceof StringLiteralExpression) {
+								this.log("  set to: " + rhsExpr.getToken().getValue());
 								setLocal(locals, lhsLocal, rhsExpr);
 							}
-						} else if (rhsExpr instanceof NullExpression
-							|| rhsExpr instanceof NumberLiteralExpression
-							|| rhsExpr instanceof IntegerLiteralExpression
-							|| rhsExpr instanceof StringLiteralExpression) {
-							this.log("  set to: " + rhsExpr.getToken().getValue());
-							setLocal(locals, lhsLocal, rhsExpr);
 						}
 					}
 					return true;
@@ -8629,7 +8630,9 @@ var _DeadCodeEliminationOptimizeCommand = exports._DeadCodeEliminationOptimizeCo
 					// fall through
 				} else {
 					expr.forEachExpression(onExpr);
-					clearLocals(locals);
+					if (funcDef.getParent() != null || funcDef.getClosures().length != 0) {
+						clearLocals(locals);
+					}
 					return true;
 				}
 			} else if (expr instanceof NewExpression) {
@@ -10478,28 +10481,21 @@ var Parser = exports.Parser = Class.extend({
 		this._prevScope = {
 			prev: this._prevScope,
 			locals: this._locals,
-			arguments: null,
-			statements: null,
-			closures: null
+			arguments: this._arguments,
+			statements: this._statements,
+			closures: this._closures
 		};
 		this._locals = [];
-		if (args != null) {
-			this._prevScope.arguments = this._arguments;
-			this._arguments = args;
-			this._prevScope.statements = this._statements;
-			this._statements = [];
-			this._prevScope.closures = this._closures;
-			this._closures = [];
-		}
+		this._arguments = args;
+		this._statements = [];
+		this._closures = [];
 	},
 
 	_popScope: function () {
 		this._locals = this._prevScope.locals;
-		if (this._prevScope.arguments != null) {
-			this._arguments = this._prevScope.arguments;
-			this._statements = this._prevScope.statements;
-			this._closures = this._prevScope.closures;
-		}
+		this._arguments = this._prevScope.arguments;
+		this._statements = this._prevScope.statements;
+		this._closures = this._prevScope.closures;
 		this._prevScope = this._prevScope.prev;
 	},
 
@@ -11830,13 +11826,14 @@ var Parser = exports.Parser = Class.extend({
 				|| this._expect("{") == null)
 				return false;
 			var caughtVariable = new CaughtVariable(catchIdentifier, catchType);
-			this._pushScope(null);
 			this._locals.push(caughtVariable);
-			if (this._block() == null) {
-				this._popScope();
-				return false;
+			try {
+				if (this._block() == null) {
+					return false;
+				}
+			} finally {
+				this._locals.splice(this._locals.indexOf(caughtVariable), 1);
 			}
-			this._popScope();
 			catchStatements.push(new CatchStatement(catchOrFinallyToken, caughtVariable, this._statements.splice(startIndex)));
 		}
 		if (catchOrFinallyToken != null) {
@@ -15364,7 +15361,7 @@ var Util = exports.Util = Class.extend({
 		return s;
 	},
 
-	// Usage: format("%1 % %2", ["foo", "bar"]) -> "foo % bar"
+	// Usage: format("%1 %% %2", ["foo", "bar"]) -> "foo % bar"
 	$format: function(fmt, args) {
 		if(!(args instanceof Array)) {
 			throw new Error("args must be an Array");
@@ -15720,5 +15717,5 @@ function isa(expr, t) {
 exports.isa = isa;
 
 
-});if ("undefined" != typeof module) { module.exports = require('interface'); } else { jsx = require('interface'); }
+});jsx = require('interface');
 })();

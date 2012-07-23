@@ -2466,7 +2466,7 @@ var JavaScriptEmitter = exports.JavaScriptEmitter = Class.extend({
 				case "Map":
 					return "H" + this._mangleTypeName(typeArgs[0]);
 				default:
-					throw new Error("unexpected template type: " + classDef.getTemplateClassName());
+					// fall through
 				}
 			}
 			return "L" + type.getClassDef().getOutputClassName() + "$";

@@ -66,9 +66,7 @@ var BrowserPlatform = exports.BrowserPlatform = Platform.extend({
 		this._map = JSON.parse(this.load(root + "/tree.generated.json"));
 
 		this._prefix = location.pathname.replace(/\/[^\/]*$/, "");
-		if (debug) {
-			console.log({ prefix: this._prefix, root: this._root });
-		}
+		this.debug({ prefix: this._prefix, root: this._root });
 	},
 
 	getRoot: function () {
@@ -78,10 +76,8 @@ var BrowserPlatform = exports.BrowserPlatform = Platform.extend({
 	_findPath: function (path) {
 		var absPath = Util.resolvePath(this._prefix + "/" + path);
 
-		if (debug) {
-			console.debug("[D] find path=%s (absPath=%s)",
-					path, absPath);
-		}
+		this.debug("[D] find path=%s (absPath=%s)",
+				path, absPath);
 
 		var parts = absPath.split('/');
 		var cur = this._map;
@@ -93,9 +89,7 @@ var BrowserPlatform = exports.BrowserPlatform = Platform.extend({
 			cur = t;
 		}
 
-		if (debug) {
-			console.debug("[D] find path --> %s", JSON.stringify(cur));
-		}
+		this.debug("[D] find path --> %s", JSON.stringify(cur));
 
 		return cur;
 	},
@@ -148,6 +142,12 @@ var BrowserPlatform = exports.BrowserPlatform = Platform.extend({
 	error: function (s) {
 		console.error(s);
 		this._errors.push(s);
+	},
+
+	debug: function (__va_args__) {
+		if (debug) {
+			console.log.apply(console, arguments);
+		}
 	},
 
 	getErrors: function () {
@@ -288,10 +288,10 @@ var BlockContext = exports.BlockContext = Class.extend({
 
 var AnalysisContext = exports.AnalysisContext = Class.extend({
 
-	constructor: function (errors, parser, instantiateTemplate) {
+	constructor: function (errors, parser, postInstantiationCallback) {
 		this.errors = errors;
 		this.parser = parser;
-		this.instantiateTemplate = instantiateTemplate;
+		this.postInstantiationCallback = postInstantiationCallback;
 		this.funcDef = null;
 		/*
 			blockStack is a stack of blocks:
@@ -317,7 +317,7 @@ var AnalysisContext = exports.AnalysisContext = Class.extend({
 
 	clone: function () {
 		// NOTE: does not clone the blockStack (call setBlockStack)
-		return new AnalysisContext(this.errors, this.parser, this.instantiateTemplate).setFuncDef(this.funcDef);
+		return new AnalysisContext(this.errors, this.parser, this.postInstantiationCallback).setFuncDef(this.funcDef);
 	},
 
 	setFuncDef: function (funcDef) {
@@ -1435,7 +1435,7 @@ var MemberFunctionDefinition = exports.MemberFunctionDefinition = MemberDefiniti
 					return false;
 				}
 			} else {
-				this._args[i].setType(type.getArgumentTypes()[i]);
+				this._args[i].setTypeForced(type.getArgumentTypes()[i]);
 			}
 		}
 		if (this._returnType != null) {
@@ -1490,8 +1490,12 @@ var LocalVariable = exports.LocalVariable = Class.extend({
 		if (this._type != null)
 			throw Error("type is already set");
 		// implicit declarations of "int" is not supported
-		if (type.equals(Type.integerType))
-			type = Type.numberType;
+		if (type.equals(Type.Type.integerType))
+			type = Type.Type.numberType;
+		this._type = type;
+	},
+
+	setTypeForced: function (type) {
 		this._type = type;
 	},
 
@@ -1668,7 +1672,6 @@ var TemplateClassDefinition = exports.TemplateClassDefinition = Class.extend({
 		this._implementTypes = implementTypes;
 		this._members = members;
 		this._objectTypesUsed = objectTypesUsed;
-		this._instantiatedDefs = [];
 	},
 
 	className: function () {
@@ -1685,12 +1688,6 @@ var TemplateClassDefinition = exports.TemplateClassDefinition = Class.extend({
 		if (this._typeArgs.length != request.getTypeArguments().length) {
 			errors.push(new CompileError(request.getToken(), "wrong number of template arguments (expected " + this._typeArgs.length + ", got " + request.getTypeArguments().length));
 			return null;
-		}
-		// return one, if already instantiated
-		for (var i = 0; i < this._instantiatedDefs.length; ++i) {
-			if (this._instantiatedDefs[i].typeArgumentsAreEqual(request.getTypeArguments())) {
-				return this._instantiatedDefs[i];
-			}
 		}
 		// build context
 		var instantiationContext = {
@@ -1721,7 +1718,6 @@ var TemplateClassDefinition = exports.TemplateClassDefinition = Class.extend({
 			this._implementTypes.map(function (t) { return t.instantiate(instantiationContext); }),
 			members,
 			instantiationContext.objectTypesUsed);
-		this._instantiatedDefs.push(instantiatedDef);
 		return instantiatedDef;
 	}
 
@@ -1945,10 +1941,6 @@ var Compiler = exports.Compiler = Class.extend({
 		FunctionType._classDef = builtins.lookup(errors, null, "Function");
 		if (! this._handleErrors(errors))
 			return false;
-		// template instantiation
-		this._instantiateTemplates(errors);
-		if (! this._handleErrors(errors))
-			return false;
 		// semantic analysis
 		this._resolveTypes(errors);
 		if (! this._handleErrors(errors))
@@ -2067,59 +2059,9 @@ var Compiler = exports.Compiler = Class.extend({
 		}
 	},
 
-	_instantiateTemplates: function (errors) {
-		for (var i = 0; i < this._parsers.length; ++i) {
-			var templateInstantiationRequests = this._parsers[i].getTemplateInstantiationRequests();
-			for (var j = 0; j < templateInstantiationRequests.length; ++j)
-				this._instantiateTemplate(errors, this._parsers[i], templateInstantiationRequests[j], false);
-		}
-	},
-
-	_instantiateTemplate: function (errors, parser, request, resolveImmmediately) {
-		var concreteClassName = Type.templateTypeToString(request.getClassName(), request.getTypeArguments());
-		// return immediately if instantiated already
-		var classDefs = parser.lookup(errors, request.getToken(), concreteClassName);
-		if (classDefs != null)
-			return classDefs;
-		// instantiate
-		var templateClass = parser.lookupTemplate(errors, request.getToken(), request.getClassName());
-		if (templateClass == null) {
-			errors.push(new CompileError(request.getToken(), "could not find template class definition for '" + request.getClassName() + "'"));
-			return null;
-		}
-		var classDef = templateClass.instantiate(errors, request);
-		if (classDef == null)
-			return null;
-		// register
-		parser.registerInstantiatedClass(classDef);
-		// resolve immediately if requested to
-		if (resolveImmmediately) {
-			classDef.resolveTypes(
-				new AnalysisContext(
-					errors,
-					parser,
-					(function (errors, request) {
-						return this._instantiateTemplate(errors, request, true);
-					}).bind(this)));
-		}
-		// nested instantiation
-		var requests = request.getInstantiationRequests();
-		for (var i = 0; i < requests.length; ++i) {
-			this._instantiateTemplate(errors, parser, requests[i], resolveImmmediately);
-		}
-		// return
-		return classDef;
-	},
-
 	_resolveTypes: function (errors) {
 		this.forEachClassDef(function (parser, classDef) {
-			classDef.resolveTypes(
-				new AnalysisContext(
-					errors,
-					parser,
-					(function (errors, request) {
-						return this._instantiateTemplate(errors, parser, request, false);
-					}).bind(this)));
+			classDef.resolveTypes(new AnalysisContext(errors, parser, null));
 			return true;
 		}.bind(this));
 	},
@@ -2129,8 +2071,10 @@ var Compiler = exports.Compiler = Class.extend({
 			return new AnalysisContext(
 				errors,
 				parser,
-				function (errors, request) {
-					return this._instantiateTemplate(errors, parser, request, true);
+				function (parser, classDef) {
+					classDef.setAnalysisContextOfVariables(createContext(parser));
+					classDef.analyze(createContext(parser));
+					return classDef;
 				}.bind(this));
 		}.bind(this);
 		// set analyzation context of every variable
@@ -2481,7 +2425,11 @@ var Expression = exports.Expression = Class.extend({
 			return new StringLiteralExpression(new Parser.Token("\"\"", false));
 		else
 			return new NullExpression(new Parser.Token("null", false), type);
-	}
+	},
+
+	$instantiateTemplate: function (context, token, className, typeArguments) {
+		return context.parser.lookupTemplate(context.errors, new TemplateInstantiationRequest(token, className, typeArguments), context.postInstantiationCallback);
+	},
 
 });
 
@@ -2842,9 +2790,13 @@ var ArrayLiteralExpression = exports.ArrayLiteralExpression = Expression.extend(
 			return false;
 		// determine the type from the array members if the type was not specified
 		if (this._type != null) {
-			var classDef = this._type.getClassDef();
-			if (! (classDef instanceof InstantiatedClassDefinition && classDef.getTemplateClassName() == "Array")) {
-				context.errors.push(new CompileError(this._token, "specified type is not an array type"));
+			var classDef;
+			if (this._type instanceof ObjectType
+				&& (classDef = this._type.getClassDef()) instanceof InstantiatedClassDefinition
+				&& classDef.getTemplateClassName() == "Array") {
+				//ok
+			} else {
+				context.errors.push(new CompileError(this._token, "the type specified after ':' is not an array type"));
 				return false;
 			}
 		} else {
@@ -2855,10 +2807,7 @@ var ArrayLiteralExpression = exports.ArrayLiteralExpression = Expression.extend(
 				} else {
 					if (elementType.equals(Type.integerType))
 						elementType = Type.numberType;
-					var instantiatedClass = context.instantiateTemplate(context.errors, new TemplateInstantiationRequest(this._token, "Array", [ elementType ]));
-					if (instantiatedClass == null)
-						return false;
-					this._type = new ObjectType(instantiatedClass);
+					this._type = new ObjectType(Expression.instantiateTemplate(context, this._token, "Array", [ elementType ]));
 					break;
 				}
 			}
@@ -2980,10 +2929,7 @@ var MapLiteralExpression = exports.MapLiteralExpression = Expression.extend({
 					if (elementType.equals(Type.integerType))
 						elementType = Type.numberType;
 					elementType = elementType.resolveIfNullable();
-					var instantiatedClass = context.instantiateTemplate(context.errors, new TemplateInstantiationRequest(this._token, "Map", [ elementType ]));
-					if (instantiatedClass == null)
-						return false;
-					this._type = new ObjectType(instantiatedClass);
+					this._type = new ObjectType(Expression.instantiateTemplate(context, this._token, "Map", [ elementType ]));
 					expectedType = elementType;
 					break;
 				}
@@ -10179,43 +10125,52 @@ var Import = exports.Import = Class.extend({
 	},
 
 	assertExistenceOfNamedClasses: function (errors) {
-		if (this._classNames != null) {
-			for (var i = 0; i < this._classNames.length; ++i) {
-				switch (this.getClasses(this._classNames[i].getValue()).length) {
-				case 0:
-					errors.push(new CompileError(this._classNames[i], "no definition for class '" + this._classNames[i].getValue() + "'"));
-					break;
-				case 1:
-					// ok
-					break;
-				default:
-					errors.push(new CompileError(this._classNames[i], "multiple candidates for class '" + this._classNames[i].getValue() + "'"));
-					break;
+		if (this._classNames == null) {
+			// no named classes
+			return;
+		}
+
+		// list all classses
+		var allClassNames = [];
+		for (var i = 0; i < this._sourceParsers.length; ++i) {
+			allClassNames = allClassNames.concat(this._sourceParsers[i].getClassDefs().map(function (classDef) { return classDef.className(); }));
+			allClassNames = allClassNames.concat(this._sourceParsers[i].getTemplateClassDefs().map(function (classDef) { return classDef.className(); }));
+		}
+		function countNumberOfClassesByName(className) {
+			var num = 0;
+			for (var i = 0; i < allClassNames.length; ++i) {
+				if (allClassNames[i] == className) {
+					++num;
 				}
+			}
+			return num;
+		}
+		for (var i = 0; i < this._classNames.length; ++i) {
+			switch (countNumberOfClassesByName(this._classNames[i].getValue())) {
+			case 0:
+				errors.push(new CompileError(this._classNames[i], "no definition for class '" + this._classNames[i].getValue() + "'"));
+				break;
+			case 1:
+				// ok
+				break;
+			default:
+				errors.push(new CompileError(this._classNames[i], "multiple candidates for class '" + this._classNames[i].getValue() + "'"));
+				break;
 			}
 		}
 	},
 
 	getClasses: function (name) {
-		// filter by classNames, if set
-		if (this._classNames != null) {
-			for (var i = 0; i < this._classNames.length; ++i)
-				if (this._classNames[i].getValue() == name)
-					break;
-			if (i == this._classNames.length)
-				return [];
-		} else {
-			if (name.charAt(0) == '_')
-				return [];
+		if (! this._classIsImportable(name)) {
+			return [];
 		}
-		// lookup
 		var found = [];
 		for (var i = 0; i < this._sourceParsers.length; ++i) {
 			var classDefs = this._sourceParsers[i].getClassDefs();
 			for (var j = 0; j < classDefs.length; ++j) {
-				var className = classDefs[j].className();
-				if (className == name) {
-					found.push(classDefs[j]);
+				var classDef = classDefs[j];
+				if (classDef.className() == name) {
+					found.push(classDef);
 					break;
 				}
 			}
@@ -10223,19 +10178,32 @@ var Import = exports.Import = Class.extend({
 		return found;
 	},
 
-	getTemplateClasses: function (name) {
-		var found = [];
+	createGetTemplateClassCallbacks: function (errors, request, postInstantiationCallback) {
+		if (! this._classIsImportable(request.getClassName())) {
+			return [];
+		}
+		var callbacks = [];
 		for (var i = 0; i < this._sourceParsers.length; ++i) {
-			var classDefs = this._sourceParsers[i].getTemplateClassDefs();
-			for (var j = 0; j < classDefs.length; ++j) {
-				var className = classDefs[j].className();
-				if (className.charAt(0) != '_' && className == name) {
-					found.push(classDefs[j]);
-					break;
-				}
+			var callback = this._sourceParsers[i].createGetTemplateClassCallback(errors, request, postInstantiationCallback);
+			if (callback != null) {
+				callbacks.push(callback);
 			}
 		}
-		return found;
+		return callbacks;
+	},
+
+	_classIsImportable: function (name) {
+		if (this._classNames != null) {
+			for (var i = 0; i < this._classNames.length; ++i)
+				if (this._classNames[i].getValue() == name)
+					break;
+			if (i == this._classNames.length)
+				return false;
+		} else {
+			if (name.charAt(0) == '_')
+				return false;
+		}
+		return true;
 	},
 
 	$create: function (errors, filenameToken, aliasToken, classNames) {
@@ -10305,23 +10273,46 @@ var QualifiedName = exports.QualifiedName = Class.extend({
 		return true;
 	},
 
-	getClass: function (context) {
+	getClass: function (context, typeArguments) {
 		if (this._import != null) {
-			var classDefs = this._import.getClasses(this._token.getValue());
-			switch (classDefs.length) {
-			case 1:
-				var classDef = classDefs[0];
-				break;
-			case 0:
-				context.errors.push(new CompileError(this._token, "no definition for class '" + this._token.getValue() + "' in file '" + this._import.getFilenameToken().getValue() + "'"));
-				return null;
-			default:
-				context.errors.push(new CompileError(this._token, "multiple candidates"));
-				return null;
+			if (typeArguments.length == 0) {
+				var classDefs = this._import.getClasses(this._token.getValue());
+				switch (classDefs.length) {
+				case 1:
+					var classDef = classDefs[0];
+					break;
+				case 0:
+					context.errors.push(new CompileError(this._token, "no definition for class '" + this._token.getValue() + "' in file '" + this._import.getFilenameToken().getValue() + "'"));
+					return null;
+				default:
+					context.errors.push(new CompileError(this._token, "multiple candidates"));
+					return null;
+				}
+			} else {
+				var callbacks = this._import.createGetTemplateClassCallbacks(context.errors, new TemplateInstantiationRequest(this._token, this._token.getValue(), typeArguments), function () {});
+				switch (callbacks.length) {
+				case 1:
+					return callbacks[0]();
+				case 0:
+					context.errors.push(new CompileError(this._token, "not definition for template class '" + tihs._token.getValue() + "' in file '" + tihs._import.getFilenameToken().getValue() + "'"));
+					return null;
+				default:
+					context.errors.push(new CompileError(this._token, "multiple canditates"));
+					return null;
+				}
 			}
-		} else if ((classDef = context.parser.lookup(context.errors, this._token, this._token.getValue())) == null) {
-			context.errors.push(new CompileError(this._token, "no class definition for '" + this._token.getValue() + "'"));
-			return null;
+		} else {
+			if (typeArguments.length == 0) {
+				if ((classDef = context.parser.lookup(context.errors, this._token, this._token.getValue())) == null) {
+					context.errors.push(new CompileError(this._token, "no class definition for '" + this._token.getValue() + "'"));
+					return null;
+				}
+			} else {
+				if ((classDef = context.parser.lookupTemplate(context.errors, new TemplateInstantiationRequest(this._token, this._token.getValue(), typeArguments), function () {})) == null) {
+					context.errors.push(new CompileError(this._token, "failed to instantiate class"));
+					return null;
+				}
+			}
 		}
 		return classDef;
 	}
@@ -10433,48 +10424,76 @@ var Parser = exports.Parser = Class.extend({
 		return null;
 	},
 
-	lookup: function (errors, contextToken, name) {
+	lookup: function (errors, contextToken, className) {
 		// class within the file is preferred
 		for (var i = 0; i < this._classDefs.length; ++i) {
-			if (this._classDefs[i].className() == name)
-				return this._classDefs[i];
+			var classDef = this._classDefs[i];
+			if (classDef.className() == className)
+				return classDef;
 		}
-		// instantiated templates never get imported
-		if (name.match(/\.</) != null)
-			return null;
 		// classnames within the imported files may conflict
 		var found = [];
 		for (var i = 0; i < this._imports.length; ++i) {
 			if (this._imports[i].getAlias() == null)
-				found = found.concat(this._imports[i].getClasses(name));
+				found = found.concat(this._imports[i].getClasses(className));
 		}
 		if (found.length == 1)
 			return found[0];
 		if (found.length >= 2)
-			errors.push(new CompileError(contextToken, "multiple candidates exist for class name '" + name + "'"));
+			errors.push(new CompileError(contextToken, "multiple candidates exist for class name '" + className + "'"));
 		return null;
 	},
 
-	lookupTemplate: function (errors, contextToken, name) {
-		// class within the file is preferred
-		for (var i = 0; i < this._templateClassDefs.length; ++i) {
-			if (this._templateClassDefs[i].className() == name)
-				return this._templateClassDefs[i];
+	lookupTemplate: function (errors, request, postInstantiationCallback) {
+		// lookup within the source file
+		var instantiateCallback = this.createGetTemplateClassCallback(errors, request, postInstantiationCallback);
+		if (instantiateCallback != null) {
+			return instantiateCallback(errors, request, postInstantiationCallback);
 		}
-		// classnames within the imported files may conflict
-		var found = [];
+		// lookup within the imported files
+		var candidateCallbacks = [];
 		for (var i = 0; i < this._imports.length; ++i) {
-			found = found.concat(this._imports[i].getTemplateClasses(name));
+			candidateCallbacks = candidateCallbacks.concat(this._imports[i].createGetTemplateClassCallbacks(errors, request, postInstantiationCallback));
 		}
-		if (found.length == 1)
-			return found[0];
-		if (found.length >= 2)
-			errors.push(new CompileError(contextToken, "multiple candidates exist for template class name '" + name + "'"));
-		return null;
+		if (candidateCallbacks.length == 0) {
+			errors.push(new CompileError(request.getToken(), "could not find definition for template class: '" + request.getClassName() + "'"));
+			return null;
+		} else if (candidateCallbacks.length >= 2) {
+			errors.push(new CompileError(request.getToken(), "multiple candidates exist for template class name '" + request.getClassName() + "'"));
+			return null;
+		}
+		return candidateCallbacks[0]();
 	},
 
-	registerInstantiatedClass: function (classDef) {
-		this._classDefs.push(classDef);
+	createGetTemplateClassCallback: function (errors, request, postInstantiationCallback) {
+		// lookup the already-instantiated class
+		for (var i = 0; i < this._classDefs.length; ++i) {
+			var classDef = this._classDefs[i];
+			if (classDef instanceof InstantiatedClassDefinition
+				&& classDef.getTemplateClassName() == request.getClassName()
+				&& Util.typesAreEqual(classDef.getTypeArguments(), request.getTypeArguments())) {
+				return function () {
+					return classDef;
+				};
+			}
+		}
+		// create instantiation callback
+		for (var i = 0; i < this._templateClassDefs.length; ++i) {
+			var templateDef = this._templateClassDefs[i];
+			if (templateDef.className() == request.getClassName()) {
+				return function () {
+					var classDef = templateDef.instantiate(errors, request);
+					if (classDef == null) {
+						return null;
+					}
+					this._classDefs.push(classDef);
+					classDef.resolveTypes(new AnalysisContext(errors, this, null));
+					postInstantiationCallback(this, classDef);
+					return classDef;
+				}.bind(this);
+			}
+		}
+		return null;
 	},
 
 	_pushScope: function (args) {
@@ -11299,20 +11318,13 @@ var Parser = exports.Parser = Class.extend({
 	},
 
 	_templateTypeDeclaration: function (qualifiedName) {
-		if (qualifiedName.getImport() != null) {
-			this._newError("template class with namespace not supported");
-			return null;
-		}
 		// parse
 		var types = [];
-		var typeIsConcrete = true;
 		do {
 			var type = this._typeDeclaration(false);
 			if (type == null)
 				return null;
 			types.push(type);
-			if (this._isPartOfTypeArg(type))
-				typeIsConcrete = false;
 			var token = this._expect([ ">", "," ]);
 			if (token == null)
 				return null;
@@ -11322,10 +11334,6 @@ var Parser = exports.Parser = Class.extend({
 		if ((className == "Array" || className == "Map") && types[0] instanceof NullableType) {
 			this._newError("cannot declare " + className + ".<Nullable.<T>>, should be " + className + ".<T>");
 			return false;
-		}
-		// request template instantiation (deferred)
-		if (typeIsConcrete) {
-			this._templateInstantiationRequests.push(new TemplateInstantiationRequest(token, qualifiedName.getToken().getValue(), types));
 		}
 		// return object type
 		var objectType = new ParsedObjectType(qualifiedName, types);
@@ -11407,9 +11415,6 @@ var Parser = exports.Parser = Class.extend({
 	},
 
 	_registerArrayTypeOf: function (token, elementType) {
-		if (! this._isPartOfTypeArg(elementType)) {
-			this._templateInstantiationRequests.push(new TemplateInstantiationRequest(token, "Array", [ elementType ]));
-		}
 		var arrayType = new ParsedObjectType(new QualifiedName(new Token("Array", true), null), [ elementType ], token);
 		this._objectTypesUsed.push(arrayType);
 		return arrayType;
@@ -12334,7 +12339,7 @@ var Parser = exports.Parser = Class.extend({
 				return false;
 			}
 			for (var scope = this._prevScope; scope != null; scope = scope.prev) {
-				if (! cb(scope.locals, scope.arguments)) {
+				if (scope.locals && ! cb(scope.locals, scope.arguments)) {
 					return false;
 				}
 			}
@@ -12806,30 +12811,41 @@ var Platform = exports.Platform = Class.extend({
 
 var jsx = require("./interface");
 
-function load(root) {
+var seen = {};
 
+function load(root) {
 	var scripts = document.getElementsByTagName("script");
 
-	for (var i = 0; i < scripts.length; ++i) {
+	for (var i = 0, l = scripts.length; i < l; ++i) {
 		var script = scripts[i];
 		if(script.type === "application/jsx") {
+			var id = script.src ? script.src : script.innerHTML;
+			if (seen.hasOwnProperty(id)) {
+				continue;
+			}
+			seen[id] = true;
+
+			var t0 = Date.now();
+			
 			var platform = new jsx.BrowserPlatform(root);
 			var c = new jsx.Compiler(platform);
 			var o = new jsx.Optimizer();
 			var emitter = new jsx.JavaScriptEmitter(platform);
 			c.setEmitter(emitter);
 
+			var sourceFile;
 			if(script.src) {
-				var file = script.src.replace(/^.*\//, "");
-				c.addSourceFile(null, file);
+				sourceFile = script.src.replace(/^.*\//, "");
 			}
 			else {
-				platform.setContent("<script>", script.innerHTML);
-				c.addSourceFile(null, "<script>");
+				sourceFile = "<script>";
+				platform.setContent(sourceFile, script.innerHTML);
 			}
+			c.addSourceFile(null, sourceFile);
 
 			if(jsx.optimizationLevel > 0) {
-				o.setup([ "lto", "no-assert", "fold-const", "return-if", "inline", "fold-const", "array-length" ]);
+				var optimizeCommands = [ "lto", "no-assert", "fold-const", "return-if", "inline", "dce", "unbox", "fold-const", "lcse", "dce", "fold-const", "array-length" ];
+				o.setup(optimizeCommands);
 				o.setEnableRunTimeTypeCheck(false);
 				emitter.setEnableRunTimeTypeCheck(false);
 			}
@@ -12840,7 +12856,7 @@ function load(root) {
 				throw new Error("Failed to compile!");
 			}
 
-			var output = emitter.getOutput();
+			var output = emitter.getOutput(sourceFile);
 
 			if(jsx.optimizationLevel > 1) {
 				output = platform.applyClosureCompiler(output, "SIMPLE_OPTIMIZATIONS");
@@ -12850,6 +12866,26 @@ function load(root) {
 			var scriptSection  = document.createTextNode(output);
 			compiledScript.appendChild(scriptSection);
 			script.parentNode.appendChild(compiledScript);
+
+			console.log("jsx-script-loader: load %s in %d ms.",
+					sourceFile, (Date.now() - t0));
+
+			var applicationArguments = script.getAttribute("data-arguments");
+			if (applicationArguments) {
+				var args = JSON.parse(applicationArguments);
+				if (args instanceof Array) {
+					for (var i = 0; i < args.length; ++i) {
+						if (typeof args[i]  !== "string") {
+							throw new TypeError("Not an array of string: arguments[i] is " + JSON.stringify(args[i]));
+						}
+					}
+				}
+				else {
+					throw new TypeError("Not an array of string: " + applicationArguments);
+				}
+				platform.debug("run _Main.main()@%s with %s", sourceFile, applicationArguments);
+				JSX.require(sourceFile)._Main.main$AS(args);
+			}
 		}
 	}
 };
@@ -14674,7 +14710,7 @@ var Type = exports.Type = Class.extend({
 	getClassDef: null, // ClassDefinition getClassDef()
 
 	equals: function (x) {
-		return this == x || ((x instanceof Type) && this.toString() == x.toString());
+		return this == x;
 	},
 
 	resolveIfNullable: function () {
@@ -14891,6 +14927,10 @@ var NullableType = exports.NullableType = Type.extend({
 		return baseType.toNullableType();
 	},
 
+	equals: function (x) {
+		return x instanceof NullableType && this._baseType.equals(x._baseType);
+	},
+
 	isConvertibleTo: function (type) {
 		return this._baseType.isConvertibleTo(type instanceof NullableType ? type._baseType : type);
 	},
@@ -14926,6 +14966,10 @@ var VariableLengthArgumentType = exports.VariableLengthArgumentType = Type.exten
 		return new VariableLengthArgumentType(baseType);
 	},
 
+	equals: function (x) {
+		return x instanceof VariableLengthArgumentType && this._baseType.equals(x._baseType);
+	},
+
 	isConvertibleTo: function (type) {
 		throw new Error("logic flaw"); // never becomes LHS
 	},
@@ -14958,6 +15002,14 @@ var ObjectType = exports.ObjectType = Type.extend({
 
 	instantiate: function (instantiationContext) {
 		throw new Error("logic flaw; ObjectType is created during semantic analysis, after template instantiation");
+	},
+
+	equals: function (x) {
+		if (this instanceof ParsedObjectType && x instanceof ParsedObjectType
+			&& (this._classDef == null || x._classDef == null)) {
+			return this.toString() == x.toString();
+		}
+		return x instanceof ObjectType && this._classDef == x._classDef;
 	},
 
 	resolveType: function (context) {
@@ -15030,8 +15082,6 @@ var ParsedObjectType = exports.ParsedObjectType = ObjectType.extend({
 				}
 			}
 		}
-		instantiationContext.request.getInstantiationRequests().push(
-			new TemplateInstantiationRequest(this._qualifiedName.getToken(), this._qualifiedName.getToken().getValue(), typeArgs));
 		var objectType = new ParsedObjectType(this._qualifiedName, typeArgs);
 		instantiationContext.objectTypesUsed.push(objectType);
 		return objectType;
@@ -15039,13 +15089,7 @@ var ParsedObjectType = exports.ParsedObjectType = ObjectType.extend({
 
 	resolveType: function (context) {
 		if (this._classDef == null) {
-			if (this._typeArguments.length == 0) {
-				this._classDef = this._qualifiedName.getClass(context);
-			} else {
-				// get the already-instantiated class (FIXME refactor, or should we move QualifiedName#getClass to somewhere else?)
-				if ((this._classDef = context.parser.lookup(context.errors, this._qualifiedName.getToken(), this.toString())) == null)
-					context.errors.push(new CompileError(this._qualifiedName.getToken(), "'" + this.toString() + "' is not defined"));
-			}
+			this._classDef = this._qualifiedName.getClass(context, this._typeArguments);
 		}
 	},
 
@@ -15254,6 +15298,12 @@ var StaticFunctionType = exports.StaticFunctionType = ResolvedFunctionType.exten
 		return new StaticFunctionType(returnType, argTypes, this._isAssignable);
 	},
 
+	equals: function (x) {
+		return x instanceof StaticFunctionType
+			&& this._returnType.equals(x._returnType)
+			&& Util.typesAreEqual(this._argTypes, x._argTypes);
+	},
+
 	_clone: function () {
 		return new StaticFunctionType(this._returnType, this._argTypes, this._isAssignable);
 	},
@@ -15280,6 +15330,13 @@ var MemberFunctionType = exports.MemberFunctionType = ResolvedFunctionType.exten
 	constructor: function (objectType, returnType, argTypes, isAssignable) {
 		ResolvedFunctionType.prototype.constructor.call(this, returnType, argTypes, isAssignable);
 		this._objectType = objectType;
+	},
+
+	equals: function (x) {
+		return x instanceof MemberFunctionType
+			&& this._objectType == x._objectType
+			&& this._returnType.equals(x._returnType)
+			&& Util.typesAreEqual(this._argTypes, x._argTypes);
 	},
 
 	_clone: function () {
@@ -15361,7 +15418,7 @@ var Util = exports.Util = Class.extend({
 		return s;
 	},
 
-	// Usage: format("%1 %% %2", ["foo", "bar"]) -> "foo % bar"
+	// Usage: format("%1 % %2", ["foo", "bar"]) -> "foo % bar"
 	$format: function(fmt, args) {
 		if(!(args instanceof Array)) {
 			throw new Error("args must be an Array");
@@ -15546,7 +15603,6 @@ var TemplateInstantiationRequest = exports.TemplateInstantiationRequest = Class.
 		this._token = token;
 		this._className = className;
 		this._typeArgs = typeArgs;
-		this._instantiationRequests = [];
 	},
 
 	getToken: function() {
@@ -15559,10 +15615,6 @@ var TemplateInstantiationRequest = exports.TemplateInstantiationRequest = Class.
 
 	getTypeArguments: function () {
 		return this._typeArgs;
-	},
-
-	getInstantiationRequests: function () {
-		return this._instantiationRequests;
 	}
 
 });

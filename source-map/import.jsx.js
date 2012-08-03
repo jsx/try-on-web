@@ -406,6 +406,15 @@ TestCase.prototype._nok$USSXX = function (name, op, got, expected) {
 /**
  * @param {!string} reason
  */
+TestCase.prototype.pass$S = function (reason) {
+	++ this._count;
+	++ this._pass;
+	this._say$S("\t" + "ok " + (this._count + "") + " - " + reason);
+};
+
+/**
+ * @param {!string} reason
+ */
 TestCase.prototype.fail$S = function (reason) {
 	this._say$S("not ok - fail");
 	this.diag$S(reason);
@@ -520,7 +529,7 @@ function AsyncContext$LTestCase$SF$LAsyncContext$V$I(test, name, timeoutHandler,
 	this._timerId = null;
 	this._test = test;
 	this._name = name;
-	id = Timer$setTimeout$F$V$I((function () {
+	id = Timer$setTimeout$F$V$N((function () {
 		timeoutHandler($this);
 	}), timeoutMS);
 	this._timerId = id;
@@ -641,22 +650,6 @@ _Matcher.prototype.toBeGE$N = function (x) {
 };
 
 /**
- * class TimerHandle extends Object
- * @constructor
- */
-function TimerHandle() {
-}
-
-TimerHandle.prototype = new Object;
-/**
- * @constructor
- */
-function TimerHandle$() {
-};
-
-TimerHandle$.prototype = new TimerHandle;
-
-/**
  * class Timer extends Object
  * @constructor
  */
@@ -673,50 +666,264 @@ function Timer$() {
 Timer$.prototype = new Timer;
 
 /**
- * @param {!number} milliseconds
+ * @param {!number} intervalMS
  * @return {TimerHandle}
  */
-Timer.setTimeout$F$V$I = function (listener, milliseconds) {
-	var setTimeout;
-	setTimeout = (function (o) { return typeof(o) === "function" ? o : null; })(js.global.setTimeout);
-	return setTimeout(listener, milliseconds);
+Timer.setTimeout$F$V$N = function (callback, intervalMS) {
+	return (function (v) {
+		if (! (v == null || typeof v === "function")) {
+			debugger;
+			throw new Error("[/Users/fuji.goro/repo/try-on-web/JSX/lib/js/timer.jsx:27] detected invalid cast, value is not a function or null");
+		}
+		return v;
+	}(js.global.setTimeout))(callback, intervalMS);
 };
 
-var Timer$setTimeout$F$V$I = Timer.setTimeout$F$V$I;
+var Timer$setTimeout$F$V$N = Timer.setTimeout$F$V$N;
 
 /**
- * @param {TimerHandle} timerID
+ * @param {TimerHandle} timer
  */
-Timer.clearTimeout$LTimerHandle$ = function (timerID) {
-	var clearTimeout;
-	clearTimeout = (function (o) { return typeof(o) === "function" ? o : null; })(js.global.clearTimeout);
-	clearTimeout(timerID);
+Timer.clearTimeout$LTimerHandle$ = function (timer) {
+	(function (v) {
+		if (! (v == null || typeof v === "function")) {
+			debugger;
+			throw new Error("[/Users/fuji.goro/repo/try-on-web/JSX/lib/js/timer.jsx:31] detected invalid cast, value is not a function or null");
+		}
+		return v;
+	}(js.global.clearTimeout))(timer);
 };
 
 var Timer$clearTimeout$LTimerHandle$ = Timer.clearTimeout$LTimerHandle$;
 
 /**
- * @param {!number} milliseconds
+ * @param {!number} intervalMS
  * @return {TimerHandle}
  */
-Timer.setInterval$F$V$I = function (listener, milliseconds) {
-	var setInterval;
-	setInterval = (function (o) { return typeof(o) === "function" ? o : null; })(js.global.setInterval);
-	return setInterval(listener, milliseconds);
+Timer.setInterval$F$V$N = function (callback, intervalMS) {
+	return (function (v) {
+		if (! (v == null || typeof v === "function")) {
+			debugger;
+			throw new Error("[/Users/fuji.goro/repo/try-on-web/JSX/lib/js/timer.jsx:35] detected invalid cast, value is not a function or null");
+		}
+		return v;
+	}(js.global.setInterval))(callback, intervalMS);
 };
 
-var Timer$setInterval$F$V$I = Timer.setInterval$F$V$I;
+var Timer$setInterval$F$V$N = Timer.setInterval$F$V$N;
 
 /**
- * @param {TimerHandle} timerID
+ * @param {TimerHandle} timer
  */
-Timer.clearInterval$LTimerHandle$ = function (timerID) {
-	var clearInterval;
-	clearInterval = (function (o) { return typeof(o) === "function" ? o : null; })(js.global.clearInterval);
-	clearInterval(timerID);
+Timer.clearInterval$LTimerHandle$ = function (timer) {
+	(function (v) {
+		if (! (v == null || typeof v === "function")) {
+			debugger;
+			throw new Error("[/Users/fuji.goro/repo/try-on-web/JSX/lib/js/timer.jsx:39] detected invalid cast, value is not a function or null");
+		}
+		return v;
+	}(js.global.clearInterval))(timer);
 };
 
 var Timer$clearInterval$LTimerHandle$ = Timer.clearInterval$LTimerHandle$;
+
+/**
+ * @return {TimerHandle}
+ */
+Timer.requestAnimationFrame$F$NV$ = function (callback) {
+	return Timer._requestAnimationFrame(callback);
+};
+
+var Timer$requestAnimationFrame$F$NV$ = Timer.requestAnimationFrame$F$NV$;
+
+/**
+ * @param {TimerHandle} timer
+ */
+Timer.cancelAnimationFrame$LTimerHandle$ = function (timer) {
+	Timer._cancelAnimationFrame(timer);
+};
+
+var Timer$cancelAnimationFrame$LTimerHandle$ = Timer.cancelAnimationFrame$LTimerHandle$;
+
+/**
+ * @param {!boolean} enable
+ */
+Timer.useNativeRAF$B = function (enable) {
+	Timer._requestAnimationFrame = Timer$_getRequestAnimationFrameImpl$B(enable);
+	Timer._cancelAnimationFrame = Timer$_getCancelAnimationFrameImpl$B(enable);
+};
+
+var Timer$useNativeRAF$B = Timer.useNativeRAF$B;
+
+/**
+ * @param {!boolean} useNativeImpl
+ */
+Timer._getRequestAnimationFrameImpl$B = function (useNativeImpl) {
+	/** @type {!number} */
+	var lastTime;
+	if (useNativeImpl) {
+		if (js.global.requestAnimationFrame) {
+			return (function (callback) {
+				return (function (v) {
+					if (! (v == null || typeof v === "function")) {
+						debugger;
+						throw new Error("[/Users/fuji.goro/repo/try-on-web/JSX/lib/js/timer.jsx:65] detected invalid cast, value is not a function or null");
+					}
+					return v;
+				}(js.global.requestAnimationFrame))(callback);
+			});
+		} else {
+			if (js.global.webkitRequestAnimationFrame) {
+				return (function (callback) {
+					return (function (v) {
+						if (! (v == null || typeof v === "function")) {
+							debugger;
+							throw new Error("[/Users/fuji.goro/repo/try-on-web/JSX/lib/js/timer.jsx:71] detected invalid cast, value is not a function or null");
+						}
+						return v;
+					}(js.global.webkitRequestAnimationFrame))(callback);
+				});
+			} else {
+				if (js.global.mozRequestAnimationFrame) {
+					return (function (callback) {
+						return (function (v) {
+							if (! (v == null || typeof v === "function")) {
+								debugger;
+								throw new Error("[/Users/fuji.goro/repo/try-on-web/JSX/lib/js/timer.jsx:77] detected invalid cast, value is not a function or null");
+							}
+							return v;
+						}(js.global.mozRequestAnimationFrame))(callback);
+					});
+				} else {
+					if (js.global.oRequestAnimationFrame) {
+						return (function (callback) {
+							return (function (v) {
+								if (! (v == null || typeof v === "function")) {
+									debugger;
+									throw new Error("[/Users/fuji.goro/repo/try-on-web/JSX/lib/js/timer.jsx:83] detected invalid cast, value is not a function or null");
+								}
+								return v;
+							}(js.global.oRequestAnimationFrame))(callback);
+						});
+					} else {
+						if (js.global.msRequestAnimationFrame) {
+							return (function (callback) {
+								return (function (v) {
+									if (! (v == null || typeof v === "function")) {
+										debugger;
+										throw new Error("[/Users/fuji.goro/repo/try-on-web/JSX/lib/js/timer.jsx:89] detected invalid cast, value is not a function or null");
+									}
+									return v;
+								}(js.global.msRequestAnimationFrame))(callback);
+							});
+						}
+					}
+				}
+			}
+		}
+	}
+	lastTime = 0;
+	return (function (callback) {
+		/** @type {!number} */
+		var now;
+		/** @type {!number} */
+		var timeToCall;
+		now = Date.now();
+		timeToCall = Math.max(0, 16 - (now - lastTime));
+		lastTime = now + timeToCall;
+		return Timer$setTimeout$F$V$N((function () {
+			callback(now + timeToCall);
+		}), timeToCall);
+	});
+};
+
+var Timer$_getRequestAnimationFrameImpl$B = Timer._getRequestAnimationFrameImpl$B;
+
+/**
+ * @param {!boolean} useNativeImpl
+ */
+Timer._getCancelAnimationFrameImpl$B = function (useNativeImpl) {
+	if (useNativeImpl) {
+		if (js.global.cancelAnimationFrame) {
+			return (function (timer) {
+				(function (v) {
+					if (! (v == null || typeof v === "function")) {
+						debugger;
+						throw new Error("[/Users/fuji.goro/repo/try-on-web/JSX/lib/js/timer.jsx:112] detected invalid cast, value is not a function or null");
+					}
+					return v;
+				}(js.global.cancelAnimationFrame))(timer);
+			});
+		} else {
+			if (js.global.webkitCancelAnimationFrame) {
+				return (function (timer) {
+					(function (v) {
+						if (! (v == null || typeof v === "function")) {
+							debugger;
+							throw new Error("[/Users/fuji.goro/repo/try-on-web/JSX/lib/js/timer.jsx:118] detected invalid cast, value is not a function or null");
+						}
+						return v;
+					}(js.global.webkitCancelAnimationFrame))(timer);
+				});
+			} else {
+				if (js.global.mozCancelAnimationFrame) {
+					return (function (timer) {
+						(function (v) {
+							if (! (v == null || typeof v === "function")) {
+								debugger;
+								throw new Error("[/Users/fuji.goro/repo/try-on-web/JSX/lib/js/timer.jsx:124] detected invalid cast, value is not a function or null");
+							}
+							return v;
+						}(js.global.mozCancelAnimationFrame))(timer);
+					});
+				} else {
+					if (js.global.oCancelAnimationFrame) {
+						return (function (timer) {
+							(function (v) {
+								if (! (v == null || typeof v === "function")) {
+									debugger;
+									throw new Error("[/Users/fuji.goro/repo/try-on-web/JSX/lib/js/timer.jsx:130] detected invalid cast, value is not a function or null");
+								}
+								return v;
+							}(js.global.oCancelAnimationFrame))(timer);
+						});
+					} else {
+						if (js.global.msCancelAnimationFrame) {
+							return (function (timer) {
+								(function (v) {
+									if (! (v == null || typeof v === "function")) {
+										debugger;
+										throw new Error("[/Users/fuji.goro/repo/try-on-web/JSX/lib/js/timer.jsx:136] detected invalid cast, value is not a function or null");
+									}
+									return v;
+								}(js.global.msCancelAnimationFrame))(timer);
+							});
+						}
+					}
+				}
+			}
+		}
+	}
+	return Timer$clearTimeout$LTimerHandle$;
+};
+
+var Timer$_getCancelAnimationFrameImpl$B = Timer._getCancelAnimationFrameImpl$B;
+
+/**
+ * class TimerHandle extends Object
+ * @constructor
+ */
+function TimerHandle() {
+}
+
+TimerHandle.prototype = new Object;
+/**
+ * @constructor
+ */
+function TimerHandle$() {
+};
+
+TimerHandle$.prototype = new TimerHandle;
 
 /**
  * class js extends Object
@@ -735,6 +942,12 @@ function js$() {
 js$.prototype = new js;
 
 TestCase.verbose = true;
+$__jsx_lazy_init(Timer, "_requestAnimationFrame", function () {
+	return Timer$_getRequestAnimationFrameImpl$B(true);
+});
+$__jsx_lazy_init(Timer, "_cancelAnimationFrame", function () {
+	return Timer$_getCancelAnimationFrameImpl$B(true);
+});
 js.global = (function () { return this; })();
 
 var $__jsx_classMap = {
@@ -760,10 +973,10 @@ var $__jsx_classMap = {
 		_Matcher$LTestCase$XS: _Matcher$LTestCase$XS
 	},
 	"system:lib/js/timer.jsx": {
-		TimerHandle: TimerHandle,
-		TimerHandle$: TimerHandle$,
 		Timer: Timer,
-		Timer$: Timer$
+		Timer$: Timer$,
+		TimerHandle: TimerHandle,
+		TimerHandle$: TimerHandle$
 	},
 	"system:lib/js/js.jsx": {
 		js: js,

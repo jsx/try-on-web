@@ -347,6 +347,7 @@
                "118.redundant-maybeundefined.jsx" : "/try/t/compile_error/118.redundant-maybeundefined.jsx",
                "047.new-abstract-class.jsx" : "/try/t/compile_error/047.new-abstract-class.jsx",
                "043.mixin-variable-conflict.jsx" : "/try/t/compile_error/043.mixin-variable-conflict.jsx",
+               "151.issue61.jsx" : "/try/t/compile_error/151.issue61.jsx",
                "048.this_in_static_func.jsx" : "/try/t/compile_error/048.this_in_static_func.jsx"
             },
             "006.jsx" : {
@@ -379,10 +380,12 @@
                },
                "192.catching-template-type.jsx" : "/try/t/run/192.catching-template-type.jsx",
                "181.issue48.jsx" : "/try/t/run/181.issue48.jsx",
+               "200.template-under-namespace.jsx" : "/try/t/run/200.template-under-namespace.jsx",
                "041.regexp-literal.jsx" : "/try/t/run/041.regexp-literal.jsx",
                "111.comma-in-call-args.jsx" : "/try/t/run/111.comma-in-call-args.jsx",
                "044.literals.jsx" : "/try/t/run/044.literals.jsx",
                "001.hello.jsx" : "/try/t/run/001.hello.jsx",
+               "199.template-arg-namespace.jsx" : "/try/t/run/199.template-arg-namespace.jsx",
                "143.map-access-converted-to-dotop.jsx" : "/try/t/run/143.map-access-converted-to-dotop.jsx",
                "086.as_nocheck-to-string.jsx" : "/try/t/run/086.as_nocheck-to-string.jsx",
                "135.ignore.dot-files.jsx" : "/try/t/run/135.ignore.dot-files.jsx",
@@ -421,6 +424,7 @@
                "129.call-closure-during-assign.jsx" : "/try/t/run/129.call-closure-during-assign.jsx",
                "056.instanceof.jsx" : "/try/t/run/056.instanceof.jsx",
                "128.base-func-overridden-by-mixin.jsx" : "/try/t/run/128.base-func-overridden-by-mixin.jsx",
+               "194.imported-class-in-templates.jsx" : "/try/t/run/194.imported-class-in-templates.jsx",
                "119.import-all-into" : {
                   "1.jsx" : "/try/t/run/119.import-all-into/1.jsx",
                   "2.jsx" : "/try/t/run/119.import-all-into/2.jsx"
@@ -481,6 +485,7 @@
                "078.bitnot.jsx" : "/try/t/run/078.bitnot.jsx",
                "059.import.jsx" : "/try/t/run/059.import.jsx",
                "061.import-paths.jsx" : "/try/t/run/061.import-paths.jsx",
+               "201.import-template.jsx" : "/try/t/run/201.import-template.jsx",
                "046.interface.jsx" : "/try/t/run/046.interface.jsx",
                "158.deduct-closure-type-in-super-statement.jsx" : "/try/t/run/158.deduct-closure-type-in-super-statement.jsx",
                "075.labelled-continue.jsx" : "/try/t/run/075.labelled-continue.jsx",
@@ -488,7 +493,17 @@
                   "foo.jsx" : "/try/t/run/063.import-by-name/foo.jsx"
                },
                "035.assign-to-int.jsx" : "/try/t/run/035.assign-to-int.jsx",
+               "199.template-arg-namespace" : {
+                  "common.jsx" : "/try/t/run/199.template-arg-namespace/common.jsx",
+                  "b.jsx" : "/try/t/run/199.template-arg-namespace/b.jsx",
+                  "a.jsx" : "/try/t/run/199.template-arg-namespace/a.jsx"
+               },
                "160.parameterized-interface.jsx" : "/try/t/run/160.parameterized-interface.jsx",
+               "202.assign-int-to-untyped.jsx" : "/try/t/run/202.assign-int-to-untyped.jsx",
+               "201.import-template" : {
+                  "named.jsx" : "/try/t/run/201.import-template/named.jsx",
+                  "hidden.jsx" : "/try/t/run/201.import-template/hidden.jsx"
+               },
                "094.funcs-with-different-rettypes-as-args.jsx" : "/try/t/run/094.funcs-with-different-rettypes-as-args.jsx",
                "054.replced-global-func.jsx" : "/try/t/run/054.replced-global-func.jsx",
                "028.arrayfunc.jsx" : "/try/t/run/028.arrayfunc.jsx",
@@ -518,7 +533,6 @@
                "057.downcast-interface.jsx" : "/try/t/run/057.downcast-interface.jsx",
                "153.assign-vararg-func.jsx" : "/try/t/run/153.assign-vararg-func.jsx",
                "122.hasownproperty.jsx" : "/try/t/run/122.hasownproperty.jsx",
-               "194.imported-class-in-templates.todo.jsx" : "/try/t/run/194.imported-class-in-templates.todo.jsx",
                "163.multi-line-comment.jsx" : "/try/t/run/163.multi-line-comment.jsx",
                "009.callfunc.jsx" : "/try/t/run/009.callfunc.jsx",
                "167.non-bool-exprs-in-loop-exprs.jsx" : "/try/t/run/167.non-bool-exprs-in-loop-exprs.jsx",
@@ -578,7 +592,11 @@
                "034.as.jsx" : "/try/t/run/034.as.jsx",
                "114.stmt-starting-w-as-noconvert.jsx" : "/try/t/run/114.stmt-starting-w-as-noconvert.jsx",
                "100.for-in-map.jsx" : "/try/t/run/100.for-in-map.jsx",
+               "200.template-under-namespace" : {
+                  "a.jsx" : "/try/t/run/200.template-under-namespace/a.jsx"
+               },
                "123.tostring-as-property.jsx" : "/try/t/run/123.tostring-as-property.jsx",
+               "203.static-var-with-lambda.jsx" : "/try/t/run/203.static-var-with-lambda.jsx",
                "105.in.jsx" : "/try/t/run/105.in.jsx",
                "198.template-as-param.jsx" : "/try/t/run/198.template-as-param.jsx",
                "174.undefined-in-array-literal.jsx" : "/try/t/run/174.undefined-in-array-literal.jsx",

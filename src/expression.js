@@ -114,7 +114,11 @@ var Expression = exports.Expression = Class.extend({
 			return new StringLiteralExpression(new Parser.Token("\"\"", false));
 		else
 			return new NullExpression(new Parser.Token("null", false), type);
-	}
+	},
+
+	$instantiateTemplate: function (context, token, className, typeArguments) {
+		return context.parser.lookupTemplate(context.errors, new TemplateInstantiationRequest(token, className, typeArguments), context.postInstantiationCallback);
+	},
 
 });
 
@@ -475,9 +479,13 @@ var ArrayLiteralExpression = exports.ArrayLiteralExpression = Expression.extend(
 			return false;
 		// determine the type from the array members if the type was not specified
 		if (this._type != null) {
-			var classDef = this._type.getClassDef();
-			if (! (classDef instanceof InstantiatedClassDefinition && classDef.getTemplateClassName() == "Array")) {
-				context.errors.push(new CompileError(this._token, "specified type is not an array type"));
+			var classDef;
+			if (this._type instanceof ObjectType
+				&& (classDef = this._type.getClassDef()) instanceof InstantiatedClassDefinition
+				&& classDef.getTemplateClassName() == "Array") {
+				//ok
+			} else {
+				context.errors.push(new CompileError(this._token, "the type specified after ':' is not an array type"));
 				return false;
 			}
 		} else {
@@ -488,10 +496,7 @@ var ArrayLiteralExpression = exports.ArrayLiteralExpression = Expression.extend(
 				} else {
 					if (elementType.equals(Type.integerType))
 						elementType = Type.numberType;
-					var instantiatedClass = context.instantiateTemplate(context.errors, new TemplateInstantiationRequest(this._token, "Array", [ elementType ]));
-					if (instantiatedClass == null)
-						return false;
-					this._type = new ObjectType(instantiatedClass);
+					this._type = new ObjectType(Expression.instantiateTemplate(context, this._token, "Array", [ elementType ]));
 					break;
 				}
 			}
@@ -613,10 +618,7 @@ var MapLiteralExpression = exports.MapLiteralExpression = Expression.extend({
 					if (elementType.equals(Type.integerType))
 						elementType = Type.numberType;
 					elementType = elementType.resolveIfNullable();
-					var instantiatedClass = context.instantiateTemplate(context.errors, new TemplateInstantiationRequest(this._token, "Map", [ elementType ]));
-					if (instantiatedClass == null)
-						return false;
-					this._type = new ObjectType(instantiatedClass);
+					this._type = new ObjectType(Expression.instantiateTemplate(context, this._token, "Map", [ elementType ]));
 					expectedType = elementType;
 					break;
 				}

@@ -127,7 +127,7 @@ vec3$NNN.prototype = new vec3;
  * @return {vec3}
  */
 vec3.vadd$Lvec3$Lvec3$ = function (a, b) {
-	return new vec3$NNN(a.x + b.x, a.y + b.y, a.z + b.z);
+	return {x: a.x + b.x, y: a.y + b.y, z: a.z + b.z};
 };
 
 var vec3$vadd$Lvec3$Lvec3$ = vec3.vadd$Lvec3$Lvec3$;
@@ -138,7 +138,7 @@ var vec3$vadd$Lvec3$Lvec3$ = vec3.vadd$Lvec3$Lvec3$;
  * @return {vec3}
  */
 vec3.vsub$Lvec3$Lvec3$ = function (a, b) {
-	return new vec3$NNN(a.x - b.x, a.y - b.y, a.z - b.z);
+	return {x: a.x - b.x, y: a.y - b.y, z: a.z - b.z};
 };
 
 var vec3$vsub$Lvec3$Lvec3$ = vec3.vsub$Lvec3$Lvec3$;
@@ -161,7 +161,7 @@ vec3.vcross$Lvec3$Lvec3$ = function (a, b) {
 	var y$1;
 	/** @type {!number} */
 	var x$1;
-	return new vec3$NNN((y$1 = a.y) * (z$1 = b.z) - (z$0 = a.z) * (y$0 = b.y), z$0 * (x$1 = b.x) - (x$0 = a.x) * z$1, x$0 * y$0 - y$1 * x$1);
+	return {x: (y$1 = a.y) * (z$1 = b.z) - (z$0 = a.z) * (y$0 = b.y), y: z$0 * (x$1 = b.x) - (x$0 = a.x) * z$1, z: x$0 * y$0 - y$1 * x$1};
 };
 
 var vec3$vcross$Lvec3$Lvec3$ = vec3.vcross$Lvec3$Lvec3$;
@@ -209,7 +209,7 @@ vec3.vnormalize$Lvec3$ = function (a) {
 	/** @type {!number} */
 	var z$0;
 	len = Math.sqrt((x$0 = a.x) * x$0 + (y$0 = a.y) * y$0 + (z$0 = a.z) * z$0);
-	v = new vec3$NNN(a.x, a.y, a.z);
+	v = {x: a.x, y: a.y, z: a.z};
 	if ((len >= 0 ? len : - len) > 1.0e-17) {
 		v.x /= len;
 		v.y /= len;
@@ -234,8 +234,8 @@ Isect.prototype = new Object;
 function Isect$() {
 	this.t = 1000000.0;
 	this.hit = false;
-	this.p = new vec3$NNN(0.0, 0.0, 0.0);
-	this.n = new vec3$NNN(0.0, 0.0, 0.0);
+	this.p = {x: 0.0, y: 0.0, z: 0.0};
+	this.n = {x: 0.0, y: 0.0, z: 0.0};
 };
 
 Isect$.prototype = new Isect;
@@ -281,10 +281,11 @@ function Sphere$Lvec3$N(center, radius) {
 Sphere$Lvec3$N.prototype = new Sphere;
 
 /**
+ * @param {Sphere} $this
  * @param {Ray} ray
  * @param {Isect} isect
  */
-Sphere.prototype.intersect$LRay$LIsect$ = function (ray, isect) {
+Sphere.intersect$LSphere$LRay$LIsect$ = function ($this, ray, isect) {
 	/** @type {!number} */
 	var B;
 	/** @type {!number} */
@@ -318,26 +319,28 @@ Sphere.prototype.intersect$LRay$LIsect$ = function (ray, isect) {
 	/** @type {!number} */
 	var radius$0;
 	a$0 = ray.org;
-	b$0 = this.center;
+	b$0 = $this.center;
 	rs$x$0 = a$0.x - b$0.x;
 	rs$y$0 = a$0.y - b$0.y;
 	rs$z$0 = a$0.z - b$0.z;
 	b$1 = ray.dir;
 	B = rs$x$0 * b$1.x + rs$y$0 * b$1.y + rs$z$0 * b$1.z;
-	C = rs$x$0 * rs$x$0 + rs$y$0 * rs$y$0 + rs$z$0 * rs$z$0 - (radius$0 = this.radius) * radius$0;
+	C = rs$x$0 * rs$x$0 + rs$y$0 * rs$y$0 + rs$z$0 * rs$z$0 - (radius$0 = $this.radius) * radius$0;
 	D = B * B - C;
 	if (D > 0.0) {
 		t = - B - Math.sqrt(D);
 		if (t > 0.0 && t < isect.t) {
 			isect.t = t;
 			isect.hit = true;
-			p$0 = isect.p = new vec3$NNN((org$0 = ray.org).x + (dir$0 = ray.dir).x * t, org$0.y + dir$0.y * t, org$0.z + dir$0.z * t);
-			b$2 = this.center;
-			n = new vec3$NNN(p$0.x - b$2.x, p$0.y - b$2.y, p$0.z - b$2.z);
+			p$0 = isect.p = {x: (org$0 = ray.org).x + (dir$0 = ray.dir).x * t, y: org$0.y + dir$0.y * t, z: org$0.z + dir$0.z * t};
+			b$2 = $this.center;
+			n = {x: p$0.x - b$2.x, y: p$0.y - b$2.y, z: p$0.z - b$2.z};
 			isect.n = vec3$vnormalize$Lvec3$(n);
 		}
 	}
 };
+
+var Sphere$intersect$LSphere$LRay$LIsect$ = Sphere.intersect$LSphere$LRay$LIsect$;
 
 /**
  * class Plane extends Object
@@ -360,10 +363,11 @@ function Plane$Lvec3$Lvec3$(p, n) {
 Plane$Lvec3$Lvec3$.prototype = new Plane;
 
 /**
+ * @param {Plane} $this
  * @param {Ray} ray
  * @param {Isect} isect
  */
-Plane.prototype.intersect$LRay$LIsect$ = function (ray, isect) {
+Plane.intersect$LPlane$LRay$LIsect$ = function ($this, ray, isect) {
 	/** @type {!number} */
 	var d;
 	/** @type {!number} */
@@ -378,21 +382,23 @@ Plane.prototype.intersect$LRay$LIsect$ = function (ray, isect) {
 	var org$0;
 	/** @type {vec3} */
 	var dir$0;
-	d = - vec3$vdot$Lvec3$Lvec3$(this.p, this.n);
+	d = - vec3$vdot$Lvec3$Lvec3$($this.p, $this.n);
 	a$0 = ray.dir;
-	b$0 = this.n;
+	b$0 = $this.n;
 	v = a$0.x * b$0.x + a$0.y * b$0.y + a$0.z * b$0.z;
 	if ((v >= 0 ? v : - v) < 1.0e-17) {
 		return;
 	}
-	t = - (vec3$vdot$Lvec3$Lvec3$(ray.org, this.n) + d) / v;
+	t = - (vec3$vdot$Lvec3$Lvec3$(ray.org, $this.n) + d) / v;
 	if (t > 0.0 && t < isect.t) {
 		isect.hit = true;
 		isect.t = t;
-		isect.n = this.n;
-		isect.p = new vec3$NNN((org$0 = ray.org).x + t * (dir$0 = ray.dir).x, org$0.y + t * dir$0.y, org$0.z + t * dir$0.z);
+		isect.n = $this.n;
+		isect.p = {x: (org$0 = ray.org).x + t * (dir$0 = ray.dir).x, y: org$0.y + t * dir$0.y, z: org$0.z + t * dir$0.z};
 	}
 };
+
+var Plane$intersect$LPlane$LRay$LIsect$ = Plane.intersect$LPlane$LRay$LIsect$;
 
 /**
  * class Random extends Object
@@ -433,8 +439,8 @@ AOBench.prototype = new Object;
  * @constructor
  */
 function AOBench$() {
-	this.spheres = [ new Sphere$Lvec3$N(new vec3$NNN(-2, 0.0, -3.5), 0.5), new Sphere$Lvec3$N(new vec3$NNN(-0.5, 0.0, -3), 0.5), new Sphere$Lvec3$N(new vec3$NNN(1.0, 0.0, -2.2), 0.5) ];
-	this.plane = new Plane$Lvec3$Lvec3$(new vec3$NNN(0.0, -0.5, 0.0), new vec3$NNN(0.0, 1.0, 0.0));
+	this.spheres = [ {center: {x: -2, y: 0.0, z: -3.5}, radius: 0.5}, {center: {x: -0.5, y: 0.0, z: -3}, radius: 0.5}, {center: {x: 1.0, y: 0.0, z: -2.2}, radius: 0.5} ];
+	this.plane = {p: {x: 0.0, y: -0.5, z: 0.0}, n: {x: 0.0, y: 1.0, z: 0.0}};
 };
 
 AOBench$.prototype = new AOBench;
@@ -459,10 +465,11 @@ AOBench.clamp$N = function (f) {
 var AOBench$clamp$N = AOBench.clamp$N;
 
 /**
+ * @param {AOBench} $this
  * @param {Array.<undefined|vec3>} basis
  * @param {vec3} n
  */
-AOBench.prototype.orthoBasis$ALvec3$Lvec3$ = function (basis, n) {
+AOBench.orthoBasis$LAOBench$ALvec3$Lvec3$ = function ($this, basis, n) {
 	/** @type {vec3} */
 	var a$0;
 	/** @type {vec3} */
@@ -478,7 +485,7 @@ AOBench.prototype.orthoBasis$ALvec3$Lvec3$ = function (basis, n) {
 	/** @type {!number} */
 	var x$0;
 	basis[2] = n;
-	basis[1] = new vec3$NNN(0.0, 0.0, 0.0);
+	basis[1] = {x: 0.0, y: 0.0, z: 0.0};
 	if ((x$0 = n.x) < 0.6 && x$0 > -0.6) {
 		basis[1].x = 1.0;
 	} else {
@@ -494,19 +501,22 @@ AOBench.prototype.orthoBasis$ALvec3$Lvec3$ = function (basis, n) {
 	}
 	a$0 = basis[1];
 	b$0 = basis[2];
-	basis[0] = new vec3$NNN(a$0.y * b$0.z - a$0.z * b$0.y, a$0.z * b$0.x - a$0.x * b$0.z, a$0.x * b$0.y - a$0.y * b$0.x);
+	basis[0] = {x: a$0.y * b$0.z - a$0.z * b$0.y, y: a$0.z * b$0.x - a$0.x * b$0.z, z: a$0.x * b$0.y - a$0.y * b$0.x};
 	basis[0] = vec3$vnormalize$Lvec3$(basis[0]);
 	a$1 = basis[2];
 	b$1 = basis[0];
-	basis[1] = new vec3$NNN(a$1.y * b$1.z - a$1.z * b$1.y, a$1.z * b$1.x - a$1.x * b$1.z, a$1.x * b$1.y - a$1.y * b$1.x);
+	basis[1] = {x: a$1.y * b$1.z - a$1.z * b$1.y, y: a$1.z * b$1.x - a$1.x * b$1.z, z: a$1.x * b$1.y - a$1.y * b$1.x};
 	basis[1] = vec3$vnormalize$Lvec3$(basis[1]);
 };
 
+var AOBench$orthoBasis$LAOBench$ALvec3$Lvec3$ = AOBench.orthoBasis$LAOBench$ALvec3$Lvec3$;
+
 /**
+ * @param {AOBench} $this
  * @param {Isect} isect
  * @return {vec3}
  */
-AOBench.prototype.ambient_occlusion$LIsect$ = function (isect) {
+AOBench.ambient_occlusion$LAOBench$LIsect$ = function ($this, isect) {
 	/** @type {Array.<undefined|vec3>} */
 	var basis;
 	/** @type {vec3} */
@@ -546,8 +556,8 @@ AOBench.prototype.ambient_occlusion$LIsect$ = function (isect) {
 	/** @type {vec3} */
 	var n$0;
 	basis = new Array(3);
-	this.orthoBasis$ALvec3$Lvec3$(basis, isect.n);
-	p = new vec3$NNN((p$0 = isect.p).x + 0.0001 * (n$0 = isect.n).x, p$0.y + 0.0001 * n$0.y, p$0.z + 0.0001 * n$0.z);
+	AOBench$orthoBasis$LAOBench$ALvec3$Lvec3$($this, basis, isect.n);
+	p = {x: (p$0 = isect.p).x + 0.0001 * (n$0 = isect.n).x, y: p$0.y + 0.0001 * n$0.y, z: p$0.z + 0.0001 * n$0.z};
 	occlusion = 0;
 	for (j = 0; j < 8; j++) {
 		for (i = 0; i < 8; i++) {
@@ -561,27 +571,30 @@ AOBench.prototype.ambient_occlusion$LIsect$ = function (isect) {
 			rx = x * basis[0].x + y * basis[1].x + z * basis[2].x;
 			ry = x * basis[0].y + y * basis[1].y + z * basis[2].y;
 			rz = x * basis[0].z + y * basis[1].z + z * basis[2].z;
-			raydir = new vec3$NNN(rx, ry, rz);
-			ray = new Ray$Lvec3$Lvec3$(p, raydir);
-			occIsect = new Isect$();
-			this.spheres[0].intersect$LRay$LIsect$(ray, occIsect);
-			this.spheres[1].intersect$LRay$LIsect$(ray, occIsect);
-			this.spheres[2].intersect$LRay$LIsect$(ray, occIsect);
-			this.plane.intersect$LRay$LIsect$(ray, occIsect);
+			raydir = {x: rx, y: ry, z: rz};
+			ray = {org: p, dir: raydir};
+			occIsect = {t: 1000000.0, hit: false, p: {x: 0.0, y: 0.0, z: 0.0}, n: {x: 0.0, y: 0.0, z: 0.0}};
+			Sphere$intersect$LSphere$LRay$LIsect$($this.spheres[0], ray, occIsect);
+			Sphere$intersect$LSphere$LRay$LIsect$($this.spheres[1], ray, occIsect);
+			Sphere$intersect$LSphere$LRay$LIsect$($this.spheres[2], ray, occIsect);
+			Plane$intersect$LPlane$LRay$LIsect$($this.plane, ray, occIsect);
 			if (occIsect.hit) {
 				occlusion++;
 			}
 		}
 	}
 	occ_f = (64 - occlusion) / 64;
-	return new vec3$NNN(occ_f, occ_f, occ_f);
+	return {x: occ_f, y: occ_f, z: occ_f};
 };
 
+var AOBench$ambient_occlusion$LAOBench$LIsect$ = AOBench.ambient_occlusion$LAOBench$LIsect$;
+
 /**
+ * @param {AOBench} $this
  * @param {!number} w
  * @param {!number} h
  */
-AOBench.prototype.render$F$IIIIIV$II = function (fill, w, h) {
+AOBench.render$LAOBench$F$IIIIIV$II = function ($this, fill, w, h) {
 	/** @type {!number} */
 	var half_w;
 	/** @type {!number} */
@@ -614,16 +627,16 @@ AOBench.prototype.render$F$IIIIIV$II = function (fill, w, h) {
 		for (x = 0; x < w; x++) {
 			px = (x - half_w) / half_w;
 			py = - (y - half_h) / half_h;
-			eye = vec3$vnormalize$Lvec3$(new vec3$NNN(px, py, -1));
-			ray = new Ray$Lvec3$Lvec3$(new vec3$NNN(0.0, 0.0, 0.0), eye);
-			isect = new Isect$();
-			this.spheres[0].intersect$LRay$LIsect$(ray, isect);
-			this.spheres[1].intersect$LRay$LIsect$(ray, isect);
-			this.spheres[2].intersect$LRay$LIsect$(ray, isect);
-			this.plane.intersect$LRay$LIsect$(ray, isect);
-			col = new vec3$NNN(0.0, 0.0, 0.0);
+			eye = vec3$vnormalize$Lvec3$({x: px, y: py, z: -1});
+			ray = {org: {x: 0.0, y: 0.0, z: 0.0}, dir: eye};
+			isect = {t: 1000000.0, hit: false, p: {x: 0.0, y: 0.0, z: 0.0}, n: {x: 0.0, y: 0.0, z: 0.0}};
+			Sphere$intersect$LSphere$LRay$LIsect$($this.spheres[0], ray, isect);
+			Sphere$intersect$LSphere$LRay$LIsect$($this.spheres[1], ray, isect);
+			Sphere$intersect$LSphere$LRay$LIsect$($this.spheres[2], ray, isect);
+			Plane$intersect$LPlane$LRay$LIsect$($this.plane, ray, isect);
+			col = {x: 0.0, y: 0.0, z: 0.0};
 			if (isect.hit) {
-				col = this.ambient_occlusion$LIsect$(isect);
+				col = AOBench$ambient_occlusion$LAOBench$LIsect$($this, isect);
 			}
 			r = AOBench$clamp$N(col.x);
 			g = AOBench$clamp$N(col.y);
@@ -632,6 +645,8 @@ AOBench.prototype.render$F$IIIIIV$II = function (fill, w, h) {
 		}
 	}
 };
+
+var AOBench$render$LAOBench$F$IIIIIV$II = AOBench.render$LAOBench$F$IIIIIV$II;
 
 /**
  * class _Main extends Object
@@ -665,17 +680,17 @@ _Main.main$AS = function (args) {
 	var t1;
 	/** @type {!number} */
 	var d;
-	canvas = (function (o) { return o instanceof HTMLCanvasElement ? o : null; })((function (o) { return o instanceof HTMLElement ? o : null; })(dom.window.document.getElementById("world")));
+	canvas = (function (o) { return o instanceof HTMLCanvasElement ? o : null; })((function (o) { return o instanceof HTMLElement ? o : null; })(dom.document.getElementById("world")));
 	ctx = (function (o) { return o instanceof CanvasRenderingContext2D ? o : null; })(canvas.getContext("2d"));
-	ao = new AOBench$();
+	ao = {spheres: [ {center: {x: -2, y: 0.0, z: -3.5}, radius: 0.5}, {center: {x: -0.5, y: 0.0, z: -3}, radius: 0.5}, {center: {x: 1.0, y: 0.0, z: -2.2}, radius: 0.5} ], plane: {p: {x: 0.0, y: -0.5, z: 0.0}, n: {x: 0.0, y: 1.0, z: 0.0}}};
 	t0 = Date.now();
-	ao.render$F$IIIIIV$II((function (x, y, r, g, b) {
+	AOBench$render$LAOBench$F$IIIIIV$II(ao, (function (x, y, r, g, b) {
 		ctx.fillStyle = "rgb(" + (r + "") + "," + (g + "") + "," + (b + "") + ")";
 		ctx.fillRect(x, y, 1, 1);
 	}), canvas.width, canvas.height);
 	t1 = Date.now();
 	d = t1 - t0;
-	(function (o) { return o instanceof HTMLElement ? o : null; })(dom.window.document.getElementById("status")).innerHTML = "Time = " + (d + "") + "[ms]";
+	(function (o) { return o instanceof HTMLElement ? o : null; })(dom.document.getElementById("status")).innerHTML = "Time = " + (d + "") + "[ms]";
 };
 
 var _Main$main$AS = _Main.main$AS;
@@ -701,7 +716,7 @@ dom$.prototype = new dom;
  * @return {HTMLElement}
  */
 dom.id$S = function (id) {
-	return (function (o) { return o instanceof HTMLElement ? o : null; })(dom.window.document.getElementById(id));
+	return (function (o) { return o instanceof HTMLElement ? o : null; })(dom.document.getElementById(id));
 };
 
 var dom$id$S = dom.id$S;
@@ -711,7 +726,7 @@ var dom$id$S = dom.id$S;
  * @return {HTMLElement}
  */
 dom.getElementById$S = function (id) {
-	return (function (o) { return o instanceof HTMLElement ? o : null; })(dom.window.document.getElementById(id));
+	return (function (o) { return o instanceof HTMLElement ? o : null; })(dom.document.getElementById(id));
 };
 
 var dom$getElementById$S = dom.getElementById$S;
@@ -721,7 +736,7 @@ var dom$getElementById$S = dom.getElementById$S;
  * @return {HTMLElement}
  */
 dom.createElement$S = function (tag) {
-	return dom.window.document.createElement(tag);
+	return dom.document.createElement(tag);
 };
 
 var dom$createElement$S = dom.createElement$S;
@@ -753,6 +768,9 @@ AOBench.NTHETA = 8;
 AOBench.ALLRAY = 64;
 $__jsx_lazy_init(dom, "window", function () {
 	return js.global.window;
+});
+$__jsx_lazy_init(dom, "document", function () {
+	return js.global.document;
 });
 js.global = (function () { return this; })();
 

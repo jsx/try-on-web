@@ -43,6 +43,7 @@
                "js-original.html" : "/try/example/aobench/js-original.html",
                "index.html" : "/try/example/aobench/index.html",
                "README" : "/try/example/aobench/README",
+               "aobench.jsx.js" : "/try/example/aobench/aobench.jsx.js",
                "ambientocclusion.js" : "/try/example/aobench/ambientocclusion.js"
             },
             "fireworks.html" : "/try/example/fireworks.html",
@@ -367,6 +368,7 @@
                "019.boolean.jsx" : "/try/t/run/019.boolean.jsx",
                "050.implicit-ctor-call.jsx" : "/try/t/run/050.implicit-ctor-call.jsx",
                "195.nested-cond.jsx" : "/try/t/run/195.nested-cond.jsx",
+               "208.overloaded-index-operator.jsx" : "/try/t/run/208.overloaded-index-operator.jsx",
                "121.decl-of-variant-array.jsx" : "/try/t/run/121.decl-of-variant-array.jsx",
                "005.for.jsx" : "/try/t/run/005.for.jsx",
                "145.construct-T.jsx" : "/try/t/run/145.construct-T.jsx",
@@ -388,10 +390,12 @@
                "199.template-arg-namespace.jsx" : "/try/t/run/199.template-arg-namespace.jsx",
                "143.map-access-converted-to-dotop.jsx" : "/try/t/run/143.map-access-converted-to-dotop.jsx",
                "086.as_nocheck-to-string.jsx" : "/try/t/run/086.as_nocheck-to-string.jsx",
+               "206.alternate-constructor-invocation.jsx" : "/try/t/run/206.alternate-constructor-invocation.jsx",
                "135.ignore.dot-files.jsx" : "/try/t/run/135.ignore.dot-files.jsx",
                "135.ignore.dot-files" : {
                   "foo.jsx" : "/try/t/run/135.ignore.dot-files/foo.jsx"
                },
+               "204.array-map.jsx" : "/try/t/run/204.array-map.jsx",
                "180.profile-exception-inline.jsx" : "/try/t/run/180.profile-exception-inline.jsx",
                "151.light-lambda-syntax.jsx" : "/try/t/run/151.light-lambda-syntax.jsx",
                "012.new.jsx" : "/try/t/run/012.new.jsx",
@@ -414,6 +418,7 @@
                "171.fused-div-of-int.jsx" : "/try/t/run/171.fused-div-of-int.jsx",
                "025.regexp.jsx" : "/try/t/run/025.regexp.jsx",
                "014.break-loop.jsx" : "/try/t/run/014.break-loop.jsx",
+               "207.alternate-constructor-invocation-in-template.jsx" : "/try/t/run/207.alternate-constructor-invocation-in-template.jsx",
                "148.null-in-cond-expr.jsx" : "/try/t/run/148.null-in-cond-expr.jsx",
                "142.static-closure.jsx" : "/try/t/run/142.static-closure.jsx",
                "173.interface-or-mixin-as-object.jsx" : "/try/t/run/173.interface-or-mixin-as-object.jsx",
@@ -587,6 +592,7 @@
                "131.assign-array-of-imported-class" : {
                   "module.jsx" : "/try/t/run/131.assign-array-of-imported-class/module.jsx"
                },
+               "203.call-func-in-map.jsx" : "/try/t/run/203.call-func-in-map.jsx",
                "138.test-case-module.jsx" : "/try/t/run/138.test-case-module.jsx",
                "067.static-member-vars2.jsx" : "/try/t/run/067.static-member-vars2.jsx",
                "034.as.jsx" : "/try/t/run/034.as.jsx",
@@ -600,6 +606,7 @@
                "105.in.jsx" : "/try/t/run/105.in.jsx",
                "198.template-as-param.jsx" : "/try/t/run/198.template-as-param.jsx",
                "174.undefined-in-array-literal.jsx" : "/try/t/run/174.undefined-in-array-literal.jsx",
+               "209.nested-rewrite-on-unclassify.jsx" : "/try/t/run/209.nested-rewrite-on-unclassify.jsx",
                "196.type-deduction-for-closures.jsx" : "/try/t/run/196.type-deduction-for-closures.jsx",
                "183.deduce-compfun-of-sort.jsx" : "/try/t/run/183.deduce-compfun-of-sort.jsx",
                "024.date.jsx" : "/try/t/run/024.date.jsx",

@@ -2,12 +2,12 @@
 <html lang="en">
   <head>
     <meta charset="utf-8">
-    <title>Hello, JSX!</title>
+    <title>Hello, WebAudio!</title>
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="robots" content="noindex,nofollow">
 
     <!-- Le styles -->
-    <link href="../assets/css/bootstrap.css" rel="stylesheet">
+    <link href="../../assets/css/bootstrap.css" rel="stylesheet">
     <style type="text/css">
       body {
         padding-top: 60px;
@@ -20,8 +20,8 @@
       <script src="http://html5shim.googlecode.com/svn/trunk/html5.js"></script>
     <![endif]-->
 
-    <script src="../build/jsx-compiler.js"></script>
-    <script type="application/jsx" src="hello-world.jsx" data-arguments="[]"></script>
+    <script src="../../build/jsx-compiler.js"></script>
+    <script type="application/jsx" src="hello-webaudio.jsx" data-arguments="[]"></script>
   </head>
 
   <body>
@@ -37,9 +37,9 @@
           <a class="brand" href="/">JSX</a>
           <div class="nav-collapse">
             <ul class="nav">
-              <li><a href="../">Try</a></li>
-              <li><a href="../source-map/">Debug with SourceMap</a></li>
-              <li class="active"><a href="../example/">Web Application Examples</a></li>
+              <li><a href="../../">Try</a></li>
+              <li><a href="../../source-map/">Debug with SourceMap</a></li>
+              <li class="active"><a href="../../example/">Web Application Examples</a></li>
             </ul>
           </div><!--/.nav-collapse -->
         </div>
@@ -49,15 +49,17 @@
     <div class="container">
       <div class="row">
         <div class="span8">
-          <h2>Hello, JSX!</h2>
+          <h2>Hello, WebAudio!</h2>
         </div>
-      </div>
-      <div class="row">
         <div class="span8">
-          <p><a class="btn btn-primary btn-large" id="run">Run the script</a></p>
+          <p id="message">This example of WebAudio API works only on Chrome.</p>
+          <p>
+            <input type="button" class="btn btn-primary btn-large" id="start" value="start" disabled="disabled" />
+            <input type="button" class="btn btn-primary btn-large" id="stop" value="stop" disabled="disabled" />
+          </p>
         </div>
       </div>
     </div> <!-- /container -->
-
   </body>
 </html>
+

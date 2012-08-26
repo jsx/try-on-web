@@ -52,6 +52,12 @@
             "hello-world.jsx" : "/try/example/hello-world.jsx",
             "sakura.png" : "/try/example/sakura.png",
             "js-fireworks.html" : "/try/example/js-fireworks.html",
+            "webaudio" : {
+               "hello-webaudio.jsx" : "/try/example/webaudio/hello-webaudio.jsx",
+               "material.txt" : "/try/example/webaudio/material.txt",
+               "amairo.mp3" : "/try/example/webaudio/amairo.mp3",
+               "index.html" : "/try/example/webaudio/index.html"
+            },
             "hello-world.html" : "/try/example/hello-world.html",
             "sakura.html" : "/try/example/sakura.html"
          },

@@ -83,6 +83,12 @@ JSX.postProfileResults = function (url) {
 		throw new Error("profiler has not been turned on");
 	return $__jsx_profiler.postResults(url);
 };
+
+JSX.resetProfileResults = function () {
+	if ($__jsx_profiler.resetResults == null)
+		throw new Error("profiler has not been turned on");
+	return $__jsx_profiler.resetResults();
+};
 /**
  * class Fib extends Object
  * @constructor

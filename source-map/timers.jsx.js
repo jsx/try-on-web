@@ -149,7 +149,7 @@ Timer.setTimeout$F$V$N = function (callback, intervalMS) {
 	return (function (v) {
 		if (! (v == null || typeof v === "function")) {
 			debugger;
-			throw new Error("[/Users/gfx/repo/try-on-web/JSX/lib/js/timer.jsx:27] detected invalid cast, value is not a function or null");
+			throw new Error("[/Users/fuji.goro/repo/try-on-web/JSX/lib/js/timer.jsx:27] detected invalid cast, value is not a function or null");
 		}
 		return v;
 	}(js.global.setTimeout))(callback, intervalMS);
@@ -164,7 +164,7 @@ Timer.clearTimeout$LTimerHandle$ = function (timer) {
 	(function (v) {
 		if (! (v == null || typeof v === "function")) {
 			debugger;
-			throw new Error("[/Users/gfx/repo/try-on-web/JSX/lib/js/timer.jsx:31] detected invalid cast, value is not a function or null");
+			throw new Error("[/Users/fuji.goro/repo/try-on-web/JSX/lib/js/timer.jsx:31] detected invalid cast, value is not a function or null");
 		}
 		return v;
 	}(js.global.clearTimeout))(timer);
@@ -180,7 +180,7 @@ Timer.setInterval$F$V$N = function (callback, intervalMS) {
 	return (function (v) {
 		if (! (v == null || typeof v === "function")) {
 			debugger;
-			throw new Error("[/Users/gfx/repo/try-on-web/JSX/lib/js/timer.jsx:35] detected invalid cast, value is not a function or null");
+			throw new Error("[/Users/fuji.goro/repo/try-on-web/JSX/lib/js/timer.jsx:35] detected invalid cast, value is not a function or null");
 		}
 		return v;
 	}(js.global.setInterval))(callback, intervalMS);
@@ -195,7 +195,7 @@ Timer.clearInterval$LTimerHandle$ = function (timer) {
 	(function (v) {
 		if (! (v == null || typeof v === "function")) {
 			debugger;
-			throw new Error("[/Users/gfx/repo/try-on-web/JSX/lib/js/timer.jsx:39] detected invalid cast, value is not a function or null");
+			throw new Error("[/Users/fuji.goro/repo/try-on-web/JSX/lib/js/timer.jsx:39] detected invalid cast, value is not a function or null");
 		}
 		return v;
 	}(js.global.clearInterval))(timer);
@@ -243,7 +243,7 @@ Timer._getRequestAnimationFrameImpl$B = function (useNativeImpl) {
 				return (function (v) {
 					if (! (v == null || typeof v === "function")) {
 						debugger;
-						throw new Error("[/Users/gfx/repo/try-on-web/JSX/lib/js/timer.jsx:65] detected invalid cast, value is not a function or null");
+						throw new Error("[/Users/fuji.goro/repo/try-on-web/JSX/lib/js/timer.jsx:65] detected invalid cast, value is not a function or null");
 					}
 					return v;
 				}(js.global.requestAnimationFrame))(callback);
@@ -254,7 +254,7 @@ Timer._getRequestAnimationFrameImpl$B = function (useNativeImpl) {
 					return (function (v) {
 						if (! (v == null || typeof v === "function")) {
 							debugger;
-							throw new Error("[/Users/gfx/repo/try-on-web/JSX/lib/js/timer.jsx:71] detected invalid cast, value is not a function or null");
+							throw new Error("[/Users/fuji.goro/repo/try-on-web/JSX/lib/js/timer.jsx:71] detected invalid cast, value is not a function or null");
 						}
 						return v;
 					}(js.global.webkitRequestAnimationFrame))(callback);
@@ -265,7 +265,7 @@ Timer._getRequestAnimationFrameImpl$B = function (useNativeImpl) {
 						return (function (v) {
 							if (! (v == null || typeof v === "function")) {
 								debugger;
-								throw new Error("[/Users/gfx/repo/try-on-web/JSX/lib/js/timer.jsx:77] detected invalid cast, value is not a function or null");
+								throw new Error("[/Users/fuji.goro/repo/try-on-web/JSX/lib/js/timer.jsx:77] detected invalid cast, value is not a function or null");
 							}
 							return v;
 						}(js.global.mozRequestAnimationFrame))(callback);
@@ -276,7 +276,7 @@ Timer._getRequestAnimationFrameImpl$B = function (useNativeImpl) {
 							return (function (v) {
 								if (! (v == null || typeof v === "function")) {
 									debugger;
-									throw new Error("[/Users/gfx/repo/try-on-web/JSX/lib/js/timer.jsx:83] detected invalid cast, value is not a function or null");
+									throw new Error("[/Users/fuji.goro/repo/try-on-web/JSX/lib/js/timer.jsx:83] detected invalid cast, value is not a function or null");
 								}
 								return v;
 							}(js.global.oRequestAnimationFrame))(callback);
@@ -287,7 +287,7 @@ Timer._getRequestAnimationFrameImpl$B = function (useNativeImpl) {
 								return (function (v) {
 									if (! (v == null || typeof v === "function")) {
 										debugger;
-										throw new Error("[/Users/gfx/repo/try-on-web/JSX/lib/js/timer.jsx:89] detected invalid cast, value is not a function or null");
+										throw new Error("[/Users/fuji.goro/repo/try-on-web/JSX/lib/js/timer.jsx:89] detected invalid cast, value is not a function or null");
 									}
 									return v;
 								}(js.global.msRequestAnimationFrame))(callback);
@@ -325,7 +325,7 @@ Timer._getCancelAnimationFrameImpl$B = function (useNativeImpl) {
 				(function (v) {
 					if (! (v == null || typeof v === "function")) {
 						debugger;
-						throw new Error("[/Users/gfx/repo/try-on-web/JSX/lib/js/timer.jsx:112] detected invalid cast, value is not a function or null");
+						throw new Error("[/Users/fuji.goro/repo/try-on-web/JSX/lib/js/timer.jsx:112] detected invalid cast, value is not a function or null");
 					}
 					return v;
 				}(js.global.cancelAnimationFrame))(timer);
@@ -336,7 +336,7 @@ Timer._getCancelAnimationFrameImpl$B = function (useNativeImpl) {
 					(function (v) {
 						if (! (v == null || typeof v === "function")) {
 							debugger;
-							throw new Error("[/Users/gfx/repo/try-on-web/JSX/lib/js/timer.jsx:118] detected invalid cast, value is not a function or null");
+							throw new Error("[/Users/fuji.goro/repo/try-on-web/JSX/lib/js/timer.jsx:118] detected invalid cast, value is not a function or null");
 						}
 						return v;
 					}(js.global.webkitCancelAnimationFrame))(timer);
@@ -347,7 +347,7 @@ Timer._getCancelAnimationFrameImpl$B = function (useNativeImpl) {
 						(function (v) {
 							if (! (v == null || typeof v === "function")) {
 								debugger;
-								throw new Error("[/Users/gfx/repo/try-on-web/JSX/lib/js/timer.jsx:124] detected invalid cast, value is not a function or null");
+								throw new Error("[/Users/fuji.goro/repo/try-on-web/JSX/lib/js/timer.jsx:124] detected invalid cast, value is not a function or null");
 							}
 							return v;
 						}(js.global.mozCancelAnimationFrame))(timer);
@@ -358,7 +358,7 @@ Timer._getCancelAnimationFrameImpl$B = function (useNativeImpl) {
 							(function (v) {
 								if (! (v == null || typeof v === "function")) {
 									debugger;
-									throw new Error("[/Users/gfx/repo/try-on-web/JSX/lib/js/timer.jsx:130] detected invalid cast, value is not a function or null");
+									throw new Error("[/Users/fuji.goro/repo/try-on-web/JSX/lib/js/timer.jsx:130] detected invalid cast, value is not a function or null");
 								}
 								return v;
 							}(js.global.oCancelAnimationFrame))(timer);
@@ -369,7 +369,7 @@ Timer._getCancelAnimationFrameImpl$B = function (useNativeImpl) {
 								(function (v) {
 									if (! (v == null || typeof v === "function")) {
 										debugger;
-										throw new Error("[/Users/gfx/repo/try-on-web/JSX/lib/js/timer.jsx:136] detected invalid cast, value is not a function or null");
+										throw new Error("[/Users/fuji.goro/repo/try-on-web/JSX/lib/js/timer.jsx:136] detected invalid cast, value is not a function or null");
 									}
 									return v;
 								}(js.global.msCancelAnimationFrame))(timer);

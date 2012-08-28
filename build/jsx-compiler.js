@@ -372,8 +372,9 @@ var ClassDefinition = exports.ClassDefinition = Class.extend({
 	$IS_READONLY: 512,
 	$IS_INLINE: 1024,
 	$IS_PURE: 2048, // constexpr (intended for for native functions)
+	$IS_DELETE: 4096, // used for disabling the default constructor
 
-	constructor: function (token, className, flags, extendType, implementTypes, members, objectTypesUsed) {
+	constructor: function (token, className, flags, extendType, implementTypes, members, objectTypesUsed, docComment) {
 		this._parser = null;
 		this._token = token;
 		this._className = className;
@@ -383,6 +384,7 @@ var ClassDefinition = exports.ClassDefinition = Class.extend({
 		this._implementTypes = implementTypes;
 		this._members = members;
 		this._objectTypesUsed = objectTypesUsed;
+		this._docComment = docComment;
 		this._optimizerStash = {};
 		for (var i = 0; i < this._members.length; ++i) {
 			this._members[i].setClassDef(this);
@@ -458,6 +460,14 @@ var ClassDefinition = exports.ClassDefinition = Class.extend({
 		return this._members;
 	},
 
+	getDocComment: function () {
+		return this._docComment;
+	},
+
+	setDocComment: function (docComment) {
+		this._docComment = docComment;
+	},
+
 	forEachClassToBase: function (cb) {
 		if (! cb(this))
 			return false;
@@ -524,7 +534,9 @@ var ClassDefinition = exports.ClassDefinition = Class.extend({
 			if (mode != ClassDefinition.GET_MEMBER_MODE_SUPER) {
 				for (var i = 0; i < classDef._members.length; ++i) {
 					var member = classDef._members[i];
-					if (isStatic == ((member.flags() & ClassDefinition.IS_STATIC) != 0)
+					if ((member.flags() & ClassDefinition.IS_DELETE) != 0) {
+						// skip
+					} else if (isStatic == ((member.flags() & ClassDefinition.IS_STATIC) != 0)
 						&& name == member.name()) {
 						if (member instanceof MemberVariableDefinition) {
 							if ((member.flags() & ClassDefinition.IS_OVERRIDE) == 0) {
@@ -1002,11 +1014,12 @@ var ClassDefinition = exports.ClassDefinition = Class.extend({
 // abstract class deriving Member(Function|Variable)Definition
 var MemberDefinition = exports.MemberDefinition = Class.extend({
 
-	constructor: function (token, nameToken, flags) {
+	constructor: function (token, nameToken, flags, docComment) {
 		this._token = token;
 		this._nameToken = nameToken; // may be null
 		if(typeof(nameToken) === "string") throw new Error("nameToken must be a Token object or null!");
 		this._flags = flags;
+		this._docComment = docComment;
 		this._classDef = null;
 		this._optimizerStash = {};
 	},
@@ -1032,6 +1045,14 @@ var MemberDefinition = exports.MemberDefinition = Class.extend({
 		this._flags = flags;
 	},
 
+	getDocComment: function () {
+		return this._docComment;
+	},
+
+	setDocComment: function (docComment) {
+		this._docComment = docComment;
+	},
+
 	getClassDef: function () {
 		return this._classDef;
 	},
@@ -1053,8 +1074,8 @@ var MemberVariableDefinition = exports.MemberVariableDefinition = MemberDefiniti
 	$ANALYZE_SUCEEDED: 2,
 	$ANALYZE_FAILED: 3,
 
-	constructor: function (token, name, flags, type, initialValue) {
-		MemberDefinition.call(this, token, name, flags);
+	constructor: function (token, name, flags, type, initialValue, docComment) {
+		MemberDefinition.call(this, token, name, flags, docComment);
 		this._type = type; // may be null
 		this._initialValue = initialValue; // may be null
 		this._analyzeState = MemberVariableDefinition.NOT_ANALYZED;
@@ -1134,8 +1155,8 @@ var MemberVariableDefinition = exports.MemberVariableDefinition = MemberDefiniti
 
 var MemberFunctionDefinition = exports.MemberFunctionDefinition = MemberDefinition.extend({
 
-	constructor: function (token, name, flags, returnType, args, locals, statements, closures, lastTokenOfBody) {
-		MemberDefinition.prototype.constructor.call(this, token, name, flags);
+	constructor: function (token, name, flags, returnType, args, locals, statements, closures, lastTokenOfBody, docComment) {
+		MemberDefinition.prototype.constructor.call(this, token, name, flags, docComment);
 		this._returnType = returnType;
 		this._args = args;
 		this._locals = locals;
@@ -1153,8 +1174,8 @@ var MemberFunctionDefinition = exports.MemberFunctionDefinition = MemberDefiniti
 	instantiate: function (instantiationContext) {
 		return this._instantiateCore(
 			instantiationContext,
-			function (token, name, flags, returnType, args, locals, statements, closures, lastTokenOfBody) {
-				return new MemberFunctionDefinition(token, name, flags, returnType, args, locals, statements, closures, lastTokenOfBody);
+			function (token, name, flags, returnType, args, locals, statements, closures, lastTokenOfBody, docComment) {
+				return new MemberFunctionDefinition(token, name, flags, returnType, args, locals, statements, closures, lastTokenOfBody, docComment);
 			});
 	},
 
@@ -1252,7 +1273,7 @@ var MemberFunctionDefinition = exports.MemberFunctionDefinition = MemberDefiniti
 		} else {
 			returnType = null;
 		}
-		return constructCallback(this._token, this._nameToken, this._flags, returnType, args, locals, statements, closures, null);
+		return constructCallback(this._token, this._nameToken, this._flags, returnType, args, locals, statements, closures, this._lastTokenOfBody, this._docComment);
 	},
 
 	serialize: function () {
@@ -1560,6 +1581,10 @@ var TemplateFunctionDefinition = exports.TemplateFunctionDefinition = MemberFunc
 		this._resolvedTypemap = {};
 	},
 
+	getTypeArguments: function () {
+		return this._typeArgs;
+	},
+
 	instantiate: function (instantiationContext) {
 		var instantiated = new TemplateFunctionDefinition(
 			this._token, this.getNameToken(), this.flags(), this._typeArgs.concat([]), this._returnType, this._args.concat([]),
@@ -1589,8 +1614,8 @@ var TemplateFunctionDefinition = exports.TemplateFunctionDefinition = MemberFunc
 		}
 		instantiated = this._instantiateCore(
 			instantiationContext,
-			function (token, name, flags, returnType, args, locals, statements, closures, lastTokenOfBody) {
-				return new InstantiatedMemberFunctionDefinition(token, name, flags, returnType, args, locals, statements, closures, lastTokenOfBody);
+			function (token, name, flags, returnType, args, locals, statements, closures, lastTokenOfBody, docComment) {
+				return new InstantiatedMemberFunctionDefinition(token, name, flags, returnType, args, locals, statements, closures, lastTokenOfBody, docComment);
 			});
 		if (instantiated == null) {
 			return null;
@@ -1810,7 +1835,7 @@ var LocalVariableStatuses = exports.LocalVariableStatuses = Class.extend({
 
 var TemplateClassDefinition = exports.TemplateClassDefinition = Class.extend({
 
-	constructor: function (className, flags, typeArgs, extendType, implementTypes, members, objectTypesUsed) {
+	constructor: function (className, flags, typeArgs, extendType, implementTypes, members, objectTypesUsed, docComment) {
 		this._className = className;
 		this._flags = flags;
 		this._typeArgs = typeArgs.concat([]);
@@ -1818,6 +1843,16 @@ var TemplateClassDefinition = exports.TemplateClassDefinition = Class.extend({
 		this._implementTypes = implementTypes;
 		this._members = members;
 		this._objectTypesUsed = objectTypesUsed;
+		this._docComment = docComment;
+		for (var i = 0; i < this._members.length; ++i) {
+			this._members[i].setClassDef(this);
+			if (this._members[i] instanceof MemberFunctionDefinition) {
+				this._members[i].forEachClosure(function setClassDef(funcDef) {
+					funcDef.setClassDef(this);
+					return funcDef.forEachClosure(setClassDef.bind(this));
+				}.bind(this));
+			}
+		}
 	},
 
 	className: function () {
@@ -1826,6 +1861,18 @@ var TemplateClassDefinition = exports.TemplateClassDefinition = Class.extend({
 
 	flags: function () {
 		return this._flags;
+	},
+
+	getTypeArguments: function () {
+		return this._typeArgs;
+	},
+
+	getDocComment: function () {
+		return this._docComment;
+	},
+
+	setDocComment: function (docComment) {
+		this._docComment = docComment;
 	},
 
 	instantiate: function (errors, request) {
@@ -1847,36 +1894,68 @@ var TemplateClassDefinition = exports.TemplateClassDefinition = Class.extend({
 		if (! succeeded)
 			return null;
 		var instantiatedDef = new InstantiatedClassDefinition(
-			this._className,
-			this._flags,
+			this,
 			request.getTypeArguments(),
 			this._extendType != null ? this._extendType.instantiate(instantiationContext): null,
 			this._implementTypes.map(function (t) { return t.instantiate(instantiationContext); }),
 			members,
 			instantiationContext.objectTypesUsed);
 		return instantiatedDef;
+	},
+
+	forEachMember: function (cb) {
+		for (var i = 0; i < this._members.length; ++i) {
+			if (! cb(this._members[i]))
+				return false;
+		}
+		return true;
+	},
+
+	forEachMemberVariable: function (cb) {
+		for (var i = 0; i < this._members.length; ++i) {
+			if (this._members[i] instanceof MemberVariableDefinition) {
+				if (! cb(this._members[i]))
+					return false;
+			}
+		}
+		return true;
+	},
+
+	forEachMemberFunction: function (cb) {
+		for (var i = 0; i < this._members.length; ++i) {
+			if (this._members[i] instanceof MemberFunctionDefinition) {
+				if (! cb(this._members[i]))
+					return false;
+			}
+		}
+		return true;
 	}
 
 });
 
 var InstantiatedClassDefinition = exports.InstantiatedClassDefinition = ClassDefinition.extend({
 
-	constructor: function (templateClassName, flags, typeArguments, extendType, implementTypes, members, objectTypesUsed) {
+	constructor: function (templateClassDef, typeArguments, extendType, implementTypes, members, objectTypesUsed) {
 		ClassDefinition.prototype.constructor.call(
 			this,
 			null,
-			Type.Type.templateTypeToString(templateClassName, typeArguments),
-			flags,
+			Type.Type.templateTypeToString(templateClassDef.className(), typeArguments),
+			templateClassDef.flags(),
 			extendType,
 			implementTypes,
 			members,
-			objectTypesUsed);
-		this._templateClassName = templateClassName;
+			objectTypesUsed,
+			null /* docComment is not used for instantiated class */);
+		this._templateClassDef = templateClassDef;
 		this._typeArguments = typeArguments;
 	},
 
+	getTemplateClass: function () {
+		return this._templateClassDef;
+	},
+
 	getTemplateClassName: function () {
-		return this._templateClassName;
+		return this._templateClassDef.className();
 	},
 
 	getTypeArguments: function () {
@@ -1993,6 +2072,7 @@ var Compiler = exports.Compiler = Class.extend({
 	$MODE_COMPILE: 0,
 	$MODE_PARSE: 1,
 	$MODE_COMPLETE: 2,
+	$MODE_DOC: 3,
 
 	constructor: function (platform) {
 		this._platform = platform;
@@ -2034,6 +2114,10 @@ var Compiler = exports.Compiler = Class.extend({
 
 	getWarningFilters: function () {
 		return this._warningFilters;
+	},
+
+	getParsers: function () {
+		return this._parsers;
 	},
 
 	addSourceFile: function (token, path, completionRequest) {
@@ -2084,8 +2168,12 @@ var Compiler = exports.Compiler = Class.extend({
 		this._analyze(errors);
 		if (! this._handleErrors(errors))
 			return false;
-		if(this._mode == Compiler.MODE_COMPLETE)
+		switch (this._mode) {
+		case Compiler.MODE_COMPLETE:
 			return true;
+		case Compiler.MODE_DOC:
+			return true;
+		}
 		// optimization
 		this._optimize();
 		// TODO peep-hole and dead store optimizations, etc.
@@ -2343,6 +2431,466 @@ var Compiler = exports.Compiler = Class.extend({
 });
 
 // vim: set noexpandtab:
+
+});require.register("doc.js", function(module, exports, require, global){
+/*
+ * Copyright (c) 2012 DeNA Co., Ltd.
+ * 
+ * Permission is hereby granted, free of charge, to any person obtaining a copy
+ * of this software and associated documentation files (the "Software"), to
+ * deal in the Software without restriction, including without limitation the
+ * rights to use, copy, modify, merge, publish, distribute, sublicense, and/or
+ * sell copies of the Software, and to permit persons to whom the Software is
+ * furnished to do so, subject to the following conditions:
+ * 
+ * The above copyright notice and this permission notice shall be included in
+ * all copies or substantial portions of the Software.
+ * 
+ * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+ * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+ * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+ * AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+ * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
+ * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS
+ * IN THE SOFTWARE.
+ */
+
+var Class = require("./Class");
+eval(Class.$import("./classdef"));
+eval(Class.$import("./type"));
+
+var DocCommentNode = exports.DocCommentNode = Class.extend({
+
+	constructor: function () {
+		this._description = "";
+	},
+
+	getDescription: function () {
+		return this._description;
+	},
+
+	appendDescription: function (s) {
+		// strip surrounding whitespace
+		s = s.replace(/^[ \t]*(.*)[ \t]*$/, function (_unused, m1) { return m1; });
+		// append
+		if (s != "") {
+			if (this._description != "") {
+				this._description += " ";
+			}
+			this._description += s;
+		}
+	}
+
+});
+
+var DocCommentParameter = exports.DocCommentParameter = DocCommentNode.extend({
+
+	constructor: function (paramName) {
+		DocCommentNode.prototype.constructor.call(this);
+		this._paramName = paramName;
+	},
+
+	getParamName: function () {
+		return this._paramName;
+	}
+
+});
+
+var DocCommentTag = exports.DocCommentTag = DocCommentNode.extend({
+
+	constructor: function (tagName) {
+		DocCommentNode.prototype.constructor.call(this);
+		this._tagName = tagName;
+	},
+
+	getTagName: function () {
+		return this._tagName;
+	}
+
+});
+
+var DocComment = exports.DocComment = DocCommentNode.extend({
+
+	constructor: function () {
+		DocCommentNode.prototype.constructor.call(this);
+		this._params = [];
+		this._tags = [];
+	},
+
+	getParams: function () {
+		return this._params;
+	},
+
+	getTags: function () {
+		return this._tags;
+	},
+
+	getTagByName: function (tagName) {
+		for (var i = 0; i < this._tags.length; ++i) {
+			if (this._tags[i].getTagName() == tagName) {
+				return this._tags[i];
+			}
+		}
+		return null;
+	}
+
+});
+
+var DocumentGenerator = exports.DocumentGenerator = Class.extend({
+
+	constructor: function (compiler) {
+		this._compiler = compiler;
+		this._outputPath = null;
+		this._pathFilter = null;
+		this._templatePath = null;
+		this._classDefToHTMLCache = []; // array of [ classDef, HTML ]
+	},
+
+	setOutputPath: function (outputPath) {
+		this._outputPath = outputPath;
+		return this;
+	},
+
+	setPathFilter: function (pathFilter/* : function (sourcePath : string) : boolean */) {
+		this._pathFilter = pathFilter;
+		return this;
+	},
+
+	setTemplatePath: function (path) {
+		this._templatePath = path;
+		return this;
+	},
+
+	buildDoc: function () {
+		var platform = this._compiler.getPlatform();
+		// CSS file is copied regardless of the template
+		platform.mkpath(this._outputPath);
+		platform.save(
+			this._outputPath + "/style.css",
+			platform.load(platform.getRoot() + "/src/doc/style.css"));
+		// output each file
+		this._compiler.getParsers().forEach(function (parser) {
+			if (this._pathFilter(parser.getPath())) {
+				var outputFile = this._outputPath + "/" + parser.getPath() + ".html";
+				platform.mkpath(outputFile.replace(/\/[^/]+$/, ""));
+				var html = this._buildDocOfFile(parser);
+				platform.save(outputFile, html);
+			}
+			return true;
+		}.bind(this));
+	},
+
+	_buildDocOfFile: function (parser) {
+		return this._compiler.getPlatform().load(this._templatePath).replace(
+			/<%JSX:(.*?)%>/g, 
+			function (_unused, key) {
+				switch (key) {
+				case "BASE_HREF":
+					// convert each component of dirname to ..
+					return parser.getPath().replace(/\/[^/]+$/, "").replace(/[^/]+/g, "..");
+				case "TITLE":
+					return this._escape(parser.getPath());
+				case "BODY":
+					return this._buildBodyOfFile(parser);
+				default:
+					throw new Error("unknown key:" + key + " in file: " + this._templatePath);
+				}
+			}.bind(this));
+	},
+
+	_buildBodyOfFile: function (parser) {
+		var _ = "";
+
+_ += "<div class=\"jsxdoc\">\n";
+_ += "<div class=\"file\">\n";
+_ += "<h1>"; _ += (this._escape(parser.getPath())).replace(/\n$/, ""); _ += "</h1>\n";
+		if (parser.getDocComment() != null) {
+_ += "<div class=\"description\">"; _ += (parser.getDocComment().getDescription()).replace(/\n$/, ""); _ += "</div>\n";
+		}
+_ += "</div>\n";
+_ += (this._buildListOfClasses(parser)).replace(/\n$/, ""); _ += "\n";
+_ += "</div>\n";
+
+		return _;
+	},
+
+	_buildListOfClasses: function (parser) {
+		var _ = "";
+
+_ += "<div class=\"classes\">\n";
+
+		parser.getTemplateClassDefs().forEach(function (classDef) {
+_ += (this._buildDocOfClass(parser, classDef)).replace(/\n$/, ""); _ += "\n";
+		}.bind(this));
+
+		parser.getClassDefs().forEach(function (classDef) {
+			if (! (classDef instanceof InstantiatedClassDefinition)) {
+_ += (this._buildDocOfClass(parser, classDef)).replace(/\n$/, ""); _ += "\n";
+			}
+		}.bind(this));
+
+_ += "</div>\n";
+
+		return _;
+	},
+	
+	_buildDocOfClass: function (parser, classDef) {
+		var typeName = "class";
+		if ((classDef.flags() & ClassDefinition.IS_INTERFACE) != 0) {
+			typeName = "interface";
+		} else if ((classDef.flags() & ClassDefinition.IS_MIXIN) != 0) {
+			typeName = "mixin";
+		}
+		var typeArgs = classDef instanceof TemplateClassDefinition ? classDef.getTypeArguments() : [];
+
+		var _ = "";
+
+_ += "<div class=\"class\" id=\"class-"; _ += (this._escape(classDef.className())).replace(/\n$/, ""); _ += "\">\n";
+_ += "<h2>"; _ += (this._flagsToHTML(classDef.flags()) + " " + this._escape(typeName + " " + classDef.className()) + this._formalTypeArgsToHTML(typeArgs)).replace(/\n$/, ""); _ += "</h2>\n";
+_ += (this._descriptionToHTML(classDef.getDocComment())).replace(/\n$/, ""); _ += "\n";
+
+		if (this._hasPublicProperties(classDef)) {
+			classDef.forEachMemberVariable(function (varDef) {
+				if (! this._isPrivate(varDef)) {
+_ += "<div class=\"member property\">\n";
+_ += "<h3>\n";
+_ += (this._flagsToHTML(varDef.flags())).replace(/\n$/, ""); _ += " var "; _ += (varDef.name()).replace(/\n$/, ""); _ += " : "; _ += (this._typeToHTML(parser, varDef.getType())).replace(/\n$/, ""); _ += "\n";
+_ += "</h3>\n";
+_ += (this._descriptionToHTML(varDef.getDocComment())).replace(/\n$/, ""); _ += "\n";
+_ += "</div>\n";
+				}
+				return true;
+			}.bind(this));
+		}
+
+		classDef.forEachMemberFunction(function (funcDef) {
+			if (! (funcDef instanceof InstantiatedMemberFunctionDefinition) && this._isConstructor(funcDef) && (funcDef.flags() & ClassDefinition.IS_DELETE) == 0) {
+_ += (this._buildDocOfFunction(parser, funcDef)).replace(/\n$/, ""); _ += "\n";
+			}
+			return true;
+		}.bind(this));
+
+		if (this._hasPublicFunctions(classDef)) {
+			classDef.forEachMemberFunction(function (funcDef) {
+				if (! (funcDef instanceof InstantiatedMemberFunctionDefinition || this._isConstructor(funcDef) || this._isPrivate(funcDef))) {
+_ += (this._buildDocOfFunction(parser, funcDef)).replace(/\n$/, ""); _ += "\n";
+				}
+				return true;
+			}.bind(this));
+		}
+
+_ += "</div>\n";
+
+		return _;
+	},
+
+	_buildDocOfFunction: function (parser, funcDef) {
+		var _ = "";
+		var funcName = this._isConstructor(funcDef) ? "new " + funcDef.getClassDef().className() : this._flagsToHTML(funcDef.flags()) + " function " + funcDef.name();
+		var args = funcDef.getArguments();
+		var argsHTML = args.map(function (arg) {
+			return this._escape(arg.getName().getValue()) + " : " + this._typeToHTML(parser, arg.getType());
+		}.bind(this)).join(", ");
+
+_ += "<div class=\"member function\">\n";
+_ += "<h3>\n";
+_ += (this._escape(funcName) + this._formalTypeArgsToHTML(funcDef instanceof TemplateFunctionDefinition ? funcDef.getTypeArguments() : [])).replace(/\n$/, ""); _ += "("; _ += (argsHTML).replace(/\n$/, ""); _ += ")\n";
+		if (! this._isConstructor(funcDef)) {
+_ += " : "; _ += (this._typeToHTML(parser, funcDef.getReturnType())).replace(/\n$/, ""); _ += "\n";
+		}
+_ += "</h3>\n";
+_ += (this._descriptionToHTML(funcDef.getDocComment())).replace(/\n$/, ""); _ += "\n";
+		if (this._argsHasDocComment(funcDef)) {
+_ += "<table class=\"arguments\">\n";
+			args.forEach(function (arg) {
+				var argName = arg.getName().getValue();
+_ += "<tr>\n";
+_ += "<td class=\"param-name\">"; _ += (this._escape(argName)).replace(/\n$/, ""); _ += "</td>\n";
+_ += "<td class=\"param-desc\">"; _ += (this._argumentDescriptionToHTML(argName, funcDef.getDocComment())).replace(/\n$/, ""); _ += "</td>\n";
+_ += "</tr>\n";
+			}.bind(this));
+_ += "</table>\n";
+
+		}
+
+_ += "</div>\n";
+
+		return _;
+	},
+
+	_descriptionToHTML: function (docComment) {
+		var _ = "";
+		var desc = docComment != null ? docComment.getDescription() : "";
+		if (desc != "") {
+_ += "<div class=\"description\">\n";
+_ += (desc).replace(/\n$/, ""); _ += "\n";
+_ += "</div>\n";
+		}
+		return _;
+	},
+
+	_argumentDescriptionToHTML: function (name, docComment) {
+		return docComment != null ? this._getDescriptionOfNamedArgument(docComment, name): "";
+	},
+
+	_formalTypeArgsToHTML: function (typeArgs) {
+		if (typeArgs.length == 0) {
+			return "";
+		}
+		return ".&lt;"
+			+ typeArgs.map(function (typeArg) { return this._escape(typeArg.getValue()); }.bind(this)).join(", ")
+			+ "&gt;";
+	},
+
+	_typeToHTML: function (parser, type) {
+		// TODO create links for object types
+		if (type instanceof ObjectType) {
+			var classDef = type.getClassDef();
+			if (classDef != null) {
+				return this._classDefToHTML(parser, classDef);
+			} else if (type instanceof ParsedObjectType && type.getTypeArguments().length != 0) {
+				classDef = type.getQualifiedName().getTemplateClass(parser);
+				if (classDef != null) {
+					return this._classDefToHTML(parser, classDef)
+						+ ".&lt;"
+						+ type.getTypeArguments().map(function (type) { return this._typeToHTML(parser, type); }.bind(this)).join(", ")
+						+ "&gt;";
+				}
+			}
+		} else if (type instanceof FunctionType) {
+			return "function "
+				+ "("
+				+ type.getArgumentTypes().map(function (type) {
+					return ":" + this._typeToHTML(parser, type);
+				}.bind(this)).join(", ")
+				+ ") : " + this._typeToHTML(parser, type.getReturnType());
+		} else if (type instanceof VariableLengthArgumentType) {
+			return "..." + this._typeToHTML(parser, type.getBaseType());
+		}
+		return this._escape(type.toString());
+	},
+
+	_classDefToHTML: function (parser, classDef) {
+		// instantiated classes should be handled separately
+		if (classDef instanceof InstantiatedClassDefinition) {
+			return this._classDefToHTML(parser, classDef.getTemplateClass())
+				+ ".&lt;"
+				+ classDef.getTypeArguments().map(function (type) { return this._typeToHTML(parser, type); }.bind(this)).join(", ")
+				+ "&gt;";
+		}
+		// lokup the cache
+		for (var cacheIndex = 0; cacheIndex < this._classDefToHTMLCache.length; ++cacheIndex) {
+			if (this._classDefToHTMLCache[cacheIndex][0] == classDef) {
+				return this._classDefToHTMLCache[cacheIndex][1];
+			}
+		}
+		// determine the parser to which the classDef belongs
+		var parserOfClassDef = function () {
+			var parsers = this._compiler.getParsers();
+			for (var i = 0; i < parsers.length; ++i) {
+				if (parsers[i].getClassDefs().indexOf(classDef) != -1
+					|| parsers[i].getTemplateClassDefs().indexOf(classDef) != -1) {
+					return parsers[i];
+				}
+			}
+			throw new Error("could not determine the parser to which the class belongs:" + classDef.className());
+		}.call(this);
+		// return text if we cannot linkify the class name
+		if (! this._pathFilter(parserOfClassDef.getPath())) {
+			return this._escape(classDef.className());
+		}
+		// linkify and return
+		var _ = "";
+_ += "<a href=\""; _ += (this._escape(parserOfClassDef.getPath())).replace(/\n$/, ""); _ += ".html#class-"; _ += (this._escape(classDef.className())).replace(/\n$/, ""); _ += "\">"; _ += (this._escape(classDef.className())).replace(/\n$/, ""); _ += "</a>\n";
+		_ = _.trim();
+		this._classDefToHTMLCache.push([classDef, _]);
+		return _;
+	},
+
+	_flagsToHTML: function (flags) {
+		var strs = [];
+		// does not expose internal properties
+		if ((flags & ClassDefinition.IS_STATIC) != 0)
+			strs.push("static");
+		if ((flags & ClassDefinition.IS_CONST) != 0)
+			strs.push("const");
+		if ((flags & ClassDefinition.IS_ABSTRACT) != 0)
+			strs.push("abstract");
+		if ((flags & ClassDefinition.IS_FINAL) != 0)
+			strs.push("final");
+		if ((flags & ClassDefinition.IS_OVERRIDE) != 0)
+			strs.push("override");
+		if ((flags & ClassDefinition.IS_INLINE) != 0)
+			strs.push("inline");
+		return strs.join(" ");
+	},
+
+	_escape: function (str) {
+		return str.replace(/[<>&'"]/g, function (ch) {
+			return {
+				"<": "&lt;",
+				">": "&gt;",
+				"&": "&amp;",
+				"'": "&#39;",
+				"\"": "&quot;"
+			}[ch];
+		});
+	},
+
+	_hasPublicProperties: function (classDef) {
+		return ! classDef.forEachMemberVariable(function (varDef) {
+			if (! this._isPrivate(varDef)) {
+				return false;
+			}
+			return true;
+		}.bind(this));
+	},
+
+	_hasPublicFunctions: function (classDef) {
+		return ! classDef.forEachMemberFunction(function (funcDef) {
+			if (funcDef instanceof InstantiatedMemberFunctionDefinition
+				|| this._isConstructor(funcDef)
+				|| this._isPrivate(funcDef)) {
+				return true;
+			}
+			return false;
+		}.bind(this));
+	},
+
+	_argsHasDocComment: function (funcDef) {
+		var docComment = funcDef.getDocComment();
+		if (docComment == null) {
+			return false;
+		}
+		var args = funcDef.getArguments();
+		for (var argIndex = 0; argIndex < args.length; ++argIndex) {
+			if (this._getDescriptionOfNamedArgument(docComment, args[argIndex].getName().getValue()) != "") {
+				return true;
+			}
+		}
+		return false;
+	},
+
+	_getDescriptionOfNamedArgument: function (docComment, argName) {
+		var params = docComment.getParams();
+		for (var paramIndex = 0; paramIndex < params.length; ++paramIndex) {
+			if (params[paramIndex].getParamName() == argName) {
+				return params[paramIndex].getDescription();
+			}
+		}
+		return "";
+	},
+
+	_isConstructor: function (funcDef) {
+		return funcDef.name() == "constructor"
+			&& (funcDef.flags() & ClassDefinition.IS_STATIC) == 0;
+	},
+
+	_isPrivate: function (memberDef) {
+		return memberDef.name().charAt(0) == "_";
+	}
+
+});
 
 });require.register("dump.js", function(module, exports, require, global){
 /*
@@ -4469,6 +5017,11 @@ var NewExpression = exports.NewExpression = OperatorExpression.extend({
 			return false;
 		}
 		var ctors = classDef.getMemberTypeByName(context.errors, this._token, "constructor", false, [], ClassDefinition.GET_MEMBER_MODE_CLASS_ONLY);
+		if (ctors == null) {
+			// classes will always have at least one constructor unless the default constructor is marked "delete"
+			context.errors.push(new CompileError(this._token, "the class cannot be instantiated"));
+			return false;
+		}
 		var argTypes = Util.analyzeArgs(
 			context, this._args, this,
 			ctors.getExpectedCallbackTypes(this._args.length, false));
@@ -6360,6 +6913,15 @@ var _NewExpressionEmitter = exports._NewExpressionEmitter = _OperatorExpressionE
 		var inliner = getInliner(callingFuncDef);
 		if (inliner) {
 			this._emitAsObjectLiteral(classDef, inliner(this._expr));
+		} else if (
+			classDef instanceof InstantiatedClassDefinition
+			&& classDef.getTemplateClassName() == "Array"
+			&& argTypes.length == 0) {
+			this._emitter._emit("[]", this._expr.getToken());
+		} else if (
+			classDef instanceof InstantiatedClassDefinition
+			&& classDef.getTemplateClassName() == "Map") {
+			this._emitter._emit("{}", this._expr.getToken());
 		} else {
 			this._emitter._emitCallArguments(
 				this._expr.getToken(),
@@ -10082,6 +10644,7 @@ eval(Class.$import("./type"));
 eval(Class.$import("./classdef"));
 eval(Class.$import("./statement"));
 eval(Class.$import("./expression"));
+eval(Class.$import("./doc"));
 eval(Class.$import("./util"));
 
 "use strict";
@@ -10489,6 +11052,30 @@ var QualifiedName = exports.QualifiedName = Class.extend({
 			}
 		}
 		return classDef;
+	},
+
+	getTemplateClass: function (parser) {
+		var foundClassDefs = [];
+		var checkClassDef = function (classDef) {
+			if (classDef.className() == this._token.getValue()) {
+				foundClassDefs.push(classDef);
+			}
+		}.bind(this);
+		if (this._import != null) {
+			this._import.getSources().forEach(function (parser) {
+				parser.getTemplateClassDefs().forEach(checkClassDef);
+			});
+		} else {
+			parser.getTemplateClassDefs().forEach(checkClassDef);
+			if (foundClassDefs.length == 0) {
+				parser.getImports().forEach(function (imprt) {
+					imprt.getSources().forEach(function (parser) {
+						parser.getTemplateClassDefs().forEach(checkClassDef);
+					});
+				});
+			}
+		}
+		return foundClassDefs.length == 1 ? foundClassDefs[0] : null;
 	}
 
 });
@@ -10504,10 +11091,12 @@ var Parser = exports.Parser = Class.extend({
 	parse: function (input, errors) {
 		// lexer properties
 		this._input = input;
-		this._lines = this._input.split(/\r|\n|\r\n/);
+		this._lines = this._input.split(_Lexer.rxNewline);
 		this._tokenLength = 0;
 		this._lineNumber = 1; // one origin
 		this._columnOffset = 0; // zero origin
+		this._fileLevelDocComment = null;
+		this._docComment = null;
 		// insert a marker so that at the completion location we would always get _expectIdentifierOpt called, whenever possible
 		if (this._completionRequest != null) {
 			var compLineNumber = Math.min(this._completionRequest.getLineNumber(), this._lines.length + 1);
@@ -10567,6 +11156,10 @@ var Parser = exports.Parser = Class.extend({
 
 	getPath: function () {
 		return this._filename;
+	},
+
+	getDocComment: function () {
+		return this._fileLevelDocComment;
 	},
 
 	getClassDefs: function () {
@@ -10713,6 +11306,7 @@ var Parser = exports.Parser = Class.extend({
 			// lexer properties
 			lineNumber: this._lineNumber,
 			columnOffset: this._columnOffset,
+			docComment: this._docComment,
 			tokenLength: this._tokenLength,
 			// errors
 			numErrors: this._errors.length,
@@ -10728,6 +11322,7 @@ var Parser = exports.Parser = Class.extend({
 	_restoreState: function (state) {
 		this._lineNumber = state.lineNumber;
 		this._columnOffset = state.columnOffset;
+		this._docComment = state.docComment;
 		this._tokenLength = state.tokenLength;
 		this._errors.length = state.numErrors;
 		this._closures.splice(state.numClosures);
@@ -10749,8 +11344,11 @@ var Parser = exports.Parser = Class.extend({
 	},
 
 	_advanceToken: function () {
-		this._forwardPos(this._tokenLength);
-		this._tokenLength = 0;
+		if (this._tokenLength != 0) {
+			this._forwardPos(this._tokenLength);
+			this._tokenLength = 0;
+			this._docComment = null;
+		}
 
 		while (true) {
 			// skip whitespaces and comments in-line
@@ -10767,10 +11365,30 @@ var Parser = exports.Parser = Class.extend({
 			}
 			switch (this._getInputByLength(2)) {
 			case "/*":
-				if (! this._skipMultilineComment())
-					return;
+				if (this._getInputByLength(4) == "/***") {
+					this._forwardPos(3); // skip to the last *, since the input might be: /***/
+					var fileLevelDocComment = this._parseDocComment();
+					if (fileLevelDocComment == null) {
+						return;
+					}
+					// the first "/***" comment is the file-level doc comment
+					if (this._fileLevelDocComment == null) {
+						this._fileLevelDocComment = fileLevelDocComment;
+					}
+				} else if (this._getInputByLength(3) == "/**") {
+					this._forwardPos(2); // skip to the last *, the input might be: /**/
+					if ((this._docComment = this._parseDocComment()) == null) {
+						return;
+					}
+				} else {
+					this._docComment = null;
+					if (! this._skipMultilineComment()) {
+						return;
+					}
+				}
 				break;
 			case "//":
+				this._docComment = null;
 				if (this._lineNumber == this._lines.length) {
 					this._columnOffset = this._lines[this._lineNumber - 1].length;
 				} else {
@@ -10800,6 +11418,76 @@ var Parser = exports.Parser = Class.extend({
 			}
 			++this._lineNumber;
 			this._columnOffset = 0;
+		}
+	},
+
+	_parseDocComment: function () {
+
+		var docComment = new DocComment();
+		var node = docComment;
+
+		while (true) {
+			// skip " * ", or return if "*/"
+			this._parseDocCommentAdvanceWhiteSpace();
+			if (this._getInputByLength(2) == "*/") {
+				this._forwardPos(2);
+				return docComment;
+			} else if (this._getInputByLength(1) == "*") {
+				this._forwardPos(1);
+				this._parseDocCommentAdvanceWhiteSpace();
+			}
+			// fetch tag (and paramName), and setup the target node to push content into
+			var tagMatch = this._getInput(this._columnOffset).match(/^\@([0-9A-Za-z_]+)[ \t]*/);
+			if (tagMatch != null) {
+				this._forwardPos(tagMatch[0].length);
+				var tag = tagMatch[1];
+				switch (tag) {
+				case "param":
+					var nameMatch = this._getInput(this._columnOffset).match(/[0-9A-Za-z_]+/);
+					if (nameMatch != null) {
+						this._forwardPos(nameMatch[0].length);
+						node = new DocCommentParameter(nameMatch[0]);
+						docComment.getParams().push(node);
+					} else {
+						this._newError("name of the parameter not found after @param");
+						node = null;
+					}
+					break;
+				default:
+					node = new DocCommentTag(tag);
+					docComment.getTags().push(node);
+					break;
+				}
+			}
+			var endAt = this._getInput(this._columnOffset).indexOf("*/");
+			if (endAt != -1) {
+				if (node != null) {
+					node.appendDescription(this._getInput(this._columnOffset).substring(0, endAt));
+				}
+				this._forwardPos(endAt + 2);
+				return docComment;
+			}
+			if (node != null) {
+				node.appendDescription(this._getInput(this._columnOffset));
+			}
+			if (this._lineNumber == this._lines.length) {
+				this._columnOffset = this._lines[this._lineNumber - 1].length;
+				this._newError("could not find the end of the doccomment");
+				return null;
+			}
+			++this._lineNumber;
+			this._columnOffset = 0;
+		}
+	},
+
+	_parseDocCommentAdvanceWhiteSpace: function () {
+		while (true) {
+			var ch = this._getInputByLength(1);
+			if (ch == " " || ch == "\t") {
+				this._forwardPos(1);
+			} else {
+				break;
+			}
 		}
 	},
 
@@ -11047,10 +11735,13 @@ var Parser = exports.Parser = Class.extend({
 		this._objectTypesUsed = [];
 		// attributes* class
 		this._classFlags = 0;
+		var docComment = null;
 		while (true) {
 			var token = this._expect([ "class", "interface", "mixin", "abstract", "final", "native", "__fake__" ]);
 			if (token == null)
 				return false;
+			if (this._classFlags == 0)
+				docComment = this._docComment;
 			if (token.getValue() == "class")
 				break;
 			if (token.getValue() == "interface") {
@@ -11204,9 +11895,9 @@ var Parser = exports.Parser = Class.extend({
 
 		// done
 		if (this._typeArgs.length != 0) {
-			this._templateClassDefs.push(new TemplateClassDefinition(className.getValue(), this._classFlags, this._typeArgs, this._extendType, this._implementTypes, members, this._objectTypesUsed));
+			this._templateClassDefs.push(new TemplateClassDefinition(className.getValue(), this._classFlags, this._typeArgs, this._extendType, this._implementTypes, members, this._objectTypesUsed, docComment));
 		} else {
-			var classDef = new ClassDefinition(className, className.getValue(), this._classFlags, this._extendType, this._implementTypes, members, this._objectTypesUsed);
+			var classDef = new ClassDefinition(className, className.getValue(), this._classFlags, this._extendType, this._implementTypes, members, this._objectTypesUsed, docComment);
 			this._classDefs.push(classDef);
 			classDef.setParser(this);
 		}
@@ -11215,10 +11906,13 @@ var Parser = exports.Parser = Class.extend({
 
 	_memberDefinition: function () {
 		var flags = 0;
+		var docComment = null;
 		while (true) {
-			var token = this._expect([ "function", "var", "static", "abstract", "override", "final", "const", "native", "__readonly__", "inline", "__pure__" ]);
+			var token = this._expect([ "function", "var", "static", "abstract", "override", "final", "const", "native", "__readonly__", "inline", "__pure__", "delete" ]);
 			if (token == null)
 				return null;
+			if (flags == 0)
+				docComment = this._docComment;
 			if (token.getValue() == "const") {
 				if ((flags & ClassDefinition.IS_STATIC) == 0) {
 					this._newError("constants must be static");
@@ -11267,6 +11961,9 @@ var Parser = exports.Parser = Class.extend({
 			case "__pure__":
 				newFlag = ClassDefinition.IS_PURE;
 				break;
+			case "delete":
+				newFlag = ClassDefinition.IS_DELETE;
+				break;
 			default:
 				throw new Error("logic flaw");
 			}
@@ -11279,7 +11976,7 @@ var Parser = exports.Parser = Class.extend({
 		if ((this._classFlags & ClassDefinition.IS_INTERFACE) != 0)
 			flags |= ClassDefinition.IS_ABSTRACT;
 		if (token.getValue() == "function") {
-			return this._functionDefinition(token, flags, this._classFlags);
+			return this._functionDefinition(token, flags, docComment);
 		}
 		// member variable decl.
 		if ((flags & ~(ClassDefinition.IS_STATIC | ClassDefinition.IS_ABSTRACT | ClassDefinition.IS_CONST | ClassDefinition.IS_READONLY | ClassDefinition.IS_INLINE)) != 0) {
@@ -11315,10 +12012,10 @@ var Parser = exports.Parser = Class.extend({
 		// all non-native, non-template values have initial value
 		if (this._typeArgs.length == 0 && initialValue == null && (this._classFlags & ClassDefinition.IS_NATIVE) == 0)
 			initialValue = Expression.getDefaultValueExpressionOf(type);
-		return new MemberVariableDefinition(token, name, flags, type, initialValue);
+		return new MemberVariableDefinition(token, name, flags, type, initialValue, docComment);
 	},
 
-	_functionDefinition: function (token, flags) {
+	_functionDefinition: function (token, flags, docComment) {
 		// name
 		var name = this._expectIdentifier(null);
 		if (name == null)
@@ -11367,13 +12064,24 @@ var Parser = exports.Parser = Class.extend({
 				if (returnType == null)
 					return null;
 			}
+			// take care of: "delete function constructor();"
+			if ((flags & ClassDefinition.IS_DELETE) != 0) {
+				if (name.getValue() != "constructor" || (flags & ClassDefinition.IS_STATIC) != 0) {
+					this._newError("only constructors may have the \"delete\" attribute set");
+					return null;
+				}
+				if (args.length != 0) {
+					this._newError("cannot \"delete\" a constructor with one or more arguments");
+					return null;
+				}
+			}
 			function createDefinition(locals, statements, closures, lastToken) {
 				return typeArgs.length != 0
 					? new TemplateFunctionDefinition(token, name, flags, typeArgs, returnType, args, locals, statements, closures, lastToken)
 					: new MemberFunctionDefinition(token, name, flags, returnType, args, locals, statements, closures, lastToken);
 			}
 			// take care of abstract function
-			if ((this._classFlags & ClassDefinition.IS_INTERFACE) != 0) {
+			if ((this._classFlags & (ClassDefinition.IS_INTERFACE | ClassDefinition.IS_DELETE)) != 0) {
 				if (this._expect(";") == null)
 					return null;
 				return createDefinition(null, null, null, null);
@@ -12512,13 +13220,13 @@ var Parser = exports.Parser = Class.extend({
 				var expr = this._expr();
 				this._statements.push(new ReturnStatement(token, expr));
 				return new MemberFunctionDefinition(
-						token, null, ClassDefinition.IS_STATIC, returnType, args, this._locals, this._statements, this._closures, null);
+						token, null, ClassDefinition.IS_STATIC, returnType, args, this._locals, this._statements, this._closures, null, null);
 			} else {
 				var lastToken = this._block();
 				if (lastToken == null)
 					return null;
 				return new MemberFunctionDefinition(
-						token, null, ClassDefinition.IS_STATIC, returnType, args, this._locals, this._statements, this._closures, lastToken);
+						token, null, ClassDefinition.IS_STATIC, returnType, args, this._locals, this._statements, this._closures, lastToken, null);
 			}
 		} finally {
 			this._popScope();
@@ -12566,7 +13274,7 @@ var Parser = exports.Parser = Class.extend({
 			this._popScope();
 			return null;
 		}
-		var funcDef = new MemberFunctionDefinition(token, null, ClassDefinition.IS_STATIC, returnType, args, this._locals, this._statements, this._closures, lastToken);
+		var funcDef = new MemberFunctionDefinition(token, null, ClassDefinition.IS_STATIC, returnType, args, this._locals, this._statements, this._closures, lastToken, null);
 		this._popScope();
 		this._closures.push(funcDef);
 		return new FunctionExpression(token, funcDef);
@@ -15293,6 +16001,10 @@ var ParsedObjectType = exports.ParsedObjectType = ObjectType.extend({
 		return this._qualifiedName.getToken();
 	},
 
+	getQualifiedName: function () {
+		return this._qualifiedName;
+	},
+
 	getTypeArguments: function () {
 		return this._typeArguments;
 	},
@@ -15960,8 +16672,8 @@ var CompileIssue = exports.CompileError = Class.extend({
 		sourceLine += Util.repeat(" ", col);
 		sourceLine += Util.repeat("^", this._size);
 
-		return Util.format("[%1:%2] %3%4\n%5\n",
-						   [this._filename, this._lineNumber, this.getPrefix(), this._message, sourceLine]);
+		return Util.format("[%1:%2:%3] %4%5\n%6\n",
+						   [this._filename, this._lineNumber, col, this.getPrefix(), this._message, sourceLine]);
 	}
 
 });

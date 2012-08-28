@@ -43,7 +43,6 @@
                "js-original.html" : "/try/example/aobench/js-original.html",
                "index.html" : "/try/example/aobench/index.html",
                "README" : "/try/example/aobench/README",
-               "aobench.jsx.js" : "/try/example/aobench/aobench.jsx.js",
                "ambientocclusion.js" : "/try/example/aobench/ambientocclusion.js"
             },
             "fireworks.html" : "/try/example/fireworks.html",
@@ -62,6 +61,7 @@
             "sakura.html" : "/try/example/sakura.html"
          },
          "src" : {
+            "doc.js" : "/try/src/doc.js",
             "util.js" : "/try/src/util.js",
             "type.js" : "/try/src/type.js",
             "emitter.js" : "/try/src/emitter.js",
@@ -73,9 +73,14 @@
             "platform.js" : "/try/src/platform.js",
             "optimizer.js" : "/try/src/optimizer.js",
             "jsemitter.js" : "/try/src/jsemitter.js",
+            "doc" : {
+               "style.css" : "/try/src/doc/style.css",
+               "template.html" : "/try/src/doc/template.html"
+            },
             "Class.js" : "/try/src/Class.js",
             "dump.js" : "/try/src/dump.js",
             "expression.js" : "/try/src/expression.js",
+            "_doc.js" : "/try/src/_doc.js",
             "compiler.js" : "/try/src/compiler.js",
             "parser.js" : "/try/src/parser.js",
             "browser-platform.js" : "/try/src/browser-platform.js",
@@ -248,6 +253,7 @@
                "116.map-property-is-not-number.jsx" : "/try/t/compile_error/116.map-property-is-not-number.jsx",
                "021.delete-var.jsx" : "/try/t/compile_error/021.delete-var.jsx",
                "064.super-invocation-order.jsx" : "/try/t/compile_error/064.super-invocation-order.jsx",
+               "152.delete-constructor.jsx" : "/try/t/compile_error/152.delete-constructor.jsx",
                "068.not-returning-void.jsx" : "/try/t/compile_error/068.not-returning-void.jsx",
                "075.incr-non-lhs.jsx" : "/try/t/compile_error/075.incr-non-lhs.jsx",
                "009.arrayliteral-empty.jsx" : "/try/t/compile_error/009.arrayliteral-empty.jsx",
@@ -420,6 +426,7 @@
                "197.var-in-catch.jsx" : "/try/t/run/197.var-in-catch.jsx",
                "011.localvar.jsx" : "/try/t/run/011.localvar.jsx",
                "045.class-inheritance.jsx" : "/try/t/run/045.class-inheritance.jsx",
+               "210.map-ctor.jsx" : "/try/t/run/210.map-ctor.jsx",
                "074.labelled-break.jsx" : "/try/t/run/074.labelled-break.jsx",
                "171.fused-div-of-int.jsx" : "/try/t/run/171.fused-div-of-int.jsx",
                "025.regexp.jsx" : "/try/t/run/025.regexp.jsx",

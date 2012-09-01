@@ -43,6 +43,7 @@
                "js-original.html" : "/try/example/aobench/js-original.html",
                "index.html" : "/try/example/aobench/index.html",
                "README" : "/try/example/aobench/README",
+               "aobench.jsx.js" : "/try/example/aobench/aobench.jsx.js",
                "ambientocclusion.js" : "/try/example/aobench/ambientocclusion.js"
             },
             "fireworks.html" : "/try/example/fireworks.html",

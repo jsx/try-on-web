@@ -46,6 +46,11 @@
                "aobench.jsx.js" : "/try/example/aobench/aobench.jsx.js",
                "ambientocclusion.js" : "/try/example/aobench/ambientocclusion.js"
             },
+            "xhr" : {
+               "hello.txt" : "/try/example/xhr/hello.txt",
+               "app.jsx" : "/try/example/xhr/app.jsx",
+               "index.html" : "/try/example/xhr/index.html"
+            },
             "fireworks.html" : "/try/example/fireworks.html",
             "fireworks.jsx" : "/try/example/fireworks.jsx",
             "hello-webgl.html" : "/try/example/hello-webgl.html",
@@ -83,6 +88,7 @@
             "expression.js" : "/try/src/expression.js",
             "_doc.js" : "/try/src/_doc.js",
             "compiler.js" : "/try/src/compiler.js",
+            "completion.js" : "/try/src/completion.js",
             "parser.js" : "/try/src/parser.js",
             "browser-platform.js" : "/try/src/browser-platform.js",
             "jssourcemap.js" : "/try/src/jssourcemap.js",
@@ -218,6 +224,10 @@
                "046.new-interface.jsx" : "/try/t/compile_error/046.new-interface.jsx",
                "035.abstract-var-with-initilizer.jsx" : "/try/t/compile_error/035.abstract-var-with-initilizer.jsx",
                "148.untyped-null-property.jsx" : "/try/t/compile_error/148.untyped-null-property.jsx",
+               "153.native-class-conflict" : {
+                  "b.jsx" : "/try/t/compile_error/153.native-class-conflict/b.jsx",
+                  "a.jsx" : "/try/t/compile_error/153.native-class-conflict/a.jsx"
+               },
                "054.import-self.jsx" : "/try/t/compile_error/054.import-self.jsx",
                "042.missing-abstract-variable.jsx" : "/try/t/compile_error/042.missing-abstract-variable.jsx",
                "119.readonly.jsx" : "/try/t/compile_error/119.readonly.jsx",
@@ -237,6 +247,7 @@
                "061.import-from-notfound" : {
                   "foo.jsx" : "/try/t/compile_error/061.import-from-notfound/foo.jsx"
                },
+               "153.native-class-conflict.jsx" : "/try/t/compile_error/153.native-class-conflict.jsx",
                "010.arrayliteral-null.jsx" : "/try/t/compile_error/010.arrayliteral-null.jsx",
                "057.import-twice" : {
                   "foo.jsx" : "/try/t/compile_error/057.import-twice/foo.jsx"
@@ -563,6 +574,7 @@
                "064.JSX_file" : {
                   "foo.jsx" : "/try/t/run/064.JSX_file/foo.jsx"
                },
+               "211.indirect-template-property.jsx" : "/try/t/run/211.indirect-template-property.jsx",
                "172.profile.jsx" : "/try/t/run/172.profile.jsx",
                "149.logical-ops-on-non-boolean.jsx" : "/try/t/run/149.logical-ops-on-non-boolean.jsx",
                "095.func-arg-is-overloaded-func.jsx" : "/try/t/run/095.func-arg-is-overloaded-func.jsx",
@@ -678,9 +690,7 @@
                "002.no-log.jsx" : "/try/t/optimize/002.no-log.jsx",
                "020.inline-arg-using-var.jsx" : "/try/t/optimize/020.inline-arg-using-var.jsx",
                "013.fold-const-propagate-string.jsx" : "/try/t/optimize/013.fold-const-propagate-string.jsx",
-               "007.inline-simple-this.jsx" : "/try/t/optimize/007.inline-simple-this.jsx",
                "010.fold-const-number-vs-int.jsx" : "/try/t/optimize/010.fold-const-number-vs-int.jsx",
-               "012.fold-const-propagate-int.jsx" : "/try/t/optimize/012.fold-const-propagate-int.jsx",
                "011.fold-const-propagate-number.jsx" : "/try/t/optimize/011.fold-const-propagate-number.jsx",
                "025.return-if-inlined-to-as.jsx" : "/try/t/optimize/025.return-if-inlined-to-as.jsx",
                "003.return-if.jsx" : "/try/t/optimize/003.return-if.jsx",
@@ -688,23 +698,27 @@
                "009.fold-const.jsx" : "/try/t/optimize/009.fold-const.jsx",
                "023.inline-minmax.jsx" : "/try/t/optimize/023.inline-minmax.jsx",
                "017.lto-finalize-class.jsx" : "/try/t/optimize/017.lto-finalize-class.jsx",
-               "025.inline-static-template-function.jsx" : "/try/t/optimize/025.inline-static-template-function.jsx",
                "018.lto-finalize-func.jsx" : "/try/t/optimize/018.lto-finalize-func.jsx",
                "001.no-assert.jsx" : "/try/t/optimize/001.no-assert.jsx",
-               "016.inline-ctor.jsx" : "/try/t/optimize/016.inline-ctor.jsx",
                "008.inline-simple-that.jsx" : "/try/t/optimize/008.inline-simple-that.jsx",
                "014.fold-const-propagate-bitops.jsx" : "/try/t/optimize/014.fold-const-propagate-bitops.jsx",
-               "006.inline-simple-static.jsx" : "/try/t/optimize/006.inline-simple-static.jsx",
+               "030.unbox-with-func-expr.jsx" : "/try/t/optimize/030.unbox-with-func-expr.jsx",
                "026.array-foreach.jsx" : "/try/t/optimize/026.array-foreach.jsx",
                "029.unbox.jsx" : "/try/t/optimize/029.unbox.jsx",
-               "005.return-if-complicated.jsx" : "/try/t/optimize/005.return-if-complicated.jsx",
-               "004.return-if-with-else.jsx" : "/try/t/optimize/004.return-if-with-else.jsx",
-               "024.inline-closure.jsx" : "/try/t/optimize/024.inline-closure.jsx",
                "021.inline-receiver-using-var.jsx" : "/try/t/optimize/021.inline-receiver-using-var.jsx",
                "019.inline-if.jsx" : "/try/t/optimize/019.inline-if.jsx",
-               "022.inline-local.jsx" : "/try/t/optimize/022.inline-local.jsx",
                "027.array-length.jsx" : "/try/t/optimize/027.array-length.jsx",
-               "015.fold-const-as-string.jsx" : "/try/t/optimize/015.fold-const-as-string.jsx"
+               "015.fold-const-as-string.jsx" : "/try/t/optimize/015.fold-const-as-string.jsx",
+               "031.unbox-with-in-func-expr.jsx" : "/try/t/optimize/031.unbox-with-in-func-expr.jsx",
+               "007.inline-simple-this.jsx" : "/try/t/optimize/007.inline-simple-this.jsx",
+               "012.fold-const-propagate-int.jsx" : "/try/t/optimize/012.fold-const-propagate-int.jsx",
+               "025.inline-static-template-function.jsx" : "/try/t/optimize/025.inline-static-template-function.jsx",
+               "016.inline-ctor.jsx" : "/try/t/optimize/016.inline-ctor.jsx",
+               "006.inline-simple-static.jsx" : "/try/t/optimize/006.inline-simple-static.jsx",
+               "004.return-if-with-else.jsx" : "/try/t/optimize/004.return-if-with-else.jsx",
+               "005.return-if-complicated.jsx" : "/try/t/optimize/005.return-if-complicated.jsx",
+               "024.inline-closure.jsx" : "/try/t/optimize/024.inline-closure.jsx",
+               "022.inline-local.jsx" : "/try/t/optimize/022.inline-local.jsx"
             },
             "complete" : {
                "001.class-or-import.jsx" : "/try/t/complete/001.class-or-import.jsx",

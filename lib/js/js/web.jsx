@@ -1355,6 +1355,29 @@ native final class CompositionEventInit {
 
 } // end of CompositionEventInit
 
+/** @see http://www.w3.org/TR/progress-events/ */
+native final class ProgressEvent extends Event {
+
+	function constructor(type : string/*DOMString*/);
+	function constructor(
+		type : string/*DOMString*/,
+		eventInitDict : ProgressEventInit
+	);
+
+	__readonly__ var lengthComputable : boolean;
+	__readonly__ var loaded : number/*unsigned long long*/;
+	__readonly__ var total : number/*unsigned long long*/;
+
+} // end of ProgressEvent
+
+native final class ProgressEventInit extends EventInit {
+
+	var lengthComputable : boolean;
+	var loaded : number/*unsigned long long*/;
+	var total : number/*unsigned long long*/;
+
+} // end of ProgressEventInit
+
 /** @see http://www.w3.org/TR/XMLHttpRequest/ */
 native __fake__ class XMLHttpRequestEventTarget extends EventTarget {
 
@@ -5055,7 +5078,7 @@ native final class TouchEvent extends UIEvent {
 
 } // end of TouchEvent
 
-/** @see http://www.w3.org/TR/2012/WD-websockets-20120524/ */
+/** @see http://www.w3.org/TR/2011/CR-websockets-20111208/ */
 native final class WebSocket extends EventTarget {
 
 	function constructor(url : string/*DOMString*/);
@@ -5096,12 +5119,12 @@ native final class WebSocket extends EventTarget {
 	var onmessage : Nullable.<function(:Event):void>/*Function?*/;
 	var binaryType : string/*DOMString*/;
 	function send(data : string/*DOMString*/) : void;
-	function send(data : ArrayBufferView) : void;
+	function send(data : ArrayBuffer) : void;
 	function send(data : Blob) : void;
 
 } // end of WebSocket
 
-/** @see http://www.w3.org/TR/2012/WD-websockets-20120524/ */
+/** @see http://www.w3.org/TR/2011/CR-websockets-20111208/ */
 native final class CloseEvent extends Event {
 
 	function constructor(type : string/*DOMString*/);
@@ -5116,7 +5139,7 @@ native final class CloseEvent extends Event {
 
 } // end of CloseEvent
 
-/** @see http://www.w3.org/TR/2012/WD-websockets-20120524/ */
+/** @see http://www.w3.org/TR/2011/CR-websockets-20111208/ */
 native final class CloseEventInit extends EventInit {
 
 	var wasClean : boolean;
@@ -8252,6 +8275,70 @@ native final class webkitURL extends URL {
 
 native final class webkitAudioContext extends AudioContext {
 }
+
+native final class DeviceOrientationEvent extends Event {
+
+	function constructor(type : string/*DOMString*/);
+	function constructor(
+		type : string/*DOMString*/,
+		eventInitDict : DeviceOrientationEventInit
+	);
+
+	__readonly__ var alpha : Nullable.<number>/*double?*/;
+	__readonly__ var beta : Nullable.<number>/*double?*/;
+	__readonly__ var gamma : Nullable.<number>/*double?*/;
+	__readonly__ var absolute : boolean;
+
+} // end of DeviceOrientationEvent
+
+native final class DeviceOrientationEventInit extends EventInit {
+
+	var alpha : Nullable.<number>/*double?*/;
+	var beta : Nullable.<number>/*double?*/;
+	var gamma : Nullable.<number>/*double?*/;
+	var absolute : boolean;
+
+} // end of DeviceOrientationEventInit
+
+native final __fake__ class DeviceAcceleration {
+
+	__readonly__ var x : Nullable.<number>/*double?*/;
+	__readonly__ var y : Nullable.<number>/*double?*/;
+	__readonly__ var z : Nullable.<number>/*double?*/;
+
+} // end of DeviceAcceleration
+
+native final __fake__ class DeviceRotationRate {
+
+	__readonly__ var alpha : Nullable.<number>/*double?*/;
+	__readonly__ var beta : Nullable.<number>/*double?*/;
+	__readonly__ var gamma : Nullable.<number>/*double?*/;
+
+} // end of DeviceRotationRate
+
+native final class DeviceMotionEvent extends Event {
+
+	function constructor(type : string/*DOMString*/);
+	function constructor(
+		type : string/*DOMString*/,
+		eventInitDict : DeviceMotionEventInit
+	);
+
+	__readonly__ var acceleration : Nullable.<DeviceAcceleration>;
+	__readonly__ var accelerationIncludingGravity : Nullable.<DeviceAcceleration>;
+	__readonly__ var rotationRate : Nullable.<DeviceRotationRate>;
+	__readonly__ var interval : Nullable.<number>/*double?*/;
+
+} // end of DeviceMotionEvent
+
+native final class DeviceMotionEventInit extends EventInit {
+
+	var acceleration : Nullable.<DeviceAcceleration>;
+	var accelerationIncludingGravity : Nullable.<DeviceAcceleration>;
+	var rotationRate : Nullable.<DeviceRotationRate>;
+	var interval : Nullable.<number>/*double?*/;
+
+} // end of DeviceMotionEventInit
 
 native final __fake__ class CanvasPixelArray {
 

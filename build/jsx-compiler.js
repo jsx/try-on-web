@@ -1559,16 +1559,16 @@ var MemberFunctionDefinition = exports.MemberFunctionDefinition = MemberDefiniti
 
 var InstantiatedMemberFunctionDefinition = exports.InstantiatedMemberFunctionDefinition = MemberFunctionDefinition.extend({
 
-	constructor: function (token, name, flags, returnType, args, locals, statements, closures, lastTokenOfBody) {
-		MemberFunctionDefinition.prototype.constructor.call(this, token, name, flags, returnType, args, locals, statements, closures, lastTokenOfBody);
+	constructor: function (token, name, flags, returnType, args, locals, statements, closures, lastTokenOfBody, docComment) {
+		MemberFunctionDefinition.prototype.constructor.call(this, token, name, flags, returnType, args, locals, statements, closures, lastTokenOfBody, docComment);
 	}
 
 });
 
 var TemplateFunctionDefinition = exports.TemplateFunctionDefinition = MemberFunctionDefinition.extend({
 
-	constructor: function (token, name, flags, typeArgs, returnType, args, locals, statements, closures, lastTokenOfBody) {
-		MemberFunctionDefinition.prototype.constructor.call(this, token, name, flags, returnType, args, locals, statements, closures, lastTokenOfBody);
+	constructor: function (token, name, flags, typeArgs, returnType, args, locals, statements, closures, lastTokenOfBody, docComment) {
+		MemberFunctionDefinition.prototype.constructor.call(this, token, name, flags, returnType, args, locals, statements, closures, lastTokenOfBody, docComment);
 		this._typeArgs = typeArgs.concat([]);
 		this._instantiatedDefs = new TypedMap(function (x, y) {
 			for (var i = 0; i < x.length; ++i) {
@@ -2007,66 +2007,6 @@ eval(Class.$import("./util"));
 
 "use strict";
 
-var CompletionRequest = exports.CompletionRequest = Class.extend({
-
-	constructor: function (lineNumber, columnOffset) {
-		this._lineNumber = lineNumber;
-		this._columnOffest = columnOffset;
-		this._candidates = [];
-	},
-
-	getLineNumber: function () {
-		return this._lineNumber;
-	},
-
-	getColumnOffset: function () {
-		return this._columnOffest;
-	},
-
-	isInRange: function (lineNumber, columnOffset, length) {
-		if (lineNumber != this._lineNumber)
-			return -1;
-		if (columnOffset <= this._columnOffest && this._columnOffest <= columnOffset + length) {
-			return this._columnOffest - columnOffset;
-		}
-		return -1;
-	},
-
-	pushCandidates: function (candidates) {
-		this._candidates.push(candidates);
-	},
-
-	getCandidates: function () {
-		var results = [];
-		// fetch the list
-		this._candidates.forEach(function (candidates) {
-			var rawCandidates = [];
-			candidates.getCandidates(rawCandidates);
-			var prefix = candidates.getPrefix();
-			rawCandidates.forEach(function (s) {
-				if (prefix == "" && s.substring(0, 2) == "__" && s != "__noconvert__") {
-					// skip hidden keywords
-				} else if (s.substring(0, prefix.length) == prefix) {
-					var left = s.substring(prefix.length);
-					if (left.length != 0) {
-						results.push(left);
-					}
-				}
-			});
-		});
-		// sort, and unique
-		results = results.sort();
-		for (var i = 1; i < results.length;) {
-			if (results[i - 1] == results[i])
-				results.splice(i - 1, 1);
-			else
-				++i;
-		}
-		return results;
-	}
-
-});
-
 var Compiler = exports.Compiler = Class.extend({
 
 	$MODE_COMPILE: 0,
@@ -2177,7 +2117,9 @@ var Compiler = exports.Compiler = Class.extend({
 		// optimization
 		this._optimize();
 		// TODO peep-hole and dead store optimizations, etc.
-		this._generateCode();
+		this._generateCode(errors);
+		if (! this._handleErrors(errors))
+			return false;
 		return true;
 	},
 
@@ -2323,7 +2265,7 @@ var Compiler = exports.Compiler = Class.extend({
 			this._optimizer.setCompiler(this).performOptimization();
 	},
 
-	_generateCode: function () {
+	_generateCode: function (errors) {
 		// build list of all classDefs
 		var classDefs = [];
 		for (var i = 0; i < this._parsers.length; ++i)
@@ -2357,14 +2299,31 @@ var Compiler = exports.Compiler = Class.extend({
 			}
 		}
 		// rename the classes with conflicting names
+		var countByName = {};
 		for (var i = 0; i < classDefs.length; ++i) {
-			if (classDefs[i].getOutputClassName() == null) {
-				var className = classDefs[i].className();
-				var suffix = 0;
-				for (var j = i + 1; j < classDefs.length; ++j)
-					if (classDefs[j].className() == className)
-						classDefs[j].setOutputClassName(className + "$" + suffix++);
-				classDefs[i].setOutputClassName(className);
+			var classDef = classDefs[i];
+			if ((classDef.flags() & ClassDefinition.IS_NATIVE) != 0) {
+				// check that the names of native classes do not conflict, and register the ocurrences
+				var className = classDef.className();
+				if (countByName[className]) {
+					errors.push(new CompileError(classDef.getToken(), "found multiple definition for native class: " + className));
+					return;
+				}
+				classDef.setOutputClassName(className);
+				countByName[className] = 1;
+			}
+		}
+		for (var i = 0; i < classDefs.length; ++i) {
+			var classDef = classDefs[i];
+			if ((classDef.flags() & ClassDefinition.IS_NATIVE) == 0) {
+				var className = classDef.className();
+				if (countByName[className]) {
+					classDef.setOutputClassName(className + "$" + (countByName[className] - 1));
+					countByName[className]++;
+				} else {
+					classDef.setOutputClassName(className);
+					countByName[className] = 1;
+				}
 			}
 		}
 		// escape the instantiated class names
@@ -2427,6 +2386,252 @@ var Compiler = exports.Compiler = Class.extend({
 		path = Util.resolvePath((lastSlashAt != -1 ? srcPath.substring(0, lastSlashAt + 1) : "") + givenPath);
 		return path;
 	},
+
+});
+
+// vim: set noexpandtab:
+
+});require.register("completion.js", function(module, exports, require, global){
+/*
+ * Copyright (c) 2012 DeNA Co., Ltd.
+ * 
+ * Permission is hereby granted, free of charge, to any person obtaining a copy
+ * of this software and associated documentation files (the "Software"), to
+ * deal in the Software without restriction, including without limitation the
+ * rights to use, copy, modify, merge, publish, distribute, sublicense, and/or
+ * sell copies of the Software, and to permit persons to whom the Software is
+ * furnished to do so, subject to the following conditions:
+ * 
+ * The above copyright notice and this permission notice shall be included in
+ * all copies or substantial portions of the Software.
+ * 
+ * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+ * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+ * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+ * AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+ * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
+ * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS
+ * IN THE SOFTWARE.
+ */
+
+var Class = require("./Class");
+eval(Class.$import("./classdef"));
+eval(Class.$import("./type"));
+eval(Class.$import("./expression"));
+eval(Class.$import("./util"));
+
+var CompletionRequest = exports.CompletionRequest = Class.extend({
+
+	constructor: function (lineNumber, columnOffset) {
+		this._lineNumber = lineNumber;
+		this._columnOffest = columnOffset;
+		this._candidates = [];
+	},
+
+	getLineNumber: function () {
+		return this._lineNumber;
+	},
+
+	getColumnOffset: function () {
+		return this._columnOffest;
+	},
+
+	isInRange: function (lineNumber, columnOffset, length) {
+		if (lineNumber != this._lineNumber)
+			return -1;
+		if (columnOffset <= this._columnOffest && this._columnOffest <= columnOffset + length) {
+			return this._columnOffest - columnOffset;
+		}
+		return -1;
+	},
+
+	pushCandidates: function (candidates) {
+		this._candidates.push(candidates);
+	},
+
+	getCandidates: function () {
+		var results = [];
+		// fetch the list
+		this._candidates.forEach(function (candidates) {
+			var rawCandidates = [];
+			candidates.getCandidates(rawCandidates);
+			var prefix = candidates.getPrefix();
+			rawCandidates.forEach(function (s) {
+				if (prefix == "" && s.substring(0, 2) == "__" && s != "__noconvert__") {
+					// skip hidden keywords
+				} else if (s.substring(0, prefix.length) == prefix) {
+					var left = s.substring(prefix.length);
+					if (left.length != 0) {
+						results.push(left);
+					}
+				}
+			});
+		});
+		// sort, and unique
+		results = results.sort();
+		for (var i = 1; i < results.length;) {
+			if (results[i - 1] == results[i])
+				results.splice(i - 1, 1);
+			else
+				++i;
+		}
+		return results;
+	}
+
+});
+
+var CompletionCandidates = exports.CompletionCandidates = Class.extend({
+
+	constructor: function () {
+		this._prefix = null;
+	},
+
+	getCandidates: null, // function (string[]) : void
+
+	getPrefix: function () {
+		return this._prefix;
+	},
+
+	setPrefix: function (prefix) {
+		this._prefix = prefix;
+		return this;
+	},
+
+	$_addClasses: function (candidates, parser, autoCompleteMatchCb) {
+		parser.getClassDefs().forEach(function (classDef) {
+			if (classDef instanceof InstantiatedClassDefinition) {
+				// skip
+			} else {
+				if (autoCompleteMatchCb == null || autoCompleteMatchCb(classDef)) {
+					candidates.push(classDef.className());
+				}
+			}
+		});
+		parser.getTemplateClassDefs().forEach(function (classDef) {
+			if (autoCompleteMatchCb == null || autoCompleteMatchCb(classDef)) {
+				candidates.push(classDef.className());
+			}
+		});
+	},
+
+	$_addImportedClasses: function (candidates, imprt, autoCompleteMatchCb) {
+		var classNames = imprt.getClassNames();
+		if (classNames != null) {
+			classNames.forEach(function (className) {
+				// FIXME can we refer to the classdefs of the classnames here?
+				candidates.push(className);
+			});
+		} else {
+			imprt.getSources().forEach(function (parser) {
+				CompletionCandidates._addClasses(candidates, parser, autoCompleteMatchCb);
+			});
+		}
+	}
+
+});
+
+var KeywordCompletionCandidate = exports.KeywordCompletionCandidate = CompletionCandidates.extend({
+
+	constructor: function (expected) {
+		CompletionCandidates.prototype.constructor.call(this);
+		this._expected = expected;
+	},
+
+	getCandidates: function (candidates) {
+		candidates.push(this._expected);
+	}
+
+});
+
+var CompletionCandidatesOfTopLevel = exports.CompletionCandidatesOfTopLevel = CompletionCandidates.extend({
+
+	constructor: function (parser, autoCompleteMatchCb) {
+		CompletionCandidates.prototype.constructor.call(this);
+		this._parser = parser;
+		this._autoCompleteMatchCb = autoCompleteMatchCb;
+	},
+
+	getCandidates: function (candidates) {
+		CompletionCandidates._addClasses(candidates, this._parser, this._autoCompleteMatchCb);
+		for (var i = 0; i < this._parser._imports.length; ++i) {
+			var imprt = this._parser._imports[i];
+			var alias = imprt.getAlias();
+			if (alias != null) {
+				candidates.push(alias);
+			} else {
+				CompletionCandidates._addImportedClasses(candidates, imprt, this._autoCompleteMatchCb);
+			}
+		}
+	}
+
+});
+
+var _CompletionCandidatesWithLocal = exports._CompletionCandidatesWithLocal = CompletionCandidatesOfTopLevel.extend({
+
+	constructor: function (parser) {
+		CompletionCandidatesOfTopLevel.prototype.constructor.call(this, parser, null);
+		this._locals = [];
+		parser._forEachScope(function (locals, args) {
+			this._locals = this._locals.concat(locals, args);
+			return true;
+		}.bind(this));
+	},
+
+	getCandidates: function (candidates) {
+		this._locals.forEach(function (local) {
+			candidates.push(local.getName().getValue());
+		});
+		CompletionCandidatesOfTopLevel.prototype.getCandidates.call(this, candidates);
+	}
+
+});
+
+var _CompletionCandidatesOfNamespace = exports._CompletionCandidatesOfNamespace = CompletionCandidates.extend({
+
+	constructor: function (imprt, autoCompleteMatchCb) {
+		CompletionCandidates.prototype.constructor.call(this);
+		this._import = imprt;
+		this._autoCompleteMatchCb = autoCompleteMatchCb;
+	},
+
+	getCandidates: function (candidates) {
+		CompletionCandidates._addImportedClasses(this._import, this._autoCompleteMatchCb);
+	}
+
+});
+
+var _CompletionCandidatesOfProperty = exports._CompletionCandidatesOfProperty = CompletionCandidates.extend({
+
+	constructor: function (expr) {
+		CompletionCandidates.prototype.constructor.call(this);
+		this._expr = expr;
+	},
+
+	getCandidates: function (candidates) {
+		var type = this._expr.getType();
+		if (type == null)
+			return;
+		type = type.resolveIfNullable();
+		if (type.equals(Type.voidType)
+			|| type.equals(Type.nullType)
+			|| type.equals(Type.variantType))
+			return;
+		// type with classdef
+		var classDef = type.getClassDef();
+		if (classDef == null)
+			return;
+		var isStatic = this._expr instanceof ClassExpression;
+		classDef.forEachMember(function (member) {
+			if (((member.flags() & ClassDefinition.IS_STATIC) != 0) == isStatic) {
+				if (! isStatic && member.name() == "constructor") {
+					// skip
+				} else {
+					candidates.push(member.name());
+				}
+			}
+			return true;
+		});
+	}
 
 });
 
@@ -3041,7 +3246,7 @@ var Expression = exports.Expression = Class.extend({
 	clone: null,
 
 	instantiate: function (instantiationContext) {
-		(function onExpr(expr) {
+		return (function onExpr(expr) {
 			if (expr instanceof NewExpression
 				|| expr instanceof ArrayLiteralExpression
 				|| expr instanceof MapLiteralExpression
@@ -10450,7 +10655,7 @@ var _UnboxOptimizeCommand = exports._UnboxOptimizeCommand = _FunctionOptimizeCom
 						replaceCb(createLocalExpressionFor(expr.getIdentifierToken().getValue()));
 						return true;
 					} else if (expr instanceof FunctionExpression) {
-						return expr.getFuncDef().forEachStatement(onStatement);
+						return onStatements(expr.getFuncDef().getStatements());
 					} else if (expr instanceof LocalExpression && expr.getLocal() == local) {
 						throw new Error("logic flaw, unexpected pattern");
 					}
@@ -10646,6 +10851,7 @@ eval(Class.$import("./statement"));
 eval(Class.$import("./expression"));
 eval(Class.$import("./doc"));
 eval(Class.$import("./util"));
+eval(Class.$import("./completion"));
 
 "use strict";
 
@@ -10656,8 +10862,8 @@ var Token = exports.Token = Class.extend({
 		this._isIdentifier = isIdentifier;
 		// two args or five args
 		this._filename = filename || null;
-		this._lineNumber = lineNumber || NaN;
-		this._columnNumber = columnNumber || NaN;
+		this._lineNumber = lineNumber;     // Nullable.<int>
+		this._columnNumber = columnNumber; // Nullable.<int>
 	},
 
 	getValue: function () {
@@ -11100,10 +11306,11 @@ var Parser = exports.Parser = Class.extend({
 		// insert a marker so that at the completion location we would always get _expectIdentifierOpt called, whenever possible
 		if (this._completionRequest != null) {
 			var compLineNumber = Math.min(this._completionRequest.getLineNumber(), this._lines.length + 1);
+			var line = this._lines[compLineNumber - 1] || '';
 			this._lines[compLineNumber - 1] =
-				this._lines[compLineNumber - 1].substring(0, this._completionRequest.getColumnOffset())
+				line.substring(0, this._completionRequest.getColumnOffset())
 				+ "Q," + // use a character that is permitted within an identifier, but never appears in keywords
-				this._lines[compLineNumber - 1].substring(this._completionRequest.getColumnOffset());
+				line.substring(this._completionRequest.getColumnOffset());
 		}
 		// output
 		this._errors = errors;
@@ -12077,8 +12284,8 @@ var Parser = exports.Parser = Class.extend({
 			}
 			function createDefinition(locals, statements, closures, lastToken) {
 				return typeArgs.length != 0
-					? new TemplateFunctionDefinition(token, name, flags, typeArgs, returnType, args, locals, statements, closures, lastToken)
-					: new MemberFunctionDefinition(token, name, flags, returnType, args, locals, statements, closures, lastToken);
+					? new TemplateFunctionDefinition(token, name, flags, typeArgs, returnType, args, locals, statements, closures, lastToken, docComment)
+					: new MemberFunctionDefinition(token, name, flags, returnType, args, locals, statements, closures, lastToken, docComment);
 			}
 			// take care of abstract function
 			if ((this._classFlags & (ClassDefinition.IS_INTERFACE | ClassDefinition.IS_DELETE)) != 0) {
@@ -13511,160 +13718,6 @@ var Parser = exports.Parser = Class.extend({
 
 });
 
-var CompletionCandidates = exports.CompletionCandidates = Class.extend({
-
-	constructor: function () {
-		this._prefix = null;
-	},
-
-	getCandidates: null, // function (string[]) : void
-
-	getPrefix: function () {
-		return this._prefix;
-	},
-
-	setPrefix: function (prefix) {
-		this._prefix = prefix;
-		return this;
-	},
-
-	$_addClasses: function (candidates, parser, autoCompleteMatchCb) {
-		parser.getClassDefs().forEach(function (classDef) {
-			if (classDef instanceof InstantiatedClassDefinition) {
-				// skip
-			} else {
-				if (autoCompleteMatchCb == null || autoCompleteMatchCb(classDef)) {
-					candidates.push(classDef.className());
-				}
-			}
-		});
-		parser.getTemplateClassDefs().forEach(function (classDef) {
-			if (autoCompleteMatchCb == null || autoCompleteMatchCb(classDef)) {
-				candidates.push(classDef.className());
-			}
-		});
-	},
-
-	$_addImportedClasses: function (candidates, imprt, autoCompleteMatchCb) {
-		var classNames = imprt.getClassNames();
-		if (classNames != null) {
-			classNames.forEach(function (className) {
-				// FIXME can we refer to the classdefs of the classnames here?
-				candidates.push(className);
-			});
-		} else {
-			imprt.getSources().forEach(function (parser) {
-				CompletionCandidates._addClasses(candidates, parser, autoCompleteMatchCb);
-			});
-		}
-	}
-
-});
-
-var KeywordCompletionCandidate = exports.KeywordCompletionCandidate = CompletionCandidates.extend({
-
-	constructor: function (expected) {
-		CompletionCandidates.prototype.constructor.call(this);
-		this._expected = expected;
-	},
-
-	getCandidates: function (candidates) {
-		candidates.push(this._expected);
-	}
-
-});
-
-var CompletionCandidatesOfTopLevel = exports.CompletionCandidatesOfTopLevel = CompletionCandidates.extend({
-
-	constructor: function (parser, autoCompleteMatchCb) {
-		CompletionCandidates.prototype.constructor.call(this);
-		this._parser = parser;
-		this._autoCompleteMatchCb = autoCompleteMatchCb;
-	},
-
-	getCandidates: function (candidates) {
-		CompletionCandidates._addClasses(candidates, this._parser, this._autoCompleteMatchCb);
-		for (var i = 0; i < this._parser._imports.length; ++i) {
-			var imprt = this._parser._imports[i];
-			var alias = imprt.getAlias();
-			if (alias != null) {
-				candidates.push(alias);
-			} else {
-				CompletionCandidates._addImportedClasses(candidates, imprt, this._autoCompleteMatchCb);
-			}
-		}
-	}
-
-});
-
-var _CompletionCandidatesWithLocal = exports._CompletionCandidatesWithLocal = CompletionCandidatesOfTopLevel.extend({
-
-	constructor: function (parser) {
-		CompletionCandidatesOfTopLevel.prototype.constructor.call(this, parser, null);
-		this._locals = [];
-		parser._forEachScope(function (locals, args) {
-			this._locals = this._locals.concat(locals, args);
-			return true;
-		}.bind(this));
-	},
-
-	getCandidates: function (candidates) {
-		this._locals.forEach(function (local) {
-			candidates.push(local.getName().getValue());
-		});
-		CompletionCandidatesOfTopLevel.prototype.getCandidates.call(this, candidates);
-	}
-
-});
-
-var _CompletionCandidatesOfNamespace = exports._CompletionCandidatesOfNamespace = CompletionCandidates.extend({
-
-	constructor: function (imprt, autoCompleteMatchCb) {
-		CompletionCandidates.prototype.constructor.call(this);
-		this._import = imprt;
-		this._autoCompleteMatchCb = autoCompleteMatchCb;
-	},
-
-	getCandidates: function (candidates) {
-		CompletionCandidates._addImportedClasses(this._import, this._autoCompleteMatchCb);
-	}
-
-});
-
-var _CompletionCandidatesOfProperty = exports._CompletionCandidatesOfProperty = CompletionCandidates.extend({
-
-	constructor: function (expr) {
-		CompletionCandidates.prototype.constructor.call(this);
-		this._expr = expr;
-	},
-
-	getCandidates: function (candidates) {
-		var type = this._expr.getType();
-		if (type == null)
-			return;
-		type = type.resolveIfNullable();
-		if (type.equals(Type.voidType)
-			|| type.equals(Type.nullType)
-			|| type.equals(Type.variantType))
-			return;
-		// type with classdef
-		var classDef = type.getClassDef();
-		if (classDef == null)
-			return;
-		var isStatic = this._expr instanceof ClassExpression;
-		classDef.forEachMember(function (member) {
-			if (((member.flags() & ClassDefinition.IS_STATIC) != 0) == isStatic) {
-				if (! isStatic && member.name() == "constructor") {
-					// skip
-				} else {
-					candidates.push(member.name());
-				}
-			}
-			return true;
-		});
-	}
-
-});
 
 });require.register("platform.js", function(module, exports, require, global){
 /*

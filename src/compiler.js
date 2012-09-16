@@ -30,66 +30,6 @@ eval(Class.$import("./util"));
 
 "use strict";
 
-var CompletionRequest = exports.CompletionRequest = Class.extend({
-
-	constructor: function (lineNumber, columnOffset) {
-		this._lineNumber = lineNumber;
-		this._columnOffest = columnOffset;
-		this._candidates = [];
-	},
-
-	getLineNumber: function () {
-		return this._lineNumber;
-	},
-
-	getColumnOffset: function () {
-		return this._columnOffest;
-	},
-
-	isInRange: function (lineNumber, columnOffset, length) {
-		if (lineNumber != this._lineNumber)
-			return -1;
-		if (columnOffset <= this._columnOffest && this._columnOffest <= columnOffset + length) {
-			return this._columnOffest - columnOffset;
-		}
-		return -1;
-	},
-
-	pushCandidates: function (candidates) {
-		this._candidates.push(candidates);
-	},
-
-	getCandidates: function () {
-		var results = [];
-		// fetch the list
-		this._candidates.forEach(function (candidates) {
-			var rawCandidates = [];
-			candidates.getCandidates(rawCandidates);
-			var prefix = candidates.getPrefix();
-			rawCandidates.forEach(function (s) {
-				if (prefix == "" && s.substring(0, 2) == "__" && s != "__noconvert__") {
-					// skip hidden keywords
-				} else if (s.substring(0, prefix.length) == prefix) {
-					var left = s.substring(prefix.length);
-					if (left.length != 0) {
-						results.push(left);
-					}
-				}
-			});
-		});
-		// sort, and unique
-		results = results.sort();
-		for (var i = 1; i < results.length;) {
-			if (results[i - 1] == results[i])
-				results.splice(i - 1, 1);
-			else
-				++i;
-		}
-		return results;
-	}
-
-});
-
 var Compiler = exports.Compiler = Class.extend({
 
 	$MODE_COMPILE: 0,
@@ -200,7 +140,9 @@ var Compiler = exports.Compiler = Class.extend({
 		// optimization
 		this._optimize();
 		// TODO peep-hole and dead store optimizations, etc.
-		this._generateCode();
+		this._generateCode(errors);
+		if (! this._handleErrors(errors))
+			return false;
 		return true;
 	},
 
@@ -346,7 +288,7 @@ var Compiler = exports.Compiler = Class.extend({
 			this._optimizer.setCompiler(this).performOptimization();
 	},
 
-	_generateCode: function () {
+	_generateCode: function (errors) {
 		// build list of all classDefs
 		var classDefs = [];
 		for (var i = 0; i < this._parsers.length; ++i)
@@ -380,14 +322,31 @@ var Compiler = exports.Compiler = Class.extend({
 			}
 		}
 		// rename the classes with conflicting names
+		var countByName = {};
 		for (var i = 0; i < classDefs.length; ++i) {
-			if (classDefs[i].getOutputClassName() == null) {
-				var className = classDefs[i].className();
-				var suffix = 0;
-				for (var j = i + 1; j < classDefs.length; ++j)
-					if (classDefs[j].className() == className)
-						classDefs[j].setOutputClassName(className + "$" + suffix++);
-				classDefs[i].setOutputClassName(className);
+			var classDef = classDefs[i];
+			if ((classDef.flags() & ClassDefinition.IS_NATIVE) != 0) {
+				// check that the names of native classes do not conflict, and register the ocurrences
+				var className = classDef.className();
+				if (countByName[className]) {
+					errors.push(new CompileError(classDef.getToken(), "found multiple definition for native class: " + className));
+					return;
+				}
+				classDef.setOutputClassName(className);
+				countByName[className] = 1;
+			}
+		}
+		for (var i = 0; i < classDefs.length; ++i) {
+			var classDef = classDefs[i];
+			if ((classDef.flags() & ClassDefinition.IS_NATIVE) == 0) {
+				var className = classDef.className();
+				if (countByName[className]) {
+					classDef.setOutputClassName(className + "$" + (countByName[className] - 1));
+					countByName[className]++;
+				} else {
+					classDef.setOutputClassName(className);
+					countByName[className] = 1;
+				}
 			}
 		}
 		// escape the instantiated class names

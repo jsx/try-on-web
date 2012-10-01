@@ -828,8 +828,9 @@ var Parser = exports.Parser = Class.extend({
 				case "param":
 					var nameMatch = this._getInput(this._columnOffset).match(/[0-9A-Za-z_]+/);
 					if (nameMatch != null) {
+					     var token = new Token(nameMatch[0], false, this._filename, this._lineNumber, this._getColumn());
 						this._forwardPos(nameMatch[0].length);
-						node = new DocCommentParameter(nameMatch[0]);
+						node = new DocCommentParameter(token);
 						docComment.getParams().push(node);
 					} else {
 						this._newError("name of the parameter not found after @param");
@@ -1278,7 +1279,7 @@ var Parser = exports.Parser = Class.extend({
 
 		// done
 		if (this._typeArgs.length != 0) {
-			this._templateClassDefs.push(new TemplateClassDefinition(className.getValue(), this._classFlags, this._typeArgs, this._extendType, this._implementTypes, members, this._objectTypesUsed, docComment));
+			this._templateClassDefs.push(new TemplateClassDefinition(className, className.getValue(), this._classFlags, this._typeArgs, this._extendType, this._implementTypes, members, this._objectTypesUsed, docComment));
 		} else {
 			var classDef = new ClassDefinition(className, className.getValue(), this._classFlags, this._extendType, this._implementTypes, members, this._objectTypesUsed, docComment);
 			this._classDefs.push(classDef);

@@ -1094,9 +1094,14 @@ var MemberVariableDefinition = exports.MemberVariableDefinition = MemberDefiniti
 		return new MemberVariableDefinition(this._token, this._nameToken, this._flags, type, initialValue);
 	},
 
+	toString: function () {
+		return this.name() + " : " + this._type.toString();
+	},
+
 	serialize: function () {
 		return {
-			"name"         : this.name(),
+			"token"      : this._token.serialize(),
+			"nameToken"  : Util.serializeNullable(this._nameToken),
 			"flags"        : this.flags(),
 			"type"         : Util.serializeNullable(this._type),
 			"initialValue" : Util.serializeNullable(this._initialValue)
@@ -1169,6 +1174,16 @@ var MemberFunctionDefinition = exports.MemberFunctionDefinition = MemberDefiniti
 			for (var i = 0; i < this._closures.length; ++i)
 				this._closures[i].setParent(this);
 		}
+	},
+
+	toString: function () {
+		var argsText = this._args.map(function (arg) {
+				return arg.getName().getValue() + " : " + arg.getType().toString();
+			}.bind(this)).join(", ");
+		return "function " +
+			this.name() +
+			"(" + argsText + ") : " +
+			this._returnType.toString();
 	},
 
 	instantiate: function (instantiationContext) {
@@ -1289,6 +1304,21 @@ var MemberFunctionDefinition = exports.MemberFunctionDefinition = MemberDefiniti
 	},
 
 	analyze: function (outerContext) {
+		// validate jsxdoc comments
+		var docComment = this.getDocComment();
+		if (docComment) {
+			var args = this.getArguments();
+			docComment.getParams().forEach(function (docParam, i) {
+				for(; i < args.length; ++i) {
+					if (args[i].getName().getValue() == docParam.getParamName()) {
+						return;
+					}
+				}
+				// invalid @param tag which is not present in the declaration.
+				outerContext.errors.push(new CompileError(docParam.getToken(), 'invalid parameter name "' + docParam.getParamName() + '" for ' + this.name() + "()"));
+			}.bind(this));
+		}
+
 		// return if is abtract (wo. function body) or is native
 		if (this._statements == null)
 			return;
@@ -1692,7 +1722,7 @@ var LocalVariable = exports.LocalVariable = Class.extend({
 	},
 
 	toString: function () {
-		return this._name + " : " + this._type;
+		return this._name.getValue() + " : " + this._type.toString();
 	},
 
 	popInstantiated: function () {
@@ -1835,7 +1865,8 @@ var LocalVariableStatuses = exports.LocalVariableStatuses = Class.extend({
 
 var TemplateClassDefinition = exports.TemplateClassDefinition = Class.extend({
 
-	constructor: function (className, flags, typeArgs, extendType, implementTypes, members, objectTypesUsed, docComment) {
+	constructor: function (token, className, flags, typeArgs, extendType, implementTypes, members, objectTypesUsed, docComment) {
+		this._token = token;
 		this._className = className;
 		this._flags = flags;
 		this._typeArgs = typeArgs.concat([]);
@@ -1853,6 +1884,10 @@ var TemplateClassDefinition = exports.TemplateClassDefinition = Class.extend({
 				}.bind(this));
 			}
 		}
+	},
+
+	getToken: function () {
+		return this._token;
 	},
 
 	className: function () {
@@ -2094,7 +2129,7 @@ var Compiler = exports.Compiler = Class.extend({
 		if (! this._handleErrors(errors))
 			return false;
 		// register backing class for primitives
-		var builtins = this.findParser(this._platform.getRoot() + "/lib/built-in.jsx");
+		var builtins = this._builtinParsers[0];
 		BooleanType._classDef = builtins.lookup(errors, null, "Boolean");
 		NumberType._classDef = builtins.lookup(errors, null, "Number");
 		StringType._classDef = builtins.lookup(errors, null, "String");
@@ -2146,8 +2181,12 @@ var Compiler = exports.Compiler = Class.extend({
 	parseFile: function (errors, parser) {
 		// read file
 		var content = this.getFileContent(errors, parser.getSourceToken(), parser.getPath());
-		if (content == null)
+		if (content == null) {
+			// call parse() to initialize parser's state
+			// because some compilation mode continues to run after errors.
+			parser.parse("", []);
 			return false;
+		}
 		// parse
 		parser.parse(content, errors);
 		// register imported files
@@ -2394,17 +2433,17 @@ var Compiler = exports.Compiler = Class.extend({
 });require.register("completion.js", function(module, exports, require, global){
 /*
  * Copyright (c) 2012 DeNA Co., Ltd.
- * 
+ *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to
  * deal in the Software without restriction, including without limitation the
  * rights to use, copy, modify, merge, publish, distribute, sublicense, and/or
  * sell copies of the Software, and to permit persons to whom the Software is
  * furnished to do so, subject to the following conditions:
- * 
+ *
  * The above copyright notice and this permission notice shall be included in
  * all copies or substantial portions of the Software.
- * 
+ *
  * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
  * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
  * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
@@ -2412,6 +2451,46 @@ var Compiler = exports.Compiler = Class.extend({
  * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
  * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS
  * IN THE SOFTWARE.
+ */
+
+/*
+
+class CompleteCandidate {
+	var word : string;
+	var partialWord : string;
+
+	var doc : Nullable.<string>;
+
+	// type of the symobl: "function():void"
+	// available for variables or functions
+	var type : Nullable.<string>;
+
+	var returnType : Nullable.<string>;   // function specific
+	var args       : Nullable.<Symbol[]>; // function specific
+
+	// where the symbol is defined
+	var definedClass       : Nullable.<string>;
+	var definedFilename    : Nullable.<string>;
+	var definedLineNumber  : Nullable.<int>;
+}
+
+example:
+
+{
+	"word" : "stringify",
+	"partialWord" : "ringify",
+
+	"doc" : "serialize a value or object as a JSON string",
+
+	"type" : "function (value : variant) : string",
+
+	"returnType" : "string",
+	"args" : [ { "name" : "value", "type" : "variant" } ],
+
+	"definedClass" : "JSON",
+	"definedFilename" : "lib/built-in/jsx",
+	"definedLineNumber" : 903
+}
  */
 
 var Class = require("./Class");
@@ -2450,6 +2529,7 @@ var CompletionRequest = exports.CompletionRequest = Class.extend({
 	},
 
 	getCandidates: function () {
+		var seen = {}; // for unique
 		var results = [];
 		// fetch the list
 		this._candidates.forEach(function (candidates) {
@@ -2457,24 +2537,31 @@ var CompletionRequest = exports.CompletionRequest = Class.extend({
 			candidates.getCandidates(rawCandidates);
 			var prefix = candidates.getPrefix();
 			rawCandidates.forEach(function (s) {
-				if (prefix == "" && s.substring(0, 2) == "__" && s != "__noconvert__") {
+				if (prefix == "" && s.word.substring(0, 2) == "__" && s.word != "__noconvert__" && s.word != "undefined") {
 					// skip hidden keywords
-				} else if (s.substring(0, prefix.length) == prefix) {
-					var left = s.substring(prefix.length);
-					if (left.length != 0) {
-						results.push(left);
+				} else if (s.word.substring(0, prefix.length) == prefix) {
+					var left = s.word.substring(prefix.length);
+					if (left.length == 0) {
+						return;
+					}
+
+					var identity = JSON.stringify([left, s.args]);
+					if (! seen.hasOwnProperty(identity)) {
+						seen[identity] = true;
+
+						if (s.word !== left) {
+							s.partialWord = left;
+						}
+
+						// "kind" is useful for debugging --completion itself,
+						// but unlikely to be used by editors
+						delete s.kind;
+						results.push(s);
 					}
 				}
-			});
-		});
-		// sort, and unique
-		results = results.sort();
-		for (var i = 1; i < results.length;) {
-			if (results[i - 1] == results[i])
-				results.splice(i - 1, 1);
-			else
-				++i;
-		}
+			}.bind(this));
+		}.bind(this));
+
 		return results;
 	}
 
@@ -2486,7 +2573,7 @@ var CompletionCandidates = exports.CompletionCandidates = Class.extend({
 		this._prefix = null;
 	},
 
-	getCandidates: null, // function (string[]) : void
+	getCandidates: null, // function (CompletionCandidate[]) : void
 
 	getPrefix: function () {
 		return this._prefix;
@@ -2497,19 +2584,42 @@ var CompletionCandidates = exports.CompletionCandidates = Class.extend({
 		return this;
 	},
 
+	$makeClassCandidate: function (classDef) {
+		var data = {
+			word: classDef.className(),
+
+			definedFilename:   classDef.getToken().getFilename(),
+			definedLineNumber: classDef.getToken().getLineNumber(),
+		};
+		if ((classDef.flags() & ClassDefinition.IS_INTERFACE) != 0) {
+			data.kind = "interface";
+		} else if ((classDef.flags() & ClassDefinition.IS_MIXIN) != 0) {
+			data.kind = "mixin";
+		}
+		else {
+			data.kind = "class";
+		}
+
+		var docComment = classDef.getDocComment();
+		if (docComment) {
+			data.doc = docComment.getDescription();
+		}
+		return data;
+	},
+
 	$_addClasses: function (candidates, parser, autoCompleteMatchCb) {
 		parser.getClassDefs().forEach(function (classDef) {
 			if (classDef instanceof InstantiatedClassDefinition) {
 				// skip
 			} else {
 				if (autoCompleteMatchCb == null || autoCompleteMatchCb(classDef)) {
-					candidates.push(classDef.className());
+					candidates.push(CompletionCandidates.makeClassCandidate(classDef));
 				}
 			}
 		});
 		parser.getTemplateClassDefs().forEach(function (classDef) {
 			if (autoCompleteMatchCb == null || autoCompleteMatchCb(classDef)) {
-				candidates.push(classDef.className());
+				candidates.push(CompletionCandidates.makeClassCandidate(classDef));
 			}
 		});
 	},
@@ -2519,7 +2629,10 @@ var CompletionCandidates = exports.CompletionCandidates = Class.extend({
 		if (classNames != null) {
 			classNames.forEach(function (className) {
 				// FIXME can we refer to the classdefs of the classnames here?
-				candidates.push(className);
+				candidates.push({
+					word: className,
+					kind: "class",
+				});
 			});
 		} else {
 			imprt.getSources().forEach(function (parser) {
@@ -2538,7 +2651,10 @@ var KeywordCompletionCandidate = exports.KeywordCompletionCandidate = Completion
 	},
 
 	getCandidates: function (candidates) {
-		candidates.push(this._expected);
+		candidates.push({
+			word: this._expected,
+			kind: 'keyword'
+		});
 	}
 
 });
@@ -2557,7 +2673,10 @@ var CompletionCandidatesOfTopLevel = exports.CompletionCandidatesOfTopLevel = Co
 			var imprt = this._parser._imports[i];
 			var alias = imprt.getAlias();
 			if (alias != null) {
-				candidates.push(alias);
+				candidates.push({
+					word: alias,
+					kind: 'alias'
+				});
 			} else {
 				CompletionCandidates._addImportedClasses(candidates, imprt, this._autoCompleteMatchCb);
 			}
@@ -2579,7 +2698,21 @@ var _CompletionCandidatesWithLocal = exports._CompletionCandidatesWithLocal = Co
 
 	getCandidates: function (candidates) {
 		this._locals.forEach(function (local) {
-			candidates.push(local.getName().getValue());
+			var data = {
+				word: local.getName().getValue(),
+
+				kind: 'variable',
+
+				definedFilename:   local.getName().getFilename(),
+				definedLineNumber: local.getName().getLineNumber()
+			};
+			var type = local.getType();
+			// type may be null when type deduction fails
+			if (type != null) {
+				data.type = type.toString();
+			}
+
+			candidates.push(data);
 		});
 		CompletionCandidatesOfTopLevel.prototype.getCandidates.call(this, candidates);
 	}
@@ -2621,16 +2754,52 @@ var _CompletionCandidatesOfProperty = exports._CompletionCandidatesOfProperty = 
 		if (classDef == null)
 			return;
 		var isStatic = this._expr instanceof ClassExpression;
-		classDef.forEachMember(function (member) {
-			if (((member.flags() & ClassDefinition.IS_STATIC) != 0) == isStatic) {
-				if (! isStatic && member.name() == "constructor") {
-					// skip
-				} else {
-					candidates.push(member.name());
+		classDef.forEachClassToBase(function (c) {
+			c.forEachMember(function (member) {
+				if (((member.flags() & ClassDefinition.IS_STATIC) != 0) == isStatic) {
+					if (! isStatic && member.name() == "constructor") {
+						return true;
+					}
+
+					candidates.push(_CompletionCandidatesOfProperty._makeMemberCandidate(member));
 				}
-			}
+				return true;
+			}.bind(this));
 			return true;
-		});
+		}.bind(this));
+	},
+
+	$_makeMemberCandidate: function(member) {
+		var kind = (member.flags() & ClassDefinition.IS_STATIC
+			? "static member"
+			: "member");
+		kind += (member instanceof MemberFunctionDefinition
+			? " function"
+			: " variable");
+		var data = {
+			word: member.name(),
+			type: member.getType().toString(),
+			kind: kind,
+
+			definedClass:      member.getClassDef().className(),
+			definedFilename:   member.getToken().getFilename(),
+			definedLineNumber: member.getToken().getLineNumber()
+		};
+		var docComment = member.getDocComment();
+		if (docComment) {
+			data.doc = docComment.getDescription();
+		}
+
+		if (member instanceof MemberFunctionDefinition) {
+			data.returnType = member.getReturnType().toString();
+			data.args = member.getArguments().map(function (arg) {
+				return {
+					name: arg.getName().getValue(),
+					type: arg.getType().toString()
+				};
+			});
+		}
+		return data;
 	}
 
 });
@@ -2675,8 +2844,7 @@ var DocCommentNode = exports.DocCommentNode = Class.extend({
 	},
 
 	appendDescription: function (s) {
-		// strip surrounding whitespace
-		s = s.replace(/^[ \t]*(.*)[ \t]*$/, function (_unused, m1) { return m1; });
+		s = s.trim();
 		// append
 		if (s != "") {
 			if (this._description != "") {
@@ -2690,13 +2858,17 @@ var DocCommentNode = exports.DocCommentNode = Class.extend({
 
 var DocCommentParameter = exports.DocCommentParameter = DocCommentNode.extend({
 
-	constructor: function (paramName) {
+	constructor: function (token) {
 		DocCommentNode.prototype.constructor.call(this);
-		this._paramName = paramName;
+		this._token = token;
+	},
+
+	getToken: function () {
+		return this._token;
 	},
 
 	getParamName: function () {
-		return this._paramName;
+		return this._token.getValue();
 	}
 
 });
@@ -2737,6 +2909,15 @@ var DocComment = exports.DocComment = DocCommentNode.extend({
 			}
 		}
 		return null;
+	},
+	getTagsByName: function (tagName) {
+		var tags = [];
+		for (var i = 0; i < this._tags.length; ++i) {
+			if (this._tags[i].getTagName() == tagName) {
+				tags.push(this._tags[i]);
+			}
+		}
+		return tags;
 	}
 
 });
@@ -2797,6 +2978,8 @@ var DocumentGenerator = exports.DocumentGenerator = Class.extend({
 					return this._escape(parser.getPath());
 				case "BODY":
 					return this._buildBodyOfFile(parser);
+				case "FOOTER":
+					return this._buildFooterOfFile(parser);
 				default:
 					throw new Error("unknown key:" + key + " in file: " + this._templatePath);
 				}
@@ -2809,13 +2992,34 @@ var DocumentGenerator = exports.DocumentGenerator = Class.extend({
 _ += "<div class=\"jsxdoc\">\n";
 _ += "<div class=\"file\">\n";
 _ += "<h1>"; _ += (this._escape(parser.getPath())).replace(/\n$/, ""); _ += "</h1>\n";
-		if (parser.getDocComment() != null) {
-_ += "<div class=\"description\">"; _ += (parser.getDocComment().getDescription()).replace(/\n$/, ""); _ += "</div>\n";
+		var docComment = parser.getDocComment();
+		if (docComment) {
+_ += " "; _ += (this._descriptionToHTML(docComment)).replace(/\n$/, ""); _ += "\n";
 		}
 _ += "</div>\n";
 _ += (this._buildListOfClasses(parser)).replace(/\n$/, ""); _ += "\n";
 _ += "</div>\n";
 
+		return _;
+	},
+
+	_buildFooterOfFile: function (parser) {
+		var _ = "";
+		var docComment = parser.getDocComment();
+		if (docComment) {
+			var version = docComment.getTagByName("version");
+			if (version) {
+_ += "<p>This is <strong>"; _ += (this._escape(parser.getPath())).replace(/\n$/, ""); _ += " version "; _ += (this._escape(version.getDescription())).replace(/\n$/, ""); _ += "</strong>.</p>\n";
+			}
+			var author = docComment.getTagByName("author");
+			if (author) {
+				var d = author.getDescription();
+				var endWithDot = (d.charAt(d.length - 1) == ".");
+_ += "<p>Copyright &copy; "; _ += (this._escape(d) + (endWithDot ? "" : ".")).replace(/\n$/, ""); _ += "</p>\n";
+			}
+		}
+_ += "<p>This document was automatically generated by <a href=\"http://jsx.github.com/\">JSX</a><br />\n";
+_ += "at "; _ += (this._escape( (new Date).toString() )).replace(/\n$/, ""); _ += ".\n";
 		return _;
 	},
 
@@ -2923,14 +3127,52 @@ _ += "</div>\n";
 		return _;
 	},
 
+
 	_descriptionToHTML: function (docComment) {
 		var _ = "";
-		var desc = docComment != null ? docComment.getDescription() : "";
-		if (desc != "") {
+
+		if (docComment != null) {
+			var desc = docComment.getDescription();
 _ += "<div class=\"description\">\n";
+			if (desc) {
 _ += (desc).replace(/\n$/, ""); _ += "\n";
+			}
+_ += (this._tagsToHTML(docComment)).replace(/\n$/, ""); _ += "\n";
 _ += "</div>\n";
 		}
+
+		return _;
+	},
+
+	_formatTagDescription: function (d) {
+		if (d.match(/^https?:\/\//)) {
+			return '<a href="' + this._escape(d) + '">' + this._escape(d) + '</a>';
+		}
+		return d;
+	},
+
+	_tagsToHTML: function (docComment) {
+		var _ = "";
+
+		["since", "see"].forEach(function (tagName) {
+			var tags = docComment.getTagsByName(tagName);
+			if (tags.length == 0) {
+				return;
+			}
+_ += "<div class=\""; _ += (tagName).replace(/\n$/, ""); _ += "\">\n";
+			if (tags.length == 1) {
+_ += "<p>"; _ += (tagName).replace(/\n$/, ""); _ += ": <em>"; _ += (this._formatTagDescription(tags[0].getDescription())).replace(/\n$/, ""); _ += "</em></p>\n";
+			}
+			else {
+_ += "<p>"; _ += (tagName).replace(/\n$/, ""); _ += ":</p>\n";
+_ += "<ul>\n";
+				tags.forEach(function (tag) {
+_ += "<li>"; _ += (this._formatTagDescription(tag.getDescription())).replace(/\n$/, ""); _ += "</li>\n";
+				}.bind(this));
+_ += "</ul>\n";
+			}
+_ += "</div>\n";
+		}.bind(this));
 		return _;
 	},
 
@@ -3600,13 +3842,13 @@ var StringLiteralExpression = exports.StringLiteralExpression = LeafExpression.e
 
 var RegExpLiteralExpression = exports.RegExpLiteralExpression = LeafExpression.extend({
 
-	constructor: function (token) {
+	constructor: function (token, type) {
 		LeafExpression.prototype.constructor.call(this, token);
-		this._type = null;
+		this._type = type; // nullable
 	},
 
 	clone: function () {
-		return new RegExpLiteralExpression(this._token);
+		return new RegExpLiteralExpression(this._token, this._type);
 	},
 
 	serialize: function () {
@@ -3804,13 +4046,18 @@ var MapLiteralExpression = exports.MapLiteralExpression = Expression.extend({
 		if (! succeeded)
 			return false;
 		// determine the type from the array members if the type was not specified
-		if (this._type != null) {
+		if (this._type != null && this._type == Type.variantType) {
+			var expectedType = null;
+		} else if (this._type != null && this._type instanceof ObjectType) {
 			var classDef = this._type.getClassDef();
 			if (! (classDef instanceof InstantiatedClassDefinition && classDef.getTemplateClassName() == "Map")) {
 				context.errors.push(new CompileError(this._token, "specified type is not a hash type"));
 				return false;
 			}
-			var expectedType = this._type.getTypeArguments()[0];
+			expectedType = this._type.getTypeArguments()[0];
+		} else if (this._type != null) {
+			context.errors.push(new CompileError(this._token, "invalid type for a map literal"));
+			return false;
 		} else {
 			for (var i = 0; i < this._elements.length; ++i) {
 				var elementType = this._elements[i].getExpr().getType();
@@ -3828,12 +4075,14 @@ var MapLiteralExpression = exports.MapLiteralExpression = Expression.extend({
 				return false;
 			}
 		}
-		// check type of the elements
-		for (var i = 0; i < this._elements.length; ++i) {
-			var elementType = this._elements[i].getExpr().getType();
-			if (! elementType.isConvertibleTo(expectedType)) {
-				context.errors.push(new CompileError(this._token, "cannot assign '" + elementType.toString() + "' to a map of '" + expectedType.toString() + "'"));
-				succeeded = false;
+		// check type of the elements (expect when expectedType == null, meaning that it is a variant)
+		if (expectedType != null) {
+			for (var i = 0; i < this._elements.length; ++i) {
+				var elementType = this._elements[i].getExpr().getType();
+				if (! elementType.isConvertibleTo(expectedType)) {
+					context.errors.push(new CompileError(this._token, "cannot assign '" + elementType.toString() + "' to a map of '" + expectedType.toString() + "'"));
+					succeeded = false;
+				}
 			}
 		}
 		return succeeded;
@@ -11652,8 +11901,9 @@ var Parser = exports.Parser = Class.extend({
 				case "param":
 					var nameMatch = this._getInput(this._columnOffset).match(/[0-9A-Za-z_]+/);
 					if (nameMatch != null) {
+					     var token = new Token(nameMatch[0], false, this._filename, this._lineNumber, this._getColumn());
 						this._forwardPos(nameMatch[0].length);
-						node = new DocCommentParameter(nameMatch[0]);
+						node = new DocCommentParameter(token);
 						docComment.getParams().push(node);
 					} else {
 						this._newError("name of the parameter not found after @param");
@@ -12102,7 +12352,7 @@ var Parser = exports.Parser = Class.extend({
 
 		// done
 		if (this._typeArgs.length != 0) {
-			this._templateClassDefs.push(new TemplateClassDefinition(className.getValue(), this._classFlags, this._typeArgs, this._extendType, this._implementTypes, members, this._objectTypesUsed, docComment));
+			this._templateClassDefs.push(new TemplateClassDefinition(className, className.getValue(), this._classFlags, this._typeArgs, this._extendType, this._implementTypes, members, this._objectTypesUsed, docComment));
 		} else {
 			var classDef = new ClassDefinition(className, className.getValue(), this._classFlags, this._extendType, this._implementTypes, members, this._objectTypesUsed, docComment);
 			this._classDefs.push(classDef);
@@ -14654,8 +14904,8 @@ var ForStatement = exports.ForStatement = ContinuableStatement.extend({
 				if (! Statement.assertIsReachable(context, this._postExpr.getToken()))
 					return false;
 				this._analyzeExpr(context, this._postExpr);
-				this.registerVariableStatusesOnBreak(context.getTopBlock().localVariableStatuses);
 			}
+			this.registerVariableStatusesOnBreak(context.getTopBlock().localVariableStatuses);
 			this._finalizeBlockAnalysis(context);
 		} catch (e) {
 			this._abortBlockAnalysis(context);
@@ -15064,11 +15314,23 @@ var TryStatement = exports.TryStatement = Statement.extend({
 		} finally {
 			context.blockStack.pop();
 		}
-		context.getTopBlock().localVariableStatuses = context.getTopBlock().localVariableStatuses.merge(lvStatusesAfterTry);
+		context.getTopBlock().localVariableStatuses = lvStatusesAfterTry != null
+			? context.getTopBlock().localVariableStatuses.merge(lvStatusesAfterTry)
+			: context.getTopBlock().localVariableStatuses.clone();
 		// catch
 		for (var i = 0; i < this._catchStatements.length; ++i) {
 			if (! this._catchStatements[i].analyze(context))
 				return false;
+			var curCatchType = this._catchStatements[i].getLocal().getType();
+			for (var j = 0; j < i; ++j) {
+				var precCatchType = this._catchStatements[j].getLocal().getType();
+				if (curCatchType.isConvertibleTo(precCatchType)) {
+					context.errors.push(new CompileError(
+						this._catchStatements[i]._token,
+						"code is unreachable, a broader catch statement for type '" + precCatchType.toString() + "' already exists"));
+					return false;
+				}
+			}
 		}
 		// finally
 		for (var i = 0; i < this._finallyStatements.length; ++i)
@@ -15146,17 +15408,7 @@ var CatchStatement = exports.CatchStatement = Statement.extend({
 	doAnalyze: function (context) {
 		// check the catch type
 		var catchType = this.getLocal().getType();
-		if (catchType instanceof ObjectType || catchType.equals(Type.variantType)) {
-			for (var j = 0; j < i; ++j) {
-				var prevCatchType = this._catchStatements[j].getLocal().getType();
-				if (catchType.isConvertibleTo(prevCatchType)) {
-					context.errors.push(new CompileError(
-						this._token,
-						"code is unreachable, a broader catch statement for type '" + prevCatchType.toString() + "' already exists"));
-					break;
-				}
-			}
-		} else {
+		if (! (catchType instanceof ObjectType || catchType.equals(Type.variantType))) {
 			context.errors.push(new CompileError(this._token, "only objects or a variant may be caught"));
 		}
 		// analyze the statements
@@ -15227,6 +15479,7 @@ var ThrowStatement = exports.ThrowStatement = Statement.extend({
 			context.errors.push(new CompileError(this._token, "cannot throw 'void'"));
 			return true;
 		}
+		context.getTopBlock().localVariableStatuses = null;
 		return true;
 	},
 
@@ -16022,8 +16275,12 @@ var ObjectType = exports.ObjectType = Type.extend({
 		if (type instanceof VariantType)
 			return true;
 		// conversions from Number / String to number / string is handled in each operator (since the behavior differ bet. the operators)
-		if (! (type instanceof ObjectType))
+		if (! (type instanceof ObjectType)) {
 			return false;
+		}
+		if (this._classDef == null) { // occurs with completion mode
+			return false;
+		}
 		return this._classDef.isConvertibleTo(type._classDef);
 	},
 
@@ -16283,7 +16540,7 @@ var ResolvedFunctionType = exports.ResolvedFunctionType = FunctionType.extend({
 			if (this._argTypes[i] instanceof VariableLengthArgumentType) {
 				args[i] = "... : " + this._argTypes[i].getBaseType().toString();
 			} else {
-				args[i] = " : " + this._argTypes[i].toString();
+				args[i] = ": " + this._argTypes[i].toString();
 			}
 		}
 		return this._toStringPrefix() + "function (" + args.join(", ") + ") : " + this._returnType.toString();

@@ -24,6 +24,8 @@
  * <p>The file defines the APIs of the built-in objects of JSX, designed to be compatible to <a href="http://www.ecma-international.org/publications/standards/Ecma-262-arch.htm">the 3rd edition of the ECMA-262 standard</a> whenever possible.</p>
  *
  * <p>The description of the API is based on <a href="https://developer.mozilla.org/en/JavaScript/Reference/">the MDN JavaScript Reference</a> under the <a href="http://creativecommons.org/licenses/by-sa/2.5/">Creative Commons: Attribution-Sharealike license</a>.</p>
+ *
+ * @author DeNA., Co., Ltd.
  */
 
 /**
@@ -123,7 +125,7 @@ native final class Array.<T> {
 	 *
 	 * @param itemN The elements to add to the end of the array.
 	 */
-	function push(...itemN : T) : int;
+	function push(...itemN : Nullable.<T>) : int;
 
 	/**
 	 * Reverses an array in place.  The first array element becomes the last and the last becomes the first.
@@ -186,7 +188,7 @@ native final class Array.<T> {
 	 * @param itemN The elements to add to the front of the array.
 	 * @return The new <code>length</code> property of the object upon which the method was called.
 	 */
-	function unshift(...itemN : T) : int;
+	function unshift(...itemN : Nullable.<T>) : int;
 
 	// 15.4.4 (ES5)
 	/**
@@ -250,7 +252,7 @@ native final class Array.<T> {
 	 * Creates a new array with all elements that pass the test implemented
 	 * the provided function.
 	 *
-	 * @param callback A function to test each elements of the array.
+	 * @param callbackfn A function to test each elements of the array.
 	 */
 	function filter(callbackfn : function(value : Nullable.<T>) : boolean) : Array.<T>;
 	function filter(callbackfn : function(value : Nullable.<T>, index : number) : boolean) : Array.<T>;
@@ -614,9 +616,9 @@ native final class Number {
 	override function toString() : string;
 
 	/**
-	 * Returns a string representing the specified Number object.
+	 * Returns a string representing the number.
 	 *
-	 * @param An integer between 2 and 36 specifying the base to use for representing numeric values.
+	 * @param radix An integer between 2 and 36 specifying the base to use for representing numeric values.
 	 */
 	function toString(radix : number) : string;
 

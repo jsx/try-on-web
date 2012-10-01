@@ -260,26 +260,22 @@ function TestCase$() {
 TestCase$.prototype = new TestCase;
 
 /**
+ */
+TestCase.prototype.setUp$ = function () {
+};
+
+/**
+ */
+TestCase.prototype.tearDown$ = function () {
+};
+
+/**
  * @param {Array.<undefined|!string>} tests
  */
 TestCase.prototype.beforeClass$AS = function (tests) {
 	this._tests = tests;
 	this._say$S("1.." + (this._tests.length + ""));
-};
-
-/**
- * @param {!string} name
- */
-TestCase.prototype.run$SF$V$ = function (name, testFunction) {
-	/** @type {!number} */
-	var numAsyncTasks;
-	name = name.replace(/[$].*$/, "");
-	numAsyncTasks = this._tasks.length;
-	this._currentName = name;
-	testFunction();
-	if (numAsyncTasks === this._tasks.length) {
-		this.after$S(name);
-	}
+	this.setUp$();
 };
 
 /**
@@ -291,6 +287,29 @@ TestCase.prototype.afterClass$ = function () {
 	} else {
 		next = this._tasks.shift();
 		next();
+	}
+};
+
+/**
+ * @param {!string} name
+ */
+TestCase.prototype.run$SF$V$ = function (name, testFunction) {
+	/** @type {!number} */
+	var numAsyncTasks;
+	name = name.replace(/[$].*$/, "");
+	numAsyncTasks = this._tasks.length;
+	this._currentName = name;
+	try {
+		testFunction();
+	} catch ($__jsx_catch_0) {
+		if ($__jsx_catch_0 instanceof Error) {
+			this.fail$S(name + " failed with exception: " + $__jsx_catch_0.toString());
+		} else {
+			throw $__jsx_catch_0;
+		}
+	}
+	if (numAsyncTasks === this._tasks.length) {
+		this.after$S(name);
 	}
 };
 
@@ -319,6 +338,7 @@ TestCase.prototype.finish$ = function () {
 		failed = this._totalCount - this._totalPass;
 		this.diag$S("tests failed " + (failed + "") + " of " + (this._totalCount + ""));
 	}
+	this.tearDown$();
 };
 
 /**
@@ -331,7 +351,7 @@ TestCase.prototype.async$F$LAsyncContext$V$F$LAsyncContext$V$I = function (testB
 	async = new AsyncContext$LTestCase$SF$LAsyncContext$V$I(this, (function (v) {
 		if (! (v != null)) {
 			debugger;
-			throw new Error("[/Users/gfx/repo/try-on-web/JSX/lib/common/test-case.jsx:147] null access");
+			throw new Error("[/Users/gfx/repo/try-on-web/JSX/lib/common/test-case.jsx:166] null access");
 		}
 		return v;
 	}(this._currentName)), timeoutHandler, timeoutMS);
@@ -380,7 +400,7 @@ TestCase.prototype._ok$US = function (name) {
 	s = (name != null ? " - " + (function (v) {
 		if (! (v != null)) {
 			debugger;
-			throw new Error("[/Users/gfx/repo/try-on-web/JSX/lib/common/test-case.jsx:175] null access");
+			throw new Error("[/Users/gfx/repo/try-on-web/JSX/lib/common/test-case.jsx:201] null access");
 		}
 		return v;
 	}(name)) : "");
@@ -399,7 +419,7 @@ TestCase.prototype._nok$USSXX = function (name, op, got, expected) {
 	s = (name != null ? " - " + (function (v) {
 		if (! (v != null)) {
 			debugger;
-			throw new Error("[/Users/gfx/repo/try-on-web/JSX/lib/common/test-case.jsx:186] null access");
+			throw new Error("[/Users/gfx/repo/try-on-web/JSX/lib/common/test-case.jsx:212] null access");
 		}
 		return v;
 	}(name)) : "");
@@ -600,20 +620,6 @@ function _Matcher$LTestCase$XS(test, got, name) {
 _Matcher$LTestCase$XS.prototype = new _Matcher;
 
 /**
- * @param {!boolean} value
- * @param {*} got
- * @param {*} expected
- * @param {!string} op
- */
-_Matcher.prototype._match$BXXS = function (value, got, expected, op) {
-	if (value) {
-		this._test._ok$US(this._name);
-	} else {
-		this._test._nok$USSXX(this._name, op, got, expected);
-	}
-};
-
-/**
  * @param {*} x
  */
 _Matcher.prototype.toBe$X = function (x) {
@@ -656,6 +662,34 @@ _Matcher.prototype.toBeGE$N = function (x) {
 };
 
 /**
+ * @param {RegExp} x
+ */
+_Matcher.prototype.toMatch$LRegExp$ = function (x) {
+	this._match$BXXS(x.test(this._got + ""), this._got, x, "match");
+};
+
+/**
+ * @param {RegExp} x
+ */
+_Matcher.prototype.notToMatch$LRegExp$ = function (x) {
+	this._match$BXXS(! x.test(this._got + ""), this._got, x, "not match");
+};
+
+/**
+ * @param {!boolean} value
+ * @param {*} got
+ * @param {*} expected
+ * @param {!string} op
+ */
+_Matcher.prototype._match$BXXS = function (value, got, expected, op) {
+	if (value) {
+		this._test._ok$US(this._name);
+	} else {
+		this._test._nok$USSXX(this._name, op, got, expected);
+	}
+};
+
+/**
  * class Timer extends Object
  * @constructor
  */
@@ -679,7 +713,7 @@ Timer.setTimeout$F$V$N = function (callback, intervalMS) {
 	return (function (v) {
 		if (! (v == null || typeof v === "function")) {
 			debugger;
-			throw new Error("[/Users/gfx/repo/try-on-web/JSX/lib/js/timer.jsx:27] detected invalid cast, value is not a function or null");
+			throw new Error("[/Users/gfx/repo/try-on-web/JSX/lib/js/timer.jsx:34] detected invalid cast, value is not a function or null");
 		}
 		return v;
 	}(js.global.setTimeout))(callback, intervalMS);
@@ -694,7 +728,7 @@ Timer.clearTimeout$LTimerHandle$ = function (timer) {
 	(function (v) {
 		if (! (v == null || typeof v === "function")) {
 			debugger;
-			throw new Error("[/Users/gfx/repo/try-on-web/JSX/lib/js/timer.jsx:31] detected invalid cast, value is not a function or null");
+			throw new Error("[/Users/gfx/repo/try-on-web/JSX/lib/js/timer.jsx:38] detected invalid cast, value is not a function or null");
 		}
 		return v;
 	}(js.global.clearTimeout))(timer);
@@ -710,7 +744,7 @@ Timer.setInterval$F$V$N = function (callback, intervalMS) {
 	return (function (v) {
 		if (! (v == null || typeof v === "function")) {
 			debugger;
-			throw new Error("[/Users/gfx/repo/try-on-web/JSX/lib/js/timer.jsx:35] detected invalid cast, value is not a function or null");
+			throw new Error("[/Users/gfx/repo/try-on-web/JSX/lib/js/timer.jsx:42] detected invalid cast, value is not a function or null");
 		}
 		return v;
 	}(js.global.setInterval))(callback, intervalMS);
@@ -725,7 +759,7 @@ Timer.clearInterval$LTimerHandle$ = function (timer) {
 	(function (v) {
 		if (! (v == null || typeof v === "function")) {
 			debugger;
-			throw new Error("[/Users/gfx/repo/try-on-web/JSX/lib/js/timer.jsx:39] detected invalid cast, value is not a function or null");
+			throw new Error("[/Users/gfx/repo/try-on-web/JSX/lib/js/timer.jsx:46] detected invalid cast, value is not a function or null");
 		}
 		return v;
 	}(js.global.clearInterval))(timer);
@@ -773,7 +807,7 @@ Timer._getRequestAnimationFrameImpl$B = function (useNativeImpl) {
 				return (function (v) {
 					if (! (v == null || typeof v === "function")) {
 						debugger;
-						throw new Error("[/Users/gfx/repo/try-on-web/JSX/lib/js/timer.jsx:65] detected invalid cast, value is not a function or null");
+						throw new Error("[/Users/gfx/repo/try-on-web/JSX/lib/js/timer.jsx:72] detected invalid cast, value is not a function or null");
 					}
 					return v;
 				}(js.global.requestAnimationFrame))(callback);
@@ -784,7 +818,7 @@ Timer._getRequestAnimationFrameImpl$B = function (useNativeImpl) {
 					return (function (v) {
 						if (! (v == null || typeof v === "function")) {
 							debugger;
-							throw new Error("[/Users/gfx/repo/try-on-web/JSX/lib/js/timer.jsx:71] detected invalid cast, value is not a function or null");
+							throw new Error("[/Users/gfx/repo/try-on-web/JSX/lib/js/timer.jsx:78] detected invalid cast, value is not a function or null");
 						}
 						return v;
 					}(js.global.webkitRequestAnimationFrame))(callback);
@@ -795,7 +829,7 @@ Timer._getRequestAnimationFrameImpl$B = function (useNativeImpl) {
 						return (function (v) {
 							if (! (v == null || typeof v === "function")) {
 								debugger;
-								throw new Error("[/Users/gfx/repo/try-on-web/JSX/lib/js/timer.jsx:77] detected invalid cast, value is not a function or null");
+								throw new Error("[/Users/gfx/repo/try-on-web/JSX/lib/js/timer.jsx:84] detected invalid cast, value is not a function or null");
 							}
 							return v;
 						}(js.global.mozRequestAnimationFrame))(callback);
@@ -806,7 +840,7 @@ Timer._getRequestAnimationFrameImpl$B = function (useNativeImpl) {
 							return (function (v) {
 								if (! (v == null || typeof v === "function")) {
 									debugger;
-									throw new Error("[/Users/gfx/repo/try-on-web/JSX/lib/js/timer.jsx:83] detected invalid cast, value is not a function or null");
+									throw new Error("[/Users/gfx/repo/try-on-web/JSX/lib/js/timer.jsx:90] detected invalid cast, value is not a function or null");
 								}
 								return v;
 							}(js.global.oRequestAnimationFrame))(callback);
@@ -817,7 +851,7 @@ Timer._getRequestAnimationFrameImpl$B = function (useNativeImpl) {
 								return (function (v) {
 									if (! (v == null || typeof v === "function")) {
 										debugger;
-										throw new Error("[/Users/gfx/repo/try-on-web/JSX/lib/js/timer.jsx:89] detected invalid cast, value is not a function or null");
+										throw new Error("[/Users/gfx/repo/try-on-web/JSX/lib/js/timer.jsx:96] detected invalid cast, value is not a function or null");
 									}
 									return v;
 								}(js.global.msRequestAnimationFrame))(callback);
@@ -855,7 +889,7 @@ Timer._getCancelAnimationFrameImpl$B = function (useNativeImpl) {
 				(function (v) {
 					if (! (v == null || typeof v === "function")) {
 						debugger;
-						throw new Error("[/Users/gfx/repo/try-on-web/JSX/lib/js/timer.jsx:112] detected invalid cast, value is not a function or null");
+						throw new Error("[/Users/gfx/repo/try-on-web/JSX/lib/js/timer.jsx:119] detected invalid cast, value is not a function or null");
 					}
 					return v;
 				}(js.global.cancelAnimationFrame))(timer);
@@ -866,7 +900,7 @@ Timer._getCancelAnimationFrameImpl$B = function (useNativeImpl) {
 					(function (v) {
 						if (! (v == null || typeof v === "function")) {
 							debugger;
-							throw new Error("[/Users/gfx/repo/try-on-web/JSX/lib/js/timer.jsx:118] detected invalid cast, value is not a function or null");
+							throw new Error("[/Users/gfx/repo/try-on-web/JSX/lib/js/timer.jsx:125] detected invalid cast, value is not a function or null");
 						}
 						return v;
 					}(js.global.webkitCancelAnimationFrame))(timer);
@@ -877,7 +911,7 @@ Timer._getCancelAnimationFrameImpl$B = function (useNativeImpl) {
 						(function (v) {
 							if (! (v == null || typeof v === "function")) {
 								debugger;
-								throw new Error("[/Users/gfx/repo/try-on-web/JSX/lib/js/timer.jsx:124] detected invalid cast, value is not a function or null");
+								throw new Error("[/Users/gfx/repo/try-on-web/JSX/lib/js/timer.jsx:131] detected invalid cast, value is not a function or null");
 							}
 							return v;
 						}(js.global.mozCancelAnimationFrame))(timer);
@@ -888,7 +922,7 @@ Timer._getCancelAnimationFrameImpl$B = function (useNativeImpl) {
 							(function (v) {
 								if (! (v == null || typeof v === "function")) {
 									debugger;
-									throw new Error("[/Users/gfx/repo/try-on-web/JSX/lib/js/timer.jsx:130] detected invalid cast, value is not a function or null");
+									throw new Error("[/Users/gfx/repo/try-on-web/JSX/lib/js/timer.jsx:137] detected invalid cast, value is not a function or null");
 								}
 								return v;
 							}(js.global.oCancelAnimationFrame))(timer);
@@ -899,7 +933,7 @@ Timer._getCancelAnimationFrameImpl$B = function (useNativeImpl) {
 								(function (v) {
 									if (! (v == null || typeof v === "function")) {
 										debugger;
-										throw new Error("[/Users/gfx/repo/try-on-web/JSX/lib/js/timer.jsx:136] detected invalid cast, value is not a function or null");
+										throw new Error("[/Users/gfx/repo/try-on-web/JSX/lib/js/timer.jsx:143] detected invalid cast, value is not a function or null");
 									}
 									return v;
 								}(js.global.msCancelAnimationFrame))(timer);
@@ -1025,19 +1059,24 @@ JSX.runTests = function (sourceFile, tests) {
 		}
 	}
 
-	var test = new testClass();
+	var testCase = new testClass();
 
-	if (test.beforeClass$AS != null)
-		test.beforeClass$AS(tests);
+	if (testCase.beforeClass$AS != null)
+		testCase.beforeClass$AS(tests);
 
 	for (var i = 0; i < tests.length; ++i) {
-		(function (m) {
-			test.run$SF$V$(m, function() { test[m](); });
+		(function (method) {
+			if (method in testCase) {
+				testCase.run$SF$V$(method, function() { testCase[method](); });
+			}
+			else {
+				throw new ReferenceError("No such test method: " + method);
+			}
 		}(tests[i]));
 	}
 
-	if (test.afterClass$ != null)
-		test.afterClass$();
+	if (testCase.afterClass$ != null)
+		testCase.afterClass$();
 };
 /**
  * call a function on load/DOMContentLoaded

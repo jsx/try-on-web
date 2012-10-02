@@ -213,25 +213,36 @@ function _Main$() {
 _Main$.prototype = new _Main;
 
 /**
+ * @param {Animal} animal
+ */
+_Main.takeAnimal$LAnimal$ = function (animal) {
+	animal.eat$();
+};
+
+var _Main$takeAnimal$LAnimal$ = _Main.takeAnimal$LAnimal$;
+
+/**
+ * @param {Flyable} flyingBeing
+ */
+_Main.takeFlyable$LFlyable$ = function (flyingBeing) {
+	flyingBeing.fly$();
+};
+
+var _Main$takeFlyable$LFlyable$ = _Main.takeFlyable$LFlyable$;
+
+/**
  * @param {Array.<undefined|!string>} args
  */
 _Main.main$AS = function (args) {
 	/** @type {Bat} */
 	var bat;
-	/** @type {Animal} */
-	var animal;
-	/** @type {Flyable} */
-	var flyable;
 	/** @type {Bee} */
 	var bee;
 	bat = new Bat$();
-	animal = bat;
-	animal.eat$();
-	flyable = bat;
-	flyable.fly$();
+	_Main$takeAnimal$LAnimal$(bat);
+	_Main$takeFlyable$LFlyable$(bat);
 	bee = new Bee$();
-	flyable = bee;
-	flyable.fly$();
+	_Main$takeFlyable$LFlyable$(bee);
 };
 
 var _Main$main$AS = _Main.main$AS;

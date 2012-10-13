@@ -135,6 +135,7 @@
          },
          "assets" : {
             "css" : {
+               "simple-hint.css" : "/try/assets/css/simple-hint.css",
                "bootstrap.css" : "/try/assets/css/bootstrap.css",
                "bootstrap-responsive.min.css" : "/try/assets/css/bootstrap-responsive.min.css",
                "codemirror.css" : "/try/assets/css/codemirror.css",
@@ -152,6 +153,7 @@
                "web.js" : "/try/assets/js/web.js",
                "jsx-profiler-result.js" : "/try/assets/js/jsx-profiler-result.js",
                "jslexer.js" : "/try/assets/js/jslexer.js",
+               "simple-hint.js" : "/try/assets/js/simple-hint.js",
                "require-simple.js" : "/try/assets/js/require-simple.js",
                "jquery.js" : "/try/assets/js/jquery.js",
                "source-map.js" : "/try/assets/js/source-map.js",

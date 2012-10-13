@@ -248,6 +248,7 @@ TestCase.prototype = new Object;
  * @constructor
  */
 function TestCase$() {
+	this.verbose = true;
 	this._totalCount = 0;
 	this._totalPass = 0;
 	this._count = 0;
@@ -400,7 +401,7 @@ TestCase.prototype._ok$US = function (name) {
 	s = (name != null ? " - " + (function (v) {
 		if (! (v != null)) {
 			debugger;
-			throw new Error("[/Users/gfx/repo/try-on-web/JSX/lib/common/test-case.jsx:201] null access");
+			throw new Error("[/Users/gfx/repo/try-on-web/JSX/lib/common/test-case.jsx:202] null access");
 		}
 		return v;
 	}(name)) : "");
@@ -419,7 +420,7 @@ TestCase.prototype._nok$USSXX = function (name, op, got, expected) {
 	s = (name != null ? " - " + (function (v) {
 		if (! (v != null)) {
 			debugger;
-			throw new Error("[/Users/gfx/repo/try-on-web/JSX/lib/common/test-case.jsx:212] null access");
+			throw new Error("[/Users/gfx/repo/try-on-web/JSX/lib/common/test-case.jsx:213] null access");
 		}
 		return v;
 	}(name)) : "");
@@ -467,6 +468,160 @@ TestCase.prototype._say$S = function (message) {
 };
 
 /**
+ * @param {*} a
+ * @param {*} b
+ * @return {!boolean}
+ */
+TestCase.prototype.equals$XX = function (a, b) {
+	return this._equals$XXI(a, b, 0);
+};
+
+/**
+ * @param {*} a
+ * @param {*} b
+ * @param {!number} recursion
+ * @return {!boolean}
+ */
+TestCase.prototype._equals$XXI = function (a, b, recursion) {
+	/** @type {Array.<undefined|*>} */
+	var aryA;
+	/** @type {Array.<undefined|*>} */
+	var aryB;
+	/** @type {!number} */
+	var i;
+	/** @type {Object.<string, undefined|*>} */
+	var mapA;
+	/** @type {Object.<string, undefined|*>} */
+	var mapB;
+	/** @type {Array.<undefined|!string>} */
+	var mapAkeys;
+	/** @type {Array.<undefined|!string>} */
+	var mapBkeys;
+	/** @type {undefined|!string} */
+	var key;
+	/** @type {Date} */
+	var dateA;
+	/** @type {Date} */
+	var dateB;
+	if (++ recursion > 1000) {
+		throw new RangeError("Deep recursion in equals()");
+	}
+	if (a == b || a == null && b == null) {
+		return true;
+	}
+	aryA = (function (o) { return o instanceof Array ? o : null; })(a);
+	aryB = (function (o) { return o instanceof Array ? o : null; })(b);
+	if (aryA) {
+		if (! aryB) {
+			return false;
+		}
+		if (aryA.length !== aryB.length) {
+			return false;
+		}
+		for (i = 0; i < aryA.length; ++ i) {
+			if (! this._equals$XXI(aryA[i], aryB[i], recursion)) {
+				return false;
+			}
+		}
+		return true;
+	}
+	mapA = (function (o) { return o instanceof Object ? o : null; })(a);
+	mapB = (function (o) { return o instanceof Object ? o : null; })(b);
+	if (mapA) {
+		if (! mapB) {
+			return false;
+		}
+		mapAkeys = this.sortedKeys$HX(mapA);
+		mapBkeys = this.sortedKeys$HX(mapB);
+		if (mapAkeys.length !== mapBkeys.length) {
+			return false;
+		}
+		for (i = 0; i < mapAkeys.length; ++ i) {
+			key = mapAkeys[i];
+			if (key != mapBkeys[i]) {
+				return false;
+			}
+			if (! this._equals$XXI(mapA[key], mapB[key], recursion)) {
+				return false;
+			}
+		}
+		return true;
+	}
+	dateA = (function (o) { return o instanceof Date ? o : null; })(a);
+	dateB = (function (o) { return o instanceof Date ? o : null; })(b);
+	if (dateA && dateB) {
+		return dateA.getTime() === dateB.getTime();
+	}
+	return false;
+};
+
+/**
+ * @param {Object.<string, undefined|*>} map
+ * @return {Array.<undefined|!string>}
+ */
+TestCase.prototype.sortedKeys$HX = function (map) {
+	/** @type {Array.<undefined|!string>} */
+	var keys;
+	/** @type {!string} */
+	var key;
+	keys = [];
+	for (key in map) {
+		keys.push(key);
+	}
+	return keys.sort();
+};
+
+/**
+ * @param {Array.<undefined|*>} a
+ * @param {Array.<undefined|*>} b
+ * @return {!string}
+ */
+TestCase.prototype.difflet$AXAX = function (a, b) {
+	/** @type {!string} */
+	var s;
+	/** @type {!number} */
+	var i;
+	/** @type {!number} */
+	var l;
+	/** @type {*} */
+	var ai;
+	/** @type {*} */
+	var bi;
+	/** @type {!boolean} */
+	var aIsOver;
+	/** @type {!boolean} */
+	var aIsLast;
+	if (! (a != null)) {
+		debugger;
+		throw new Error("[/Users/gfx/repo/try-on-web/JSX/lib/common/test-case.jsx:330] assertion failure");
+	}
+	if (! (b != null)) {
+		debugger;
+		throw new Error("[/Users/gfx/repo/try-on-web/JSX/lib/common/test-case.jsx:331] assertion failure");
+	}
+	s = "[\n";
+	for ((i = 0, l = Math.max(a.length, b.length)); i < l; ++ i) {
+		ai = a[i];
+		bi = b[i];
+		aIsOver = i >= a.length;
+		aIsLast = i + 1 >= a.length;
+		if (! aIsOver) {
+			s += "  " + JSON.stringify(ai);
+			if (! aIsLast) {
+				s += ",";
+			}
+			if (ai != bi) {
+				s += " // != " + JSON.stringify(bi);
+			}
+		} else {
+			s += "  // != " + JSON.stringify(bi);
+		}
+		s += "\n";
+	}
+	return s + "]";
+};
+
+/**
  * @param {!string} message
  */
 TestCase.prototype.diag$S = function (message) {
@@ -477,7 +632,7 @@ TestCase.prototype.diag$S = function (message) {
  * @param {!string} message
  */
 TestCase.prototype.note$S = function (message) {
-	if (TestCase.verbose) {
+	if (this.verbose) {
 		this._say$S(message.replace(/^/mg, "# "));
 	}
 };
@@ -673,6 +828,81 @@ _Matcher.prototype.toMatch$LRegExp$ = function (x) {
  */
 _Matcher.prototype.notToMatch$LRegExp$ = function (x) {
 	this._match$BXXS(! x.test(this._got + ""), this._got, x, "not match");
+};
+
+/**
+ * @param {Array.<undefined|*>} x
+ */
+_Matcher.prototype.toEqual$AX = function (x) {
+	/** @type {Array.<undefined|*>} */
+	var got;
+	if (! (x != null)) {
+		debugger;
+		throw new Error("[/Users/gfx/repo/try-on-web/JSX/lib/common/test-case.jsx:484] assertion failure");
+	}
+	got = (function (o) { return o instanceof Array ? o : null; })(this._got);
+	if (got == null) {
+		this._test._nok$USSXX(this._name, "equals", this._got, x);
+		return;
+	}
+	if (this._test.equals$XX(got, x)) {
+		this._test._ok$US(this._name);
+	} else {
+		this._test._nok$USSXX(this._name, "equals", got, x);
+		this._test.note$S(this._test.difflet$AXAX(got, x));
+	}
+};
+
+/**
+ * @param {Array.<undefined|!string>} x
+ */
+_Matcher.prototype.toEqual$AS = function (x) {
+	this.toEqual$AX((function (v) {
+		if (! (v == null || v instanceof Array)) {
+			debugger;
+			throw new Error("[/Users/gfx/repo/try-on-web/JSX/lib/common/test-case.jsx:502] detected invalid cast, value is not an Array or null");
+		}
+		return v;
+	}(x)));
+};
+
+/**
+ * @param {Array.<undefined|!number>} x
+ */
+_Matcher.prototype.toEqual$AN = function (x) {
+	this.toEqual$AX((function (v) {
+		if (! (v == null || v instanceof Array)) {
+			debugger;
+			throw new Error("[/Users/gfx/repo/try-on-web/JSX/lib/common/test-case.jsx:505] detected invalid cast, value is not an Array or null");
+		}
+		return v;
+	}(x)));
+};
+
+/**
+ * @param {Array.<undefined|!number>} x
+ */
+_Matcher.prototype.toEqual$AI = function (x) {
+	this.toEqual$AX((function (v) {
+		if (! (v == null || v instanceof Array)) {
+			debugger;
+			throw new Error("[/Users/gfx/repo/try-on-web/JSX/lib/common/test-case.jsx:508] detected invalid cast, value is not an Array or null");
+		}
+		return v;
+	}(x)));
+};
+
+/**
+ * @param {Array.<undefined|!boolean>} x
+ */
+_Matcher.prototype.toEqual$AB = function (x) {
+	this.toEqual$AX((function (v) {
+		if (! (v == null || v instanceof Array)) {
+			debugger;
+			throw new Error("[/Users/gfx/repo/try-on-web/JSX/lib/common/test-case.jsx:511] detected invalid cast, value is not an Array or null");
+		}
+		return v;
+	}(x)));
 };
 
 /**
@@ -981,7 +1211,6 @@ function js$() {
 
 js$.prototype = new js;
 
-TestCase.verbose = true;
 $__jsx_lazy_init(Timer, "_requestAnimationFrame", function () {
 	return Timer$_getRequestAnimationFrameImpl$B(true);
 });
@@ -1057,6 +1286,11 @@ JSX.runTests = function (sourceFile, tests) {
 				tests.push(m);
 			}
 		}
+	}
+	else { // set as process arguments
+		tests = tests.map(function (name) {
+			return name + "$"; // mangle for function test*():void
+		});
 	}
 
 	var testCase = new testClass();

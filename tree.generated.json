@@ -63,6 +63,9 @@
                "amairo.mp3" : "/try/example/webaudio/amairo.mp3",
                "index.html" : "/try/example/webaudio/index.html"
             },
+            "ipc-js" : {
+               "index.html" : "/try/example/ipc-js/index.html"
+            },
             "hello-world.html" : "/try/example/hello-world.html",
             "sakura.html" : "/try/example/sakura.html"
          },
@@ -440,6 +443,7 @@
                   "a.jsx" : "/try/t/run/200.template-under-namespace/a.jsx"
                },
                "123.tostring-as-property.jsx" : "/try/t/run/123.tostring-as-property.jsx",
+               "216.var-decl-of-arg.jsx" : "/try/t/run/216.var-decl-of-arg.jsx",
                "203.static-var-with-lambda.jsx" : "/try/t/run/203.static-var-with-lambda.jsx",
                "105.in.jsx" : "/try/t/run/105.in.jsx",
                "198.template-as-param.jsx" : "/try/t/run/198.template-as-param.jsx",
@@ -487,6 +491,7 @@
                "004.xhr-interface.jsx" : "/try/t/lib/004.xhr-interface.jsx",
                "007.typedarray.jsx" : "/try/t/lib/007.typedarray.jsx",
                "008.dom-interface.jsx" : "/try/t/lib/008.dom-interface.jsx",
+               "012.test-case-compare.jsx" : "/try/t/lib/012.test-case-compare.jsx",
                "005.builtins.jsx" : "/try/t/lib/005.builtins.jsx",
                "003.js.jsx" : "/try/t/lib/003.js.jsx",
                "001.hello.jsx" : "/try/t/lib/001.hello.jsx",
@@ -754,6 +759,7 @@
                "025.inline-static-template-function.jsx" : "/try/t/optimize/025.inline-static-template-function.jsx",
                "016.inline-ctor.jsx" : "/try/t/optimize/016.inline-ctor.jsx",
                "006.inline-simple-static.jsx" : "/try/t/optimize/006.inline-simple-static.jsx",
+               "032.inline-call-lambda-in-inner-function.todo.jsx" : "/try/t/optimize/032.inline-call-lambda-in-inner-function.todo.jsx",
                "004.return-if-with-else.jsx" : "/try/t/optimize/004.return-if-with-else.jsx",
                "005.return-if-complicated.jsx" : "/try/t/optimize/005.return-if-complicated.jsx",
                "024.inline-closure.jsx" : "/try/t/optimize/024.inline-closure.jsx",

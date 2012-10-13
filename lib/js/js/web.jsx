@@ -2,6 +2,7 @@
 /***
  * Web Browser Interface for JSX
  *
+ * @author DeNA, Co., Ltd.
  * @see http://www.w3.org/
  */
 import "js.jsx";
@@ -2343,6 +2344,16 @@ native final __fake__ class Window extends EventTarget {
 		timeout : number/*long*/
 	) : number/*long*/;
 	function clearInterval(handle : number/*long*/) : void;
+
+	function postMessage(
+		message : variant/*any*/,
+		targetOrigin : string/*DOMString*/
+	) : void;
+	function postMessage(
+		message : variant/*any*/,
+		targetOrigin : string/*DOMString*/,
+		transfer : Transferable[]
+	) : void;
 
 	// implements WindowAnimationTiming
 
@@ -5092,7 +5103,7 @@ native final class TouchEvent extends UIEvent {
 
 } // end of TouchEvent
 
-/** @see http://www.w3.org/TR/2011/CR-websockets-20111208/ */
+/** @see http://www.w3.org/TR/2012/CR-websockets-20120920/ */
 native final class WebSocket extends EventTarget {
 
 	function constructor(url : string/*DOMString*/);
@@ -5118,9 +5129,9 @@ native final class WebSocket extends EventTarget {
 	__readonly__ var readyState : number/*unsigned short*/;
 	__readonly__ var bufferedAmount : number/*unsigned long*/;
 	// networking
-	var onopen : Nullable.<function(:Event):void>/*Function?*/;
-	var onerror : Nullable.<function(:Event):void>/*Function?*/;
-	var onclose : Nullable.<function(:Event):void>/*Function?*/;
+	var onopen : function(:Event):void/*EventHandler*/;
+	var onerror : function(:Event):void/*EventHandler*/;
+	var onclose : function(:Event):void/*EventHandler*/;
 	__readonly__ var extensions : string/*DOMString*/;
 	__readonly__ var protocol : string/*DOMString*/;
 	function close() : void;
@@ -5130,15 +5141,16 @@ native final class WebSocket extends EventTarget {
 		reason : string/*DOMString*/
 	) : void;
 	// messaging
-	var onmessage : Nullable.<function(:Event):void>/*Function?*/;
+	var onmessage : function(:Event):void/*EventHandler*/;
 	var binaryType : string/*DOMString*/;
 	function send(data : string/*DOMString*/) : void;
-	function send(data : ArrayBuffer) : void;
 	function send(data : Blob) : void;
+	function send(data : ArrayBuffer) : void;
+	function send(data : ArrayBufferView) : void;
 
 } // end of WebSocket
 
-/** @see http://www.w3.org/TR/2011/CR-websockets-20111208/ */
+/** @see http://www.w3.org/TR/2012/CR-websockets-20120920/ */
 native final class CloseEvent extends Event {
 
 	function constructor(type : string/*DOMString*/);
@@ -5153,7 +5165,7 @@ native final class CloseEvent extends Event {
 
 } // end of CloseEvent
 
-/** @see http://www.w3.org/TR/2011/CR-websockets-20111208/ */
+/** @see http://www.w3.org/TR/2012/CR-websockets-20120920/ */
 native final class CloseEventInit extends EventInit {
 
 	var wasClean : boolean;

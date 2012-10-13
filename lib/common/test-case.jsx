@@ -70,7 +70,7 @@ import "console.jsx";
  */
 class TestCase {
 	// TODO turn off when the process has no tty
-	static var verbose = true;
+	var verbose = true;
 
 	var _totalCount = 0;
 	var _totalPass  = 0;
@@ -182,6 +182,7 @@ class TestCase {
 
 	/* matcher factory */
 
+	// want to delcare expect.<T>(value : T) : _Matcher.<T>
 	/**
 	 * <p>Creates a test matcher for a value.</p>
 	 * <p>Usage: <code>this.expect(testingValue).tobe(expectedValue)</code></p>
@@ -249,6 +250,115 @@ class TestCase {
 		console.info(message);
 	}
 
+	function equals(a : variant, b : variant) : boolean {
+		return this._equals(a, b, 0);
+	}
+
+	function _equals(a : variant, b : variant, recursion : int) : boolean {
+		if (++recursion > 1000) {
+			throw new RangeError("Deep recursion in equals()");
+		}
+		if (a == b || (a == null && b == null)) {
+			return true;
+		}
+
+		// both are Array.<T>
+		var aryA = a as Array.<variant>;
+		var aryB = b as Array.<variant>;
+		if (aryA) {
+			if (! aryB) {
+				return false;
+			}
+			if (aryA.length != aryB.length) {
+				return false;
+			}
+			for (var i = 0; i < aryA.length; ++i) {
+				if (! this._equals(aryA[i], aryB[i], recursion)) {
+					return false;
+				}
+			}
+			return true;
+		}
+
+		// both are Map.<T>
+		var mapA = a as Map.<variant>;
+		var mapB = b as Map.<variant>;
+		if (mapA) {
+			if (! mapB) {
+				return false;
+			}
+
+			var mapAkeys = this.sortedKeys(mapA);
+			var mapBkeys = this.sortedKeys(mapB);
+
+			if (mapAkeys.length != mapBkeys.length) {
+				return false;
+			}
+
+			for (var i = 0; i < mapAkeys.length; ++i) {
+				var key = mapAkeys[i];
+				if (key != mapBkeys[i]) {
+					return false;
+				}
+				if (! this._equals(mapA[key], mapB[key], recursion)) {
+					return false;
+				}
+			}
+			return true;
+		}
+
+		// both are Date
+		var dateA = a as Date;
+		var dateB = b as Date;
+		if (dateA && dateB) {
+			return dateA.getTime() == dateB.getTime();
+		}
+
+		// XXX: consider serialize():variant
+		return false;
+	}
+
+	function sortedKeys(map : Map.<variant>) : Array.<string> {
+		var keys = new Array.<string>;
+		for (var key in map) {
+			keys.push(key);
+		}
+		return keys.sort();
+	}
+
+	function difflet(a : Array.<variant>, b : Array.<variant>) : string {
+		assert a != null;
+		assert b != null;
+
+		var s = "[\n";
+
+		for (var i = 0, l = Math.max(a.length, b.length); i < l; ++i) {
+			var ai = a[i];
+			var bi = b[i];
+
+			var aIsOver = (i   >= a.length);
+			var aIsLast = (i+1 >= a.length);
+
+			if (! aIsOver) {
+				s += "  " + JSON.stringify(ai);
+				if (! aIsLast) {
+					s += ",";
+				}
+
+				if (ai != bi) {
+					// put pretty diff
+					s += " // != " + JSON.stringify(bi);
+				}
+			}
+			else {
+				s += "  // != " + JSON.stringify(bi);
+			}
+			s += "\n";
+		}
+
+		return s + "]";
+	}
+
 	/**
 	 * Shows diagnostic messages.
 	 */
@@ -260,7 +370,7 @@ class TestCase {
 	 * Shows notes.
 	 */
 	function note(message : string) : void {
-		if(TestCase.verbose) {
+		if(this.verbose) {
 			this._say(message.replace(/^/mg, "# "));
 		}
 	}
@@ -365,6 +475,40 @@ class _Matcher {
 	function notToMatch(x : RegExp) : void {
 		this._match(! x.test(this._got as string),
 				this._got, x, "not match");
+	}
+
+	/**
+	 * Tests whether the given array equals to the expected.
+	 */
+	function toEqual(x : Array.<variant>) : void {
+		assert x != null;
+
+		var got = this._got as Array.<variant>;
+		if (got == null) {
+			this._test._nok(this._name, "equals", this._got, x);
+			return;
+		}
+
+		if (this._test.equals(got, x)) {
+			this._test._ok(this._name);
+		}
+		else {
+			this._test._nok(this._name, "equals", got, x);
+			this._test.note(this._test.difflet(got, x));
+		}
+	}
+
+	function toEqual(x : Array.<string>) : void {
+		this.toEqual(x as __noconvert__ Array.<variant>);
+	}
+	function toEqual(x : Array.<number>) : void {
+		this.toEqual(x as __noconvert__ Array.<variant>);
+	}
+	function toEqual(x : Array.<int>) : void {
+		this.toEqual(x as __noconvert__ Array.<variant>);
+	}
+	function toEqual(x : Array.<boolean>) : void {
+		this.toEqual(x as __noconvert__ Array.<variant>);
 	}
 
 	function _match(value : boolean, got : variant, expected : variant, op : string) : void {

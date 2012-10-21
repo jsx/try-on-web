@@ -2,44 +2,9 @@
    "" : {
       "try-on-web" : {
          "example" : {
-            "fireworks.js" : "/try/example/fireworks.js",
-            "shooting.js" : "/try/example/shooting.js",
-            "img" : {
-               "teko.jpg" : "/try/example/img/teko.jpg",
-               "bomb9.png" : "/try/example/img/bomb9.png",
-               "bomb7.png" : "/try/example/img/bomb7.png",
-               "bomb10.png" : "/try/example/img/bomb10.png",
-               "rock1.png" : "/try/example/img/rock1.png",
-               "bomb6.png" : "/try/example/img/bomb6.png",
-               "bomb2.png" : "/try/example/img/bomb2.png",
-               "bomb4.png" : "/try/example/img/bomb4.png",
-               "space4.png" : "/try/example/img/space4.png",
-               "space1.png" : "/try/example/img/space1.png",
-               "space5.png" : "/try/example/img/space5.png",
-               "bomb5.png" : "/try/example/img/bomb5.png",
-               "bomb1.png" : "/try/example/img/bomb1.png",
-               "space7.png" : "/try/example/img/space7.png",
-               "my.png" : "/try/example/img/my.png",
-               "bullet.png" : "/try/example/img/bullet.png",
-               "space3.png" : "/try/example/img/space3.png",
-               "bomb3.png" : "/try/example/img/bomb3.png",
-               "space10.png" : "/try/example/img/space10.png",
-               "bomb8.png" : "/try/example/img/bomb8.png",
-               "rock2.png" : "/try/example/img/rock2.png",
-               "rock3.png" : "/try/example/img/rock3.png",
-               "space9.png" : "/try/example/img/space9.png",
-               "space6.png" : "/try/example/img/space6.png",
-               "space2.png" : "/try/example/img/space2.png",
-               "space8.png" : "/try/example/img/space8.png",
-               "README" : "/try/example/img/README"
-            },
-            "shooting.html" : "/try/example/shooting.html",
-            "shooting.jsx" : "/try/example/shooting.jsx",
-            "hello-webgl.jsx" : "/try/example/hello-webgl.jsx",
-            "index.html" : "/try/example/index.html",
-            "sakura.jsx" : "/try/example/sakura.jsx",
             "aobench" : {
                "aobench.jsx" : "/try/example/aobench/aobench.jsx",
+               "Makefile" : "/try/example/aobench/Makefile",
                "js-original.html" : "/try/example/aobench/js-original.html",
                "index.html" : "/try/example/aobench/index.html",
                "README" : "/try/example/aobench/README",
@@ -51,23 +16,70 @@
                "app.jsx" : "/try/example/xhr/app.jsx",
                "index.html" : "/try/example/xhr/index.html"
             },
-            "fireworks.html" : "/try/example/fireworks.html",
-            "fireworks.jsx" : "/try/example/fireworks.jsx",
-            "hello-webgl.html" : "/try/example/hello-webgl.html",
-            "hello-world.jsx" : "/try/example/hello-world.jsx",
-            "sakura.png" : "/try/example/sakura.png",
-            "js-fireworks.html" : "/try/example/js-fireworks.html",
+            "shooting" : {
+               "shooting.js" : "/try/example/shooting/shooting.js",
+               "img" : {
+                  "bomb9.png" : "/try/example/shooting/img/bomb9.png",
+                  "bomb7.png" : "/try/example/shooting/img/bomb7.png",
+                  "bomb10.png" : "/try/example/shooting/img/bomb10.png",
+                  "rock1.png" : "/try/example/shooting/img/rock1.png",
+                  "bomb6.png" : "/try/example/shooting/img/bomb6.png",
+                  "bomb2.png" : "/try/example/shooting/img/bomb2.png",
+                  "bomb4.png" : "/try/example/shooting/img/bomb4.png",
+                  "space4.png" : "/try/example/shooting/img/space4.png",
+                  "space1.png" : "/try/example/shooting/img/space1.png",
+                  "space5.png" : "/try/example/shooting/img/space5.png",
+                  "bomb5.png" : "/try/example/shooting/img/bomb5.png",
+                  "bomb1.png" : "/try/example/shooting/img/bomb1.png",
+                  "space7.png" : "/try/example/shooting/img/space7.png",
+                  "my.png" : "/try/example/shooting/img/my.png",
+                  "bullet.png" : "/try/example/shooting/img/bullet.png",
+                  "space3.png" : "/try/example/shooting/img/space3.png",
+                  "bomb3.png" : "/try/example/shooting/img/bomb3.png",
+                  "space10.png" : "/try/example/shooting/img/space10.png",
+                  "bomb8.png" : "/try/example/shooting/img/bomb8.png",
+                  "rock2.png" : "/try/example/shooting/img/rock2.png",
+                  "rock3.png" : "/try/example/shooting/img/rock3.png",
+                  "space9.png" : "/try/example/shooting/img/space9.png",
+                  "space6.png" : "/try/example/shooting/img/space6.png",
+                  "space2.png" : "/try/example/shooting/img/space2.png",
+                  "space8.png" : "/try/example/shooting/img/space8.png",
+                  "README" : "/try/example/shooting/img/README"
+               },
+               "index.html" : "/try/example/shooting/index.html",
+               "shooting.jsx" : "/try/example/shooting/shooting.jsx"
+            },
+            "sakura" : {
+               "sakura.png" : "/try/example/sakura/sakura.png",
+               "sakura.jsx" : "/try/example/sakura/sakura.jsx",
+               "index.html" : "/try/example/sakura/index.html"
+            },
+            "hello-webgl" : {
+               "teko.jpg" : "/try/example/hello-webgl/teko.jpg",
+               "hello-webgl.jsx" : "/try/example/hello-webgl/hello-webgl.jsx",
+               "index.html" : "/try/example/hello-webgl/index.html"
+            },
+            "hello-world" : {
+               "hello-world.jsx" : "/try/example/hello-world/hello-world.jsx",
+               "index.html" : "/try/example/hello-world/index.html"
+            },
+            "fireworks" : {
+               "style.css" : "/try/example/fireworks/style.css",
+               "fireworks.js" : "/try/example/fireworks/fireworks.js",
+               "js.html" : "/try/example/fireworks/js.html",
+               "fireworks.jsx" : "/try/example/fireworks/fireworks.jsx",
+               "index.html" : "/try/example/fireworks/index.html"
+            },
+            "ipc-js" : {
+               "index.html" : "/try/example/ipc-js/index.html"
+            },
             "webaudio" : {
                "hello-webaudio.jsx" : "/try/example/webaudio/hello-webaudio.jsx",
                "material.txt" : "/try/example/webaudio/material.txt",
                "amairo.mp3" : "/try/example/webaudio/amairo.mp3",
                "index.html" : "/try/example/webaudio/index.html"
             },
-            "ipc-js" : {
-               "index.html" : "/try/example/ipc-js/index.html"
-            },
-            "hello-world.html" : "/try/example/hello-world.html",
-            "sakura.html" : "/try/example/sakura.html"
+            "index.html" : "/try/example/index.html"
          },
          "src" : {
             "doc.js" : "/try/src/doc.js",
@@ -289,6 +301,7 @@
                "119.import-all-into.jsx" : "/try/t/run/119.import-all-into.jsx",
                "215.issue80-2.jsx" : "/try/t/run/215.issue80-2.jsx",
                "155.deduct-closure-type-on-assign.jsx" : "/try/t/run/155.deduct-closure-type-on-assign.jsx",
+               "217.function-field-in-template.todo.jsx" : "/try/t/run/217.function-field-in-template.todo.jsx",
                "194.imported-class-in-templates" : {
                   "b.jsx" : "/try/t/run/194.imported-class-in-templates/b.jsx",
                   "a.jsx" : "/try/t/run/194.imported-class-in-templates/a.jsx"

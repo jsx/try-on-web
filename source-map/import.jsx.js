@@ -276,7 +276,6 @@ TestCase.prototype.tearDown$ = function () {
 TestCase.prototype.beforeClass$AS = function (tests) {
 	this._tests = tests;
 	this._say$S("1.." + (this._tests.length + ""));
-	this.setUp$();
 };
 
 /**
@@ -301,6 +300,7 @@ TestCase.prototype.run$SF$V$ = function (name, testFunction) {
 	numAsyncTasks = this._tasks.length;
 	this._currentName = name;
 	try {
+		this.setUp$();
 		testFunction();
 	} catch ($__jsx_catch_0) {
 		if ($__jsx_catch_0 instanceof Error) {
@@ -318,6 +318,7 @@ TestCase.prototype.run$SF$V$ = function (name, testFunction) {
  * @param {!string} name
  */
 TestCase.prototype.after$S = function (name) {
+	this.tearDown$();
 	++ this._totalCount;
 	this._say$S("\t" + "1.." + (this._count + ""));
 	if (this._count === this._pass) {
@@ -339,7 +340,6 @@ TestCase.prototype.finish$ = function () {
 		failed = this._totalCount - this._totalPass;
 		this.diag$S("tests failed " + (failed + "") + " of " + (this._totalCount + ""));
 	}
-	this.tearDown$();
 };
 
 /**
@@ -352,7 +352,7 @@ TestCase.prototype.async$F$LAsyncContext$V$F$LAsyncContext$V$I = function (testB
 	async = new AsyncContext$LTestCase$SF$LAsyncContext$V$I(this, (function (v) {
 		if (! (v != null)) {
 			debugger;
-			throw new Error("[/Users/gfx/repo/try-on-web/JSX/lib/common/test-case.jsx:166] null access");
+			throw new Error("[/Users/gfx/repo/try-on-web/JSX/lib/common/test-case.jsx:170] null access");
 		}
 		return v;
 	}(this._currentName)), timeoutHandler, timeoutMS);
@@ -401,7 +401,7 @@ TestCase.prototype._ok$US = function (name) {
 	s = (name != null ? " - " + (function (v) {
 		if (! (v != null)) {
 			debugger;
-			throw new Error("[/Users/gfx/repo/try-on-web/JSX/lib/common/test-case.jsx:202] null access");
+			throw new Error("[/Users/gfx/repo/try-on-web/JSX/lib/common/test-case.jsx:207] null access");
 		}
 		return v;
 	}(name)) : "");
@@ -420,7 +420,7 @@ TestCase.prototype._nok$USSXX = function (name, op, got, expected) {
 	s = (name != null ? " - " + (function (v) {
 		if (! (v != null)) {
 			debugger;
-			throw new Error("[/Users/gfx/repo/try-on-web/JSX/lib/common/test-case.jsx:213] null access");
+			throw new Error("[/Users/gfx/repo/try-on-web/JSX/lib/common/test-case.jsx:218] null access");
 		}
 		return v;
 	}(name)) : "");
@@ -593,11 +593,11 @@ TestCase.prototype.difflet$AXAX = function (a, b) {
 	var aIsLast;
 	if (! (a != null)) {
 		debugger;
-		throw new Error("[/Users/gfx/repo/try-on-web/JSX/lib/common/test-case.jsx:330] assertion failure");
+		throw new Error("[/Users/gfx/repo/try-on-web/JSX/lib/common/test-case.jsx:335] assertion failure");
 	}
 	if (! (b != null)) {
 		debugger;
-		throw new Error("[/Users/gfx/repo/try-on-web/JSX/lib/common/test-case.jsx:331] assertion failure");
+		throw new Error("[/Users/gfx/repo/try-on-web/JSX/lib/common/test-case.jsx:336] assertion failure");
 	}
 	s = "[\n";
 	for ((i = 0, l = Math.max(a.length, b.length)); i < l; ++ i) {
@@ -838,7 +838,7 @@ _Matcher.prototype.toEqual$AX = function (x) {
 	var got;
 	if (! (x != null)) {
 		debugger;
-		throw new Error("[/Users/gfx/repo/try-on-web/JSX/lib/common/test-case.jsx:484] assertion failure");
+		throw new Error("[/Users/gfx/repo/try-on-web/JSX/lib/common/test-case.jsx:489] assertion failure");
 	}
 	got = (function (o) { return o instanceof Array ? o : null; })(this._got);
 	if (got == null) {
@@ -860,7 +860,7 @@ _Matcher.prototype.toEqual$AS = function (x) {
 	this.toEqual$AX((function (v) {
 		if (! (v == null || v instanceof Array)) {
 			debugger;
-			throw new Error("[/Users/gfx/repo/try-on-web/JSX/lib/common/test-case.jsx:502] detected invalid cast, value is not an Array or null");
+			throw new Error("[/Users/gfx/repo/try-on-web/JSX/lib/common/test-case.jsx:507] detected invalid cast, value is not an Array or null");
 		}
 		return v;
 	}(x)));
@@ -873,7 +873,7 @@ _Matcher.prototype.toEqual$AN = function (x) {
 	this.toEqual$AX((function (v) {
 		if (! (v == null || v instanceof Array)) {
 			debugger;
-			throw new Error("[/Users/gfx/repo/try-on-web/JSX/lib/common/test-case.jsx:505] detected invalid cast, value is not an Array or null");
+			throw new Error("[/Users/gfx/repo/try-on-web/JSX/lib/common/test-case.jsx:510] detected invalid cast, value is not an Array or null");
 		}
 		return v;
 	}(x)));
@@ -886,7 +886,7 @@ _Matcher.prototype.toEqual$AI = function (x) {
 	this.toEqual$AX((function (v) {
 		if (! (v == null || v instanceof Array)) {
 			debugger;
-			throw new Error("[/Users/gfx/repo/try-on-web/JSX/lib/common/test-case.jsx:508] detected invalid cast, value is not an Array or null");
+			throw new Error("[/Users/gfx/repo/try-on-web/JSX/lib/common/test-case.jsx:513] detected invalid cast, value is not an Array or null");
 		}
 		return v;
 	}(x)));
@@ -899,7 +899,7 @@ _Matcher.prototype.toEqual$AB = function (x) {
 	this.toEqual$AX((function (v) {
 		if (! (v == null || v instanceof Array)) {
 			debugger;
-			throw new Error("[/Users/gfx/repo/try-on-web/JSX/lib/common/test-case.jsx:511] detected invalid cast, value is not an Array or null");
+			throw new Error("[/Users/gfx/repo/try-on-web/JSX/lib/common/test-case.jsx:516] detected invalid cast, value is not an Array or null");
 		}
 		return v;
 	}(x)));

@@ -20,8 +20,10 @@
 
     <!-- JSX compiler and web interface -->
     <script src="build/jsx-compiler.js"></script>
+    <script> JSX.require("system:src/web/jsx-web-compiler.jsx").JsxWebCompiler.begin$(); </script>
     <script src="assets/js/require-simple.js"></script>
-    <script src="assets/js/web.js"></script>
+    <script src="assets/js/jsx-web-front.jsx.js"></script>
+    <script> JSX.require("system:src/web/jsx-web-front.jsx").JsxWebFront.begin$(); </script>
 
     <!-- Le styles -->
     <link href="assets/css/bootstrap.css" rel="stylesheet">
@@ -303,7 +305,6 @@
 <li class="source-file"><a href="t/run/206.alternate-constructor-invocation.jsx" data-path="t/run/206.alternate-constructor-invocation.jsx">206.alternate-constructor-invocation.jsx</a></li>
 <li class="source-file"><a href="t/run/207.alternate-constructor-invocation-in-template.jsx" data-path="t/run/207.alternate-constructor-invocation-in-template.jsx">207.alternate-constructor-invocation-in-template.jsx</a></li>
 <li class="source-file"><a href="t/run/208.overloaded-index-operator.jsx" data-path="t/run/208.overloaded-index-operator.jsx">208.overloaded-index-operator.jsx</a></li>
-<li class="source-file"><a href="t/run/209.nested-rewrite-on-unclassify.jsx" data-path="t/run/209.nested-rewrite-on-unclassify.jsx">209.nested-rewrite-on-unclassify.jsx</a></li>
 <li class="source-file"><a href="t/run/210.map-ctor.jsx" data-path="t/run/210.map-ctor.jsx">210.map-ctor.jsx</a></li>
 <li class="source-file"><a href="t/run/211.indirect-template-property.jsx" data-path="t/run/211.indirect-template-property.jsx">211.indirect-template-property.jsx</a></li>
 <li class="source-file"><a href="t/run/212.map-literal-as-variant.jsx" data-path="t/run/212.map-literal-as-variant.jsx">212.map-literal-as-variant.jsx</a></li>
@@ -312,6 +313,8 @@
 <li class="source-file"><a href="t/run/215.issue80-2.jsx" data-path="t/run/215.issue80-2.jsx">215.issue80-2.jsx</a></li>
 <li class="source-file"><a href="t/run/216.var-decl-of-arg.jsx" data-path="t/run/216.var-decl-of-arg.jsx">216.var-decl-of-arg.jsx</a></li>
 <li class="source-file"><a href="t/run/217.function-field-in-template.todo.jsx" data-path="t/run/217.function-field-in-template.todo.jsx">217.function-field-in-template.todo.jsx</a></li>
+<li class="source-file"><a href="t/run/219.parameterize-nullable-type.jsx" data-path="t/run/219.parameterize-nullable-type.jsx">219.parameterize-nullable-type.jsx</a></li>
+<li class="source-file"><a href="t/run/220.assign-named-function-expr-to-var.jsx" data-path="t/run/220.assign-named-function-expr-to-var.jsx">220.assign-named-function-expr-to-var.jsx</a></li>
 <li id="t-lib" class="nav-header">t/lib</li>
 <li class="source-file"><a href="t/lib/001.hello.jsx" data-path="t/lib/001.hello.jsx">001.hello.jsx</a></li>
 <li class="source-file"><a href="t/lib/002.timer.jsx" data-path="t/lib/002.timer.jsx">002.timer.jsx</a></li>
@@ -324,6 +327,7 @@
 <li class="source-file"><a href="t/lib/010.web.jsx" data-path="t/lib/010.web.jsx">010.web.jsx</a></li>
 <li class="source-file"><a href="t/lib/011.aobench.jsx" data-path="t/lib/011.aobench.jsx">011.aobench.jsx</a></li>
 <li class="source-file"><a href="t/lib/012.test-case-compare.jsx" data-path="t/lib/012.test-case-compare.jsx">012.test-case-compare.jsx</a></li>
+<li class="source-file"><a href="t/lib/013.nodejs.jsx" data-path="t/lib/013.nodejs.jsx">013.nodejs.jsx</a></li>
 <li id="t-compile_error" class="nav-header">t/compile_error</li>
 <li class="source-file"><a href="t/compile_error/001.unknown-var.jsx" data-path="t/compile_error/001.unknown-var.jsx">001.unknown-var.jsx</a></li>
 <li class="source-file"><a href="t/compile_error/002.unknown-func.jsx" data-path="t/compile_error/002.unknown-func.jsx">002.unknown-func.jsx</a></li>

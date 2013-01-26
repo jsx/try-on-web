@@ -1,3 +1,4 @@
+// generatedy by JSX compiler 0.9.2 (2013-01-26 13:29:25 +0900; 5b722b08f9c2150f9a7dfa47e2312b63a99b7cb5)
 var JSX = {};
 (function () {
 
@@ -597,6 +598,7 @@ var AOBench$ambient_occlusion$LAOBench$LIsect$ = AOBench.ambient_occlusion$LAOBe
 
 /**
  * @param {AOBench} $this
+ * @param {*} fill
  * @param {!number} w
  * @param {!number} h
  */
@@ -686,8 +688,8 @@ _Main.main$AS = function (args) {
 	var t1;
 	/** @type {!number} */
 	var d;
-	canvas = (function (o) { return o instanceof HTMLCanvasElement ? o : null; })((function (o) { return o instanceof HTMLElement ? o : null; })(dom.document.getElementById("world")));
-	ctx = (function (o) { return o instanceof CanvasRenderingContext2D ? o : null; })(canvas.getContext("2d"));
+	canvas = dom.document.getElementById("world");
+	ctx = canvas.getContext("2d");
 	ao = {spheres: [ {center: {x: -2, y: 0.0, z: -3.5}, radius: 0.5}, {center: {x: -0.5, y: 0.0, z: -3}, radius: 0.5}, {center: {x: 1.0, y: 0.0, z: -2.2}, radius: 0.5} ], plane: {p: {x: 0.0, y: -0.5, z: 0.0}, n: {x: 0.0, y: 1.0, z: 0.0}}};
 	t0 = Date.now();
 	AOBench$render$LAOBench$F$IIIIIV$II(ao, (function (x, y, r, g, b) {
@@ -696,7 +698,7 @@ _Main.main$AS = function (args) {
 	}), canvas.width, canvas.height);
 	t1 = Date.now();
 	d = t1 - t0;
-	(function (o) { return o instanceof HTMLElement ? o : null; })(dom.document.getElementById("status")).innerHTML = "Time = " + (d + "") + "[ms]";
+	dom.document.getElementById("status").innerHTML = "Time = " + (d + "") + "[ms]";
 };
 
 var _Main$main$AS = _Main.main$AS;
@@ -722,7 +724,7 @@ dom$.prototype = new dom;
  * @return {HTMLElement}
  */
 dom.id$S = function (id) {
-	return (function (o) { return o instanceof HTMLElement ? o : null; })(dom.document.getElementById(id));
+	return dom.document.getElementById(id);
 };
 
 var dom$id$S = dom.id$S;
@@ -732,7 +734,7 @@ var dom$id$S = dom.id$S;
  * @return {HTMLElement}
  */
 dom.getElementById$S = function (id) {
-	return (function (o) { return o instanceof HTMLElement ? o : null; })(dom.document.getElementById(id));
+	return dom.document.getElementById(id);
 };
 
 var dom$getElementById$S = dom.getElementById$S;
@@ -779,7 +781,6 @@ $__jsx_lazy_init(dom, "document", function () {
 	return js.global.document;
 });
 js.global = (function () { return this; })();
-
 var $__jsx_classMap = {
 	"web/example/aobench/aobench.jsx": {
 		Config: Config,

@@ -1,5 +1,9 @@
 {
    "example" : {
+      "webrtc" : {
+         "app.jsx" : "example/webrtc/app.jsx",
+         "index.html" : "example/webrtc/index.html"
+      },
       "aobench" : {
          "aobench.jsx" : "example/aobench/aobench.jsx",
          "Makefile" : "example/aobench/Makefile",
@@ -46,6 +50,11 @@
          },
          "index.html" : "example/shooting/index.html",
          "shooting.jsx" : "example/shooting/shooting.jsx"
+      },
+      "webgl" : {
+         "teko.jpg" : "example/webgl/teko.jpg",
+         "hello-webgl.jsx" : "example/webgl/hello-webgl.jsx",
+         "index.html" : "example/webgl/index.html"
       },
       "sakura" : {
          "sakura.png" : "example/sakura/sakura.png",
@@ -296,6 +305,7 @@
          "052.lambda.jsx" : "t/run/052.lambda.jsx",
          "193.not-in.jsx" : "t/run/193.not-in.jsx",
          "099.assign-array-element.jsx" : "t/run/099.assign-array-element.jsx",
+         "223.issue50.todo.jsx" : "t/run/223.issue50.todo.jsx",
          "220.assign-named-function-expr-to-var.jsx" : "t/run/220.assign-named-function-expr-to-var.jsx",
          "197.var-in-catch.jsx" : "t/run/197.var-in-catch.jsx",
          "011.localvar.jsx" : "t/run/011.localvar.jsx",
@@ -482,6 +492,7 @@
          "103.debugger.jsx" : "t/run/103.debugger.jsx",
          "064.JSX_file.jsx" : "t/run/064.JSX_file.jsx",
          "098.assign-map-member.jsx" : "t/run/098.assign-map-member.jsx",
+         "222.issue91.jsx" : "t/run/222.issue91.jsx",
          "131.assign-array-of-imported-class" : {
             "module.jsx" : "t/run/131.assign-array-of-imported-class/module.jsx"
          },
@@ -507,6 +518,7 @@
          "184.implements-template.jsx" : "t/run/184.implements-template.jsx",
          "055.downcast.jsx" : "t/run/055.downcast.jsx",
          "146.assign-to-property-of-variant.jsx" : "t/run/146.assign-to-property-of-variant.jsx",
+         "221.issue88.todo.jsx" : "t/run/221.issue88.todo.jsx",
          "186.string-replace-cb-wo-type.jsx" : "t/run/186.string-replace-cb-wo-type.jsx",
          "150.light-function-type-notation.jsx" : "t/run/150.light-function-type-notation.jsx",
          "065.call-implicit-ctor.jsx" : "t/run/065.call-implicit-ctor.jsx",
@@ -536,6 +548,7 @@
       "002.util.t" : "t/002.util.t",
       "009.self-hosting.t" : "t/009.self-hosting.t",
       "003.source-map.t" : "t/003.source-map.t",
+      "010.debug-flag.t" : "t/010.debug-flag.t",
       "008.do-not-crash.t" : "t/008.do-not-crash.t",
       "lib" : {
          "011.aobench.jsx" : "t/lib/011.aobench.jsx",
@@ -551,6 +564,7 @@
          "002.timer.jsx" : "t/lib/002.timer.jsx",
          "013.nodejs.jsx" : "t/lib/013.nodejs.jsx"
       },
+      "011.closure-compiler.t" : "t/011.closure-compiler.t",
       "006.jsx" : {
          "hello.jsx" : "t/006.jsx/hello.jsx",
          "dump-args.jsx" : "t/006.jsx/dump-args.jsx"
@@ -677,6 +691,7 @@
          "059.import-as-conflict-with-builtin.jsx" : "t/compile_error/059.import-as-conflict-with-builtin.jsx",
          "131.fused-assign-against-non-lhs.jsx" : "t/compile_error/131.fused-assign-against-non-lhs.jsx",
          "044.const-function.jsx" : "t/compile_error/044.const-function.jsx",
+         "157.compile-note.jsx" : "t/compile_error/157.compile-note.jsx",
          "137.call-constructor-as-func.jsx" : "t/compile_error/137.call-constructor-as-func.jsx",
          "039.mixin-conflict.jsx" : "t/compile_error/039.mixin-conflict.jsx",
          "135.open-function.jsx" : "t/compile_error/135.open-function.jsx",
@@ -735,11 +750,13 @@
          "123.as-against-func-var.jsx" : "t/compile_error/123.as-against-func-var.jsx",
          "133.invalid-expr-in-if-cond.jsx" : "t/compile_error/133.invalid-expr-in-if-cond.jsx",
          "076.bitnot-nonnumber.jsx" : "t/compile_error/076.bitnot-nonnumber.jsx",
+         "158.named-func-expr-outside-of-func.jsx" : "t/compile_error/158.named-func-expr-outside-of-func.jsx",
          "114.func-arg-is-overloaded-func.jsx" : "t/compile_error/114.func-arg-is-overloaded-func.jsx",
          "141.maybeundefined-arraytype.jsx" : "t/compile_error/141.maybeundefined-arraytype.jsx",
          "122.as-against-overload-resolution-error.jsx" : "t/compile_error/122.as-against-overload-resolution-error.jsx",
          "130.inherited-abstract-class.jsx" : "t/compile_error/130.inherited-abstract-class.jsx",
          "118.redundant-maybeundefined.jsx" : "t/compile_error/118.redundant-maybeundefined.jsx",
+         "159.issue84.jsx" : "t/compile_error/159.issue84.jsx",
          "047.new-abstract-class.jsx" : "t/compile_error/047.new-abstract-class.jsx",
          "043.mixin-variable-conflict.jsx" : "t/compile_error/043.mixin-variable-conflict.jsx",
          "151.issue61.jsx" : "t/compile_error/151.issue61.jsx",
@@ -749,6 +766,9 @@
          "002.util.jsx" : "t/src/002.util.jsx",
          "001.lexer.jsx" : "t/src/001.lexer.jsx",
          "003.source-map.jsx" : "t/src/003.source-map.jsx"
+      },
+      "010" : {
+         "debug-flag.jsx" : "t/010/debug-flag.jsx"
       },
       "005.web-example.t" : "t/005.web-example.t",
       "util" : {
@@ -792,6 +812,7 @@
       },
       "007.mode-parse.t" : "t/007.mode-parse.t",
       "optimize" : {
+         "036.eliminate-constant-conditions.jsx" : "t/optimize/036.eliminate-constant-conditions.jsx",
          "002.no-log.jsx" : "t/optimize/002.no-log.jsx",
          "033.array-length-empty-init-expr.jsx" : "t/optimize/033.array-length-empty-init-expr.jsx",
          "020.inline-arg-using-var.jsx" : "t/optimize/020.inline-arg-using-var.jsx",
@@ -819,11 +840,14 @@
          "031.unbox-with-in-func-expr.jsx" : "t/optimize/031.unbox-with-in-func-expr.jsx",
          "025.inline-nested-closure.jsx" : "t/optimize/025.inline-nested-closure.jsx",
          "007.inline-simple-this.jsx" : "t/optimize/007.inline-simple-this.jsx",
+         "038.debug-flag.jsx" : "t/optimize/038.debug-flag.jsx",
          "012.fold-const-propagate-int.jsx" : "t/optimize/012.fold-const-propagate-int.jsx",
+         "035.eliminate-if.jsx" : "t/optimize/035.eliminate-if.jsx",
          "025.inline-static-template-function.jsx" : "t/optimize/025.inline-static-template-function.jsx",
          "016.inline-ctor.jsx" : "t/optimize/016.inline-ctor.jsx",
          "034.unclassify-nested-rewrite.jsx" : "t/optimize/034.unclassify-nested-rewrite.jsx",
          "006.inline-simple-static.jsx" : "t/optimize/006.inline-simple-static.jsx",
+         "037.unclassify-simple.jsx" : "t/optimize/037.unclassify-simple.jsx",
          "032.inline-call-lambda-in-inner-function.todo.jsx" : "t/optimize/032.inline-call-lambda-in-inner-function.todo.jsx",
          "004.return-if-with-else.jsx" : "t/optimize/004.return-if-with-else.jsx",
          "005.return-if-complicated.jsx" : "t/optimize/005.return-if-complicated.jsx",

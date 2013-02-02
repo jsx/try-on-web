@@ -1,3 +1,4 @@
+// generatedy by JSX compiler 0.9.4 (2013-02-03 01:04:33 +0900; a9ef6a0d75dc264324523b49682a92f772444fe5)
 var JSX = {};
 (function () {
 
@@ -89,6 +90,7 @@ JSX.resetProfileResults = function () {
 		throw new Error("profiler has not been turned on");
 	return $__jsx_profiler.resetResults();
 };
+JSX.DEBUG = true;
 /**
  * class _Main extends Object
  * @constructor
@@ -121,7 +123,7 @@ _Main.main$AS = function (args) {
 var _Main$main$AS = _Main.main$AS;
 
 var $__jsx_classMap = {
-	"add.jsx": {
+	"system:example/add.jsx": {
 		_Main: _Main,
 		_Main$: _Main$
 	}
@@ -192,7 +194,7 @@ JSX.runTests = function (sourceFile, tests) {
 function $__jsx_onload (event) {
 	window.removeEventListener("load", $__jsx_onload);
 	document.removeEventListener("DOMContentLoaded", $__jsx_onload);
-	JSX.runMain("add.jsx", [])
+	JSX.runMain("system:example/add.jsx", [])
 }
 
 window.addEventListener("load", $__jsx_onload);
@@ -200,4 +202,4 @@ document.addEventListener("DOMContentLoaded", $__jsx_onload);
 
 })();
 
-//@ sourceMappingURL=add.jsx.js.mapping
+//@ sourceMappingURL=/Users/gfx/repo/try-on-web/JSX/example/add.jsx.js.mapping

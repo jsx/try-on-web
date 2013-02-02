@@ -2,10 +2,10 @@
 // DO NOT EDIT IT DIRECTLY. EDIT tool/make-meta INSTEAD.
 
 final class Meta {
-    static const VERSION_STRING   = "0.9.2";
-    static const VERSION_NUMBER   =  0.009002;
-    static const LAST_COMMIT_HASH = "5b722b08f9c2150f9a7dfa47e2312b63a99b7cb5";
-    static const LAST_COMMIT_DATE = "2013-01-26 13:29:25 +0900";
+    static const VERSION_STRING   = "0.9.4";
+    static const VERSION_NUMBER   =  0.009004;
+    static const LAST_COMMIT_HASH = "a9ef6a0d75dc264324523b49682a92f772444fe5";
+    static const LAST_COMMIT_DATE = "2013-02-03 01:04:33 +0900";
 
     static const IDENTIFIER = Meta.VERSION_STRING + " (" + Meta.LAST_COMMIT_DATE + "; " + Meta.LAST_COMMIT_HASH + ")";
 } // class Meta

@@ -517,10 +517,10 @@ class Scope {
 	var statements : Statement[];
 	var closures : MemberFunctionDefinition[];
 
-	function constructor (prev : Scope, locals : LocalVariable[], arguments : ArgumentDeclaration[], statements : Statement[], closures : MemberFunctionDefinition[]) {
+	function constructor (prev : Scope, locals : LocalVariable[], args : ArgumentDeclaration[], statements : Statement[], closures : MemberFunctionDefinition[]) {
 		this.prev = prev;
 		this.locals = locals;
-		this.arguments = arguments;
+		this.arguments = args;
 		this.statements = statements;
 		this.closures = closures;
 	}
@@ -773,6 +773,12 @@ class Parser {
 			}
 			return false;
 		}
+
+		if (this._arguments == null) {
+			this._newError(Util.format("cannot declare variable %1 outside of a function", [identifierToken.getValue()])); // FIXME should we allow this?
+			return null;
+		}
+
 		for (var i = 0; i < this._arguments.length; ++i) {
 			if (isEqualTo(this._arguments[i])) {
 				return this._arguments[i];
@@ -868,6 +874,7 @@ class Parser {
 						return;
 					}
 				} else {
+					this._forwardPos(2); // skip "/*"
 					this._docComment = null;
 					if (! this._skipMultilineComment()) {
 						return;
@@ -1602,10 +1609,10 @@ class Parser {
 					return null;
 				return createDefinition(null, null, null, null);
 			} else if ((flags & (ClassDefinition.IS_ABSTRACT | ClassDefinition.IS_NATIVE)) != 0) {
-				var token = this._expect([ ";", "{" ]);
-				if (token == null)
+				var endDeclToken = this._expect([ ";", "{" ]);
+				if (endDeclToken == null)
 					return null;
-				if (token.getValue() == ";")
+				if (endDeclToken.getValue() == ";")
 					return createDefinition(null, null, null, null);
 			} else {
 				if (this._expect("{") == null)
@@ -1827,9 +1834,9 @@ class Parser {
 		if (returnType == null)
 			return null;
 		if (objectType != null)
-			return new MemberFunctionType(objectType, returnType, argTypes, true);
+			return new MemberFunctionType(null, objectType, returnType, argTypes, true);
 		else
-			return new StaticFunctionType(returnType, argTypes, true);
+			return new StaticFunctionType(null, returnType, argTypes, true);
 	}
 
 	function _functionTypeDeclaration (objectType : Type) : Type {
@@ -1867,9 +1874,9 @@ class Parser {
 		if (returnType == null)
 			return null;
 		if (objectType != null)
-			return new MemberFunctionType(objectType, returnType, argTypes, true);
+			return new MemberFunctionType(null, objectType, returnType, argTypes, true);
 		else
-			return new StaticFunctionType(returnType, argTypes, true);
+			return new StaticFunctionType(null, returnType, argTypes, true);
 	}
 
 	function _registerArrayTypeOf (token : Token, elementType : Type) : ParsedObjectType {
@@ -2811,7 +2818,7 @@ class Parser {
 			// add name to current scope for local function declaration
 			if (requireTypeDeclaration) {
 				var argTypes = args.map.<Type>(function(arg) { return arg.getType(); });
-				var type = new StaticFunctionType(returnType, argTypes, false);
+				var type = new StaticFunctionType(token, returnType, argTypes, false);
 				local = this._registerLocal(name, type);
 			} else {
 				local = this._registerLocal(name, null);

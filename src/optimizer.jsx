@@ -27,14 +27,17 @@ import "./statement.jsx";
 import "./type.jsx";
 import "./util.jsx";
 import "./compiler.jsx";
-import "console.jsx";
 
 abstract class OptimizerStash {
 	abstract function clone () : OptimizerStash;
 }
 
-interface Stashable {
-	function getOptimizerStash () : variant;
+mixin Stashable {
+	var _optimizerStash = new Map.<OptimizerStash>;
+
+	function getOptimizerStash () : Map.<OptimizerStash> {
+		return this._optimizerStash;
+	}
 }
 
 class _Util {
@@ -226,6 +229,8 @@ class Optimizer {
 				this._commands.push(new _NoAssertCommand());
 			} else if (cmd == "no-log") {
 				this._commands.push(new _NoLogCommand());
+			} else if (cmd == "no-debug") {
+				this._commands.push(new _NoDebugCommand());
 			} else if (cmd == "unclassify") {
 				this._commands.push(new _UnclassifyOptimizationCommand());
 				calleesAreDetermined = false;
@@ -287,7 +292,8 @@ class Optimizer {
 				this._commands[i].setup(this).performOptimization();
 				this.log("finished optimizer: " + this._commands[i]._identifier);
 			} catch (e : Error) {
-				console.error("optimizer '" + this._commands[i]._identifier + "' died unexpectedly, dumping the logs");
+				var platform = this._compiler.getPlatform();
+				platform.error("optimizer '" + this._commands[i]._identifier + "' died unexpectedly, dumping the logs");
 				this.dumpLogs();
 				throw e;
 			}
@@ -301,8 +307,9 @@ class Optimizer {
 	}
 
 	function dumpLogs () : void {
+		var platform = this._compiler.getPlatform();
 		for (var i = 0; i < this._log.length; ++i) {
-			console.error(this._log[i]);
+			platform.error(this._log[i]);
 		}
 	}
 
@@ -783,27 +790,6 @@ class _UnclassifyOptimizationCommand extends _OptimizeCommand {
 				}
 			return true;
 		});
-		// mark constructors that are inlineable
-		for (var candidateIndex = candidates.length - 1; candidateIndex >= 0; --candidateIndex) {
-			var hasInlineableCtor = false;
-			candidates[candidateIndex].forEachMemberFunction(function (funcDef) {
-				if ((funcDef.flags() & ClassDefinition.IS_STATIC) == 0 && funcDef.name() == "constructor") {
-					var inliner = this._createInliner(funcDef);
-					this.log(funcDef.getClassDef().className() + "#constructor(" + funcDef.getArgumentTypes().map.<string>(function (arg) { return ":" + arg.toString(); }).join(",") + ") is" + (inliner ? "" : " not") + " inlineable");
-					if (inliner) {
-						(this.getStash(funcDef) as _UnclassifyOptimizationCommandStash).inliner = inliner;
-						hasInlineableCtor = true;
-					}
-				}
-				return true;
-			});
-			if (! hasInlineableCtor) {
-				candidates.splice(candidateIndex, 1);
-			}
-		}
-		if (candidates.length == 0) {
-			return candidates;
-		}
 		// check that the class is not referred to by: instanceof
 		this.getCompiler().forEachClassDef(function (parser : Parser, classDef : ClassDefinition) : boolean {
 			if (candidates.length == 0) {
@@ -839,6 +825,27 @@ class _UnclassifyOptimizationCommand extends _OptimizeCommand {
 			});
 			return true;
 		});
+		// mark constructors that are inlineable
+		for (var candidateIndex = candidates.length - 1; candidateIndex >= 0; --candidateIndex) {
+			var hasInlineableCtor = false;
+			candidates[candidateIndex].forEachMemberFunction(function (funcDef) {
+				if ((funcDef.flags() & ClassDefinition.IS_STATIC) == 0 && funcDef.name() == "constructor") {
+					var inliner = this._createInliner(funcDef);
+					this.log(funcDef.getClassDef().className() + "#constructor(" + funcDef.getArgumentTypes().map.<string>(function (arg) { return ":" + arg.toString(); }).join(",") + ") is" + (inliner ? "" : " not") + " inlineable");
+					if (inliner) {
+						(this.getStash(funcDef) as _UnclassifyOptimizationCommandStash).inliner = inliner;
+						hasInlineableCtor = true;
+					}
+				}
+				return true;
+			});
+			if (! hasInlineableCtor) {
+				candidates.splice(candidateIndex, 1);
+			}
+		}
+		if (candidates.length == 0) {
+			return candidates;
+		}
 		return candidates;
 	}
 
@@ -990,6 +997,7 @@ class _UnclassifyOptimizationCommand extends _OptimizeCommand {
 										propertyExpr.getIdentifierToken(),
 										propertyExpr.getTypeArguments(),
 										new StaticFunctionType(
+											null, // this argument is no longer used in optimization phase
 											(funcType as ResolvedFunctionType).getReturnType(),
 											[ receiverType ].concat((funcType as ResolvedFunctionType).getArgumentTypes()),
 											false)),
@@ -1312,6 +1320,7 @@ class _DeadCodeEliminationOptimizeCommand extends _FunctionOptimizeCommand {
 			this._eliminateDeadStoresToProperties(funcDef, exprs);
 			this._delayAssignmentsBetweenLocals(funcDef, exprs);
 			this._eliminateDeadStores(funcDef, exprs);
+			this._eliminateDeadConditions(funcDef, exprs);
 		});
 		// remove statements without side-effects
 		(function onStatements(statements : Statement[]) : boolean {
@@ -1407,15 +1416,14 @@ class _DeadCodeEliminationOptimizeCommand extends _FunctionOptimizeCommand {
 		// rewrite the locals
 		var onExpr = function (expr : Expression, replaceCb : function(:Expression):void) : boolean {
 			if (expr instanceof AssignmentExpression) {
-				if ((expr as AssignmentExpression).getFirstExpr() instanceof LocalExpression) {
-					onExpr((expr as AssignmentExpression).getSecondExpr(), function (assignExpr : AssignmentExpression) : function(:Expression):void{
-						return function (expr) {
-							assignExpr.setSecondExpr(expr);
-						};
-					}(expr as AssignmentExpression));
-					if (! localsUntouchable.get(((expr as AssignmentExpression).getFirstExpr() as LocalExpression).getLocal())
-						&& ((expr as AssignmentExpression).getFirstExpr() as LocalExpression).getType().equals((expr as AssignmentExpression).getSecondExpr().getType())) {
-							var lhsLocal = ((expr as AssignmentExpression).getFirstExpr() as LocalExpression).getLocal();
+				var assignmentExpr = expr as AssignmentExpression;
+				if (assignmentExpr.getFirstExpr() instanceof LocalExpression) {
+					onExpr(assignmentExpr.getSecondExpr(), function (expr) {
+						assignmentExpr.setSecondExpr(expr);
+					});
+					if (! localsUntouchable.get((assignmentExpr.getFirstExpr() as LocalExpression).getLocal())
+						&& (assignmentExpr.getFirstExpr() as LocalExpression).getType().equals(assignmentExpr.getSecondExpr().getType())) {
+							var lhsLocal = (assignmentExpr.getFirstExpr() as LocalExpression).getLocal();
 							this.log("resetting cache for: " + lhsLocal.getName().getValue());
 							locals.reversedForEach(function(local, expr) {
 								if (local == lhsLocal) {
@@ -1427,8 +1435,8 @@ class _DeadCodeEliminationOptimizeCommand extends _FunctionOptimizeCommand {
 								}
 								return true;
 							});
-							if ((expr as AssignmentExpression).getToken().getValue() == "=") {
-								var rhsExpr = (expr as AssignmentExpression).getSecondExpr();
+							if (assignmentExpr.getToken().getValue() == "=") {
+								var rhsExpr = assignmentExpr.getSecondExpr();
 								if (rhsExpr instanceof LocalExpression) {
 									var rhsLocal = (rhsExpr as LocalExpression).getLocal();
 									if (lhsLocal != rhsLocal && ! localsUntouchable.get(rhsLocal)) {
@@ -1595,6 +1603,47 @@ class _DeadCodeEliminationOptimizeCommand extends _FunctionOptimizeCommand {
 			return expr.forEachExpression(onExpr);
 		};
 		Util.forEachExpression(onExpr, exprs);
+	}
+
+	function _eliminateDeadConditions (funcDef : MemberFunctionDefinition, exprs : Expression[]) : void {
+		function conditionIsConstant(expr : Expression) : Nullable.<boolean> {
+			if (expr instanceof BooleanLiteralExpression) {
+				return expr.getToken().getValue() == "true";
+			} else if (expr instanceof StringLiteralExpression) {
+				return expr.getToken().getValue().length > 2;
+			} else if (expr instanceof NumberLiteralExpression || expr instanceof IntegerLiteralExpression) {
+				return expr.getToken().getValue() as number != 0;
+			} else if (expr instanceof MapLiteralExpression || expr instanceof ArrayLiteralExpression) {
+				return true;
+			}
+			return null;
+		}
+		function spliceStatements (dest : Statement[], index : number, src : Statement[]) : void {
+			dest.splice(index, 1);
+			for (var i = 0; i < src.length; ++i) {
+				dest.splice(index + i, 0, src[i]);
+			}
+		}
+		(function onStatements(statements : Statement[]) : boolean {
+			for (var i = statements.length - 1; i >= 0; --i) {
+				var statement = statements[i];
+				if (statement instanceof IfStatement) {
+					var ifStatement = statement as IfStatement;
+					var cond = conditionIsConstant(ifStatement.getExpr());
+					if (cond == null) {
+						// nothing to do
+					} else if (cond == false && ifStatement.getOnFalseStatements().length == 0) {
+						statements.splice(i, 1);
+					} else if (cond == false) {
+						spliceStatements(statements, i, ifStatement.getOnFalseStatements());
+					} else if (cond == true) {
+						spliceStatements(statements, i, ifStatement.getOnTrueStatements());
+					}
+				}
+				statement.handleStatements(onStatements);
+			}
+			return true;
+		})(funcDef.getStatements());
 	}
 
 }
@@ -2226,6 +2275,9 @@ class _LCSECachedExpression {
 
 }
 
+/**
+ * Common Subexpression Elimination
+ */
 class _LCSEOptimizeCommand extends _FunctionOptimizeCommand {
 
 	function constructor () {
@@ -2246,15 +2298,16 @@ class _LCSEOptimizeCommand extends _FunctionOptimizeCommand {
 
 		var getCacheKey = function (expr : Expression) : Nullable.<string> {
 			if (expr instanceof PropertyExpression) {
-				var receiverType = (expr as PropertyExpression).getExpr().getType();
+                var propertyExpr = expr as PropertyExpression;
+				var receiverType = propertyExpr.getExpr().getType();
 				if (receiverType instanceof ObjectType && _Util.classIsNative(receiverType.getClassDef())) {
 					return null;
 				}
-				var base = getCacheKey((expr as PropertyExpression).getExpr());
+				var base = getCacheKey(propertyExpr.getExpr());
 				if (base == null) {
 					return null;
 				}
-				return base + "." + (expr as PropertyExpression).getIdentifierToken().getValue();
+				return base + "." + propertyExpr.getIdentifierToken().getValue();
 			} else if (expr instanceof LocalExpression) {
 				return (expr as LocalExpression).getLocal().getName().getValue();
 			} else if (expr instanceof ThisExpression) {
@@ -2308,60 +2361,52 @@ class _LCSEOptimizeCommand extends _FunctionOptimizeCommand {
 		var onExpr = function (expr : Expression, replaceCb : function(:Expression):void) : boolean {
 			// handle special cases first
 			if (expr instanceof AssignmentExpression) {
-				var lhsExpr = (expr as AssignmentExpression).getFirstExpr();
+                var assignmentExpr =expr as AssignmentExpression;
+				var lhsExpr = assignmentExpr.getFirstExpr();
 				if (lhsExpr instanceof LocalExpression) {
-					onExpr((expr as AssignmentExpression).getSecondExpr(), function (receiver : AssignmentExpression) : function(:Expression):void {
-						return function (expr) {
-							receiver.setSecondExpr(expr);
-						};
-					}(expr as AssignmentExpression));
+					onExpr(assignmentExpr.getSecondExpr(), function (expr) {
+						assignmentExpr.setSecondExpr(expr);
+					});
 					clearCacheByLocalName((lhsExpr as LocalExpression).getLocal().getName().getValue());
 				} else if (lhsExpr instanceof PropertyExpression) {
-					onExpr((lhsExpr as PropertyExpression).getExpr(), function (receiver : PropertyExpression) : function(:Expression):void {
-						return function (expr) {
-							receiver.setExpr(expr);
-						};
-					}(lhsExpr as PropertyExpression));
-					onExpr((expr as AssignmentExpression).getSecondExpr(), function (receiver : AssignmentExpression) : function(:Expression):void {
-						return function (expr) {
-							receiver.setSecondExpr(expr);
-						};
-					}(expr as AssignmentExpression));
-					if ((lhsExpr as PropertyExpression).getIdentifierToken().getValue() == "length") {
-						// once we support caching array elements, we need to add special care
+					var lhsPropertyExpr = lhsExpr as PropertyExpression;
+					onExpr((lhsExpr as PropertyExpression).getExpr(), function (expr) {
+						lhsPropertyExpr.setExpr(expr);
+					});
+					onExpr(assignmentExpr.getSecondExpr(), function (expr) {
+							assignmentExpr.setSecondExpr(expr);
+					});
+					if (lhsPropertyExpr.getIdentifierToken().getValue() == "length") {
+						// FIXME once we support caching array elements, we need to add special care
 					} else {
 						var cacheKey = getCacheKey(lhsExpr);
 						if (cacheKey) {
-							registerCacheable(cacheKey, lhsExpr, function (receiver : AssignmentExpression) : function(:Expression):void {
-								return function (expr) {
-									receiver.setFirstExpr(expr);
-								};
-							}(expr as AssignmentExpression));
+							registerCacheable(cacheKey, lhsExpr, function (expr) {
+								assignmentExpr.setFirstExpr(expr);
+							});
 						}
 					}
 				} else {
 					clearCache();
 				}
 				return true;
-			} else if (expr instanceof PreIncrementExpression
-				   || expr instanceof PostIncrementExpression) {
+			} else if (expr instanceof IncrementExpression) {
+				var incrementExpr = expr as IncrementExpression;
 				// optimize the receiver of LHS, and clear (for now)
-				if ((expr as IncrementExpression).getExpr() instanceof PropertyExpression) {
-					onExpr(((expr as IncrementExpression).getExpr() as PropertyExpression).getExpr(), function (receiver : PropertyExpression) : function(:Expression):void {
-						return function (expr) {
-							receiver.setExpr(expr);
-						};
-					}((expr as IncrementExpression).getExpr() as PropertyExpression));
+				if (incrementExpr.getExpr() instanceof PropertyExpression) {
+					var propertyExpr = incrementExpr.getExpr() as PropertyExpression;
+					onExpr(propertyExpr.getExpr(), function (expr) {
+						propertyExpr.setExpr(expr);
+					});
 				}
 				clearCache();
 				return true;
 			} else if (expr instanceof ConditionalExpression) {
+				var conditionalExpr = expr as ConditionalExpression;
 				// only optimize the condExpr, then clear (for now)
-				onExpr((expr as ConditionalExpression).getCondExpr(), function (receiver : ConditionalExpression) : function(:Expression):void {
-					return function (expr) {
-						receiver.setCondExpr(expr);
-					};
-				}(expr as ConditionalExpression));
+				onExpr(conditionalExpr.getCondExpr(), function (expr) {
+					conditionalExpr.setCondExpr(expr);
+				});
 				clearCache();
 				return true;
 			} else if (expr instanceof FunctionExpression) {
@@ -2373,11 +2418,10 @@ class _LCSEOptimizeCommand extends _FunctionOptimizeCommand {
 				if (funcExpr instanceof LocalExpression) {
 					// nothing to do
 				} else if (funcExpr instanceof PropertyExpression) {
-					onExpr(((expr as CallExpression).getExpr() as PropertyExpression).getExpr(), function (receiver : PropertyExpression) : function(:Expression):void {
-						return function (expr) {
-							receiver.setExpr(expr);
-						};
-					}((expr as CallExpression).getExpr() as PropertyExpression));
+					var propertyExpr = funcExpr as PropertyExpression;
+					onExpr(propertyExpr.getExpr(), function (expr) {
+						propertyExpr.setExpr(expr);
+					});
 				} else {
 					clearCache();
 				}
@@ -2392,9 +2436,9 @@ class _LCSEOptimizeCommand extends _FunctionOptimizeCommand {
 				clearCache();
 				return true;
 			} else if (expr instanceof NewExpression) {
+				this.log("new expression");
 				// optimize the args, and clear
 				var args = (expr as NewExpression).getArguments();
-				this.log("new expression");
 				for (var i = 0; i < args.length; ++i) {
 					onExpr(args[i], function (args : Expression[], index : number) : function(:Expression):void {
 						return function (expr) {
@@ -2409,7 +2453,8 @@ class _LCSEOptimizeCommand extends _FunctionOptimizeCommand {
 			if (expr instanceof PropertyExpression) {
 				if ((expr as PropertyExpression).getIdentifierToken().getValue() == "length") {
 					// ditto as above comment for "length"
-				} else {
+				}
+				else {
 					var cacheKey = getCacheKey(expr);
 					if (cacheKey) {
 						this.log("rewriting cse for: " + cacheKey);
@@ -2466,7 +2511,7 @@ class _UnboxOptimizeCommand extends _FunctionOptimizeCommand {
 		}
 		var locals = funcDef.getLocals();
 		// check all the locals that exist _now_, and remove ones that have been optimized
-		for (var i = 0, iMax = locals.length; i < locals.length;) {
+		for (var i = 0, iMax = locals.length; i < iMax;) {
 			if (this._optimizeLocal(funcDef, locals[i])) {
 				locals.splice(i, 1);
 			} else {
@@ -2826,4 +2871,52 @@ class _ArrayLengthOptimizeCommand extends _FunctionOptimizeCommand {
 		return (classDef as InstantiatedClassDefinition).getTemplateClassName() == "Array";
 	}
 
+}
+
+class _NoDebugCommandStash extends OptimizerStash {
+	var debugValue = true;
+
+	override function clone () : OptimizerStash {
+		var tmp = new _NoDebugCommandStash;
+		tmp.debugValue = this.debugValue;
+		return tmp;
+	}
+}
+
+/**
+ * Set JSX.DEBUG = false, where `if (JSX.DEBUG) { ... }` blocks will be
+ * removed by "dce" optimization command.
+ */
+class _NoDebugCommand extends _OptimizeCommand {
+
+	function constructor() {
+		super("no-debug");
+	}
+
+	override function _createStash () : OptimizerStash {
+		return new _NoDebugCommandStash();
+	}
+
+	override function performOptimization () : void {
+		var stash = this.getStash(this.getCompiler().getEmitter()) as _NoDebugCommandStash;
+		stash.debugValue = false;
+
+		this.getCompiler().forEachClassDef(function (parser, classDef) {
+			if (classDef.className() == "JSX") {
+				classDef.forEachMemberVariable(function (memberVariable) {
+					if (memberVariable.name() == "DEBUG"
+							&& (memberVariable.flags() & ClassDefinition.IS_STATIC) != 0) {
+
+						this.log("set JSX.DEBUG = " + stash.debugValue as  string);
+						var falseExpr = new BooleanLiteralExpression(new Token(stash.debugValue as string, false));
+						memberVariable.setInitialValue(falseExpr);
+						return false;
+					}
+					return true;
+				});
+				return false;
+			}
+			return true;
+		});
+	}
 }

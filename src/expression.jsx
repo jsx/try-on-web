@@ -31,16 +31,13 @@ import "./optimizer.jsx";
 abstract class Expression implements Stashable {
 
 	var _token : Token;
-	var _optimizerStash : Map.<OptimizerStash>;
 
 	function constructor (token : Token) {
 		this._token = token;
-		this._optimizerStash = new Map.<OptimizerStash>;
 	}
 
 	function constructor (that : Expression) {
 		this._token = that.getToken();
-		this._optimizerStash = new Map.<OptimizerStash>;
 		for (var k in that._optimizerStash)
 			this._optimizerStash[k] = that._optimizerStash[k].clone();
 	}
@@ -112,10 +109,6 @@ abstract class Expression implements Stashable {
 	function assertIsAssignable (context : AnalysisContext, token : Token, type : Type) : boolean {
 		context.errors.push(new CompileError(token, "left-hand-side expression is not assignable"));
 		return false;
-	}
-
-	override function getOptimizerStash () : Map.<OptimizerStash> {
-		return this._optimizerStash;
 	}
 
 	static function assertIsAssignable (context : AnalysisContext, token : Token, lhsType : Type, rhsType : Type) : boolean {
@@ -802,7 +795,7 @@ class FunctionExpression extends Expression {
 	}
 
 	override function getType () : Type {
-		return new StaticFunctionType(this._funcDef.getReturnType(), this._funcDef.getArgumentTypes(), false);
+		return this._funcDef.getType();
 	}
 
 	function typesAreIdentified () : boolean {

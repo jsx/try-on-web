@@ -1,3 +1,4 @@
+// generatedy by JSX compiler 0.9.4 (2013-02-03 01:04:33 +0900; a9ef6a0d75dc264324523b49682a92f772444fe5)
 var JSX = {};
 (function () {
 
@@ -89,6 +90,7 @@ JSX.resetProfileResults = function () {
 		throw new Error("profiler has not been turned on");
 	return $__jsx_profiler.resetResults();
 };
+JSX.DEBUG = true;
 /**
  * class _Main extends Object
  * @constructor
@@ -224,7 +226,7 @@ _Main$0.main$AS = function (args) {
 	n = (args.length > 0 ? +(function (v) {
 		if (! (v != null)) {
 			debugger;
-			throw new Error("[fib.jsx:42] null access");
+			throw new Error("[/Users/gfx/repo/try-on-web/JSX/example/fib.jsx:42] null access");
 		}
 		return v;
 	}(args[0])) : 10);
@@ -281,6 +283,7 @@ TestCase.prototype.beforeClass$AS = function (tests) {
 /**
  */
 TestCase.prototype.afterClass$ = function () {
+	/** @type {*} */
 	var next;
 	if (this._tasks.length === 0) {
 		this.finish$();
@@ -292,6 +295,7 @@ TestCase.prototype.afterClass$ = function () {
 
 /**
  * @param {!string} name
+ * @param {*} testFunction
  */
 TestCase.prototype.run$SF$V$ = function (name, testFunction) {
 	/** @type {!number} */
@@ -343,6 +347,8 @@ TestCase.prototype.finish$ = function () {
 };
 
 /**
+ * @param {*} testBody
+ * @param {*} timeoutHandler
  * @param {!number} timeoutMS
  */
 TestCase.prototype.async$F$LAsyncContext$V$F$LAsyncContext$V$I = function (testBody, timeoutHandler, timeoutMS) {
@@ -362,6 +368,7 @@ TestCase.prototype.async$F$LAsyncContext$V$F$LAsyncContext$V$I = function (testB
 };
 
 /**
+ * @param {*} testBody
  * @param {!number} timeoutMS
  */
 TestCase.prototype.async$F$LAsyncContext$V$I = function (testBody, timeoutMS) {
@@ -452,7 +459,7 @@ TestCase.prototype.fail$S = function (reason) {
  * @param {*} value
  */
 TestCase.prototype._dump$SX = function (tag, value) {
-	if (typeof value === "object" && (function (o) { return o instanceof Object ? o : null; })(value) != null) {
+	if (typeof value === "object") {
 		this.diag$S(tag);
 		console.dir(value);
 	} else {
@@ -509,12 +516,24 @@ TestCase.prototype._equals$XXI = function (a, b, recursion) {
 	if (a == b || a == null && b == null) {
 		return true;
 	}
-	aryA = (function (o) { return o instanceof Array ? o : null; })(a);
-	aryB = (function (o) { return o instanceof Array ? o : null; })(b);
-	if (aryA) {
-		if (! aryB) {
+	if (a instanceof Array) {
+		if (! (b instanceof Array)) {
 			return false;
 		}
+		aryA = (function (v) {
+			if (! (v == null || v instanceof Array)) {
+				debugger;
+				throw new Error("[/Users/gfx/repo/try-on-web/JSX/lib/common/test-case.jsx:275] detected invalid cast, value is not an Array or null");
+			}
+			return v;
+		}(a));
+		aryB = (function (v) {
+			if (! (v == null || v instanceof Array)) {
+				debugger;
+				throw new Error("[/Users/gfx/repo/try-on-web/JSX/lib/common/test-case.jsx:276] detected invalid cast, value is not an Array or null");
+			}
+			return v;
+		}(b));
 		if (aryA.length !== aryB.length) {
 			return false;
 		}
@@ -525,12 +544,24 @@ TestCase.prototype._equals$XXI = function (a, b, recursion) {
 		}
 		return true;
 	}
-	mapA = (function (o) { return o instanceof Object ? o : null; })(a);
-	mapB = (function (o) { return o instanceof Object ? o : null; })(b);
-	if (mapA) {
-		if (! mapB) {
+	if ((typeof(a) === "object")) {
+		if (! ((typeof(b) === "object"))) {
 			return false;
 		}
+		mapA = (function (v) {
+			if (! (v == null || typeof v === "object" || typeof v === "function")) {
+				debugger;
+				throw new Error("[/Users/gfx/repo/try-on-web/JSX/lib/common/test-case.jsx:293] detected invalid cast, value is not a Map or null");
+			}
+			return v;
+		}(a));
+		mapB = (function (v) {
+			if (! (v == null || typeof v === "object" || typeof v === "function")) {
+				debugger;
+				throw new Error("[/Users/gfx/repo/try-on-web/JSX/lib/common/test-case.jsx:294] detected invalid cast, value is not a Map or null");
+			}
+			return v;
+		}(b));
 		mapAkeys = this.sortedKeys$HX(mapA);
 		mapBkeys = this.sortedKeys$HX(mapB);
 		if (mapAkeys.length !== mapBkeys.length) {
@@ -547,10 +578,27 @@ TestCase.prototype._equals$XXI = function (a, b, recursion) {
 		}
 		return true;
 	}
-	dateA = (function (o) { return o instanceof Date ? o : null; })(a);
-	dateB = (function (o) { return o instanceof Date ? o : null; })(b);
-	if (dateA && dateB) {
-		return dateA.getTime() === dateB.getTime();
+	if (a instanceof Date) {
+		if (! (b instanceof Date)) {
+			return false;
+		}
+		dateA = (function (v) {
+			if (! (v == null || v instanceof Date)) {
+				debugger;
+				throw new Error("[/Users/gfx/repo/try-on-web/JSX/lib/common/test-case.jsx:320] detected invalid cast, value is not an instance of the designated type or null");
+			}
+			return v;
+		}(a));
+		dateB = (function (v) {
+			if (! (v == null || v instanceof Date)) {
+				debugger;
+				throw new Error("[/Users/gfx/repo/try-on-web/JSX/lib/common/test-case.jsx:321] detected invalid cast, value is not an instance of the designated type or null");
+			}
+			return v;
+		}(b));
+		if (dateA && dateB) {
+			return dateA.getTime() === dateB.getTime();
+		}
 	}
 	return false;
 };
@@ -593,11 +641,11 @@ TestCase.prototype.difflet$AXAX = function (a, b) {
 	var aIsLast;
 	if (! (a != null)) {
 		debugger;
-		throw new Error("[/Users/gfx/repo/try-on-web/JSX/lib/common/test-case.jsx:335] assertion failure");
+		throw new Error("[/Users/gfx/repo/try-on-web/JSX/lib/common/test-case.jsx:340] assertion failure");
 	}
 	if (! (b != null)) {
 		debugger;
-		throw new Error("[/Users/gfx/repo/try-on-web/JSX/lib/common/test-case.jsx:336] assertion failure");
+		throw new Error("[/Users/gfx/repo/try-on-web/JSX/lib/common/test-case.jsx:341] assertion failure");
 	}
 	s = "[\n";
 	for ((i = 0, l = Math.max(a.length, b.length)); i < l; ++ i) {
@@ -701,6 +749,7 @@ AsyncContext.prototype = new Object;
  * @constructor
  * @param {TestCase} test
  * @param {!string} name
+ * @param {*} timeoutHandler
  * @param {!number} timeoutMS
  */
 function AsyncContext$LTestCase$SF$LAsyncContext$V$I(test, name, timeoutHandler, timeoutMS) {
@@ -728,6 +777,7 @@ AsyncContext.prototype.name$ = function () {
 /**
  */
 AsyncContext.prototype.done$ = function () {
+	/** @type {*} */
 	var next;
 	Timer$clearTimeout$LTimerHandle$(this._timerId);
 	this._test.after$S(this._name);
@@ -838,13 +888,19 @@ _Matcher.prototype.toEqual$AX = function (x) {
 	var got;
 	if (! (x != null)) {
 		debugger;
-		throw new Error("[/Users/gfx/repo/try-on-web/JSX/lib/common/test-case.jsx:489] assertion failure");
+		throw new Error("[/Users/gfx/repo/try-on-web/JSX/lib/common/test-case.jsx:494] assertion failure");
 	}
-	got = (function (o) { return o instanceof Array ? o : null; })(this._got);
-	if (got == null) {
+	if (! (this._got instanceof Array)) {
 		this._test._nok$USSXX(this._name, "equals", this._got, x);
 		return;
 	}
+	got = (function (v) {
+		if (! (v == null || v instanceof Array)) {
+			debugger;
+			throw new Error("[/Users/gfx/repo/try-on-web/JSX/lib/common/test-case.jsx:501] detected invalid cast, value is not an Array or null");
+		}
+		return v;
+	}(this._got));
 	if (this._test.equals$XX(got, x)) {
 		this._test._ok$US(this._name);
 	} else {
@@ -860,7 +916,7 @@ _Matcher.prototype.toEqual$AS = function (x) {
 	this.toEqual$AX((function (v) {
 		if (! (v == null || v instanceof Array)) {
 			debugger;
-			throw new Error("[/Users/gfx/repo/try-on-web/JSX/lib/common/test-case.jsx:507] detected invalid cast, value is not an Array or null");
+			throw new Error("[/Users/gfx/repo/try-on-web/JSX/lib/common/test-case.jsx:512] detected invalid cast, value is not an Array or null");
 		}
 		return v;
 	}(x)));
@@ -873,7 +929,7 @@ _Matcher.prototype.toEqual$AN = function (x) {
 	this.toEqual$AX((function (v) {
 		if (! (v == null || v instanceof Array)) {
 			debugger;
-			throw new Error("[/Users/gfx/repo/try-on-web/JSX/lib/common/test-case.jsx:510] detected invalid cast, value is not an Array or null");
+			throw new Error("[/Users/gfx/repo/try-on-web/JSX/lib/common/test-case.jsx:515] detected invalid cast, value is not an Array or null");
 		}
 		return v;
 	}(x)));
@@ -886,7 +942,7 @@ _Matcher.prototype.toEqual$AI = function (x) {
 	this.toEqual$AX((function (v) {
 		if (! (v == null || v instanceof Array)) {
 			debugger;
-			throw new Error("[/Users/gfx/repo/try-on-web/JSX/lib/common/test-case.jsx:513] detected invalid cast, value is not an Array or null");
+			throw new Error("[/Users/gfx/repo/try-on-web/JSX/lib/common/test-case.jsx:518] detected invalid cast, value is not an Array or null");
 		}
 		return v;
 	}(x)));
@@ -899,7 +955,7 @@ _Matcher.prototype.toEqual$AB = function (x) {
 	this.toEqual$AX((function (v) {
 		if (! (v == null || v instanceof Array)) {
 			debugger;
-			throw new Error("[/Users/gfx/repo/try-on-web/JSX/lib/common/test-case.jsx:516] detected invalid cast, value is not an Array or null");
+			throw new Error("[/Users/gfx/repo/try-on-web/JSX/lib/common/test-case.jsx:521] detected invalid cast, value is not an Array or null");
 		}
 		return v;
 	}(x)));
@@ -936,6 +992,7 @@ function Timer$() {
 Timer$.prototype = new Timer;
 
 /**
+ * @param {*} callback
  * @param {!number} intervalMS
  * @return {TimerHandle}
  */
@@ -967,6 +1024,7 @@ Timer.clearTimeout$LTimerHandle$ = function (timer) {
 var Timer$clearTimeout$LTimerHandle$ = Timer.clearTimeout$LTimerHandle$;
 
 /**
+ * @param {*} callback
  * @param {!number} intervalMS
  * @return {TimerHandle}
  */
@@ -998,6 +1056,7 @@ Timer.clearInterval$LTimerHandle$ = function (timer) {
 var Timer$clearInterval$LTimerHandle$ = Timer.clearInterval$LTimerHandle$;
 
 /**
+ * @param {*} callback
  * @return {TimerHandle}
  */
 Timer.requestAnimationFrame$F$NV$ = function (callback) {
@@ -1027,6 +1086,7 @@ var Timer$useNativeRAF$B = Timer.useNativeRAF$B;
 
 /**
  * @param {!boolean} useNativeImpl
+ * @return {*}
  */
 Timer._getRequestAnimationFrameImpl$B = function (useNativeImpl) {
 	/** @type {!number} */
@@ -1111,6 +1171,7 @@ var Timer$_getRequestAnimationFrameImpl$B = Timer._getRequestAnimationFrameImpl$
 
 /**
  * @param {!boolean} useNativeImpl
+ * @return {*}
  */
 Timer._getCancelAnimationFrameImpl$B = function (useNativeImpl) {
 	if (useNativeImpl) {
@@ -1218,15 +1279,14 @@ $__jsx_lazy_init(Timer, "_cancelAnimationFrame", function () {
 	return Timer$_getCancelAnimationFrameImpl$B(true);
 });
 js.global = (function () { return this; })();
-
 var $__jsx_classMap = {
-	"import.jsx": {
+	"system:example/import.jsx": {
 		_Main: _Main,
 		_Main$: _Main$,
 		_Test: _Test,
 		_Test$: _Test$
 	},
-	"fib.jsx": {
+	"system:example/fib.jsx": {
 		Fib: Fib,
 		Fib$: Fib$,
 		_Main: _Main$0,
@@ -1318,7 +1378,7 @@ JSX.runTests = function (sourceFile, tests) {
 function $__jsx_onload (event) {
 	window.removeEventListener("load", $__jsx_onload);
 	document.removeEventListener("DOMContentLoaded", $__jsx_onload);
-	JSX.runMain("import.jsx", [])
+	JSX.runMain("system:example/import.jsx", [])
 }
 
 window.addEventListener("load", $__jsx_onload);
@@ -1326,4 +1386,4 @@ document.addEventListener("DOMContentLoaded", $__jsx_onload);
 
 })();
 
-//@ sourceMappingURL=import.jsx.js.mapping
+//@ sourceMappingURL=/Users/gfx/repo/try-on-web/JSX/example/import.jsx.js.mapping

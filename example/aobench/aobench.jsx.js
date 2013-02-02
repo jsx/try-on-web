@@ -1,4 +1,4 @@
-// generatedy by JSX compiler 0.9.2 (2013-01-26 13:29:25 +0900; 5b722b08f9c2150f9a7dfa47e2312b63a99b7cb5)
+// generatedy by JSX compiler 0.9.4 (2013-02-03 01:04:33 +0900; a9ef6a0d75dc264324523b49682a92f772444fe5)
 var JSX = {};
 (function () {
 
@@ -90,6 +90,7 @@ JSX.resetProfileResults = function () {
 		throw new Error("profiler has not been turned on");
 	return $__jsx_profiler.resetResults();
 };
+JSX.DEBUG = false;
 /**
  * class Config extends Object
  * @constructor
@@ -782,7 +783,7 @@ $__jsx_lazy_init(dom, "document", function () {
 });
 js.global = (function () { return this; })();
 var $__jsx_classMap = {
-	"web/example/aobench/aobench.jsx": {
+	"system:web/example/aobench/aobench.jsx": {
 		Config: Config,
 		Config$: Config$,
 		vec3: vec3,
@@ -877,7 +878,7 @@ JSX.runTests = function (sourceFile, tests) {
 function $__jsx_onload (event) {
 	window.removeEventListener("load", $__jsx_onload);
 	document.removeEventListener("DOMContentLoaded", $__jsx_onload);
-	JSX.runMain("web/example/aobench/aobench.jsx", [])
+	JSX.runMain("system:web/example/aobench/aobench.jsx", [])
 }
 
 window.addEventListener("load", $__jsx_onload);

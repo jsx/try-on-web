@@ -34,10 +34,6 @@ import "./jsemitter.jsx";
 import "./optimizer.jsx";
 import "./util.jsx";
 
-import "js.jsx";
-import "js/nodejs.jsx";
-
-
 class JSXCommand {
 
 	static function help() : string {
@@ -173,7 +169,7 @@ class JSXCommand {
 					emitter.setEnableRunTimeTypeCheck(false);
 					optimizer.setEnableRunTimeTypeCheck(false);
 				});
-				optimizeCommands = [ "lto", "no-assert", "no-log", "fold-const", "return-if", "inline", "dce", "unbox", "fold-const", "lcse", "dce", "fold-const", "array-length", "unclassify" ];
+				optimizeCommands = [ "lto", "no-assert", "no-log", "no-debug", "fold-const", "return-if", "inline", "dce", "unbox", "fold-const", "lcse", "dce", "fold-const", "array-length", "unclassify" ];
 				break;
 			case "--optimize":
 				if ((optarg = getoptarg()) == null) {
@@ -221,7 +217,7 @@ class JSXCommand {
 					break;
 				case "node": // implies JavaScriptEmitter
 					tasks.push(function () : void {
-						var shebang =  "#!" + process.execPath + "\n";
+						var shebang =  "#!/usr/bin/env node\n";
 						emitter.addHeader(shebang);
 					});
 					break;
@@ -247,6 +243,11 @@ class JSXCommand {
 					emitter.setEnableProfiler(true);
 				});
 				break;
+			case "--compilation-server":
+				if ((optarg = getoptarg()) == null) {
+					return 1;
+				}
+				return platform.runCompilationServer(optarg);
 			case "--version":
 				platform.log(Meta.IDENTIFIER);
 				return 0;
@@ -363,7 +364,7 @@ class JSXCommand {
 				if (outputFile != null) {
 					emitter.saveSourceMappingFile(platform);
 
-					platform.makeFileExecutable(outputFile, "node");
+					platform.makeFileExecutable(outputFile, executable);
 				}
 
 			}

@@ -1555,7 +1555,6 @@ class _Test extends TestCase {
         var v102 : Storage = o.sessionStorage;
         var v103 : Storage = o.localStorage;
         var v104 : IDBFactory = o.indexedDB;
-        var v105 : Intent = o.intent;
         var f18 : number/*long*/ = o.setTimeout(X.getfunction___void());
         var f19 : number/*long*/ = o.setTimeout(X.getfunction___void(), X.getnumber());
         o.clearTimeout(X.getnumber());
@@ -2871,11 +2870,10 @@ class _Test extends TestCase {
         o.unregisterContentHandler(X.getstring(), X.getstring());
         o.yieldForStorageUpdates();
         var v2 : Geolocation = o.geolocation;
-        o.startActivity(X.getIntent());
-        o.startActivity(X.getIntent(), X.getfunction_data_variant_ports_MessagePort____void());
-        o.startActivity(X.getIntent(), X.getfunction_data_variant_ports_MessagePort____void(), X.getfunction_data_variant__void());
-        o.getUserMedia(X.getNullable__MediaStreamConstraints_(), X.getfunction_stream_LocalMediaStream__void());
-        o.getUserMedia(X.getNullable__MediaStreamConstraints_(), X.getfunction_stream_LocalMediaStream__void(), X.getNullable__function_error_NavigatorUserMediaError__void_());
+        o.getUserMedia(X.getNullable__Map__variant__(), X.getfunction_stream_LocalMediaStream__void());
+        o.getUserMedia(X.getNullable__Map__variant__(), X.getfunction_stream_LocalMediaStream__void(), X.getNullable__function_error_NavigatorUserMediaError__void_());
+        o.webkitGetUserMedia(X.getNullable__Map__variant__(), X.getfunction_stream_LocalMediaStream__void());
+        o.webkitGetUserMedia(X.getNullable__Map__variant__(), X.getfunction_stream_LocalMediaStream__void(), X.getNullable__function_error_NavigatorUserMediaError__void_());
     } // Navigator
 
     function compile_NavigatorID(o : NavigatorID) : void {
@@ -3891,48 +3889,136 @@ class _Test extends TestCase {
         var v5 : string/*DOMString*/ = o.iconUrl;
     } // NotificationOptions
 
-    function compile_IntentParameters(o : IntentParameters) : void {
-        var v1 : string/*DOMString*/ = o.action;
-        var v2 : string/*DOMString*/ = o.type;
-        var v3 : variant/*any*/ = o.data;
-        var v4 : Transferable[] = o.transfer;
-        var v5 : Object = o.extras;
-        var v6 : URL = o.service;
-        var v7 : URL[] = o.suggestions;
-    } // IntentParameters
+    function compile_AudioMediaStreamTrack(o : AudioMediaStreamTrack) : void {
+        var v1 : boolean = o.canInsertDTMF;
+        o.insertDTMF(X.getstring());
+        o.insertDTMF(X.getstring(), X.getnumber());
+    } // AudioMediaStreamTrack
 
-    function compile_Intent(o : Intent) : void {
-        var c1 = new Intent(X.getIntentParameters());
-        var c2 = new Intent(X.getstring(), X.getstring());
-        var c3 = new Intent(X.getstring(), X.getstring(), X.getvariant());
-        var c4 = new Intent(X.getstring(), X.getstring(), X.getvariant(), X.getTransferable__());
-        var v1 : string/*DOMString*/ = o.action;
-        var v2 : string/*DOMString*/ = o.type;
-        var v3 : variant/*any*/ = o.data;
-        var v4 : MessagePort[] = o.ports;
-        var f1 : string/*DOMString*/ = o.getExtra(X.getstring());
-        o.postResult(X.getvariant());
-        o.postResult(X.getvariant(), X.getTransferable__());
-        o.postFailure(X.getvariant());
-    } // Intent
+    function compile_RTCSessionDescription(o : RTCSessionDescription) : void {
+        var c1 = new RTCSessionDescription();
+        var c2 = new RTCSessionDescription(X.getRTCSessionDescriptionInit());
+        var v1 : Nullable.<string>/*RTCSdpType?*/ = o.type;
+        var v2 : Nullable.<string>/*DOMString?*/ = o.sdp;
+    } // RTCSessionDescription
 
-    function compile_Intents(o : Intents) : void {
-        o.startActivity(X.getIntent());
-        o.startActivity(X.getIntent(), X.getfunction_data_variant_ports_MessagePort____void());
-        o.startActivity(X.getIntent(), X.getfunction_data_variant_ports_MessagePort____void(), X.getfunction_data_variant__void());
-    } // Intents
+    function compile_RTCSessionDescriptionInit(o : RTCSessionDescriptionInit) : void {
+        var v1 : string/*RTCSdpType*/ = o.type;
+        var v2 : string/*DOMString*/ = o.sdp;
+    } // RTCSessionDescriptionInit
 
-    function compile_IntentProvider(o : IntentProvider) : void {
-        var v1 : Intent = o.intent;
-    } // IntentProvider
+    function compile_RTCIceCandidate(o : RTCIceCandidate) : void {
+        var c1 = new RTCIceCandidate();
+        var c2 = new RTCIceCandidate(X.getRTCIceCandidateInit());
+        var v1 : Nullable.<string>/*DOMString?*/ = o.candidate;
+        var v2 : Nullable.<string>/*DOMString?*/ = o.sdpMid;
+        var v3 : Nullable.<number>/*unsigned short?*/ = o.sdpMLineIndex;
+    } // RTCIceCandidate
 
-    function compile_HTMLIntentElement(o : HTMLIntentElement) : void {
-        var v1 : string/*DOMString*/ = o.action;
-        var v2 : string/*DOMString*/ = o.type;
-        var v3 : string/*DOMString*/ = o.href;
-        var v4 : string/*DOMString*/ = o.title;
-        var v5 : string/*DOMString*/ = o.disposition;
-    } // HTMLIntentElement
+    function compile_RTCIceCandidateInit(o : RTCIceCandidateInit) : void {
+        var v1 : string/*DOMString*/ = o.candidate;
+        var v2 : string/*DOMString*/ = o.sdpMid;
+        var v3 : number/*unsigned short*/ = o.sdpMLineIndex;
+    } // RTCIceCandidateInit
+
+    function compile_RTCIceServer(o : RTCIceServer) : void {
+        var v1 : string/*DOMString*/ = o.url;
+        var v2 : Nullable.<string>/*nullable DOMString*/ = o.credential;
+    } // RTCIceServer
+
+    function compile_RTCConfiguration(o : RTCConfiguration) : void {
+        var v1 : RTCIceServer[] = o.iceServers;
+    } // RTCConfiguration
+
+    function compile_RTCPeerConnection(o : RTCPeerConnection) : void {
+        var c1 = new RTCPeerConnection(X.getRTCConfiguration());
+        var c2 = new RTCPeerConnection(X.getRTCConfiguration(), X.getMap__variant_());
+        o.createOffer(X.getfunction_sdp_RTCSessionDescription__void());
+        o.createOffer(X.getfunction_sdp_RTCSessionDescription__void(), X.getfunction_errorInformation_string__void());
+        o.createOffer(X.getfunction_sdp_RTCSessionDescription__void(), X.getfunction_errorInformation_string__void(), X.getMap__variant_());
+        o.createAnswer(X.getRTCSessionDescription(), X.getfunction_sdp_RTCSessionDescription__void());
+        o.createAnswer(X.getRTCSessionDescription(), X.getfunction_sdp_RTCSessionDescription__void(), X.getNullable__function_errorInformation_string__void_());
+        o.createAnswer(X.getRTCSessionDescription(), X.getfunction_sdp_RTCSessionDescription__void(), X.getNullable__function_errorInformation_string__void_(), X.getMap__variant_());
+        o.createAnswer(X.getRTCSessionDescription(), X.getfunction_sdp_RTCSessionDescription__void(), X.getNullable__function_errorInformation_string__void_(), X.getMap__variant_(), X.getboolean());
+        o.setLocalDescription(X.getRTCSessionDescription());
+        o.setLocalDescription(X.getRTCSessionDescription(), X.getfunction___void());
+        o.setLocalDescription(X.getRTCSessionDescription(), X.getfunction___void(), X.getfunction_errorInformation_string__void());
+        var v1 : RTCSessionDescription = o.localDescription;
+        o.setRemoteDescription(X.getRTCSessionDescription());
+        o.setRemoteDescription(X.getRTCSessionDescription(), X.getfunction___void());
+        o.setRemoteDescription(X.getRTCSessionDescription(), X.getfunction___void(), X.getfunction_errorInformation_string__void());
+        var v2 : RTCSessionDescription = o.remoteDescription;
+        var v3 : string/*RTCPeerState*/ = o.readyState;
+        o.updateIce();
+        o.updateIce(X.getNullable__RTCConfiguration_());
+        o.updateIce(X.getNullable__RTCConfiguration_(), X.getNullable__Map__variant__());
+        o.updateIce(X.getNullable__RTCConfiguration_(), X.getNullable__Map__variant__(), X.getboolean());
+        o.addIceCandidate(X.getRTCIceCandidate());
+        var v4 : string/*RTCIceState*/ = o.iceState;
+        var v5 : MediaStream[]/*MediaStreamArray*/ = o.localStreams;
+        var v6 : MediaStream[]/*MediaStreamArray*/ = o.remoteStreams;
+        var f1 : DataChannel = o.createDataChannel(X.getstring());
+        var f2 : DataChannel = o.createDataChannel(X.getstring(), X.getDataChannelInit());
+        var v7 : Nullable.<function(:Event):void>/*EventHandler*/ = o.ondatachannel;
+        o.addStream(X.getMediaStream());
+        o.addStream(X.getMediaStream(), X.getMap__variant_());
+        o.removeStream(X.getMediaStream());
+        o.close();
+        var v8 : Nullable.<function(:Event):void>/*EventHandler*/ = o.onnegotationneeded;
+        var v9 : Nullable.<function(:Event):void>/*EventHandler*/ = o.onicecandidate;
+        var v10 : Nullable.<function(:Event):void>/*EventHandler*/ = o.onopen;
+        var v11 : Nullable.<function(:Event):void>/*EventHandler*/ = o.onstatechange;
+        var v12 : Nullable.<function(:Event):void>/*EventHandler*/ = o.onaddstream;
+        var v13 : Nullable.<function(:Event):void>/*EventHandler*/ = o.onremovestream;
+        var v14 : Nullable.<function(:Event):void>/*EventHandler*/ = o.onicechange;
+    } // RTCPeerConnection
+
+    function compile_DataChannel(o : DataChannel) : void {
+        var v1 : string/*DOMString*/ = o.label;
+        var v2 : boolean = o.reliable;
+        var v3 : string/*DataChannelState*/ = o.readyState;
+        var v4 : number/*unsigned long*/ = o.bufferedAmount;
+        var v5 : Nullable.<function(:Event):void>/*EventHandler*/ = o.onopen;
+        var v6 : Nullable.<function(:Event):void>/*EventHandler*/ = o.onerror;
+        var v7 : Nullable.<function(:Event):void>/*EventHandler*/ = o.onclose;
+        o.close();
+        var v8 : Nullable.<function(:Event):void>/*EventHandler*/ = o.onmessage;
+        var v9 : string/*DOMString*/ = o.binaryType;
+        o.send(X.getstring());
+        o.send(X.getArrayBuffer());
+        o.send(X.getBlob());
+    } // DataChannel
+
+    function compile_DataChannelInit(o : DataChannelInit) : void {
+        var v1 : boolean = o.reliable;
+    } // DataChannelInit
+
+    function compile_RTCPeerConnectionIceEvent(o : RTCPeerConnectionIceEvent) : void {
+        var c1 = new RTCPeerConnectionIceEvent(X.getstring(), X.getRTCPeerConnectionIceEventInit());
+        var v1 : RTCIceCandidate = o.candidate;
+    } // RTCPeerConnectionIceEvent
+
+    function compile_RTCPeerConnectionIceEventInit(o : RTCPeerConnectionIceEventInit) : void {
+        var v1 : RTCIceCandidate = o.candidate;
+    } // RTCPeerConnectionIceEventInit
+
+    function compile_MediaStreamEvent(o : MediaStreamEvent) : void {
+        var c1 = new MediaStreamEvent(X.getstring(), X.getMediaStreamEventInit());
+        var v1 : Nullable.<MediaStream> = o.stream;
+    } // MediaStreamEvent
+
+    function compile_MediaStreamEventInit(o : MediaStreamEventInit) : void {
+        var v1 : MediaStream = o.stream;
+    } // MediaStreamEventInit
+
+    function compile_DataChannelEvent(o : DataChannelEvent) : void {
+        var c1 = new DataChannelEvent(X.getstring(), X.getDataChannelEventInit());
+        var v1 : DataChannel = o.channel;
+    } // DataChannelEvent
+
+    function compile_DataChannelEventInit(o : DataChannelEventInit) : void {
+        var v1 : DataChannel = o.channel;
+    } // DataChannelEventInit
 
     function compile_MediaStream(o : MediaStream) : void {
         var c1 = new MediaStream(X.getNullable__MediaStreamTrackList_(), X.getNullable__MediaStreamTrackList_());
@@ -3973,8 +4059,10 @@ class _Test extends TestCase {
     } // MediaStreamTrackList
 
     function compile_NavigatorUserMedia(o : NavigatorUserMedia) : void {
-        o.getUserMedia(X.getNullable__MediaStreamConstraints_(), X.getfunction_stream_LocalMediaStream__void());
-        o.getUserMedia(X.getNullable__MediaStreamConstraints_(), X.getfunction_stream_LocalMediaStream__void(), X.getNullable__function_error_NavigatorUserMediaError__void_());
+        o.getUserMedia(X.getNullable__Map__variant__(), X.getfunction_stream_LocalMediaStream__void());
+        o.getUserMedia(X.getNullable__Map__variant__(), X.getfunction_stream_LocalMediaStream__void(), X.getNullable__function_error_NavigatorUserMediaError__void_());
+        o.webkitGetUserMedia(X.getNullable__Map__variant__(), X.getfunction_stream_LocalMediaStream__void());
+        o.webkitGetUserMedia(X.getNullable__Map__variant__(), X.getfunction_stream_LocalMediaStream__void(), X.getNullable__function_error_NavigatorUserMediaError__void_());
     } // NavigatorUserMedia
 
     function compile_MediaStreamConstraints(o : MediaStreamConstraints) : void {
@@ -5266,9 +5354,6 @@ class _Test extends TestCase {
     function compile_webkitAudioContext(o : webkitAudioContext) : void {
     } // webkitAudioContext
 
-    function compile_webkitIntent(o : webkitIntent) : void {
-    } // webkitIntent
-
     function compile_webkitIDBCursor(o : webkitIDBCursor) : void {
     } // webkitIDBCursor
 
@@ -5404,6 +5489,9 @@ native class X {
     static function getDOMStringList() : DOMStringList;
     static function getDOMStringMap() : DOMStringMap;
     static function getDOMTokenList() : DOMTokenList;
+    static function getDataChannel() : DataChannel;
+    static function getDataChannelEventInit() : DataChannelEventInit;
+    static function getDataChannelInit() : DataChannelInit;
     static function getDataTransferItemList() : DataTransferItemList;
     static function getDate() : Date;
     static function getDelayNode() : DelayNode;
@@ -5468,20 +5556,20 @@ native class X {
     static function getInt16Array() : Int16Array;
     static function getInt32Array() : Int32Array;
     static function getInt8Array() : Int8Array;
-    static function getIntent() : Intent;
-    static function getIntentParameters() : IntentParameters;
     static function getKeyboardEventInit() : KeyboardEventInit;
     static function getLocation() : Location;
+    static function getMap__variant_() : Map.<variant>;
     static function getMediaElementAudioSourceNode() : MediaElementAudioSourceNode;
     static function getMediaList() : MediaList;
     static function getMediaQueryList() : MediaQueryList;
     static function getMediaStream() : MediaStream;
     static function getMediaStreamAudioSourceNode() : MediaStreamAudioSourceNode;
+    static function getMediaStreamEventInit() : MediaStreamEventInit;
     static function getMediaStreamTrack() : MediaStreamTrack;
     static function getMediaStreamTrackList() : MediaStreamTrackList;
+    static function getMediaStream__() : MediaStream[];
     static function getMessageEventInit() : MessageEventInit;
     static function getMessagePort() : MessagePort;
-    static function getMessagePort__() : MessagePort[];
     static function getMouseEvent() : MouseEvent;
     static function getMouseEventInit() : MouseEventInit;
     static function getMutationObserverInit() : MutationObserverInit;
@@ -5523,13 +5611,14 @@ native class X {
     static function getNullable__Map__variant____() : Nullable.<Map.<variant>[]>;
     static function getNullable__MediaController_() : Nullable.<MediaController>;
     static function getNullable__MediaError_() : Nullable.<MediaError>;
-    static function getNullable__MediaStreamConstraints_() : Nullable.<MediaStreamConstraints>;
     static function getNullable__MediaStreamTrackList_() : Nullable.<MediaStreamTrackList>;
+    static function getNullable__MediaStream_() : Nullable.<MediaStream>;
     static function getNullable__MessagePort___() : Nullable.<MessagePort[]>;
     static function getNullable__NodeFilter_() : Nullable.<NodeFilter>;
     static function getNullable__Node_() : Nullable.<Node>;
     static function getNullable__Object_() : Nullable.<Object>;
     static function getNullable__Path_() : Nullable.<Path>;
+    static function getNullable__RTCConfiguration_() : Nullable.<RTCConfiguration>;
     static function getNullable__SVGMatrix_() : Nullable.<SVGMatrix>;
     static function getNullable__Storage_() : Nullable.<Storage>;
     static function getNullable__StyleSheet_() : Nullable.<StyleSheet>;
@@ -5554,6 +5643,7 @@ native class X {
     static function getNullable__function__Event__void_() : Nullable.<function(:Event):void>;
     static function getNullable__function__File__void_() : Nullable.<function(:File):void>;
     static function getNullable__function__string__void_() : Nullable.<function(:string):void>;
+    static function getNullable__function_errorInformation_string__void_() : Nullable.<function(errorInformation:string):void>;
     static function getNullable__function_error_NavigatorUserMediaError__void_() : Nullable.<function(error:NavigatorUserMediaError):void>;
     static function getNullable__number_() : Nullable.<number>;
     static function getNullable__string_() : Nullable.<string>;
@@ -5567,6 +5657,13 @@ native class X {
     static function getPositionOptions() : PositionOptions;
     static function getProcessingInstruction() : ProcessingInstruction;
     static function getProgressEventInit() : ProgressEventInit;
+    static function getRTCConfiguration() : RTCConfiguration;
+    static function getRTCIceCandidate() : RTCIceCandidate;
+    static function getRTCIceCandidateInit() : RTCIceCandidateInit;
+    static function getRTCIceServer__() : RTCIceServer[];
+    static function getRTCPeerConnectionIceEventInit() : RTCPeerConnectionIceEventInit;
+    static function getRTCSessionDescription() : RTCSessionDescription;
+    static function getRTCSessionDescriptionInit() : RTCSessionDescriptionInit;
     static function getRange() : Range;
     static function getScreen() : Screen;
     static function getScriptProcessorNode() : ScriptProcessorNode;
@@ -5587,8 +5684,6 @@ native class X {
     static function getTransferable__() : Transferable[];
     static function getTreeWalker() : TreeWalker;
     static function getUIEventInit() : UIEventInit;
-    static function getURL() : URL;
-    static function getURL__() : URL[];
     static function getUint16Array() : Uint16Array;
     static function getUint32Array() : Uint32Array;
     static function getUint8Array() : Uint8Array;
@@ -5612,14 +5707,14 @@ native class X {
     static function getfunction__IDBTransactionSync__void() : function(:IDBTransactionSync):void;
     static function getfunction__MediaQueryList__void() : function(:MediaQueryList):void;
     static function getfunction___void() : function():void;
-    static function getfunction_data_variant__void() : function(data:variant):void;
-    static function getfunction_data_variant_ports_MessagePort____void() : function(data:variant,ports:MessagePort[]):void;
     static function getfunction_decodedData_AudioBuffer__void() : function(decodedData:AudioBuffer):void;
+    static function getfunction_errorInformation_string__void() : function(errorInformation:string):void;
     static function getfunction_mutations_MutationRecord___observer_MutationObserver__void() : function(mutations:MutationRecord[],observer:MutationObserver):void;
     static function getfunction_permission_string__void() : function(permission:string):void;
     static function getfunction_positionError_PositionError__void() : function(positionError:PositionError):void;
     static function getfunction_position_Position__void() : function(position:Position):void;
     static function getfunction_renderedData_AudioBuffer__void() : function(renderedData:AudioBuffer):void;
+    static function getfunction_sdp_RTCSessionDescription__void() : function(sdp:RTCSessionDescription):void;
     static function getfunction_stream_LocalMediaStream__void() : function(stream:LocalMediaStream):void;
     static function getfunction_time_number__void() : function(time:number):void;
     static function getint__() : int[];

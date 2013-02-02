@@ -1,3 +1,4 @@
+// generatedy by JSX compiler 0.9.4 (2013-02-03 01:04:33 +0900; a9ef6a0d75dc264324523b49682a92f772444fe5)
 var JSX = {};
 (function () {
 
@@ -89,6 +90,7 @@ JSX.resetProfileResults = function () {
 		throw new Error("profiler has not been turned on");
 	return $__jsx_profiler.resetResults();
 };
+JSX.DEBUG = true;
 /**
  * class _Main extends Object
  * @constructor
@@ -142,6 +144,7 @@ function Timer$() {
 Timer$.prototype = new Timer;
 
 /**
+ * @param {*} callback
  * @param {!number} intervalMS
  * @return {TimerHandle}
  */
@@ -173,6 +176,7 @@ Timer.clearTimeout$LTimerHandle$ = function (timer) {
 var Timer$clearTimeout$LTimerHandle$ = Timer.clearTimeout$LTimerHandle$;
 
 /**
+ * @param {*} callback
  * @param {!number} intervalMS
  * @return {TimerHandle}
  */
@@ -204,6 +208,7 @@ Timer.clearInterval$LTimerHandle$ = function (timer) {
 var Timer$clearInterval$LTimerHandle$ = Timer.clearInterval$LTimerHandle$;
 
 /**
+ * @param {*} callback
  * @return {TimerHandle}
  */
 Timer.requestAnimationFrame$F$NV$ = function (callback) {
@@ -233,6 +238,7 @@ var Timer$useNativeRAF$B = Timer.useNativeRAF$B;
 
 /**
  * @param {!boolean} useNativeImpl
+ * @return {*}
  */
 Timer._getRequestAnimationFrameImpl$B = function (useNativeImpl) {
 	/** @type {!number} */
@@ -317,6 +323,7 @@ var Timer$_getRequestAnimationFrameImpl$B = Timer._getRequestAnimationFrameImpl$
 
 /**
  * @param {!boolean} useNativeImpl
+ * @return {*}
  */
 Timer._getCancelAnimationFrameImpl$B = function (useNativeImpl) {
 	if (useNativeImpl) {
@@ -424,9 +431,8 @@ $__jsx_lazy_init(Timer, "_cancelAnimationFrame", function () {
 	return Timer$_getCancelAnimationFrameImpl$B(true);
 });
 js.global = (function () { return this; })();
-
 var $__jsx_classMap = {
-	"timers.jsx": {
+	"system:example/timers.jsx": {
 		_Main: _Main,
 		_Main$: _Main$
 	},
@@ -507,7 +513,7 @@ JSX.runTests = function (sourceFile, tests) {
 function $__jsx_onload (event) {
 	window.removeEventListener("load", $__jsx_onload);
 	document.removeEventListener("DOMContentLoaded", $__jsx_onload);
-	JSX.runMain("timers.jsx", [])
+	JSX.runMain("system:example/timers.jsx", [])
 }
 
 window.addEventListener("load", $__jsx_onload);
@@ -515,4 +521,4 @@ document.addEventListener("DOMContentLoaded", $__jsx_onload);
 
 })();
 
-//@ sourceMappingURL=timers.jsx.js.mapping
+//@ sourceMappingURL=/Users/gfx/repo/try-on-web/JSX/example/timers.jsx.js.mapping

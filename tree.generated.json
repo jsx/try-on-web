@@ -61,11 +61,6 @@
          "sakura.jsx" : "example/sakura/sakura.jsx",
          "index.html" : "example/sakura/index.html"
       },
-      "hello-webgl" : {
-         "teko.jpg" : "example/hello-webgl/teko.jpg",
-         "hello-webgl.jsx" : "example/hello-webgl/hello-webgl.jsx",
-         "index.html" : "example/hello-webgl/index.html"
-      },
       "hello-world" : {
          "hello-world.jsx" : "example/hello-world/hello-world.jsx",
          "index.html" : "example/hello-world/index.html"
@@ -89,37 +84,7 @@
       "index.html" : "example/index.html"
    },
    "src" : {
-      "interface.js" : "src/interface.js",
-      "classdef.js" : "src/classdef.js",
-      "jsemitter.js" : "src/jsemitter.js",
-      "doc" : {
-         "style.css" : "src/doc/style.css",
-         "template.html" : "src/doc/template.html"
-      },
-      "Class.js" : "src/Class.js",
-      "doc.jsx" : "src/doc.jsx",
-      "jssourcemap.jsx" : "src/jssourcemap.jsx",
-      "statement.jsx" : "src/statement.jsx",
-      "jsemitter.jsx" : "src/jsemitter.jsx",
-      "expression.js" : "src/expression.js",
-      "_doc.js" : "src/_doc.js",
-      "completion.js" : "src/completion.js",
-      "browser-platform.js" : "src/browser-platform.js",
-      "js" : {
-         "profiler.js" : "src/js/profiler.js",
-         "web-launcher.js" : "src/js/web-launcher.js",
-         "bootstrap.js" : "src/js/bootstrap.js",
-         "launcher.js" : "src/js/launcher.js"
-      },
-      "statement.js" : "src/statement.js",
-      "util.jsx" : "src/util.jsx",
-      "optimizer.jsx" : "src/optimizer.jsx",
-      "doc.js" : "src/doc.js",
-      "util.js" : "src/util.js",
-      "type.js" : "src/type.js",
-      "emitter.js" : "src/emitter.js",
       "jsx-command.jsx" : "src/jsx-command.jsx",
-      "Test.js" : "src/Test.js",
       "web" : {
          "script-loader.jsx" : "src/web/script-loader.jsx",
          "browser-platform.jsx" : "src/web/browser-platform.jsx",
@@ -127,24 +92,32 @@
          "jsx-web-compiler.jsx" : "src/web/jsx-web-compiler.jsx"
       },
       "type.jsx" : "src/type.jsx",
-      "script-loader.js" : "src/script-loader.js",
-      "validate.js" : "src/validate.js",
-      "optimizer.js" : "src/optimizer.js",
-      "platform.js" : "src/platform.js",
+      "doc" : {
+         "style.css" : "src/doc/style.css",
+         "template.html" : "src/doc/template.html"
+      },
       "classdef.jsx" : "src/classdef.jsx",
       "jsx-node-front.jsx" : "src/jsx-node-front.jsx",
-      "dump.js" : "src/dump.js",
+      "doc.jsx" : "src/doc.jsx",
       "parser.jsx" : "src/parser.jsx",
+      "jssourcemap.jsx" : "src/jssourcemap.jsx",
       "_doc.jsx" : "src/_doc.jsx",
+      "jsemitter.jsx" : "src/jsemitter.jsx",
+      "statement.jsx" : "src/statement.jsx",
       "completion.jsx" : "src/completion.jsx",
-      "compiler.js" : "src/compiler.js",
-      "parser.js" : "src/parser.js",
-      "emitter.jsx" : "src/emitter.jsx",
       "compiler.jsx" : "src/compiler.jsx",
-      "jssourcemap.js" : "src/jssourcemap.js",
+      "emitter.jsx" : "src/emitter.jsx",
       "meta.jsx" : "src/meta.jsx",
+      "js" : {
+         "profiler.js" : "src/js/profiler.js",
+         "web-launcher.js" : "src/js/web-launcher.js",
+         "bootstrap.js" : "src/js/bootstrap.js",
+         "launcher.js" : "src/js/launcher.js"
+      },
       "platform.jsx" : "src/platform.jsx",
-      "expression.jsx" : "src/expression.jsx"
+      "util.jsx" : "src/util.jsx",
+      "expression.jsx" : "src/expression.jsx",
+      "optimizer.jsx" : "src/optimizer.jsx"
    },
    "build" : {
       "jsx-compiler.js" : "build/jsx-compiler.js"
@@ -193,7 +166,6 @@
             "jsx.js" : "assets/js/mode/jsx.js",
             "javascript.js" : "assets/js/mode/javascript.js"
          },
-         "web.js" : "assets/js/web.js",
          "jsx-profiler-result.js" : "assets/js/jsx-profiler-result.js",
          "jslexer.js" : "assets/js/jslexer.js",
          "jsx-web-front.jsx.js" : "assets/js/jsx-web-front.jsx.js",
@@ -240,13 +212,9 @@
    },
    "index.html" : "index.html",
    "t" : {
-      "001.lexer.t" : "t/001.lexer.t",
       "004.example.t" : "t/004.example.t",
       "008" : {
          "hello.jsx" : "t/008/hello.jsx"
-      },
-      "source-map" : {
-         "hello.jsx" : "t/source-map/hello.jsx"
       },
       "web" : {
          "001.hello.jsx" : "t/web/001.hello.jsx",
@@ -512,14 +480,12 @@
          "105.in.jsx" : "t/run/105.in.jsx",
          "198.template-as-param.jsx" : "t/run/198.template-as-param.jsx",
          "174.undefined-in-array-literal.jsx" : "t/run/174.undefined-in-array-literal.jsx",
-         "209.nested-rewrite-on-unclassify.jsx" : "t/run/209.nested-rewrite-on-unclassify.jsx",
          "196.type-deduction-for-closures.jsx" : "t/run/196.type-deduction-for-closures.jsx",
          "183.deduce-compfun-of-sort.jsx" : "t/run/183.deduce-compfun-of-sort.jsx",
          "024.date.jsx" : "t/run/024.date.jsx",
          "184.implements-template.jsx" : "t/run/184.implements-template.jsx",
          "055.downcast.jsx" : "t/run/055.downcast.jsx",
          "146.assign-to-property-of-variant.jsx" : "t/run/146.assign-to-property-of-variant.jsx",
-         "221.issue88.todo.jsx" : "t/run/221.issue88.todo.jsx",
          "186.string-replace-cb-wo-type.jsx" : "t/run/186.string-replace-cb-wo-type.jsx",
          "150.light-function-type-notation.jsx" : "t/run/150.light-function-type-notation.jsx",
          "065.call-implicit-ctor.jsx" : "t/run/065.call-implicit-ctor.jsx",
@@ -546,11 +512,9 @@
          "096.null-for-function-arg.jsx" : "t/run/096.null-for-function-arg.jsx",
          "039.ctor-overload.jsx" : "t/run/039.ctor-overload.jsx"
       },
-      "002.util.t" : "t/002.util.t",
       "009.self-hosting.t" : "t/009.self-hosting.t",
-      "003.source-map.t" : "t/003.source-map.t",
-      "010.debug-flag.t" : "t/010.debug-flag.t",
       "008.do-not-crash.t" : "t/008.do-not-crash.t",
+      "010.debug-flag.t" : "t/010.debug-flag.t",
       "lib" : {
          "011.aobench.jsx" : "t/lib/011.aobench.jsx",
          "010.web.jsx" : "t/lib/010.web.jsx",
@@ -774,43 +738,8 @@
       "010" : {
          "debug-flag.jsx" : "t/010/debug-flag.jsx"
       },
-      "005.web-example.t" : "t/005.web-example.t",
       "util" : {
-         "extlib" : {
-            "man" : {
-               "man3" : {
-                  "JSON::PP.3pm" : "t/util/extlib/man/man3/JSON::PP.3pm",
-                  "JSON::PP::Boolean.3pm" : "t/util/extlib/man/man3/JSON::PP::Boolean.3pm"
-               },
-               "man1" : {
-                  "json_pp.1" : "t/util/extlib/man/man1/json_pp.1"
-               }
-            },
-            "bin" : {
-               "json_pp" : "t/util/extlib/bin/json_pp"
-            },
-            "lib" : {
-               "perl5" : {
-                  "darwin-thread-multi-2level" : {
-                     "perllocal.pod" : "t/util/extlib/lib/perl5/darwin-thread-multi-2level/perllocal.pod",
-                     ".meta" : {
-                        "JSON-PP-2.27200" : {
-                           "install.json" : "t/util/extlib/lib/perl5/darwin-thread-multi-2level/.meta/JSON-PP-2.27200/install.json"
-                        }
-                     }
-                  },
-                  "JSON" : {
-                     "PP.pm" : "t/util/extlib/lib/perl5/JSON/PP.pm",
-                     "PP" : {
-                        "Boolean.pm" : "t/util/extlib/lib/perl5/JSON/PP/Boolean.pm"
-                     }
-                  }
-               }
-            }
-         },
          "jslexer.jsx" : "t/util/jslexer.jsx",
-         "Util.pm" : "t/util/Util.pm",
-         "jslexer.js" : "t/util/jslexer.js",
          "form" : "t/util/form",
          "test-runner" : "t/util/test-runner"
       },
@@ -853,7 +782,6 @@
          "034.unclassify-nested-rewrite.jsx" : "t/optimize/034.unclassify-nested-rewrite.jsx",
          "006.inline-simple-static.jsx" : "t/optimize/006.inline-simple-static.jsx",
          "037.unclassify-simple.jsx" : "t/optimize/037.unclassify-simple.jsx",
-         "032.inline-call-lambda-in-inner-function.todo.jsx" : "t/optimize/032.inline-call-lambda-in-inner-function.todo.jsx",
          "004.return-if-with-else.jsx" : "t/optimize/004.return-if-with-else.jsx",
          "005.return-if-complicated.jsx" : "t/optimize/005.return-if-complicated.jsx",
          "024.inline-closure.jsx" : "t/optimize/024.inline-closure.jsx",

@@ -836,7 +836,7 @@ class _MapLiteralExpressionEmitter extends _ExpressionEmitter {
 	}
 
 	override function emit (outerOpPrecedence : number) : void {
-		this._emitter._emit("{ ", null);
+		this._emitter._emit("({ ", null);
 		var elements = this._expr.getElements();
 		for (var i = 0; i < elements.length; ++i) {
 			var element = elements[i];
@@ -846,7 +846,7 @@ class _MapLiteralExpressionEmitter extends _ExpressionEmitter {
 			this._emitter._emit(": ", null);
 			this._emitter._getExpressionEmitterFor(element.getExpr()).emit(0);
 		}
-		this._emitter._emit(" }", null);
+		this._emitter._emit(" })", null);
 	}
 
 }
@@ -1448,9 +1448,9 @@ class _EqualityExpressionEmitter extends _OperatorExpressionEmitter {
 		if (this._expr.getFirstExpr().getType() instanceof PrimitiveType && this._expr.getSecondExpr().getType() instanceof PrimitiveType) {
 			emitOp += "=";
 		}
-		this._emitter._getExpressionEmitterFor(this._expr.getFirstExpr()).emit(_EqualityExpressionEmitter._operatorPrecedence[op]);
+		this._emitter._getExpressionEmitterFor(this._expr.getFirstExpr()).emit(_EqualityExpressionEmitter._operatorPrecedence[op] - 1);
 		this._emitter._emit(" " + emitOp + " ", this._expr.getToken());
-		this._emitter._getExpressionEmitterFor(this._expr.getSecondExpr()).emit(_EqualityExpressionEmitter._operatorPrecedence[op]);
+		this._emitter._getExpressionEmitterFor(this._expr.getSecondExpr()).emit(_EqualityExpressionEmitter._operatorPrecedence[op] - 1);
 	}
 
 	override function _getPrecedence () : number {
@@ -1946,7 +1946,7 @@ class _NewExpressionEmitter extends _OperatorExpressionEmitter {
 	}
 
 	function _emitAsObjectLiteral (classDef : ClassDefinition, propertyExprs : Expression[]) : void {
-		this._emitter._emit("{", this._expr.getToken());
+		this._emitter._emit("({", this._expr.getToken());
 		var propertyIndex = 0;
 		classDef.forEachMemberVariable(function (member) {
 			if ((member.flags() & ClassDefinition.IS_STATIC) == 0) {
@@ -1958,7 +1958,7 @@ class _NewExpressionEmitter extends _OperatorExpressionEmitter {
 			}
 			return true;
 		});
-		this._emitter._emit("}", this._expr.getToken());
+		this._emitter._emit("})", this._expr.getToken());
 	}
 
 	override function _getPrecedence () : number {
@@ -2024,7 +2024,7 @@ class JavaScriptEmitter implements Emitter {
 		JavaScriptEmitter.initialize();
 		this._platform = platform;
 		this._output = "// generatedy by JSX compiler " + Meta.IDENTIFIER + "\n";
-		this._outputEndsWithReturn = this._output.match(/\n$/) != null;
+		this._outputEndsWithReturn = true; // see the above line
 		this._outputFile = null;
 		this._indent = 0;
 		this._emittingClass = null;
@@ -2434,34 +2434,44 @@ class JavaScriptEmitter implements Emitter {
 		}
 	}
 
+	function _addSourceMapping(token : Token) : void {
+		var lastNewLinePos = this._output.lastIndexOf("\n") + 1;
+		var genColumn = (this._output.length - lastNewLinePos);
+		var genPos = {
+			line: this._output.match(/^/mg).length,
+			column: genColumn
+		};
+		var tokenValue = null : Nullable.<string>;
+		var origPos = null : Map.<number>;
+		if (! Number.isNaN(token.getLineNumber())) {
+			origPos = {
+				line: token.getLineNumber(),
+				column: token.getColumnNumber() + 1
+			};
+			if (token.isIdentifier()) {
+				tokenValue = token.getValue();
+			}
+		}
+		var filename = token.getFilename();
+		if (filename != null) {
+			filename = this._encodeFilename(filename, "");
+		}
+		this._sourceMapper.add(genPos, origPos, filename, tokenValue);
+	}
+
 	function _emit (str : string, token : Token) : void {
 		if (str == "")
 			return;
+
 		if (this._outputEndsWithReturn && this._indent != 0) {
 			this._output += this._getIndent();
 			this._outputEndsWithReturn = false;
 		}
-		// optional source map
+
 		if(this._sourceMapper != null && token != null) {
-			var lastNewLinePos = this._output.lastIndexOf("\n") + 1;
-			var genColumn = (this._output.length - lastNewLinePos) - 1;
-			var genPos = {
-				line: this._output.match(/^/mg).length,
-				column: genColumn
-			};
-			var origPos = {
-				line: token.getLineNumber(),
-				column: token.getColumnNumber()
-			};
-			var tokenValue = null : Nullable.<string>;
-			if (token.isIdentifier())
-				tokenValue = token.getValue();
-			var filename = token.getFilename();
-			if (filename != null) {
-				filename = this._encodeFilename(filename, "");
-			}
-			this._sourceMapper.add(genPos, origPos, filename, tokenValue);
+			this._addSourceMapping(token);
 		}
+
 		str = str.replace(/\n(.)/g, (function (m : string) : string {
 			return "\n" + this._getIndent() + m.substring(1);
 		}));

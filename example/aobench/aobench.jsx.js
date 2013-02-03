@@ -1,4 +1,4 @@
-// generatedy by JSX compiler 0.9.4 (2013-02-03 01:20:37 +0900; 64c0918e8dfc140ff53766c3fc0afb2bef354a9f)
+// generatedy by JSX compiler 0.9.4 (2013-02-03 19:17:42 +0900; 87025f5c7c5bf6bc304d8b136625c33b2a992342)
 var JSX = {};
 (function () {
 
@@ -135,7 +135,7 @@ vec3$NNN.prototype = new vec3;
  * @return {vec3}
  */
 vec3.vadd$Lvec3$Lvec3$ = function (a, b) {
-	return {x: a.x + b.x, y: a.y + b.y, z: a.z + b.z};
+	return ({x: a.x + b.x, y: a.y + b.y, z: a.z + b.z});
 };
 
 var vec3$vadd$Lvec3$Lvec3$ = vec3.vadd$Lvec3$Lvec3$;
@@ -146,7 +146,7 @@ var vec3$vadd$Lvec3$Lvec3$ = vec3.vadd$Lvec3$Lvec3$;
  * @return {vec3}
  */
 vec3.vsub$Lvec3$Lvec3$ = function (a, b) {
-	return {x: a.x - b.x, y: a.y - b.y, z: a.z - b.z};
+	return ({x: a.x - b.x, y: a.y - b.y, z: a.z - b.z});
 };
 
 var vec3$vsub$Lvec3$Lvec3$ = vec3.vsub$Lvec3$Lvec3$;
@@ -169,7 +169,7 @@ vec3.vcross$Lvec3$Lvec3$ = function (a, b) {
 	var y$1;
 	/** @type {!number} */
 	var x$1;
-	return {x: (y$1 = a.y) * (z$1 = b.z) - (z$0 = a.z) * (y$0 = b.y), y: z$0 * (x$1 = b.x) - (x$0 = a.x) * z$1, z: x$0 * y$0 - y$1 * x$1};
+	return ({x: (y$1 = a.y) * (z$1 = b.z) - (z$0 = a.z) * (y$0 = b.y), y: z$0 * (x$1 = b.x) - (x$0 = a.x) * z$1, z: x$0 * y$0 - y$1 * x$1});
 };
 
 var vec3$vcross$Lvec3$Lvec3$ = vec3.vcross$Lvec3$Lvec3$;
@@ -217,7 +217,7 @@ vec3.vnormalize$Lvec3$ = function (a) {
 	/** @type {!number} */
 	var z$0;
 	len = Math.sqrt((x$0 = a.x) * x$0 + (y$0 = a.y) * y$0 + (z$0 = a.z) * z$0);
-	v = {x: a.x, y: a.y, z: a.z};
+	v = ({x: a.x, y: a.y, z: a.z});
 	if ((len >= 0 ? len : - len) > 1.0e-17) {
 		v.x /= len;
 		v.y /= len;
@@ -242,8 +242,8 @@ Isect.prototype = new Object;
 function Isect$() {
 	this.t = 1000000.0;
 	this.hit = false;
-	this.p = {x: 0.0, y: 0.0, z: 0.0};
-	this.n = {x: 0.0, y: 0.0, z: 0.0};
+	this.p = ({x: 0.0, y: 0.0, z: 0.0});
+	this.n = ({x: 0.0, y: 0.0, z: 0.0});
 };
 
 Isect$.prototype = new Isect;
@@ -340,9 +340,9 @@ Sphere.intersect$LSphere$LRay$LIsect$ = function ($this, ray, isect) {
 		if (t > 0.0 && t < isect.t) {
 			isect.t = t;
 			isect.hit = true;
-			p$0 = isect.p = {x: (org$0 = ray.org).x + (dir$0 = ray.dir).x * t, y: org$0.y + dir$0.y * t, z: org$0.z + dir$0.z * t};
+			p$0 = isect.p = ({x: (org$0 = ray.org).x + (dir$0 = ray.dir).x * t, y: org$0.y + dir$0.y * t, z: org$0.z + dir$0.z * t});
 			b$2 = $this.center;
-			n = {x: p$0.x - b$2.x, y: p$0.y - b$2.y, z: p$0.z - b$2.z};
+			n = ({x: p$0.x - b$2.x, y: p$0.y - b$2.y, z: p$0.z - b$2.z});
 			isect.n = vec3$vnormalize$Lvec3$(n);
 		}
 	}
@@ -402,7 +402,7 @@ Plane.intersect$LPlane$LRay$LIsect$ = function ($this, ray, isect) {
 		isect.hit = true;
 		isect.t = t;
 		isect.n = $this.n;
-		isect.p = {x: (org$0 = ray.org).x + t * (dir$0 = ray.dir).x, y: org$0.y + t * dir$0.y, z: org$0.z + t * dir$0.z};
+		isect.p = ({x: (org$0 = ray.org).x + t * (dir$0 = ray.dir).x, y: org$0.y + t * dir$0.y, z: org$0.z + t * dir$0.z});
 	}
 };
 
@@ -447,8 +447,8 @@ AOBench.prototype = new Object;
  * @constructor
  */
 function AOBench$() {
-	this.spheres = [ {center: {x: -2, y: 0.0, z: -3.5}, radius: 0.5}, {center: {x: -0.5, y: 0.0, z: -3}, radius: 0.5}, {center: {x: 1.0, y: 0.0, z: -2.2}, radius: 0.5} ];
-	this.plane = {p: {x: 0.0, y: -0.5, z: 0.0}, n: {x: 0.0, y: 1.0, z: 0.0}};
+	this.spheres = [ ({center: ({x: -2, y: 0.0, z: -3.5}), radius: 0.5}), ({center: ({x: -0.5, y: 0.0, z: -3}), radius: 0.5}), ({center: ({x: 1.0, y: 0.0, z: -2.2}), radius: 0.5}) ];
+	this.plane = ({p: ({x: 0.0, y: -0.5, z: 0.0}), n: ({x: 0.0, y: 1.0, z: 0.0})});
 };
 
 AOBench$.prototype = new AOBench;
@@ -493,7 +493,7 @@ AOBench.orthoBasis$LAOBench$ALvec3$Lvec3$ = function ($this, basis, n) {
 	/** @type {!number} */
 	var x$0;
 	basis[2] = n;
-	basis[1] = {x: 0.0, y: 0.0, z: 0.0};
+	basis[1] = ({x: 0.0, y: 0.0, z: 0.0});
 	if ((x$0 = n.x) < 0.6 && x$0 > -0.6) {
 		basis[1].x = 1.0;
 	} else {
@@ -509,11 +509,11 @@ AOBench.orthoBasis$LAOBench$ALvec3$Lvec3$ = function ($this, basis, n) {
 	}
 	a$0 = basis[1];
 	b$0 = basis[2];
-	basis[0] = {x: a$0.y * b$0.z - a$0.z * b$0.y, y: a$0.z * b$0.x - a$0.x * b$0.z, z: a$0.x * b$0.y - a$0.y * b$0.x};
+	basis[0] = ({x: a$0.y * b$0.z - a$0.z * b$0.y, y: a$0.z * b$0.x - a$0.x * b$0.z, z: a$0.x * b$0.y - a$0.y * b$0.x});
 	basis[0] = vec3$vnormalize$Lvec3$(basis[0]);
 	a$1 = basis[2];
 	b$1 = basis[0];
-	basis[1] = {x: a$1.y * b$1.z - a$1.z * b$1.y, y: a$1.z * b$1.x - a$1.x * b$1.z, z: a$1.x * b$1.y - a$1.y * b$1.x};
+	basis[1] = ({x: a$1.y * b$1.z - a$1.z * b$1.y, y: a$1.z * b$1.x - a$1.x * b$1.z, z: a$1.x * b$1.y - a$1.y * b$1.x});
 	basis[1] = vec3$vnormalize$Lvec3$(basis[1]);
 };
 
@@ -565,7 +565,7 @@ AOBench.ambient_occlusion$LAOBench$LIsect$ = function ($this, isect) {
 	var n$0;
 	basis = new Array(3);
 	AOBench$orthoBasis$LAOBench$ALvec3$Lvec3$($this, basis, isect.n);
-	p = {x: (p$0 = isect.p).x + 0.0001 * (n$0 = isect.n).x, y: p$0.y + 0.0001 * n$0.y, z: p$0.z + 0.0001 * n$0.z};
+	p = ({x: (p$0 = isect.p).x + 0.0001 * (n$0 = isect.n).x, y: p$0.y + 0.0001 * n$0.y, z: p$0.z + 0.0001 * n$0.z});
 	occlusion = 0;
 	for (j = 0; j < 8; j++) {
 		for (i = 0; i < 8; i++) {
@@ -579,9 +579,9 @@ AOBench.ambient_occlusion$LAOBench$LIsect$ = function ($this, isect) {
 			rx = x * basis[0].x + y * basis[1].x + z * basis[2].x;
 			ry = x * basis[0].y + y * basis[1].y + z * basis[2].y;
 			rz = x * basis[0].z + y * basis[1].z + z * basis[2].z;
-			raydir = {x: rx, y: ry, z: rz};
-			ray = {org: p, dir: raydir};
-			occIsect = {t: 1000000.0, hit: false, p: {x: 0.0, y: 0.0, z: 0.0}, n: {x: 0.0, y: 0.0, z: 0.0}};
+			raydir = ({x: rx, y: ry, z: rz});
+			ray = ({org: p, dir: raydir});
+			occIsect = ({t: 1000000.0, hit: false, p: ({x: 0.0, y: 0.0, z: 0.0}), n: ({x: 0.0, y: 0.0, z: 0.0})});
 			Sphere$intersect$LSphere$LRay$LIsect$($this.spheres[0], ray, occIsect);
 			Sphere$intersect$LSphere$LRay$LIsect$($this.spheres[1], ray, occIsect);
 			Sphere$intersect$LSphere$LRay$LIsect$($this.spheres[2], ray, occIsect);
@@ -592,7 +592,7 @@ AOBench.ambient_occlusion$LAOBench$LIsect$ = function ($this, isect) {
 		}
 	}
 	occ_f = (64 - occlusion) / 64;
-	return {x: occ_f, y: occ_f, z: occ_f};
+	return ({x: occ_f, y: occ_f, z: occ_f});
 };
 
 var AOBench$ambient_occlusion$LAOBench$LIsect$ = AOBench.ambient_occlusion$LAOBench$LIsect$;
@@ -636,14 +636,14 @@ AOBench.render$LAOBench$F$IIIIIV$II = function ($this, fill, w, h) {
 		for (x = 0; x < w; x++) {
 			px = (x - half_w) / half_w;
 			py = - (y - half_h) / half_h;
-			eye = vec3$vnormalize$Lvec3$({x: px, y: py, z: -1});
-			ray = {org: {x: 0.0, y: 0.0, z: 0.0}, dir: eye};
-			isect = {t: 1000000.0, hit: false, p: {x: 0.0, y: 0.0, z: 0.0}, n: {x: 0.0, y: 0.0, z: 0.0}};
+			eye = vec3$vnormalize$Lvec3$(({x: px, y: py, z: -1}));
+			ray = ({org: ({x: 0.0, y: 0.0, z: 0.0}), dir: eye});
+			isect = ({t: 1000000.0, hit: false, p: ({x: 0.0, y: 0.0, z: 0.0}), n: ({x: 0.0, y: 0.0, z: 0.0})});
 			Sphere$intersect$LSphere$LRay$LIsect$($this.spheres[0], ray, isect);
 			Sphere$intersect$LSphere$LRay$LIsect$($this.spheres[1], ray, isect);
 			Sphere$intersect$LSphere$LRay$LIsect$($this.spheres[2], ray, isect);
 			Plane$intersect$LPlane$LRay$LIsect$($this.plane, ray, isect);
-			col = {x: 0.0, y: 0.0, z: 0.0};
+			col = ({x: 0.0, y: 0.0, z: 0.0});
 			if (isect.hit) {
 				col = AOBench$ambient_occlusion$LAOBench$LIsect$($this, isect);
 			}
@@ -691,7 +691,7 @@ _Main.main$AS = function (args) {
 	var d;
 	canvas = dom.document.getElementById("world");
 	ctx = canvas.getContext("2d");
-	ao = {spheres: [ {center: {x: -2, y: 0.0, z: -3.5}, radius: 0.5}, {center: {x: -0.5, y: 0.0, z: -3}, radius: 0.5}, {center: {x: 1.0, y: 0.0, z: -2.2}, radius: 0.5} ], plane: {p: {x: 0.0, y: -0.5, z: 0.0}, n: {x: 0.0, y: 1.0, z: 0.0}}};
+	ao = ({spheres: [ ({center: ({x: -2, y: 0.0, z: -3.5}), radius: 0.5}), ({center: ({x: -0.5, y: 0.0, z: -3}), radius: 0.5}), ({center: ({x: 1.0, y: 0.0, z: -2.2}), radius: 0.5}) ], plane: ({p: ({x: 0.0, y: -0.5, z: 0.0}), n: ({x: 0.0, y: 1.0, z: 0.0})})});
 	t0 = Date.now();
 	AOBench$render$LAOBench$F$IIIIIV$II(ao, (function (x, y, r, g, b) {
 		ctx.fillStyle = "rgb(" + (r + "") + "," + (g + "") + "," + (b + "") + ")";
@@ -751,6 +751,847 @@ dom.createElement$S = function (tag) {
 var dom$createElement$S = dom.createElement$S;
 
 /**
+ * class EventInit extends Object
+ * @constructor
+ */
+function EventInit() {
+}
+
+EventInit.prototype = new Object;
+/**
+ * @constructor
+ */
+function EventInit$() {
+	this.bubbles = false;
+	this.cancelable = false;
+};
+
+EventInit$.prototype = new EventInit;
+
+/**
+ * class CustomEventInit extends EventInit
+ * @constructor
+ */
+function CustomEventInit() {
+}
+
+CustomEventInit.prototype = new EventInit;
+/**
+ * @constructor
+ */
+function CustomEventInit$() {
+	this.bubbles = false;
+	this.cancelable = false;
+	this.detail = null;
+};
+
+CustomEventInit$.prototype = new CustomEventInit;
+
+/**
+ * class MutationObserverInit extends Object
+ * @constructor
+ */
+function MutationObserverInit() {
+}
+
+MutationObserverInit.prototype = new Object;
+/**
+ * @constructor
+ */
+function MutationObserverInit$() {
+	this.childList = false;
+	this.attributes = false;
+	this.characterData = false;
+	this.subtree = false;
+	this.attributeOldValue = false;
+	this.characterDataOldValue = false;
+	this.attributeFilter = null;
+};
+
+MutationObserverInit$.prototype = new MutationObserverInit;
+
+/**
+ * class UIEventInit extends EventInit
+ * @constructor
+ */
+function UIEventInit() {
+}
+
+UIEventInit.prototype = new EventInit;
+/**
+ * @constructor
+ */
+function UIEventInit$() {
+	this.bubbles = false;
+	this.cancelable = false;
+	this.view = null;
+	this.detail = 0;
+};
+
+UIEventInit$.prototype = new UIEventInit;
+
+/**
+ * class FocusEventInit extends Object
+ * @constructor
+ */
+function FocusEventInit() {
+}
+
+FocusEventInit.prototype = new Object;
+/**
+ * @constructor
+ */
+function FocusEventInit$() {
+	this.bubbles = false;
+	this.cancelable = false;
+	this.view = null;
+	this.detail = 0;
+	this.relatedTarget = null;
+};
+
+FocusEventInit$.prototype = new FocusEventInit;
+
+/**
+ * class MouseEventInit extends UIEventInit
+ * @constructor
+ */
+function MouseEventInit() {
+}
+
+MouseEventInit.prototype = new UIEventInit;
+/**
+ * @constructor
+ */
+function MouseEventInit$() {
+	this.bubbles = false;
+	this.cancelable = false;
+	this.view = null;
+	this.detail = 0;
+	this.screenX = 0;
+	this.screenY = 0;
+	this.clientX = 0;
+	this.clientY = 0;
+	this.ctrlKey = false;
+	this.shiftKey = false;
+	this.altKey = false;
+	this.metaKey = false;
+	this.button = 0;
+	this.buttons = 0;
+	this.relatedTarget = null;
+	this.region = null;
+};
+
+MouseEventInit$.prototype = new MouseEventInit;
+
+/**
+ * class WheelEventInit extends Object
+ * @constructor
+ */
+function WheelEventInit() {
+}
+
+WheelEventInit.prototype = new Object;
+/**
+ * @constructor
+ */
+function WheelEventInit$() {
+	this.bubbles = false;
+	this.cancelable = false;
+	this.view = null;
+	this.detail = 0;
+	this.screenX = 0;
+	this.screenY = 0;
+	this.clientX = 0;
+	this.clientY = 0;
+	this.ctrlKey = false;
+	this.shiftKey = false;
+	this.altKey = false;
+	this.metaKey = false;
+	this.button = 0;
+	this.buttons = 0;
+	this.relatedTarget = null;
+	this.deltaX = 0;
+	this.deltaY = 0;
+	this.deltaZ = 0;
+	this.deltaMode = 0;
+};
+
+WheelEventInit$.prototype = new WheelEventInit;
+
+/**
+ * class KeyboardEventInit extends Object
+ * @constructor
+ */
+function KeyboardEventInit() {
+}
+
+KeyboardEventInit.prototype = new Object;
+/**
+ * @constructor
+ */
+function KeyboardEventInit$() {
+	this.bubbles = false;
+	this.cancelable = false;
+	this.view = null;
+	this.detail = 0;
+	this.char = "";
+	this.key = "";
+	this.location = 0;
+	this.ctrlKey = false;
+	this.shiftKey = false;
+	this.altKey = false;
+	this.metaKey = false;
+	this.repeat = false;
+	this.locale = "";
+	this.charCode = 0;
+	this.keyCode = 0;
+	this.which = 0;
+};
+
+KeyboardEventInit$.prototype = new KeyboardEventInit;
+
+/**
+ * class CompositionEventInit extends Object
+ * @constructor
+ */
+function CompositionEventInit() {
+}
+
+CompositionEventInit.prototype = new Object;
+/**
+ * @constructor
+ */
+function CompositionEventInit$() {
+	this.bubbles = false;
+	this.cancelable = false;
+	this.view = null;
+	this.detail = 0;
+	this.data = null;
+	this.locale = "";
+};
+
+CompositionEventInit$.prototype = new CompositionEventInit;
+
+/**
+ * class ProgressEventInit extends EventInit
+ * @constructor
+ */
+function ProgressEventInit() {
+}
+
+ProgressEventInit.prototype = new EventInit;
+/**
+ * @constructor
+ */
+function ProgressEventInit$() {
+	this.bubbles = false;
+	this.cancelable = false;
+	this.lengthComputable = false;
+	this.loaded = 0;
+	this.total = 0;
+};
+
+ProgressEventInit$.prototype = new ProgressEventInit;
+
+/**
+ * class XMLHttpRequestOptions extends Object
+ * @constructor
+ */
+function XMLHttpRequestOptions() {
+}
+
+XMLHttpRequestOptions.prototype = new Object;
+/**
+ * @constructor
+ */
+function XMLHttpRequestOptions$() {
+	this.anon = false;
+};
+
+XMLHttpRequestOptions$.prototype = new XMLHttpRequestOptions;
+
+/**
+ * class TrackEventInit extends EventInit
+ * @constructor
+ */
+function TrackEventInit() {
+}
+
+TrackEventInit.prototype = new EventInit;
+/**
+ * @constructor
+ */
+function TrackEventInit$() {
+	this.bubbles = false;
+	this.cancelable = false;
+	this.track = null;
+};
+
+TrackEventInit$.prototype = new TrackEventInit;
+
+/**
+ * class PopStateEventInit extends EventInit
+ * @constructor
+ */
+function PopStateEventInit() {
+}
+
+PopStateEventInit.prototype = new EventInit;
+/**
+ * @constructor
+ */
+function PopStateEventInit$() {
+	this.bubbles = false;
+	this.cancelable = false;
+	this.state = null;
+};
+
+PopStateEventInit$.prototype = new PopStateEventInit;
+
+/**
+ * class HashChangeEventInit extends EventInit
+ * @constructor
+ */
+function HashChangeEventInit() {
+}
+
+HashChangeEventInit.prototype = new EventInit;
+/**
+ * @constructor
+ */
+function HashChangeEventInit$() {
+	this.bubbles = false;
+	this.cancelable = false;
+	this.oldURL = "";
+	this.newURL = "";
+};
+
+HashChangeEventInit$.prototype = new HashChangeEventInit;
+
+/**
+ * class PageTransitionEventInit extends EventInit
+ * @constructor
+ */
+function PageTransitionEventInit() {
+}
+
+PageTransitionEventInit.prototype = new EventInit;
+/**
+ * @constructor
+ */
+function PageTransitionEventInit$() {
+	this.bubbles = false;
+	this.cancelable = false;
+	this.persisted = false;
+};
+
+PageTransitionEventInit$.prototype = new PageTransitionEventInit;
+
+/**
+ * class DragEventInit extends EventInit
+ * @constructor
+ */
+function DragEventInit() {
+}
+
+DragEventInit.prototype = new EventInit;
+/**
+ * @constructor
+ */
+function DragEventInit$() {
+	this.bubbles = false;
+	this.cancelable = false;
+	this.view = null;
+	this.detail = 0;
+	this.screenX = 0;
+	this.screenY = 0;
+	this.clientX = 0;
+	this.clientY = 0;
+	this.ctrlKey = false;
+	this.shiftKey = false;
+	this.altKey = false;
+	this.metaKey = false;
+	this.button = 0;
+	this.buttons = 0;
+	this.relatedTarget = null;
+	this.dataTransfer = null;
+};
+
+DragEventInit$.prototype = new DragEventInit;
+
+/**
+ * class CloseEventInit extends EventInit
+ * @constructor
+ */
+function CloseEventInit() {
+}
+
+CloseEventInit.prototype = new EventInit;
+/**
+ * @constructor
+ */
+function CloseEventInit$() {
+	this.bubbles = false;
+	this.cancelable = false;
+	this.wasClean = false;
+	this.code = 0;
+	this.reason = "";
+};
+
+CloseEventInit$.prototype = new CloseEventInit;
+
+/**
+ * class StorageEventInit extends EventInit
+ * @constructor
+ */
+function StorageEventInit() {
+}
+
+StorageEventInit.prototype = new EventInit;
+/**
+ * @constructor
+ */
+function StorageEventInit$() {
+	this.bubbles = false;
+	this.cancelable = false;
+	this.key = null;
+	this.oldValue = null;
+	this.newValue = null;
+	this.url = "";
+	this.storageArea = null;
+};
+
+StorageEventInit$.prototype = new StorageEventInit;
+
+/**
+ * class MessageEventInit extends EventInit
+ * @constructor
+ */
+function MessageEventInit() {
+}
+
+MessageEventInit.prototype = new EventInit;
+/**
+ * @constructor
+ */
+function MessageEventInit$() {
+	this.bubbles = false;
+	this.cancelable = false;
+	this.data = null;
+	this.origin = "";
+	this.lastEventId = "";
+	this.source = null;
+	this.ports = null;
+};
+
+MessageEventInit$.prototype = new MessageEventInit;
+
+/**
+ * class ErrorEventInit extends EventInit
+ * @constructor
+ */
+function ErrorEventInit() {
+}
+
+ErrorEventInit.prototype = new EventInit;
+/**
+ * @constructor
+ */
+function ErrorEventInit$() {
+	this.bubbles = false;
+	this.cancelable = false;
+	this.message = "";
+	this.filename = "";
+	this.lineno = 0;
+};
+
+ErrorEventInit$.prototype = new ErrorEventInit;
+
+/**
+ * class EventSourceInit extends Object
+ * @constructor
+ */
+function EventSourceInit() {
+}
+
+EventSourceInit.prototype = new Object;
+/**
+ * @constructor
+ */
+function EventSourceInit$() {
+	this.withCredentials = false;
+};
+
+EventSourceInit$.prototype = new EventSourceInit;
+
+/**
+ * class IDBObjectStoreParameters extends Object
+ * @constructor
+ */
+function IDBObjectStoreParameters() {
+}
+
+IDBObjectStoreParameters.prototype = new Object;
+/**
+ * @constructor
+ */
+function IDBObjectStoreParameters$() {
+	this.keyPath = null;
+	this.autoIncrement = false;
+};
+
+IDBObjectStoreParameters$.prototype = new IDBObjectStoreParameters;
+
+/**
+ * class IDBIndexParameters extends Object
+ * @constructor
+ */
+function IDBIndexParameters() {
+}
+
+IDBIndexParameters.prototype = new Object;
+/**
+ * @constructor
+ */
+function IDBIndexParameters$() {
+	this.unique = false;
+	this.multiEntry = false;
+};
+
+IDBIndexParameters$.prototype = new IDBIndexParameters;
+
+/**
+ * class IDBVersionChangeEventInit extends EventInit
+ * @constructor
+ */
+function IDBVersionChangeEventInit() {
+}
+
+IDBVersionChangeEventInit.prototype = new EventInit;
+/**
+ * @constructor
+ */
+function IDBVersionChangeEventInit$() {
+	this.bubbles = false;
+	this.cancelable = false;
+	this.oldVersion = 0;
+	this.newVersion = null;
+};
+
+IDBVersionChangeEventInit$.prototype = new IDBVersionChangeEventInit;
+
+/**
+ * class NotificationOptions extends Object
+ * @constructor
+ */
+function NotificationOptions() {
+}
+
+NotificationOptions.prototype = new Object;
+/**
+ * @constructor
+ */
+function NotificationOptions$() {
+	this.titleDir = "";
+	this.body = "";
+	this.bodyDir = "";
+	this.tag = "";
+	this.iconUrl = "";
+};
+
+NotificationOptions$.prototype = new NotificationOptions;
+
+/**
+ * class RTCSessionDescriptionInit extends Object
+ * @constructor
+ */
+function RTCSessionDescriptionInit() {
+}
+
+RTCSessionDescriptionInit.prototype = new Object;
+/**
+ * @constructor
+ */
+function RTCSessionDescriptionInit$() {
+	this.type = "";
+	this.sdp = "";
+};
+
+RTCSessionDescriptionInit$.prototype = new RTCSessionDescriptionInit;
+
+/**
+ * class RTCIceCandidateInit extends Object
+ * @constructor
+ */
+function RTCIceCandidateInit() {
+}
+
+RTCIceCandidateInit.prototype = new Object;
+/**
+ * @constructor
+ */
+function RTCIceCandidateInit$() {
+	this.candidate = "";
+	this.sdpMid = "";
+	this.sdpMLineIndex = 0;
+};
+
+RTCIceCandidateInit$.prototype = new RTCIceCandidateInit;
+
+/**
+ * class RTCIceServer extends Object
+ * @constructor
+ */
+function RTCIceServer() {
+}
+
+RTCIceServer.prototype = new Object;
+/**
+ * @constructor
+ */
+function RTCIceServer$() {
+	this.url = "";
+	this.credential = null;
+};
+
+RTCIceServer$.prototype = new RTCIceServer;
+
+/**
+ * class RTCConfiguration extends Object
+ * @constructor
+ */
+function RTCConfiguration() {
+}
+
+RTCConfiguration.prototype = new Object;
+/**
+ * @constructor
+ */
+function RTCConfiguration$() {
+	this.iceServers = null;
+};
+
+RTCConfiguration$.prototype = new RTCConfiguration;
+
+/**
+ * class DataChannelInit extends Object
+ * @constructor
+ */
+function DataChannelInit() {
+}
+
+DataChannelInit.prototype = new Object;
+/**
+ * @constructor
+ */
+function DataChannelInit$() {
+	this.reliable = false;
+};
+
+DataChannelInit$.prototype = new DataChannelInit;
+
+/**
+ * class RTCPeerConnectionIceEventInit extends EventInit
+ * @constructor
+ */
+function RTCPeerConnectionIceEventInit() {
+}
+
+RTCPeerConnectionIceEventInit.prototype = new EventInit;
+/**
+ * @constructor
+ */
+function RTCPeerConnectionIceEventInit$() {
+	this.bubbles = false;
+	this.cancelable = false;
+	this.candidate = null;
+};
+
+RTCPeerConnectionIceEventInit$.prototype = new RTCPeerConnectionIceEventInit;
+
+/**
+ * class MediaStreamEventInit extends EventInit
+ * @constructor
+ */
+function MediaStreamEventInit() {
+}
+
+MediaStreamEventInit.prototype = new EventInit;
+/**
+ * @constructor
+ */
+function MediaStreamEventInit$() {
+	this.bubbles = false;
+	this.cancelable = false;
+	this.stream = null;
+};
+
+MediaStreamEventInit$.prototype = new MediaStreamEventInit;
+
+/**
+ * class DataChannelEventInit extends EventInit
+ * @constructor
+ */
+function DataChannelEventInit() {
+}
+
+DataChannelEventInit.prototype = new EventInit;
+/**
+ * @constructor
+ */
+function DataChannelEventInit$() {
+	this.bubbles = false;
+	this.cancelable = false;
+	this.channel = null;
+};
+
+DataChannelEventInit$.prototype = new DataChannelEventInit;
+
+/**
+ * class MediaStreamConstraints extends Object
+ * @constructor
+ */
+function MediaStreamConstraints() {
+}
+
+MediaStreamConstraints.prototype = new Object;
+/**
+ * @constructor
+ */
+function MediaStreamConstraints$() {
+	this.video = null;
+	this.audio = null;
+};
+
+MediaStreamConstraints$.prototype = new MediaStreamConstraints;
+
+/**
+ * class MediaTrackConstraints extends Object
+ * @constructor
+ */
+function MediaTrackConstraints() {
+}
+
+MediaTrackConstraints.prototype = new Object;
+/**
+ * @constructor
+ */
+function MediaTrackConstraints$() {
+	this.mandatory = null;
+	this.optional = null;
+};
+
+MediaTrackConstraints$.prototype = new MediaTrackConstraints;
+
+/**
+ * class HitRegionOptions extends Object
+ * @constructor
+ */
+function HitRegionOptions() {
+}
+
+HitRegionOptions.prototype = new Object;
+/**
+ * @constructor
+ */
+function HitRegionOptions$() {
+	this.path = null;
+	this.id = "";
+	this.parentID = null;
+	this.cursor = "";
+	this.control = null;
+	this.label = null;
+	this.role = null;
+};
+
+HitRegionOptions$.prototype = new HitRegionOptions;
+
+/**
+ * class WebGLContextAttributes extends Object
+ * @constructor
+ */
+function WebGLContextAttributes() {
+}
+
+WebGLContextAttributes.prototype = new Object;
+/**
+ * @constructor
+ */
+function WebGLContextAttributes$() {
+	this.alpha = false;
+	this.depth = false;
+	this.stencil = false;
+	this.antialias = false;
+	this.premultipliedAlpha = false;
+	this.preserveDrawingBuffer = false;
+};
+
+WebGLContextAttributes$.prototype = new WebGLContextAttributes;
+
+/**
+ * class WebGLContextEventInit extends EventInit
+ * @constructor
+ */
+function WebGLContextEventInit() {
+}
+
+WebGLContextEventInit.prototype = new EventInit;
+/**
+ * @constructor
+ */
+function WebGLContextEventInit$() {
+	this.bubbles = false;
+	this.cancelable = false;
+	this.statusMessage = "";
+};
+
+WebGLContextEventInit$.prototype = new WebGLContextEventInit;
+
+/**
+ * class DeviceOrientationEventInit extends EventInit
+ * @constructor
+ */
+function DeviceOrientationEventInit() {
+}
+
+DeviceOrientationEventInit.prototype = new EventInit;
+/**
+ * @constructor
+ */
+function DeviceOrientationEventInit$() {
+	this.bubbles = false;
+	this.cancelable = false;
+	this.alpha = null;
+	this.beta = null;
+	this.gamma = null;
+	this.absolute = false;
+};
+
+DeviceOrientationEventInit$.prototype = new DeviceOrientationEventInit;
+
+/**
+ * class DeviceMotionEventInit extends EventInit
+ * @constructor
+ */
+function DeviceMotionEventInit() {
+}
+
+DeviceMotionEventInit.prototype = new EventInit;
+/**
+ * @constructor
+ */
+function DeviceMotionEventInit$() {
+	this.bubbles = false;
+	this.cancelable = false;
+	this.acceleration = null;
+	this.accelerationIncludingGravity = null;
+	this.rotationRate = null;
+	this.interval = null;
+};
+
+DeviceMotionEventInit$.prototype = new DeviceMotionEventInit;
+
+/**
  * class js extends Object
  * @constructor
  */
@@ -805,7 +1646,87 @@ var $__jsx_classMap = {
 	},
 	"system:lib/js/js/web.jsx": {
 		dom: dom,
-		dom$: dom$
+		dom$: dom$,
+		EventInit: EventInit,
+		EventInit$: EventInit$,
+		CustomEventInit: CustomEventInit,
+		CustomEventInit$: CustomEventInit$,
+		MutationObserverInit: MutationObserverInit,
+		MutationObserverInit$: MutationObserverInit$,
+		UIEventInit: UIEventInit,
+		UIEventInit$: UIEventInit$,
+		FocusEventInit: FocusEventInit,
+		FocusEventInit$: FocusEventInit$,
+		MouseEventInit: MouseEventInit,
+		MouseEventInit$: MouseEventInit$,
+		WheelEventInit: WheelEventInit,
+		WheelEventInit$: WheelEventInit$,
+		KeyboardEventInit: KeyboardEventInit,
+		KeyboardEventInit$: KeyboardEventInit$,
+		CompositionEventInit: CompositionEventInit,
+		CompositionEventInit$: CompositionEventInit$,
+		ProgressEventInit: ProgressEventInit,
+		ProgressEventInit$: ProgressEventInit$,
+		XMLHttpRequestOptions: XMLHttpRequestOptions,
+		XMLHttpRequestOptions$: XMLHttpRequestOptions$,
+		TrackEventInit: TrackEventInit,
+		TrackEventInit$: TrackEventInit$,
+		PopStateEventInit: PopStateEventInit,
+		PopStateEventInit$: PopStateEventInit$,
+		HashChangeEventInit: HashChangeEventInit,
+		HashChangeEventInit$: HashChangeEventInit$,
+		PageTransitionEventInit: PageTransitionEventInit,
+		PageTransitionEventInit$: PageTransitionEventInit$,
+		DragEventInit: DragEventInit,
+		DragEventInit$: DragEventInit$,
+		CloseEventInit: CloseEventInit,
+		CloseEventInit$: CloseEventInit$,
+		StorageEventInit: StorageEventInit,
+		StorageEventInit$: StorageEventInit$,
+		MessageEventInit: MessageEventInit,
+		MessageEventInit$: MessageEventInit$,
+		ErrorEventInit: ErrorEventInit,
+		ErrorEventInit$: ErrorEventInit$,
+		EventSourceInit: EventSourceInit,
+		EventSourceInit$: EventSourceInit$,
+		IDBObjectStoreParameters: IDBObjectStoreParameters,
+		IDBObjectStoreParameters$: IDBObjectStoreParameters$,
+		IDBIndexParameters: IDBIndexParameters,
+		IDBIndexParameters$: IDBIndexParameters$,
+		IDBVersionChangeEventInit: IDBVersionChangeEventInit,
+		IDBVersionChangeEventInit$: IDBVersionChangeEventInit$,
+		NotificationOptions: NotificationOptions,
+		NotificationOptions$: NotificationOptions$,
+		RTCSessionDescriptionInit: RTCSessionDescriptionInit,
+		RTCSessionDescriptionInit$: RTCSessionDescriptionInit$,
+		RTCIceCandidateInit: RTCIceCandidateInit,
+		RTCIceCandidateInit$: RTCIceCandidateInit$,
+		RTCIceServer: RTCIceServer,
+		RTCIceServer$: RTCIceServer$,
+		RTCConfiguration: RTCConfiguration,
+		RTCConfiguration$: RTCConfiguration$,
+		DataChannelInit: DataChannelInit,
+		DataChannelInit$: DataChannelInit$,
+		RTCPeerConnectionIceEventInit: RTCPeerConnectionIceEventInit,
+		RTCPeerConnectionIceEventInit$: RTCPeerConnectionIceEventInit$,
+		MediaStreamEventInit: MediaStreamEventInit,
+		MediaStreamEventInit$: MediaStreamEventInit$,
+		DataChannelEventInit: DataChannelEventInit,
+		DataChannelEventInit$: DataChannelEventInit$,
+		MediaStreamConstraints: MediaStreamConstraints,
+		MediaStreamConstraints$: MediaStreamConstraints$,
+		MediaTrackConstraints: MediaTrackConstraints,
+		MediaTrackConstraints$: MediaTrackConstraints$,
+		HitRegionOptions: HitRegionOptions,
+		HitRegionOptions$: HitRegionOptions$,
+		WebGLContextAttributes: WebGLContextAttributes,
+		WebGLContextAttributes$: WebGLContextAttributes$,
+		WebGLContextEventInit: WebGLContextEventInit,
+		WebGLContextEventInit$: WebGLContextEventInit$,
+		DeviceOrientationEventInit: DeviceOrientationEventInit,
+		DeviceOrientationEventInit$: DeviceOrientationEventInit$,
+		DeviceMotionEventInit: DeviceMotionEventInit,
+		DeviceMotionEventInit$: DeviceMotionEventInit$
 	},
 	"system:lib/js/js.jsx": {
 		js: js,

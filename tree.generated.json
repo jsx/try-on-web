@@ -263,6 +263,7 @@
          "195.nested-cond.jsx" : "t/run/195.nested-cond.jsx",
          "208.overloaded-index-operator.jsx" : "t/run/208.overloaded-index-operator.jsx",
          "213.null-arguments-to-array.jsx" : "t/run/213.null-arguments-to-array.jsx",
+         "221.equal-expr-assoc.jsx" : "t/run/221.equal-expr-assoc.jsx",
          "121.decl-of-variant-array.jsx" : "t/run/121.decl-of-variant-array.jsx",
          "005.for.jsx" : "t/run/005.for.jsx",
          "145.construct-T.jsx" : "t/run/145.construct-T.jsx",
@@ -765,6 +766,9 @@
       "src" : {
          "002.util.jsx" : "t/src/002.util.jsx",
          "001.lexer.jsx" : "t/src/001.lexer.jsx",
+         "source-map" : {
+            "hello.jsx" : "t/src/source-map/hello.jsx"
+         },
          "003.source-map.jsx" : "t/src/003.source-map.jsx"
       },
       "010" : {
@@ -814,6 +818,7 @@
       "optimize" : {
          "036.eliminate-constant-conditions.jsx" : "t/optimize/036.eliminate-constant-conditions.jsx",
          "002.no-log.jsx" : "t/optimize/002.no-log.jsx",
+         "039.unused-map-literal.jsx" : "t/optimize/039.unused-map-literal.jsx",
          "033.array-length-empty-init-expr.jsx" : "t/optimize/033.array-length-empty-init-expr.jsx",
          "020.inline-arg-using-var.jsx" : "t/optimize/020.inline-arg-using-var.jsx",
          "013.fold-const-propagate-string.jsx" : "t/optimize/013.fold-const-propagate-string.jsx",

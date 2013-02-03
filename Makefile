@@ -3,7 +3,7 @@ update:
 	git pull --rebase
 	git submodule update --init --recursive
 	cd JSX && git fetch && git checkout origin/master && make
-	mv JSX/try/* .
+	cp -r JSX/try/* .
 	perl -i -pe 's/"try"/"try-on-web"/' tree.generated.json
 	@echo build finished!
 

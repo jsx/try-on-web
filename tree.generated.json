@@ -190,7 +190,6 @@
          "debug-console.png" : "assets/img/debug-console.png"
       }
    },
-   "tree.generated.json" : "tree.generated.json",
    "lib" : {
       "js" : {
          "js.jsx" : "lib/js/js.jsx",

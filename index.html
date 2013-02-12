@@ -19,11 +19,7 @@
     <script src="assets/js/mode/jsx.js"></script>
 
     <!-- JSX compiler and web interface -->
-    <script src="build/jsx-compiler.js"></script>
-    <script> JSX.require("system:src/web/jsx-web-compiler.jsx").JsxWebCompiler.begin$(); </script>
-    <script src="assets/js/require-simple.js"></script>
-    <script src="assets/js/jsx-web-front.jsx.js"></script>
-    <script> JSX.require("system:src/web/jsx-web-front.jsx").JsxWebFront.begin$(); </script>
+    <script src="build/playground.jsx.js"></script>
 
     <!-- Le styles -->
     <link href="assets/css/bootstrap.css" rel="stylesheet">
@@ -79,13 +75,14 @@
     </div>
 
     <div class="container-fluid">
-      <div class-"span10">
-          <a class="btn btn-primary btn-large" id="run" href="#">run(^R)</a>
-          <a class="btn btn-primary btn-large" id="compile" href="#">Compile(^C)</a>
-          <a class="btn btn-primary btn-large" id="ast" href="#">AST</a>
+      <div>
+          <a class="btn btn-primary" id="run" href="#">run(^R)</a>
+          <a class="btn btn-primary" id="compile" href="#">Compile(^C)</a>
+          <a class="btn btn-primary" id="ast" href="#">AST</a>
+
           <label class="radio inline"><input type="radio" value="0" id="non-optimizations" name="optimization-level" checked="checked" />non optimizations</label>
-          <label class="radio inline"><input type="radio" value="1" id="simple-optimizations" name="optimization-level" />simple optimizations</label>
-          <label class="radio inline"><input type="radio" value="2" id="advanced-optimizations" name="optimization-level" />advanced optimizations</label>
+          <label class="radio inline"><input type="radio" value="1" id="simple-optimizations" name="optimization-level" />JSX optimizations</label>
+          <label class="radio inline"><input type="radio" value="2" id="advanced-optimizations" name="optimization-level" />JSX optimizations + Minification</label>
       </div>
 
       <div class="row-fluid">
@@ -171,7 +168,6 @@
 <li class="source-file"><a href="t/run/078.bitnot.jsx" data-path="t/run/078.bitnot.jsx">078.bitnot.jsx</a></li>
 <li class="source-file"><a href="t/run/079.logical-op.jsx" data-path="t/run/079.logical-op.jsx">079.logical-op.jsx</a></li>
 <li class="source-file"><a href="t/run/080.return-void.jsx" data-path="t/run/080.return-void.jsx">080.return-void.jsx</a></li>
-<li class="source-file"><a href="t/run/081.assert-pass.jsx" data-path="t/run/081.assert-pass.jsx">081.assert-pass.jsx</a></li>
 <li class="source-file"><a href="t/run/081.ununsed-non-typed-local.jsx" data-path="t/run/081.ununsed-non-typed-local.jsx">081.ununsed-non-typed-local.jsx</a></li>
 <li class="source-file"><a href="t/run/082.detect-assign-of-undefined.jsx" data-path="t/run/082.detect-assign-of-undefined.jsx">082.detect-assign-of-undefined.jsx</a></li>
 <li class="source-file"><a href="t/run/083.detect-undefined-call-arg.jsx" data-path="t/run/083.detect-undefined-call-arg.jsx">083.detect-undefined-call-arg.jsx</a></li>
@@ -231,7 +227,6 @@
 <li class="source-file"><a href="t/run/137.same-pred-op-with-parens.jsx" data-path="t/run/137.same-pred-op-with-parens.jsx">137.same-pred-op-with-parens.jsx</a></li>
 <li class="source-file"><a href="t/run/137.variant-accessors.jsx" data-path="t/run/137.variant-accessors.jsx">137.variant-accessors.jsx</a></li>
 <li class="source-file"><a href="t/run/138.json-complex.jsx" data-path="t/run/138.json-complex.jsx">138.json-complex.jsx</a></li>
-<li class="source-file"><a href="t/run/138.test-case-module.jsx" data-path="t/run/138.test-case-module.jsx">138.test-case-module.jsx</a></li>
 <li class="source-file"><a href="t/run/139.array-of-maybeundefined.jsx" data-path="t/run/139.array-of-maybeundefined.jsx">139.array-of-maybeundefined.jsx</a></li>
 <li class="source-file"><a href="t/run/140.basic-template.jsx" data-path="t/run/140.basic-template.jsx">140.basic-template.jsx</a></li>
 <li class="source-file"><a href="t/run/140.new-array.jsx" data-path="t/run/140.new-array.jsx">140.new-array.jsx</a></li>
@@ -302,6 +297,7 @@
 <li class="source-file"><a href="t/run/203.call-func-in-map.jsx" data-path="t/run/203.call-func-in-map.jsx">203.call-func-in-map.jsx</a></li>
 <li class="source-file"><a href="t/run/203.static-var-with-lambda.jsx" data-path="t/run/203.static-var-with-lambda.jsx">203.static-var-with-lambda.jsx</a></li>
 <li class="source-file"><a href="t/run/204.array-map.jsx" data-path="t/run/204.array-map.jsx">204.array-map.jsx</a></li>
+<li class="source-file"><a href="t/run/205.common-element-type.jsx" data-path="t/run/205.common-element-type.jsx">205.common-element-type.jsx</a></li>
 <li class="source-file"><a href="t/run/206.alternate-constructor-invocation.jsx" data-path="t/run/206.alternate-constructor-invocation.jsx">206.alternate-constructor-invocation.jsx</a></li>
 <li class="source-file"><a href="t/run/207.alternate-constructor-invocation-in-template.jsx" data-path="t/run/207.alternate-constructor-invocation-in-template.jsx">207.alternate-constructor-invocation-in-template.jsx</a></li>
 <li class="source-file"><a href="t/run/208.overloaded-index-operator.jsx" data-path="t/run/208.overloaded-index-operator.jsx">208.overloaded-index-operator.jsx</a></li>
@@ -317,7 +313,16 @@
 <li class="source-file"><a href="t/run/220.assign-named-function-expr-to-var.jsx" data-path="t/run/220.assign-named-function-expr-to-var.jsx">220.assign-named-function-expr-to-var.jsx</a></li>
 <li class="source-file"><a href="t/run/221.equal-expr-assoc.jsx" data-path="t/run/221.equal-expr-assoc.jsx">221.equal-expr-assoc.jsx</a></li>
 <li class="source-file"><a href="t/run/222.issue91.jsx" data-path="t/run/222.issue91.jsx">222.issue91.jsx</a></li>
-<li class="source-file"><a href="t/run/223.issue50.todo.jsx" data-path="t/run/223.issue50.todo.jsx">223.issue50.todo.jsx</a></li>
+<li class="source-file"><a href="t/run/223.issue50.jsx" data-path="t/run/223.issue50.jsx">223.issue50.jsx</a></li>
+<li class="source-file"><a href="t/run/223.map-keys.jsx" data-path="t/run/223.map-keys.jsx">223.map-keys.jsx</a></li>
+<li class="source-file"><a href="t/run/224.empty-array-for-function-arg.jsx" data-path="t/run/224.empty-array-for-function-arg.jsx">224.empty-array-for-function-arg.jsx</a></li>
+<li class="source-file"><a href="t/run/225.empty-map-for-function-arg.jsx" data-path="t/run/225.empty-map-for-function-arg.jsx">225.empty-map-for-function-arg.jsx</a></li>
+<li class="source-file"><a href="t/run/226.variant-for-function-arg.todo.jsx" data-path="t/run/226.variant-for-function-arg.todo.jsx">226.variant-for-function-arg.todo.jsx</a></li>
+<li class="source-file"><a href="t/run/227.unclasify-with-as.jsx" data-path="t/run/227.unclasify-with-as.jsx">227.unclasify-with-as.jsx</a></li>
+<li class="source-file"><a href="t/run/228.issue85-unreachable-for-switch.todo.jsx" data-path="t/run/228.issue85-unreachable-for-switch.todo.jsx">228.issue85-unreachable-for-switch.todo.jsx</a></li>
+<li class="source-file"><a href="t/run/229.assert.jsx" data-path="t/run/229.assert.jsx">229.assert.jsx</a></li>
+<li class="source-file"><a href="t/run/230.test-case-module.jsx" data-path="t/run/230.test-case-module.jsx">230.test-case-module.jsx</a></li>
+<li class="source-file"><a href="t/run/232.assing-func-to-variant.jsx" data-path="t/run/232.assing-func-to-variant.jsx">232.assing-func-to-variant.jsx</a></li>
 <li id="t-lib" class="nav-header">t/lib</li>
 <li class="source-file"><a href="t/lib/001.hello.jsx" data-path="t/lib/001.hello.jsx">001.hello.jsx</a></li>
 <li class="source-file"><a href="t/lib/002.timer.jsx" data-path="t/lib/002.timer.jsx">002.timer.jsx</a></li>
@@ -344,7 +349,6 @@
 <li class="source-file"><a href="t/compile_error/010.arrayliteral-null.jsx" data-path="t/compile_error/010.arrayliteral-null.jsx">010.arrayliteral-null.jsx</a></li>
 <li class="source-file"><a href="t/compile_error/011.arrayliteral-bad-type.jsx" data-path="t/compile_error/011.arrayliteral-bad-type.jsx">011.arrayliteral-bad-type.jsx</a></li>
 <li class="source-file"><a href="t/compile_error/012.arrayliteral-type-mismatch.jsx" data-path="t/compile_error/012.arrayliteral-type-mismatch.jsx">012.arrayliteral-type-mismatch.jsx</a></li>
-<li class="source-file"><a href="t/compile_error/013.arrayliteral-type-conflict.jsx" data-path="t/compile_error/013.arrayliteral-type-conflict.jsx">013.arrayliteral-type-conflict.jsx</a></li>
 <li class="source-file"><a href="t/compile_error/014.assign-class.jsx" data-path="t/compile_error/014.assign-class.jsx">014.assign-class.jsx</a></li>
 <li class="source-file"><a href="t/compile_error/015.keyword-nospace-identifier.jsx" data-path="t/compile_error/015.keyword-nospace-identifier.jsx">015.keyword-nospace-identifier.jsx</a></li>
 <li class="source-file"><a href="t/compile_error/016.implicit-conversion-from-object-to-primitive.jsx" data-path="t/compile_error/016.implicit-conversion-from-object-to-primitive.jsx">016.implicit-conversion-from-object-to-primitive.jsx</a></li>
@@ -488,8 +492,10 @@
 <li class="source-file"><a href="t/compile_error/155.issue78.jsx" data-path="t/compile_error/155.issue78.jsx">155.issue78.jsx</a></li>
 <li class="source-file"><a href="t/compile_error/156.unreachable-catch.jsx" data-path="t/compile_error/156.unreachable-catch.jsx">156.unreachable-catch.jsx</a></li>
 <li class="source-file"><a href="t/compile_error/157.compile-note.jsx" data-path="t/compile_error/157.compile-note.jsx">157.compile-note.jsx</a></li>
+<li class="source-file"><a href="t/compile_error/157.funciton-expression-name.jsx" data-path="t/compile_error/157.funciton-expression-name.jsx">157.funciton-expression-name.jsx</a></li>
 <li class="source-file"><a href="t/compile_error/158.named-func-expr-outside-of-func.jsx" data-path="t/compile_error/158.named-func-expr-outside-of-func.jsx">158.named-func-expr-outside-of-func.jsx</a></li>
 <li class="source-file"><a href="t/compile_error/159.issue84.jsx" data-path="t/compile_error/159.issue84.jsx">159.issue84.jsx</a></li>
+<li class="source-file"><a href="t/compile_error/160.empty-literal-type-deduction.jsx" data-path="t/compile_error/160.empty-literal-type-deduction.jsx">160.empty-literal-type-deduction.jsx</a></li>
 
             </ul>
           </div><!--/.well -->

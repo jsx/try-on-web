@@ -122,14 +122,13 @@ class DocumentGenerator {
 	var _outputPath : Nullable.<string>;
 	var _pathFilter : function(:string):boolean;
 	var _templatePath : Nullable.<string>;
-	var _classDefToHTMLCache : Tuple.<ClassDefinition,string>[];
+	var _classDefToHTMLCache = new TypedMap.<ClassDefinition,string>;
 
 	function constructor (compiler : Compiler) {
 		this._compiler = compiler;
 		this._outputPath = null;
 		this._pathFilter = null;
 		this._templatePath = null;
-		this._classDefToHTMLCache = [] : Tuple.<ClassDefinition,string>[];
 	}
 
 	function setOutputPath (outputPath : string) : DocumentGenerator {
@@ -386,12 +385,13 @@ _ += "</div>\n";
 				+ (classDef as InstantiatedClassDefinition).getTypeArguments().map.<string>(function (type) { return this._typeToHTML(parser, type); }).join(", ")
 				+ "&gt;";
 		}
+
 		// lokup the cache
-		for (var cacheIndex = 0; cacheIndex < this._classDefToHTMLCache.length; ++cacheIndex) {
-			if (this._classDefToHTMLCache[cacheIndex].first == classDef) {
-				return this._classDefToHTMLCache[cacheIndex].second;
-			}
+		var result = this._classDefToHTMLCache.get(classDef);
+		if (result != null) {
+			return result;
 		}
+
 		// determine the parser to which the classDef belongs
 		function determineParserOfClassDef () : Parser {
 			var parsers = this._compiler.getParsers();
@@ -412,7 +412,7 @@ _ += "</div>\n";
 		var _ = "";
 _ += "<a href=\""; _ += (this._escape(parserOfClassDef.getPath())).replace(/\n$/, ""); _ += ".html#class-"; _ += (this._escape(classDef.className())).replace(/\n$/, ""); _ += "\">"; _ += (this._escape(classDef.className())).replace(/\n$/, ""); _ += "</a>\n";
 		_ = _.trim();
-		this._classDefToHTMLCache.push(new Tuple.<ClassDefinition,string>(classDef, _));
+		this._classDefToHTMLCache.set(classDef, _);
 		return _;
 	}
 

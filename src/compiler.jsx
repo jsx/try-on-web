@@ -332,7 +332,7 @@ class Compiler {
 					}
 				}
 			}
-			throw new Error("logic error, could not find class definition of '" + deps[0].className() + "'");
+			throw new Error("logic flaw, could not find class definition of '" + deps[0].className() + "'");
 		};
 		for (var i = 0; i < classDefs.length;) {
 			var deps = classDefs[i].implementTypes().map.<ClassDefinition>(function (t) { return t.getClassDef(); }).concat(new ClassDefinition[]);
@@ -378,9 +378,9 @@ class Compiler {
 		for (var i = 0; i < classDefs.length; ++i) {
 			if ((classDefs[i].flags() & ClassDefinition.IS_NATIVE) == 0
 				&& classDefs[i] instanceof InstantiatedClassDefinition) {
-				// classDefs[i].setOutputClassName(
-				// 	classDefs[i].getOutputClassName().replace(/\.</g, "$$").replace(/>/g, "$E").replace(/,\s*/g,"$"));
-					classDefs[i].setOutputClassName("$TEMPLATECLASS$" + i as string);
+				var escapedClassName = classDefs[i].getOutputClassName().replace(/\.</g, "$$").replace(/>/g, "$E").replace(/[^A-Za-z0-9_]/g,"$");
+
+				 classDefs[i].setOutputClassName(escapedClassName);
 			}
 		}
 		// emit
@@ -404,12 +404,12 @@ class Compiler {
 						break;
 				}
 				if (doWarn != false) {
-					this._platform.error(warning.format(this));
+					this._platform.warn(warning.format(this.getPlatform()));
 				}
 			} else {
-				this._platform.error(error.format(this));
+				this._platform.error(error.format(this.getPlatform()));
 				error.getCompileNotes().forEach(function (note) {
-					this._platform.error(note.format(this));
+					this._platform.error(note.format(this.getPlatform()));
 				});
 				isFatal = true;
 			}
@@ -417,12 +417,6 @@ class Compiler {
 		// clear all errors
 		errors.splice(0, errors.length);
 		return ! isFatal;
-	}
-
-	function _printErrors (errors : CompileError[]) : void {
-		for (var i = 0; i < errors.length; ++i) {
-			this._platform.error(errors[i].format(this));
-		}
 	}
 
 	function _resolvePath (srcPath : string, givenPath : string) : string {

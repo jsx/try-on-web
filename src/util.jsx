@@ -24,8 +24,8 @@ import "./expression.jsx";
 import "./statement.jsx";
 import "./classdef.jsx";
 import "./type.jsx";
-import "./parser.jsx";
-import "./compiler.jsx";
+import "./platform.jsx";
+import Token from "./parser.jsx";
 
 class Cloner.<T> {
 
@@ -71,8 +71,13 @@ class Util {
 		return s;
 	}
 
-	// Usage: format("%1 %% %2", ["foo", "bar"]) -> "foo % bar"
+	/**
+	 * Usage: Util.format("%1 %% %2", ["foo", "bar"]) -> "foo % bar"
+     * @param fmt format template
+	 * @param args parameters which are expanded into <code>fmt</code>
+	 */
 	static function format (fmt : string, args : string[]) : string {
+		assert args != null;
 		var i = 0;
 		return fmt.replace(/%(\d+|%)/g, function(m) {
 			if (m == "%%") {
@@ -85,30 +90,74 @@ class Util {
 		});
 	}
 
-	static function analyzeArgs (context : AnalysisContext, args : Expression[], parentExpr : Expression, expectedCallbackTypes : Type[][]) : Type[] {
+	static function analyzeArgs (context : AnalysisContext, args : Expression[], parentExpr : Expression, expectedTypes : Type[][]) : Type[] {
 		var argTypes = [] : Type[];
 		for (var i = 0; i < args.length; ++i) {
 			if (args[i] instanceof FunctionExpression && ! (args[i] as FunctionExpression).typesAreIdentified()) {
 				// find the only expected types, by counting the number of arguments
 				var funcDef = (args[i] as FunctionExpression).getFuncDef();
 				var expectedCallbackType = null : Type;
-				for (var j = 0; j < expectedCallbackTypes.length; ++j) {
-					if ((expectedCallbackTypes[j][i] as ResolvedFunctionType).getArgumentTypes().length == funcDef.getArguments().length) {
+				for (var j = 0; j < expectedTypes.length; ++j) {
+					if (expectedTypes[j][i] != null && expectedTypes[j][i] instanceof FunctionType && (expectedTypes[j][i] as ResolvedFunctionType).getArgumentTypes().length == funcDef.getArguments().length) {
 						if (expectedCallbackType == null) {
-							expectedCallbackType = expectedCallbackTypes[j][i];
-						} else if (Util.typesAreEqual((expectedCallbackType as ResolvedFunctionType).getArgumentTypes(), (expectedCallbackTypes[j][i] as ResolvedFunctionType).getArgumentTypes())
-							&& (expectedCallbackType as ResolvedFunctionType).getReturnType().equals((expectedCallbackTypes[j][i] as ResolvedFunctionType).getReturnType())) {
+							expectedCallbackType = expectedTypes[j][i];
+						} else if (Util.typesAreEqual((expectedCallbackType as ResolvedFunctionType).getArgumentTypes(), (expectedTypes[j][i] as ResolvedFunctionType).getArgumentTypes())
+							&& (expectedCallbackType as ResolvedFunctionType).getReturnType().equals((expectedTypes[j][i] as ResolvedFunctionType).getReturnType())) {
 							// function signatures are equal
 						} else {
 							break;
 						}
 					}
 				}
-				if (j != expectedCallbackTypes.length) {
+				if (j != expectedTypes.length) {
 					// multiple canditates, skip
 				} else if (expectedCallbackType != null) {
 					if (! funcDef.deductTypeIfUnknown(context, expectedCallbackType as ResolvedFunctionType))
 						return null;
+				}
+			} else if (args[i] instanceof ArrayLiteralExpression && (args[i] as ArrayLiteralExpression).getExprs().length == 0 && (args[i] as ArrayLiteralExpression).getType() == null) {
+				var arrayExpr = args[i] as ArrayLiteralExpression;
+				var expectedArrayType = null : Type;
+				for (var j = 0; j < expectedTypes.length; ++j) {
+					if (expectedTypes[j][i] != null
+						&& expectedTypes[j][i] instanceof ObjectType
+						&& expectedTypes[j][i].getClassDef() instanceof InstantiatedClassDefinition
+						&& (expectedTypes[j][i].getClassDef() as InstantiatedClassDefinition).getTemplateClassName() == 'Array') {
+						if (expectedArrayType == null) {
+							expectedArrayType = expectedTypes[j][i];
+						} else if (expectedArrayType.equals(expectedTypes[j][i])) {
+							// type parameters are equal
+						} else {
+							break;
+						}
+					}
+				}
+				if (j != expectedTypes.length) {
+					// multiple canditates, skip
+				} else if (expectedArrayType != null) {
+					arrayExpr.setType(expectedArrayType);
+				}
+			} else if (args[i] instanceof MapLiteralExpression && (args[i] as MapLiteralExpression).getElements().length == 0 && (args[i] as MapLiteralExpression).getType() == null) {
+				var mapExpr = args[i] as MapLiteralExpression;
+				var expectedMapType = null : Type;
+				for (var j = 0; j < expectedTypes.length; ++j) {
+					if (expectedTypes[j][i] != null
+						&& expectedTypes[j][i] instanceof ObjectType
+						&& expectedTypes[j][i].getClassDef() instanceof InstantiatedClassDefinition
+						&& (expectedTypes[j][i].getClassDef() as InstantiatedClassDefinition).getTemplateClassName() == 'Map') {
+						if (expectedMapType == null) {
+							expectedMapType = expectedTypes[j][i];
+						} else if (expectedMapType.equals(expectedTypes[j][i])) {
+							// type parameters are equal
+						} else {
+							break;
+						}
+					}
+				}
+				if (j != expectedTypes.length) {
+					// multiple canditates, skip
+				} else if (expectedMapType != null) {
+					mapExpr.setType(expectedMapType);
 				}
 			}
 			if (! args[i].analyze(context, parentExpr))
@@ -167,7 +216,7 @@ class Util {
 		return found;
 	}
 
-	static var _stringLiteralEncodingMap = {
+	static const _stringLiteralEncodingMap = {
 		"\0" : "\\0",
 		"\r" : "\\r",
 		"\n" : "\\n",
@@ -237,17 +286,13 @@ class Util {
 	}
 
 	static function _resolvedPathParts(path : string) : string[] {
-		var tokens = path.split("/");
+		var tokens = path.split(/[\\\/]+/);
 		for (var i = 0; i < tokens.length;) {
-			if (tokens[i] == "." || (i != 0 && tokens[i] == "")) {
+			if (i != 0 && tokens[i] == ".") {
 				tokens.splice(i, 1);
 			} else if (tokens[i] == ".." && i != 0 && tokens[i - 1] != "..") {
-				if (i == 1 && tokens[0] == "") {
-					tokens.splice(i, 1);
-				} else {
-					tokens.splice(i - 1, 2);
-					i -= 1;
-				}
+				tokens.splice(i - 1, 2);
+				i -= 1;
 			} else {
 				i++;
 			}
@@ -308,11 +353,67 @@ class Util {
 			default: return n as string + 'th';
 		}
 	}
+
+	static function makeErrorMessage (platform : Platform, message : string, filename : Nullable.<string>, lineNumber : number, columnNumber : number, size : number) : string {
+		if (filename == null) {
+			return message + "\n";
+		}
+
+		var content = platform.load(filename);
+		var sourceLine = content.split(/\n/)[ lineNumber - 1 ] + "\n";
+
+		// fix visual width
+		var TAB_WIDTH = 4;
+		var tabs = sourceLine.slice(0, columnNumber).match(/\t/g);
+		if(tabs != null) {
+			columnNumber += (TAB_WIDTH-1) * tabs.length;
+		}
+
+		sourceLine  = sourceLine.replace(/\t/g, Util.repeat(" ", TAB_WIDTH));
+		sourceLine += Util.repeat(" ", columnNumber);
+		sourceLine += Util.repeat("^", size);
+
+		return Util.format("[%1:%2:%3] %4\n%5\n", [filename, lineNumber as string, columnNumber as string, message, sourceLine]);
+	}
+
+	/**
+	 * Converts a date object to ISO 8601 format
+	 */
+	static function formatDate(date : Date) : string {
+		var tz = (function(offset : number) : string {
+			var sign = offset > 0 ? "-" : "+";
+			var o    = Math.abs(offset);
+
+			var h = Util._pad((o / 60) as int, 2);
+			var m = Util._pad((o % 60) as int, 2);
+			return sign + h + m;
+		}(date.getTimezoneOffset()));
+
+		return date.getFullYear() as string + '-'
+				+ Util._pad(date.getMonth() + 1, 2) + '-'
+				+ Util._pad(date.getDate(), 2) + 'T'
+				+ Util._pad(date.getHours(), 2) + ':'
+				+ Util._pad(date.getMinutes(), 2) + ':'
+				+ Util._pad(date.getSeconds(), 2) + '.'
+				+ Util._pad(date.getMilliseconds(), 3) + 'Z'
+				+ tz;
+	}
+
+	static function _pad (d : number, width : number) : string{
+		var s = d as string;
+		while (s.length < width) {
+			s = "0" + s;
+		}
+		return s;
+	}
 }
 
-class Tuple.<T,U> {
+/*
+ * Tow-value data structure class
+ */
+class Pair.<T,U> {
 
-	var first : T;
+	var first  : T;
 	var second : U;
 
 	function constructor(first : T, second : U) {
@@ -322,11 +423,14 @@ class Tuple.<T,U> {
 
 }
 
+/*
+ * Three-value data structure class
+ */
 class Triple.<T,U,V> {
 
-	var first : T;
+	var first  : T;
 	var second : U;
-	var third : V;
+	var third  : V;
 
 	function constructor(first : T, second : U, third : V) {
 		this.first = first;
@@ -336,9 +440,12 @@ class Triple.<T,U,V> {
 
 }
 
+/**
+ * Map-like container with specified type of keys.
+ */
 class TypedMap.<K,V> {
 
-	var _list : Tuple.<K,V>[];
+	var _list =  new Pair.<K,V>[];
 	var _equalsCallback : function(:K,:K):boolean;
 
 	function constructor() {
@@ -346,24 +453,23 @@ class TypedMap.<K,V> {
 	}
 
 	function constructor(equalsCallback : function(:K,:K):boolean) {
-		this._list = [] : Tuple.<K,V>[];
 		this._equalsCallback = equalsCallback;
 	}
 
-	function exists (key : K) : boolean {
+	function has(key : K) : boolean {
 		return ! this.forEach(function (entryKey, entryValue) {
 			return ! this._equalsCallback(key, entryKey);
 		});
 	}
 
-	function put(key : K, val : V) : void {
+	function set(key : K, val : V) : void {
 		for (var i = 0; i < this._list.length; ++i) {
 			if (this._equalsCallback(this._list[i].first, key)) {
 				this._list[i].second = val;
 				return;
 			}
 		}
-		this._list.push(new Tuple.<K,V>(key, val));
+		this._list.push(new Pair.<K,V>(key, val));
 	}
 
 	function get(key : K) : Nullable.<V> {
@@ -375,7 +481,7 @@ class TypedMap.<K,V> {
 		return null;
 	}
 
-	function remove(key : K) : void {
+	function delete(key : K) : void {
 		for (var i = 0; i < this._list.length; ++i) {
 			if (this._equalsCallback(this._list[i].first, key)) {
 				this._list.splice(i, 1);
@@ -470,27 +576,8 @@ abstract class CompileIssue {
 		this._size = 1;
 	}
 
-	function format (compiler : Compiler) : string {
-		if (this._filename == null) {
-			return this._message + "\n";
-		}
-
-		var content = compiler.getFileContent(new CompileError[] /* ignore errors */, null, this._filename);
-		var sourceLine = content.split(/\n/)[ this._lineNumber - 1 ] + "\n";
-
-		// fix visual width
-		var col = this._columnNumber;
-		var TAB_WIDTH = 4;
-		var tabs = sourceLine.slice(0, col).match(/\t/g);
-		if(tabs != null) {
-			col += (TAB_WIDTH-1) * tabs.length;
-		}
-
-		sourceLine  = sourceLine.replace(/\t/g, Util.repeat(" ", TAB_WIDTH));
-		sourceLine += Util.repeat(" ", col);
-		sourceLine += Util.repeat("^", this._size);
-
-		return Util.format("[%1:%2:%3] %4%5\n%6\n", [this._filename, this._lineNumber as string, col as string, this.getPrefix(), this._message, sourceLine]);
+	function format (platform : Platform) : string {
+		return Util.makeErrorMessage(platform, this.getPrefix() + this._message, this._filename, this._lineNumber, this._columnNumber, this._size);
 	}
 
 	abstract function getPrefix () : string;

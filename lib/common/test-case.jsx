@@ -71,6 +71,7 @@ import "console.jsx";
 class TestCase {
 	// TODO turn off when the process has no tty
 	var verbose = true;
+	var showStackTrace = true; // turn off on test this class
 
 	var _totalCount = 0;
 	var _totalPass  = 0;
@@ -116,12 +117,26 @@ class TestCase {
 		var numAsyncTasks = this._tasks.length;
 		this._currentName = name;
 
+		this.setUp();
+
 		try {
-			this.setUp();
 			testFunction();
 		}
 		catch (e : Error) {
-			this.fail(name + " failed with exception: " + e.toString());
+			var msg;
+			if (e instanceof TestFailure) { // normal failure
+				msg = e.message ? " - " + e.message : "";
+			}
+			else {
+				msg = " - failed with exception";
+				if (e.message) {
+					msg += ": " + e.message;
+				}
+			}
+			this._say("\t" + "not ok " + (++this._count) as string + msg);
+			if (e.stack && this.showStackTrace) {
+				this.diag(e.stack);
+			}
 		}
 
 		if(numAsyncTasks == this._tasks.length) { // synchronous
@@ -208,19 +223,26 @@ class TestCase {
 		this._say("\t" + "ok " + (this._count) as string + s);
 	}
 
+	function _nok(name : Nullable.<string>) : void {
+		this._nok(name, null, null, null);
+	}
+
 	function _nok(
 		name : Nullable.<string>,
-		op : string,
+		op : Nullable.<string>,
 		got : variant,
 		expected : variant
 	) : void {
 
 		var s = name != null ? " - " + name :  "";
-		this._say("\t" + "not ok " + (this._count) as string + s);
+		this._say("\t" + "not ok " + this._count as string + s);
 
-		this.diag("comparing with " + op + s.replace(" - ", " for "));
-		this._dump("got:      ", got);
-		this._dump("expected: ", expected);
+		if (op != null) {
+			this.diag("comparing with " + op + s.replace(" - ", " for "));
+			this._dump("got:      ", got);
+			this._dump("expected: ", expected);
+		}
+		throw new TestFailure(name != null ? name : "");
 	}
 
 	/**
@@ -237,8 +259,8 @@ class TestCase {
 	 * Tells a test fails.
 	 */
 	function fail(reason : string) : void {
-		this._say("not ok - fail");
-		this.diag(reason);
+		++this._count;
+		throw new TestFailure(reason);
 	}
 
 	function _dump(tag : string, value : variant) : void {
@@ -293,8 +315,8 @@ class TestCase {
 			var mapA = a as Map.<variant>;
 			var mapB = b as Map.<variant>;
 
-			var mapAkeys = this.sortedKeys(mapA);
-			var mapBkeys = this.sortedKeys(mapB);
+			var mapAkeys = mapA.keys().sort();
+			var mapBkeys = mapB.keys().sort();
 
 			if (mapAkeys.length != mapBkeys.length) {
 				return false;
@@ -326,14 +348,6 @@ class TestCase {
 
 		// XXX: consider serialize():variant
 		return false;
-	}
-
-	function sortedKeys(map : Map.<variant>) : Array.<string> {
-		var keys = new Array.<string>;
-		for (var key in map) {
-			keys.push(key);
-		}
-		return keys.sort();
 	}
 
 	function difflet(a : Array.<variant>, b : Array.<variant>) : string {
@@ -393,6 +407,12 @@ class TestCase {
 		else { // before boforeClass()
 			return "TestCase";
 		}
+	}
+}
+
+class TestFailure extends Error {
+	function constructor(reason : string) {
+		super(reason);
 	}
 }
 

@@ -42,15 +42,6 @@ mixin Stashable {
 
 class _Util {
 
-	static function numberOfStatements (statements : Statement[]) : number {
-		var n = 0;
-		Util.forEachStatement(function onStatement(statement : Statement) : boolean {
-			++n;
-			return statement.forEachStatement(onStatement);
-		}, statements);
-		return n;
-	}
-
 	static function handleSubStatements (cb : function(:Statement[]):boolean, statement : Statement) : boolean {
 		var ret = false;
 		if (statement instanceof ContinuableStatement) {
@@ -76,22 +67,6 @@ class _Util {
 				ret = true;
 		}
 		return ret;
-	}
-
-	static function getFuncName (funcDef : MemberFunctionDefinition) : string {
-		var classDef = funcDef.getClassDef();
-		var s = (classDef != null ? classDef.className(): "<<unknown>>");
-		s += (funcDef.flags() & ClassDefinition.IS_STATIC) != 0 ? "." : "#";
-		s += funcDef.getNameToken() != null ? funcDef.name() : "<<unknown>>";
-		s += "(";
-		var argTypes = funcDef.getArgumentTypes();
-		for (var i = 0; i < argTypes.length; ++i) {
-			if (i != 0)
-				s += ", ";
-			s += ":" + argTypes[i].toString();
-		}
-		s += ")";
-		return s;
 	}
 
 	static function classIsNative (classDef : ClassDefinition) : boolean {
@@ -297,7 +272,7 @@ class Optimizer {
 				this.log("finished optimizer: " + this._commands[i]._identifier);
 			} catch (e : Error) {
 				var platform = this._compiler.getPlatform();
-				platform.error("optimizer '" + this._commands[i]._identifier + "' died unexpectedly, dumping the logs");
+				platform.error("fatal error: optimizer '" + this._commands[i]._identifier + "' died unexpectedly, dumping the logs");
 				this.dumpLogs();
 				throw e;
 			}
@@ -362,7 +337,7 @@ abstract class _OptimizeCommand {
 		}
 		for (var i = 0; nameExists(baseName + "$" + i as string); ++i)
 			;
-		var newLocal = new LocalVariable(new Token(baseName + "$" + i as string, true), type);
+		var newLocal = new LocalVariable(new Token(baseName + "$" + i as string, false), type);
 		locals.push(newLocal);
 		this.log("rewriting " + baseName + " to " + newLocal.getName().getValue());
 		return newLocal;
@@ -390,9 +365,9 @@ abstract class _FunctionOptimizeCommand extends _OptimizeCommand {
 
 	override function performOptimization () : void {
 		function doit (funcDef : MemberFunctionDefinition) : void {
-			this.log("starting optimization of " + _Util.getFuncName(funcDef));
+			this.log("starting optimization of " + funcDef.getNotation());
 			this.optimizeFunction(funcDef);
-			this.log("finished optimization of " + _Util.getFuncName(funcDef));
+			this.log("finished optimization of " + funcDef.getNotation());
 		}
 		this.getCompiler().forEachClassDef(function (parser, classDef) {
 			classDef.forEachMemberFunction(function (funcDef) {
@@ -475,10 +450,10 @@ class _LinkTimeOptimizationCommand extends _OptimizeCommand {
 								throw new Error("a non-native, non-abstract function with out function body?");
 							var overrides = this._getOverrides(classDef, (this.getStash(classDef) as _LinkTimeOptimizationCommandStash).extendedBy, funcDef.name(), funcDef.getArgumentTypes());
 							if (overrides.length == 0) {
-								this.log("marking function as final: " + classDef.className() + "#" + funcDef.name());
+								this.log("marking function as final: " + funcDef.getNotation());
 								funcDef.setFlags(funcDef.flags() | ClassDefinition.IS_FINAL);
 							} else {
-								this.log("function has overrides, not marking as final: " + classDef.className() + "#" + funcDef.name());
+								this.log("function has overrides, not marking as final: " + funcDef.getNotation());
 							}
 						} else if ((funcDef.flags() & ClassDefinition.IS_ABSTRACT) != 0) {
 							/*
@@ -810,6 +785,15 @@ class _UnclassifyOptimizationCommand extends _OptimizeCommand {
 						}
 					}
 				}
+				else if (expr instanceof AsExpression && expr.getType() instanceof ObjectType) {
+					var foundClassDefIndex = candidates.indexOf(expr.getType().getClassDef());
+					if (foundClassDefIndex != -1) {
+						candidates.splice(foundClassDefIndex, 1);
+						if (candidates.length == 0) {
+							return false;
+						}
+					}
+				}
 				return expr.forEachExpression(onExpr);
 			}
 			classDef.forEachMemberFunction(function onFunction(funcDef : MemberFunctionDefinition) : boolean {
@@ -835,7 +819,7 @@ class _UnclassifyOptimizationCommand extends _OptimizeCommand {
 			candidates[candidateIndex].forEachMemberFunction(function (funcDef) {
 				if ((funcDef.flags() & ClassDefinition.IS_STATIC) == 0 && funcDef.name() == "constructor") {
 					var inliner = this._createInliner(funcDef);
-					this.log(funcDef.getClassDef().className() + "#constructor(" + funcDef.getArgumentTypes().map.<string>(function (arg) { return ":" + arg.toString(); }).join(",") + ") is" + (inliner ? "" : " not") + " inlineable");
+					this.log(funcDef.getNotation() + " is" + (inliner ? "" : " not") + " inlineable");
 					if (inliner) {
 						(this.getStash(funcDef) as _UnclassifyOptimizationCommandStash).inliner = inliner;
 						hasInlineableCtor = true;
@@ -957,7 +941,7 @@ class _UnclassifyOptimizationCommand extends _OptimizeCommand {
 
 	function _rewriteFunctionAsStatic (funcDef : MemberFunctionDefinition) : void {
 		// first argument should be this
-		var thisArg = new ArgumentDeclaration(new Token("$this", true), new ObjectType(funcDef.getClassDef()));
+		var thisArg = new ArgumentDeclaration(new Token("$this", false), new ObjectType(funcDef.getClassDef()));
 		funcDef.getArguments().unshift(thisArg);
 		// rewrite this
 		funcDef.forEachStatement(function onStatement(statement : Statement) : boolean {
@@ -1158,7 +1142,7 @@ class _FoldConstantCommand extends _FunctionOptimizeCommand {
 		}
 		if (isEqual != null) {
 			var result = expr.getToken().getValue() == "==" ? isEqual as boolean : ! isEqual;
-			replaceCb(new BooleanLiteralExpression(new Token(result ? "true" : "false", false)));
+			replaceCb(new BooleanLiteralExpression(new Token(result ? "true" : "false", true)));
 		}
 	}
 
@@ -1407,12 +1391,12 @@ class _DeadCodeEliminationOptimizeCommand extends _FunctionOptimizeCommand {
 				&& (expr as AssignmentExpression).getFirstExpr() instanceof LocalExpression) {
 					var local = ((expr as AssignmentExpression).getFirstExpr() as LocalExpression).getLocal();
 					this.log("local variable " + local.getName().getValue() + " cannot be rewritten (has fused op)");
-					localsUntouchable.put(local, true);
+					localsUntouchable.set(local, true);
 				} else if (expr instanceof IncrementExpression
 					&& (expr as IncrementExpression).getExpr() instanceof LocalExpression) {
 					var local = ((expr as IncrementExpression).getExpr() as LocalExpression).getLocal();
 					this.log("local variable " + local.getName().getValue() + " cannot be rewritten (has increment)");
-					localsUntouchable.put(local, true);
+					localsUntouchable.set(local, true);
 				}
 			return expr.forEachExpression(_onExpr);
 		};
@@ -1432,10 +1416,10 @@ class _DeadCodeEliminationOptimizeCommand extends _FunctionOptimizeCommand {
 							locals.reversedForEach(function(local, expr) {
 								if (local == lhsLocal) {
 									this.log("  clearing itself");
-									locals.remove(local);
+									locals.delete(local);
 								} else if (expr instanceof LocalExpression && (expr as LocalExpression).getLocal() == lhsLocal) {
 									this.log("  clearing " + local.getName().getValue());
-									locals.remove(local);
+									locals.delete(local);
 								}
 								return true;
 							});
@@ -1445,14 +1429,14 @@ class _DeadCodeEliminationOptimizeCommand extends _FunctionOptimizeCommand {
 									var rhsLocal = (rhsExpr as LocalExpression).getLocal();
 									if (lhsLocal != rhsLocal && ! localsUntouchable.get(rhsLocal)) {
 										this.log("  set to: " + rhsLocal.getName().getValue());
-										locals.put(lhsLocal, rhsExpr);
+										locals.set(lhsLocal, rhsExpr);
 									}
 								} else if (rhsExpr instanceof NullExpression
 									   || rhsExpr instanceof NumberLiteralExpression
 									   || rhsExpr instanceof IntegerLiteralExpression
 									   || rhsExpr instanceof StringLiteralExpression) {
 									this.log("  set to: " + rhsExpr.getToken().getValue());
-									locals.put(lhsLocal, rhsExpr);
+									locals.set(lhsLocal, rhsExpr);
 								}
 							}
 						}
@@ -1564,7 +1548,7 @@ class _DeadCodeEliminationOptimizeCommand extends _FunctionOptimizeCommand {
 			}
 			return false;
 		}
-		var lastAssignExpr = new Map.<Tuple.<AssignmentExpression, function(:Expression):void>>;
+		var lastAssignExpr = new Map.<Pair.<AssignmentExpression, function(:Expression):void>>;
 		var onExpr = function (expr : Expression, rewriteCb : function(:Expression):void) : boolean {
 			if (expr instanceof AssignmentExpression) {
 				var assignmentExpr = expr as AssignmentExpression;
@@ -1575,10 +1559,11 @@ class _DeadCodeEliminationOptimizeCommand extends _FunctionOptimizeCommand {
 						var propertyName = (firstExpr as PropertyExpression).getIdentifierToken().getValue();
 						onExpr(assignmentExpr.getSecondExpr(), null);
 						if (lastAssignExpr[propertyName]
-								   && baseExprsAreEqual((firstExpr as PropertyExpression).getExpr(), (lastAssignExpr[propertyName].first.getFirstExpr() as PropertyExpression).getExpr())) {
+								&& lastAssignExpr[propertyName].second != null
+								&& baseExprsAreEqual((firstExpr as PropertyExpression).getExpr(), (lastAssignExpr[propertyName].first.getFirstExpr() as PropertyExpression).getExpr())) {
 							lastAssignExpr[propertyName].second(lastAssignExpr[propertyName].first.getSecondExpr());
 						}
-						lastAssignExpr[propertyName] = new Tuple.<AssignmentExpression, function(:Expression):void>(assignmentExpr, rewriteCb);
+						lastAssignExpr[propertyName] = new Pair.<AssignmentExpression, function(:Expression):void>(assignmentExpr, rewriteCb);
 						return true;
 					} else if (assignmentExpr.getFirstExpr() instanceof LocalExpression) {
 						onExpr(assignmentExpr.getSecondExpr(), null);
@@ -1597,11 +1582,11 @@ class _DeadCodeEliminationOptimizeCommand extends _FunctionOptimizeCommand {
 			} else if (expr instanceof CallExpression) {
 				onExpr((expr as CallExpression).getExpr(), null);
 				Util.forEachExpression(onExpr, (expr as CallExpression).getArguments());
-				lastAssignExpr = new Map.<Tuple.<AssignmentExpression, function(:Expression):void>>;
+				lastAssignExpr = new Map.<Pair.<AssignmentExpression, function(:Expression):void>>;
 				return true;
 			} else if (expr instanceof NewExpression) {
 				Util.forEachExpression(onExpr, (expr as NewExpression).getArguments());
-				lastAssignExpr = new Map.<Tuple.<AssignmentExpression, function(:Expression):void>>;
+				lastAssignExpr = new Map.<Pair.<AssignmentExpression, function(:Expression):void>>;
 				return true;
 			}
 			return expr.forEachExpression(onExpr);
@@ -1675,7 +1660,7 @@ class _InlineOptimizeCommandStash extends OptimizerStash {
 
 class _InlineOptimizeCommand extends _FunctionOptimizeCommand {
 
-	static const INLINE_THRESHOLD = 5;
+	static const INLINE_THRESHOLD = 30; // TODO: make it configurable (--optimize inline=N)
 
 	function constructor () {
 		super("inline");
@@ -1694,7 +1679,7 @@ class _InlineOptimizeCommand extends _FunctionOptimizeCommand {
 		// we need to the check here since functions might recurse
 		if (funcDef.getStatements() == null)
 			return true;
-		this.log("* starting optimization of " + _Util.getFuncName(funcDef));
+		this.log("* starting optimization of " + funcDef.getNotation());
 		while (true) {
 			while (true) {
 				if (! this._handleStatements(funcDef, funcDef.getStatements()))
@@ -1704,7 +1689,7 @@ class _InlineOptimizeCommand extends _FunctionOptimizeCommand {
 			if (! (this.setupCommand(new _ReturnIfOptimizeCommand()) as _ReturnIfOptimizeCommand).optimizeFunction(funcDef))
 				break;
 		}
-		this.log("* finished optimization of " + _Util.getFuncName(funcDef));
+		this.log("* finished optimization of " + funcDef.getNotation());
 		return true;
 	}
 
@@ -1730,7 +1715,7 @@ class _InlineOptimizeCommand extends _FunctionOptimizeCommand {
 				var args = this._getArgsAndThisIfCallExprIsInlineable(expr as CallExpression, true);
 				if (args != null) {
 					var callingFuncDef = _DetermineCalleeCommand.getCallingFuncDef(expr);
-					this.log("expanding " + _Util.getFuncName(callingFuncDef) + " as expression");
+					this.log("expanding " + callingFuncDef.getNotation() + " as expression");
 					var stmt = callingFuncDef.getStatements()[0];
 					if (stmt instanceof ExpressionStatement) {
 						var expr = (stmt as ExpressionStatement).getExpr();
@@ -1967,6 +1952,27 @@ class _InlineOptimizeCommand extends _FunctionOptimizeCommand {
 		}
 	}
 
+	function _isWorthInline (funcDef : MemberFunctionDefinition) : boolean {
+		if (funcDef.isAnonymous()) {
+			return true; // always try to inline for anonymous function expressions
+		}
+		// count number of expressions
+		var n = 0;
+		funcDef.forEachStatement(function onStatement(statement : Statement) : boolean {
+			var cont = statement.forEachExpression( function onExpr(expr : Expression) : boolean {
+				if (++n >= _InlineOptimizeCommand.INLINE_THRESHOLD) {
+					return false;
+				}
+				return expr.forEachExpression(onExpr);
+			});
+			if (! cont) {
+				return false;
+			}
+			return statement.forEachStatement(onStatement);
+		});
+		return n < _InlineOptimizeCommand.INLINE_THRESHOLD;
+	}
+
 	function _functionIsInlineable (funcDef : MemberFunctionDefinition) : boolean {
 		if ((this.getStash(funcDef) as _InlineOptimizeCommandStash).isInlineable == null) {
 			(this.getStash(funcDef) as _InlineOptimizeCommandStash).isInlineable = function () : boolean {
@@ -1977,7 +1983,7 @@ class _InlineOptimizeCommand extends _FunctionOptimizeCommand {
 				var requestsInline = (funcDef.flags() & ClassDefinition.IS_INLINE) != 0;
 				if (requestsInline) {
 					// ok
-				} else if (_Util.numberOfStatements(statements) >= _InlineOptimizeCommand.INLINE_THRESHOLD) {
+				} else if (! this._isWorthInline(funcDef)) {
 					return false;
 				}
 				// no return in the middle, no function expression or super invocation expression
@@ -2009,14 +2015,14 @@ class _InlineOptimizeCommand extends _FunctionOptimizeCommand {
 					return statement.forEachStatement(onStatement);
 				});
 			}();
-			this.log(_Util.getFuncName(funcDef) + ((this.getStash(funcDef) as _InlineOptimizeCommandStash).isInlineable ? " is" : " is not") + " inlineable");
+			this.log(funcDef.getNotation() + ((this.getStash(funcDef) as _InlineOptimizeCommandStash).isInlineable ? " is" : " is not") + " inlineable");
 		}
 		return (this.getStash(funcDef) as _InlineOptimizeCommandStash).isInlineable;
 	}
 
 	function _expandCallingFunction (callerFuncDef : MemberFunctionDefinition, statements : Statement[], stmtIndex : number, calleeFuncDef : MemberFunctionDefinition, argsAndThis : Expression[]) : number {
 		// clone statements of the calling function, while rewriting the identifiers with actual arguments
-		this.log("expanding " + _Util.getFuncName(calleeFuncDef));
+		this.log("expanding " + calleeFuncDef.getNotation());
 		var argsAndThisAndLocals = argsAndThis.concat(new Expression[]);
 		stmtIndex = this._createVars(callerFuncDef, statements, stmtIndex, calleeFuncDef, argsAndThisAndLocals);
 		var calleeStatements = calleeFuncDef.getStatements();
@@ -2170,7 +2176,7 @@ class _ReturnIfOptimizeCommand extends _FunctionOptimizeCommand {
 
 		this._altered = false;
 		this._optimizeStatements(funcDef.getStatements());
-		this.log(_Util.getFuncName(funcDef) + " " + (this._altered ? "Y" : "N"));
+		this.log(funcDef.getNotation() + " " + (this._altered ? "Y" : "N"));
 		return this._altered;
 	}
 
@@ -2771,7 +2777,7 @@ class _ArrayLengthOptimizeCommand extends _FunctionOptimizeCommand {
 			&& statement.forEachStatement(function (statement) { return this._lengthIsUnmodifiedInStatement(statement); })) {
 
 			// optimize!
-			this.log(_Util.getFuncName(funcDef) + " optimizing .length at line " + statement.getToken().getLineNumber() as string);
+			this.log(funcDef.getNotation() + " optimizing .length at line " + statement.getToken().getLineNumber() as string);
 			// create local var for array.length
 			var lengthLocal = this.createVar(funcDef, Type.integerType, arrayLocal.getName().getValue() + "$len");
 			// assign array.length to the local
@@ -2912,7 +2918,7 @@ class _NoDebugCommand extends _OptimizeCommand {
 							&& (memberVariable.flags() & ClassDefinition.IS_STATIC) != 0) {
 
 						this.log("set JSX.DEBUG = " + stash.debugValue as  string);
-						var falseExpr = new BooleanLiteralExpression(new Token(stash.debugValue as string, false));
+						var falseExpr = new BooleanLiteralExpression(new Token(stash.debugValue as string, true));
 						memberVariable.setInitialValue(falseExpr);
 						return false;
 					}

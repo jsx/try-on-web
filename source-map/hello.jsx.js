@@ -1,7 +1,6 @@
-// generatedy by JSX compiler 0.9.4 (2013-02-03 19:17:42 +0900; 87025f5c7c5bf6bc304d8b136625c33b2a992342)
+// generatedy by JSX compiler 0.9.5 (2013-02-12 10:13:11 +0900; 3afedeed551a60eb5993ed7c28986ef77fa42878)
 var JSX = {};
-(function () {
-
+(function (JSX) {
 /**
  * copies the implementations from source interface to target
  */
@@ -41,8 +40,7 @@ function $__jsx_div_assign(obj, prop, divisor) {
 }
 
 /*
- * global functions called by JSX
- * (enamed so that they do not conflict with local variable names)
+ * global functions, renamed to avoid conflict with local variable names
  */
 var $__jsx_parseInt = parseInt;
 var $__jsx_parseFloat = parseFloat;
@@ -98,7 +96,6 @@ JSX.DEBUG = true;
 function _Main() {
 }
 
-_Main.prototype = new Object;
 /**
  * @constructor
  */
@@ -129,6 +126,9 @@ var $__jsx_classMap = {
  */
 JSX.runMain = function (sourceFile, args) {
 	var module = JSX.require(sourceFile);
+	if (! module) {
+		throw new Error("entry point module not found in " + sourceFile);
+	}
 
 	if (! module._Main) {
 		throw new Error("entry point _Main not found in " + sourceFile);
@@ -194,6 +194,6 @@ function $__jsx_onload (event) {
 window.addEventListener("load", $__jsx_onload);
 document.addEventListener("DOMContentLoaded", $__jsx_onload);
 
-})();
+})(JSX);
 
 //@ sourceMappingURL=hello.jsx.js.mapping

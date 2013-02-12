@@ -137,6 +137,9 @@ sub compile_and_run {
         fail "failed to execute compiled script";
         return;
     };
+    $output   =~ s/\s+$//;
+    $expected =~ s/\s+$//;
+
     # compare the results
     is $output, $expected, $file or do {
         difflet([split /\n/, $output], [split /\n/, $expected]);
@@ -169,7 +172,7 @@ sub optimize_and_compare {
 
     # compile, run, and check (wo. optimization)
     my($ok, $src, $logs) = jsx($file);
-    ok $ok, "compile '$file' (wo. optimization)" or return;
+    ok $ok, "compile '$file' (wo. optimization)" or return diag($logs);
     is $logs, '', "... with no logs";
     my ($output, $elapsed) = bench(sub { run_compiled($file, $src) });
 
@@ -178,7 +181,7 @@ sub optimize_and_compare {
 
     # compile, run, and check (w. optimization)
     ($ok, my $src_optimized, my $logs_optimized) = jsx("$opts --optimize dump-logs $file");
-    ok $ok, "compile '$file' (w. $opts)" or return;
+    ok $ok, "compile '$file' (w. $opts)" or return diag($logs);
     for my $flag(@optimization_flags) {
         like $logs_optimized, qr/\[ \Q$flag\E \]/xms, "... with [$flag] in logs";
     }
@@ -210,12 +213,14 @@ sub optimize_and_compare {
 sub expect_compile_error {
     my($file) = @_;
 
-    plan tests => 4;
+    plan tests => 5;
 
     my($ok, $stdout, $stderr) = jsx($file);
     ok !$ok, "failed to compile $file";
     unlike $stderr, qr/^ \s+ \b at \b \s+ \b Module \b/xms,
         "... without compiler crash";
+    unlike $stderr, qr/\b logic flaw \b/xms,
+        "... without logic flaw";
     unlike $stderr, qr/\b assertion \s+ failure \b/xms,
         "... without assertion failure";
     unlike $stderr, qr/^ TypeError:/xms,

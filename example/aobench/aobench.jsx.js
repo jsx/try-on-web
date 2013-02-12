@@ -1,7 +1,6 @@
-// generatedy by JSX compiler 0.9.4 (2013-02-03 19:17:42 +0900; 87025f5c7c5bf6bc304d8b136625c33b2a992342)
+// generatedy by JSX compiler 0.9.5 (2013-02-12 10:13:11 +0900; 3afedeed551a60eb5993ed7c28986ef77fa42878)
 var JSX = {};
-(function () {
-
+(function (JSX) {
 /**
  * copies the implementations from source interface to target
  */
@@ -41,8 +40,7 @@ function $__jsx_div_assign(obj, prop, divisor) {
 }
 
 /*
- * global functions called by JSX
- * (enamed so that they do not conflict with local variable names)
+ * global functions, renamed to avoid conflict with local variable names
  */
 var $__jsx_parseInt = parseInt;
 var $__jsx_parseFloat = parseFloat;
@@ -98,7 +96,6 @@ JSX.DEBUG = false;
 function Config() {
 }
 
-Config.prototype = new Object;
 /**
  * @constructor
  */
@@ -114,7 +111,6 @@ Config$.prototype = new Config;
 function vec3() {
 }
 
-vec3.prototype = new Object;
 /**
  * @constructor
  * @param {!number} x
@@ -235,7 +231,6 @@ var vec3$vnormalize$Lvec3$ = vec3.vnormalize$Lvec3$;
 function Isect() {
 }
 
-Isect.prototype = new Object;
 /**
  * @constructor
  */
@@ -255,7 +250,6 @@ Isect$.prototype = new Isect;
 function Ray() {
 }
 
-Ray.prototype = new Object;
 /**
  * @constructor
  * @param {vec3} org
@@ -275,7 +269,6 @@ Ray$Lvec3$Lvec3$.prototype = new Ray;
 function Sphere() {
 }
 
-Sphere.prototype = new Object;
 /**
  * @constructor
  * @param {vec3} center
@@ -357,7 +350,6 @@ var Sphere$intersect$LSphere$LRay$LIsect$ = Sphere.intersect$LSphere$LRay$LIsect
 function Plane() {
 }
 
-Plane.prototype = new Object;
 /**
  * @constructor
  * @param {vec3} p
@@ -415,7 +407,6 @@ var Plane$intersect$LPlane$LRay$LIsect$ = Plane.intersect$LPlane$LRay$LIsect$;
 function Random() {
 }
 
-Random.prototype = new Object;
 /**
  * @constructor
  */
@@ -442,7 +433,6 @@ var Random$next$ = Random.next$;
 function AOBench() {
 }
 
-AOBench.prototype = new Object;
 /**
  * @constructor
  */
@@ -478,14 +468,6 @@ var AOBench$clamp$N = AOBench.clamp$N;
  * @param {vec3} n
  */
 AOBench.orthoBasis$LAOBench$ALvec3$Lvec3$ = function ($this, basis, n) {
-	/** @type {vec3} */
-	var a$0;
-	/** @type {vec3} */
-	var b$0;
-	/** @type {vec3} */
-	var a$1;
-	/** @type {vec3} */
-	var b$1;
 	/** @type {!number} */
 	var z$0;
 	/** @type {!number} */
@@ -507,13 +489,9 @@ AOBench.orthoBasis$LAOBench$ALvec3$Lvec3$ = function ($this, basis, n) {
 			}
 		}
 	}
-	a$0 = basis[1];
-	b$0 = basis[2];
-	basis[0] = ({x: a$0.y * b$0.z - a$0.z * b$0.y, y: a$0.z * b$0.x - a$0.x * b$0.z, z: a$0.x * b$0.y - a$0.y * b$0.x});
+	basis[0] = vec3$vcross$Lvec3$Lvec3$(basis[1], basis[2]);
 	basis[0] = vec3$vnormalize$Lvec3$(basis[0]);
-	a$1 = basis[2];
-	b$1 = basis[0];
-	basis[1] = ({x: a$1.y * b$1.z - a$1.z * b$1.y, y: a$1.z * b$1.x - a$1.x * b$1.z, z: a$1.x * b$1.y - a$1.y * b$1.x});
+	basis[1] = vec3$vcross$Lvec3$Lvec3$(basis[2], basis[0]);
 	basis[1] = vec3$vnormalize$Lvec3$(basis[1]);
 };
 
@@ -664,7 +642,6 @@ var AOBench$render$LAOBench$F$IIIIIV$II = AOBench.render$LAOBench$F$IIIIIV$II;
 function _Main() {
 }
 
-_Main.prototype = new Object;
 /**
  * @constructor
  */
@@ -711,7 +688,6 @@ var _Main$main$AS = _Main.main$AS;
 function dom() {
 }
 
-dom.prototype = new Object;
 /**
  * @constructor
  */
@@ -757,7 +733,6 @@ var dom$createElement$S = dom.createElement$S;
 function EventInit() {
 }
 
-EventInit.prototype = new Object;
 /**
  * @constructor
  */
@@ -794,7 +769,6 @@ CustomEventInit$.prototype = new CustomEventInit;
 function MutationObserverInit() {
 }
 
-MutationObserverInit.prototype = new Object;
 /**
  * @constructor
  */
@@ -837,7 +811,6 @@ UIEventInit$.prototype = new UIEventInit;
 function FocusEventInit() {
 }
 
-FocusEventInit.prototype = new Object;
 /**
  * @constructor
  */
@@ -890,7 +863,6 @@ MouseEventInit$.prototype = new MouseEventInit;
 function WheelEventInit() {
 }
 
-WheelEventInit.prototype = new Object;
 /**
  * @constructor
  */
@@ -925,7 +897,6 @@ WheelEventInit$.prototype = new WheelEventInit;
 function KeyboardEventInit() {
 }
 
-KeyboardEventInit.prototype = new Object;
 /**
  * @constructor
  */
@@ -957,7 +928,6 @@ KeyboardEventInit$.prototype = new KeyboardEventInit;
 function CompositionEventInit() {
 }
 
-CompositionEventInit.prototype = new Object;
 /**
  * @constructor
  */
@@ -1000,7 +970,6 @@ ProgressEventInit$.prototype = new ProgressEventInit;
 function XMLHttpRequestOptions() {
 }
 
-XMLHttpRequestOptions.prototype = new Object;
 /**
  * @constructor
  */
@@ -1214,7 +1183,6 @@ ErrorEventInit$.prototype = new ErrorEventInit;
 function EventSourceInit() {
 }
 
-EventSourceInit.prototype = new Object;
 /**
  * @constructor
  */
@@ -1231,7 +1199,6 @@ EventSourceInit$.prototype = new EventSourceInit;
 function IDBObjectStoreParameters() {
 }
 
-IDBObjectStoreParameters.prototype = new Object;
 /**
  * @constructor
  */
@@ -1249,7 +1216,6 @@ IDBObjectStoreParameters$.prototype = new IDBObjectStoreParameters;
 function IDBIndexParameters() {
 }
 
-IDBIndexParameters.prototype = new Object;
 /**
  * @constructor
  */
@@ -1287,7 +1253,6 @@ IDBVersionChangeEventInit$.prototype = new IDBVersionChangeEventInit;
 function NotificationOptions() {
 }
 
-NotificationOptions.prototype = new Object;
 /**
  * @constructor
  */
@@ -1308,7 +1273,6 @@ NotificationOptions$.prototype = new NotificationOptions;
 function RTCSessionDescriptionInit() {
 }
 
-RTCSessionDescriptionInit.prototype = new Object;
 /**
  * @constructor
  */
@@ -1326,7 +1290,6 @@ RTCSessionDescriptionInit$.prototype = new RTCSessionDescriptionInit;
 function RTCIceCandidateInit() {
 }
 
-RTCIceCandidateInit.prototype = new Object;
 /**
  * @constructor
  */
@@ -1345,7 +1308,6 @@ RTCIceCandidateInit$.prototype = new RTCIceCandidateInit;
 function RTCIceServer() {
 }
 
-RTCIceServer.prototype = new Object;
 /**
  * @constructor
  */
@@ -1363,7 +1325,6 @@ RTCIceServer$.prototype = new RTCIceServer;
 function RTCConfiguration() {
 }
 
-RTCConfiguration.prototype = new Object;
 /**
  * @constructor
  */
@@ -1380,7 +1341,6 @@ RTCConfiguration$.prototype = new RTCConfiguration;
 function DataChannelInit() {
 }
 
-DataChannelInit.prototype = new Object;
 /**
  * @constructor
  */
@@ -1454,7 +1414,6 @@ DataChannelEventInit$.prototype = new DataChannelEventInit;
 function MediaStreamConstraints() {
 }
 
-MediaStreamConstraints.prototype = new Object;
 /**
  * @constructor
  */
@@ -1472,7 +1431,6 @@ MediaStreamConstraints$.prototype = new MediaStreamConstraints;
 function MediaTrackConstraints() {
 }
 
-MediaTrackConstraints.prototype = new Object;
 /**
  * @constructor
  */
@@ -1490,7 +1448,6 @@ MediaTrackConstraints$.prototype = new MediaTrackConstraints;
 function HitRegionOptions() {
 }
 
-HitRegionOptions.prototype = new Object;
 /**
  * @constructor
  */
@@ -1513,7 +1470,6 @@ HitRegionOptions$.prototype = new HitRegionOptions;
 function WebGLContextAttributes() {
 }
 
-WebGLContextAttributes.prototype = new Object;
 /**
  * @constructor
  */
@@ -1598,7 +1554,6 @@ DeviceMotionEventInit$.prototype = new DeviceMotionEventInit;
 function js() {
 }
 
-js.prototype = new Object;
 /**
  * @constructor
  */
@@ -1740,6 +1695,9 @@ var $__jsx_classMap = {
  */
 JSX.runMain = function (sourceFile, args) {
 	var module = JSX.require(sourceFile);
+	if (! module) {
+		throw new Error("entry point module not found in " + sourceFile);
+	}
 
 	if (! module._Main) {
 		throw new Error("entry point _Main not found in " + sourceFile);
@@ -1805,4 +1763,4 @@ function $__jsx_onload (event) {
 window.addEventListener("load", $__jsx_onload);
 document.addEventListener("DOMContentLoaded", $__jsx_onload);
 
-})();
+})(JSX);

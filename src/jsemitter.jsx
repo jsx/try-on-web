@@ -34,11 +34,12 @@ import "./platform.jsx";
 import _UnclassifyOptimizationCommandStash,
 	   _NoDebugCommandStash from "./optimizer.jsx";
 
-class _Util {
 
-	/**
-	 * Originally, this function is used for the sake of optimization by Google Closure Compiler, but now JSX is faster than Closure Compiler and this method is no longer maintained.
-	 */
+/**
+ * Originally, type annotations are used for the sake of optimization by Google Closure Compiler, but now JSX is faster than Closure Compiler and this method is no longer maintained.
+ */
+class _TypeAnnotation {
+
 	static function toClosureType (type : Type) : Nullable.<string> {
 		if (type.equals(Type.booleanType)) {
 			return "!boolean";
@@ -47,13 +48,13 @@ class _Util {
 		} else if (type.equals(Type.stringType)) {
 			return "!string";
 		} else if (type instanceof NullableType) {
-			return "undefined|" + _Util.toClosureType((type as NullableType).getBaseType());
+			return "undefined|" + _TypeAnnotation.toClosureType((type as NullableType).getBaseType());
 		} else if (type instanceof ObjectType) {
 			var classDef = type.getClassDef();
 			if (classDef instanceof InstantiatedClassDefinition && (classDef as InstantiatedClassDefinition).getTemplateClassName() == "Array") {
-				return "Array.<undefined|" + _Util.toClosureType((classDef as InstantiatedClassDefinition).getTypeArguments()[0]) + ">";
+				return "Array.<undefined|" + _TypeAnnotation.toClosureType((classDef as InstantiatedClassDefinition).getTypeArguments()[0]) + ">";
 			} else if (classDef instanceof InstantiatedClassDefinition && (classDef as InstantiatedClassDefinition).getTemplateClassName() == "Map") {
-				return "Object.<string, undefined|" + _Util.toClosureType((classDef as InstantiatedClassDefinition).getTypeArguments()[0]) + ">";
+				return "Object.<string, undefined|" + _TypeAnnotation.toClosureType((classDef as InstantiatedClassDefinition).getTypeArguments()[0]) + ">";
 			} else {
 				return classDef.getOutputClassName();
 			}
@@ -65,89 +66,11 @@ class _Util {
 		return null;
 	}
 
-	static function getInstanceofNameFromClassDef (classDef : ClassDefinition) : string {
-		if (classDef instanceof InstantiatedClassDefinition) {
-			var name = (classDef as InstantiatedClassDefinition).getTemplateClassName();
-			if (name == "Map")
-				name = "Object";
-		} else {
-			name = classDef.getOutputClassName();
-		}
-		return name;
-	}
-
-	static function buildAnnotation (template : string, type : Type) : string {
-		var closureType = _Util.toClosureType(type);
+	static function build(template : string, type : Type) : string {
+		var closureType = _TypeAnnotation.toClosureType(type);
 		if (closureType == null)
 			return "";
 		return Util.format(template, [closureType]);
-	}
-
-	static function emitLabelOfStatement (emitter : JavaScriptEmitter, statement : LabellableStatement) : void {
-		var label = statement.getLabel();
-		if (label != null) {
-			emitter._reduceIndent();
-			emitter._emit(label.getValue() + ":\n", label);
-			emitter._advanceIndent();
-		}
-	}
-
-	static function getStash (stashable : Stashable) : variant {
-		var stashHash = stashable.getOptimizerStash();
-		var stash;
-		if ((stash = stashHash["jsemitter"]) == null) {
-			stash = stashHash["jsemitter"] = null;
-		}
-		return stashHash;
-	}
-
-	static function setupBooleanizeFlags (funcDef : MemberFunctionDefinition) : void {
-		var exprReturnsBoolean = function (expr : Expression) : boolean {
-			if (expr instanceof LogicalExpression) {
-				return _Util.getStash(expr)["returnsBoolean"] as boolean;
-			} else {
-				return expr.getType().equals(Type.booleanType);
-			}
-		};
-		funcDef.forEachStatement(function onStatement(statement : Statement) : boolean {
-			var parentExpr = new Expression[]; // [0] is stack top
-			statement.forEachExpression(function onExpr(expr : Expression) : boolean {
-				// handle children
-				parentExpr.unshift(expr);
-				expr.forEachExpression(onExpr);
-				parentExpr.shift();
-				// check
-				if (expr instanceof LogicalExpression) {
-					var shouldBooleanize = true;
-					var returnsBoolean = false;
-					if (exprReturnsBoolean((expr as LogicalExpression).getFirstExpr()) && exprReturnsBoolean((expr as LogicalExpression).getSecondExpr())) {
-						returnsBoolean = true;
-						shouldBooleanize = false;
-					} else if (parentExpr.length == 0) {
-						if (statement instanceof ExpressionStatement
-							|| statement instanceof IfStatement
-							|| statement instanceof DoWhileStatement
-							|| statement instanceof WhileStatement
-							|| statement instanceof ForStatement) {
-							shouldBooleanize = false;
-						}
-					} else if (parentExpr[0] instanceof LogicalExpression
-						|| parentExpr[0] instanceof LogicalNotExpression) {
-						shouldBooleanize = false;
-					} else if (parentExpr[0] instanceof ConditionalExpression && (parentExpr[0] as ConditionalExpression).getCondExpr() == expr) {
-						shouldBooleanize = false;
-					}
-					_Util.getStash(expr)["shouldBooleanize"] = shouldBooleanize;
-					_Util.getStash(expr)["returnsBoolean"] = returnsBoolean;
-				}
-				return true;
-			});
-			return statement.forEachStatement(onStatement);
-		});
-	}
-
-	static function shouldBooleanize (logicalExpr : Expression) : boolean {
-		return _Util.getStash(logicalExpr)["shouldBooleanize"] as boolean;
 	}
 
 }
@@ -163,6 +86,15 @@ abstract class _StatementEmitter {
 	}
 
 	abstract function emit () : void;
+
+	function emitLabelOfStatement (statement : LabellableStatement) : void {
+		var label = statement.getLabel();
+		if (label != null) {
+			this._emitter._reduceIndent();
+			this._emitter._emit(label.getValue() + ":\n", label);
+			this._emitter._advanceIndent();
+		}
+	}
 
 }
 
@@ -312,7 +244,7 @@ class _DoWhileStatementEmitter extends _StatementEmitter {
 	}
 
 	override function emit () : void {
-		_Util.emitLabelOfStatement(this._emitter, this._statement);
+		this.emitLabelOfStatement(this._statement);
 		this._emitter._emit("do {\n", null);
 		this._emitter._emitStatements(this._statement.getStatements());
 		this._emitter._emit("} while (", null);
@@ -332,7 +264,7 @@ class _ForInStatementEmitter extends _StatementEmitter {
 	}
 
 	override function emit () : void {
-		_Util.emitLabelOfStatement(this._emitter, this._statement);
+		this.emitLabelOfStatement(this._statement);
 		this._emitter._emit("for (", null);
 		this._emitter._getExpressionEmitterFor(this._statement.getLHSExpr()).emit(0);
 		this._emitter._emit(" in ", null);
@@ -354,7 +286,7 @@ class _ForStatementEmitter extends _StatementEmitter {
 	}
 
 	override function emit () : void {
-		_Util.emitLabelOfStatement(this._emitter, this._statement);
+		this.emitLabelOfStatement(this._statement);
 		this._emitter._emit("for (", this._statement.getToken());
 		var initExpr = this._statement.getInitExpr();
 		if (initExpr != null)
@@ -408,7 +340,7 @@ class _SwitchStatementEmitter extends _StatementEmitter {
 	}
 
 	override function emit () : void {
-		_Util.emitLabelOfStatement(this._emitter, this._statement);
+		this.emitLabelOfStatement(this._statement);
 		this._emitter._emit("switch (", this._statement.getToken());
 		this._emitter._emitWithNullableGuard(this._statement.getExpr(), 0);
 		this._emitter._emit(") {\n", null);
@@ -464,7 +396,7 @@ class _WhileStatementEmitter extends _StatementEmitter {
 	}
 
 	override function emit () : void {
-		_Util.emitLabelOfStatement(this._emitter, this._statement);
+		this.emitLabelOfStatement(this._statement);
 		this._emitter._emit("while (", this._statement.getToken());
 		this._emitter._getExpressionEmitterFor(this._statement.getExpr()).emit(0);
 		this._emitter._emit(") {\n", null);
@@ -600,7 +532,7 @@ class _AssertStatementEmitter extends _StatementEmitter {
 		var condExpr = this._statement._expr;
 		this._emitter._emitAssertion(function () {
 			this._emitter._getExpressionEmitterFor(condExpr).emit(0);
-		}, this._statement.getToken(), "assertion failure");
+		}, condExpr.getToken(), "assertion failure");
 	}
 
 }
@@ -1219,7 +1151,7 @@ class _InstanceofExpressionEmitter extends _ExpressionEmitter {
 		} else if ((expectedType.getClassDef().flags() & (ClassDefinition.IS_INTERFACE | ClassDefinition.IS_MIXIN)) == 0) {
 			this.emitWithPrecedence(outerOpPrecedence, _InstanceofExpressionEmitter._operatorPrecedence, (function () {
 				this._emitter._getExpressionEmitterFor(this._expr.getExpr()).emit(_InstanceofExpressionEmitter._operatorPrecedence);
-				this._emitter._emit(" instanceof " + _Util.getInstanceofNameFromClassDef(expectedType.getClassDef()), null);
+				this._emitter._emit(" instanceof " + this.getInstanceofNameFromClassDef(expectedType.getClassDef()), this._expr.getToken());
 			}));
 		} else {
 			this.emitWithPrecedence(outerOpPrecedence, _CallExpressionEmitter._operatorPrecedence, (function () {
@@ -1228,6 +1160,17 @@ class _InstanceofExpressionEmitter extends _ExpressionEmitter {
 				this._emitter._emit(")", this._expr.getToken());
 			}));
 		}
+	}
+
+	function getInstanceofNameFromClassDef (classDef : ClassDefinition) : string {
+		if (classDef instanceof InstantiatedClassDefinition) {
+			var name = (classDef as InstantiatedClassDefinition).getTemplateClassName();
+			if (name == "Map")
+				name = "Object";
+		} else {
+			name = classDef.getOutputClassName();
+		}
+		return name;
 	}
 
 	static var _operatorPrecedence = 0;
@@ -1312,7 +1255,9 @@ class _FunctionExpressionEmitter extends _OperatorExpressionEmitter {
 
 	override function _emit () : void {
 		var funcDef = this._expr.getFuncDef();
-		this._emitter._emit("(function (", funcDef.getToken());
+		if (! this._expr.isStatement())
+			this._emitter._emit("(", funcDef.getToken());
+		this._emitter._emit("function " + (funcDef.getNameToken() != null ? funcDef.name() : "") + "(", funcDef.getToken());
 		var args = funcDef.getArguments();
 		for (var i = 0; i < args.length; ++i) {
 			if (i != 0)
@@ -1323,7 +1268,9 @@ class _FunctionExpressionEmitter extends _OperatorExpressionEmitter {
 		this._emitter._advanceIndent();
 		this._emitter._emitFunctionBody(funcDef);
 		this._emitter._reduceIndent();
-		this._emitter._emit("})", funcDef.getToken());
+		this._emitter._emit("}", funcDef.getToken());
+		if (! this._expr.isStatement())
+			this._emitter._emit(")", funcDef.getToken());
 	}
 
 	override function _getPrecedence () : number {
@@ -1502,7 +1449,7 @@ class _LogicalExpressionEmitter extends _OperatorExpressionEmitter {
 	}
 
 	override function emit (outerOpPrecedence : number) : void {
-		if (_Util.shouldBooleanize(this._expr)) {
+		if (this._emitter.shouldBooleanize(this._expr)) {
 			// !! is faster than Boolean, see http://jsperf.com/boolean-vs-notnot
 			this._emitter._emit("!! (", this._expr.getToken());
 			super.emit(0);
@@ -1805,6 +1752,12 @@ class _CallExpressionEmitter extends _OperatorExpressionEmitter {
 				[ calleeExpr.getExpr(), this._expr.getArguments()[0] ],
 				[ new ObjectType(classDef) as Type, Type.stringType as Type ]);
 			return true;
+		case "keys":
+			this._emitter._emitCallArguments(
+				calleeExpr.getToken(), "Object.keys(",
+				[ calleeExpr.getExpr() ],
+				[ new ObjectType(classDef) as Type ]);
+			return true;
 		default:
 			return false;
 		}
@@ -2002,9 +1955,21 @@ class _CommaExpressionEmitter extends _ExpressionEmitter {
 
 }
 
+class _JSEmitterStash extends OptimizerStash {
+	var shouldBooleanize = false;
+	var returnsBoolean   = false;
+
+	override function clone() : _JSEmitterStash {
+		throw new Error("logic flaw");
+	}
+}
+
 // the global emitter
 
 class JavaScriptEmitter implements Emitter {
+
+	var _fileHeader = "var JSX = {};\n" + "(function (JSX) {\n";
+	var _fileFooter =                     "})(JSX);\n";
 
 	var _platform : Platform;
 	var _output : string;
@@ -2021,16 +1986,21 @@ class JavaScriptEmitter implements Emitter {
 	var _sourceMapper : SourceMapper;
 
 	function constructor (platform : Platform) {
-		JavaScriptEmitter.initialize();
+		JavaScriptEmitter._initialize();
+
 		this._platform = platform;
-		this._output = "// generatedy by JSX compiler " + Meta.IDENTIFIER + "\n";
-		this._outputEndsWithReturn = true; // see the above line
+		this._output = "";
+		this._outputEndsWithReturn = true;
 		this._outputFile = null;
 		this._indent = 0;
 		this._emittingClass = null;
 		this._emittingFunction = null;
 		this._emittingStatementStack = new _StatementEmitter[];
 		this._enableRunTimeTypeCheck = true;
+
+		// headers
+		this._output += "// generatedy by JSX compiler " + Meta.IDENTIFIER + "\n";
+		this._output += this._fileHeader;
 	}
 
 	function isJsModule(classDef : ClassDefinition) : boolean {
@@ -2045,9 +2015,11 @@ class JavaScriptEmitter implements Emitter {
 	}
 
 	override function setOutputFile (name : Nullable.<string>) : void {
-		this._outputFile = name;
+		if (name == null) return;
 
-		if(this._enableSourceMap && name != null) {
+		this._outputFile = Util.resolvePath(name);
+
+		if(this._enableSourceMap) {
 			// FIXME: set correct sourceRoot
 			var sourceRoot = null : Nullable.<string>;
 			this._sourceMapper = new SourceMapper(name, sourceRoot);
@@ -2090,7 +2062,7 @@ class JavaScriptEmitter implements Emitter {
 		for (var i = 0; i < classDefs.length; ++i) {
 			classDefs[i].forEachMemberFunction(function onFuncDef(funcDef : MemberFunctionDefinition) : boolean {
 				funcDef.forEachClosure(onFuncDef);
-				_Util.setupBooleanizeFlags(funcDef);
+				this._setupBooleanizeFlags(funcDef);
 				return true;
 			});
 		}
@@ -2102,6 +2074,65 @@ class JavaScriptEmitter implements Emitter {
 			this._emitStaticInitializationCode(classDefs[i]);
 		this._emitClassMap(classDefs);
 	}
+
+	// reuse of optimizer stash
+	function getStash (stashable : Stashable) : _JSEmitterStash {
+		var stash = stashable.getOptimizerStash();
+		if (stash["jsemitter"] == null) {
+			stash["jsemitter"] = new _JSEmitterStash;
+		}
+		return stash["jsemitter"] as _JSEmitterStash;
+	}
+
+	function _setupBooleanizeFlags (funcDef : MemberFunctionDefinition) : void {
+		var exprReturnsBoolean = function (expr : Expression) : boolean {
+			if (expr instanceof LogicalExpression) {
+				return this.getStash(expr).returnsBoolean;
+			} else {
+				return expr.getType().equals(Type.booleanType);
+			}
+		};
+		funcDef.forEachStatement(function onStatement(statement : Statement) : boolean {
+			var parentExpr = new Expression[]; // [0] is stack top
+			statement.forEachExpression(function onExpr(expr : Expression) : boolean {
+				// handle children
+				parentExpr.unshift(expr);
+				expr.forEachExpression(onExpr);
+				parentExpr.shift();
+				// check
+				if (expr instanceof LogicalExpression) {
+					var shouldBooleanize = true;
+					var returnsBoolean = false;
+					if (exprReturnsBoolean((expr as LogicalExpression).getFirstExpr()) && exprReturnsBoolean((expr as LogicalExpression).getSecondExpr())) {
+						returnsBoolean = true;
+						shouldBooleanize = false;
+					} else if (parentExpr.length == 0) {
+						if (statement instanceof ExpressionStatement
+							|| statement instanceof IfStatement
+							|| statement instanceof DoWhileStatement
+							|| statement instanceof WhileStatement
+							|| statement instanceof ForStatement) {
+							shouldBooleanize = false;
+						}
+					} else if (parentExpr[0] instanceof LogicalExpression
+						|| parentExpr[0] instanceof LogicalNotExpression) {
+						shouldBooleanize = false;
+					} else if (parentExpr[0] instanceof ConditionalExpression && (parentExpr[0] as ConditionalExpression).getCondExpr() == expr) {
+						shouldBooleanize = false;
+					}
+					this.getStash(expr).shouldBooleanize = shouldBooleanize;
+					this.getStash(expr).returnsBoolean   = returnsBoolean;
+				}
+				return true;
+			});
+			return statement.forEachStatement(onStatement);
+		});
+	}
+
+	function shouldBooleanize (logicalExpr : Expression) : boolean {
+		return this.getStash(logicalExpr).shouldBooleanize;
+	}
+
 
 	function _emitClassDefinition (classDef : ClassDefinition) : void {
 		this._emittingClass = classDef;
@@ -2221,6 +2252,7 @@ class JavaScriptEmitter implements Emitter {
 	}
 
 	override function getOutput (sourceFile : string, entryPoint : Nullable.<string>, executableFor : Nullable.<string>) : string {
+		// do not add any lines before this._output for source-map
 		var output = this._output + "\n";
 		if (this._enableProfiler) {
 			output += this._platform.load(this._platform.getRoot() + "/src/js/profiler.js");
@@ -2228,7 +2260,7 @@ class JavaScriptEmitter implements Emitter {
 		if (entryPoint != null) {
 			output = this._platform.addLauncher(this, this._encodeFilename(sourceFile, "system:"), output, entryPoint, executableFor);
 		}
-		output += "})();\n";
+		output += this._fileFooter;
 		if (this._sourceMapper) {
 			output += this._sourceMapper.magicToken();
 		}
@@ -2247,8 +2279,9 @@ class JavaScriptEmitter implements Emitter {
 			"}\n" +
 			"\n",
 			classDef.getToken());
-		if (classDef.extendType() != null)
+		if (classDef.extendType() != null && classDef.extendType().getClassDef().getOutputClassName() != "Object") {
 			this._emit(classDef.getOutputClassName() + ".prototype = new " + classDef.extendType().getClassDef().getOutputClassName() + ";\n", null);
+		}
 		var implementTypes = classDef.implementTypes();
 		if (implementTypes.length != 0) {
 			for (var i = 0; i < implementTypes.length; ++i)
@@ -2286,7 +2319,7 @@ class JavaScriptEmitter implements Emitter {
 		// emit
 		this._emit("/**\n", null);
 		this._emitFunctionArgumentAnnotations(funcDef);
-		this._emit(_Util.buildAnnotation(" * @return {%1}\n", funcDef.getReturnType()), null);
+		this._emit(_TypeAnnotation.build(" * @return {%1}\n", funcDef.getReturnType()), null);
 		this._emit(" */\n", null);
 		this._emit(className + ".", null);
 		if ((funcDef.flags() & ClassDefinition.IS_STATIC) == 0)
@@ -2306,7 +2339,7 @@ class JavaScriptEmitter implements Emitter {
 	function _emitFunctionArgumentAnnotations (funcDef : MemberFunctionDefinition) : void {
 		var args = funcDef.getArguments();
 		for (var i = 0; i < args.length; ++i)
-			this._emit(_Util.buildAnnotation(" * @param {%1} " + args[i].getName().getValue() + "\n", args[i].getType()), null);
+			this._emit(_TypeAnnotation.build(" * @param {%1} " + args[i].getName().getValue() + "\n", args[i].getType()), null);
 	}
 
 	function _emitFunctionArguments (funcDef : MemberFunctionDefinition) : void {
@@ -2327,19 +2360,7 @@ class JavaScriptEmitter implements Emitter {
 			if (this._enableProfiler) {
 				this._emit(
 					"var $__jsx_profiler_ctx = $__jsx_profiler.enter("
-					+ Util.encodeStringLiteral(
-						(funcDef.getClassDef() != null ? funcDef.getClassDef().className() : "<<unnamed>>")
-						+ ((funcDef.flags() & ClassDefinition.IS_STATIC) != 0 ? "." : "#")
-						+ (funcDef.getNameToken() != null ? funcDef.name() : "line_" + funcDef.getToken().getLineNumber() as string)
-						+ "("
-						+ function () : string {
-							var r = new string[];
-							funcDef.getArgumentTypes().forEach(function (argType) {
-								r.push(":" + argType.toString());
-							});
-							return r.join(", ");
-						}()
-						+ ")")
+					+ Util.encodeStringLiteral(funcDef.getNotation())
 					+ ");\n",
 					null);
 			}
@@ -2359,7 +2380,7 @@ class JavaScriptEmitter implements Emitter {
 				var type = locals[i].getType();
 				if (type == null)
 					continue;
-				this._emit(_Util.buildAnnotation("/** @type {%1} */\n", type), null);
+				this._emit(_TypeAnnotation.build("/** @type {%1} */\n", type), null);
 				var name = locals[i].getName();
 				// do not pass the token for declaration
 				this._emit("var " + name.getValue() + ";\n", null);
@@ -2716,9 +2737,9 @@ class JavaScriptEmitter implements Emitter {
 		this._emit(")) {\n", null);
 		this._advanceIndent();
 		this._emit("debugger;\n", null);
-		// FIXME make the expression source and throw a fit exception class
-		var err = Util.format('throw new Error("[%1:%2] %3");\n', [token.getFilename(), token.getLineNumber() as string, message]);
-		this._emit(err, null);
+		var s = Util.makeErrorMessage(this._platform, message, token.getFilename(), token.getLineNumber(), token.getColumnNumber(), token.getValue().length);
+		var err = Util.format('throw new Error(%1);\n', [Util.encodeStringLiteral(s)]);
+		this._emit(err, token);
 		this._reduceIndent();
 		this._emit("}\n", null);
 	}
@@ -2777,7 +2798,13 @@ class JavaScriptEmitter implements Emitter {
 		}
 	}
 
-	static function initialize () : void {
+	static var _initialized = false;
+	static function _initialize () : void {
+		if (JavaScriptEmitter._initialized) {
+			return;
+		}
+		JavaScriptEmitter._initialized = true;
+
 		var precedence = [
 			[
 				{ "new":        function (op : string, precedence : number) : void { _NewExpressionEmitter._setOperatorPrecedence(op, precedence); } },

@@ -27,7 +27,6 @@ import "./expression.jsx";
 import "./parser.jsx";
 import "./doc.jsx";
 import "./optimizer.jsx";
-import "console.jsx";
 
 class InstantiationContext {
 
@@ -43,9 +42,9 @@ class InstantiationContext {
 
 }
 
-class _Util {
+mixin TemplateDefinition {
 
-	static function buildInstantiationContext (errors : CompileError[], token : Token, formalTypeArgs : Token[], actualTypeArgs : Type[]) : InstantiationContext {
+	function buildInstantiationContext (errors : CompileError[], token : Token, formalTypeArgs : Token[], actualTypeArgs : Type[]) : InstantiationContext {
 		// check number of type arguments
 		if (formalTypeArgs.length != actualTypeArgs.length) {
 			errors.push(new CompileError(token, "wrong number of template arguments (expected " + formalTypeArgs.length as string + ", got " + actualTypeArgs.length as string));
@@ -113,7 +112,7 @@ class AnalysisContext {
 		this.statement = null;
 	}
 
-	function clone () : Object {
+	function clone () : AnalysisContext {
 		// NOTE: does not clone the blockStack (call setBlockStack)
 		return new AnalysisContext(this.errors, this.parser, this.postInstantiationCallback).setFuncDef(this.funcDef);
 	}
@@ -451,7 +450,9 @@ class ClassDefinition implements Stashable {
 			this._analyzeClassDef(context);
 		} catch (e : Error) {
 			var token = this.getToken();
-			console.error("fatal error while analyzing class " + this.className());
+			var srcPos = token != null ? Util.format(" at file %1, line %2", [token.getFilename(), token.getLineNumber() as string]) : "";
+			e.message = Util.format("fatal error while analyzing class %1%2\n%3", [this.className(), srcPos, e.message]);
+
 			throw e;
 		}
 		this._analyzeMemberFunctions(context);
@@ -529,7 +530,7 @@ class ClassDefinition implements Stashable {
 			for (var i = 0; i < this._members.length; ++i)
 				if (this._members[i] instanceof MemberFunctionDefinition && (this._members[i].flags() & ClassDefinition.IS_OVERRIDE) != 0)
 					if (this._assertFunctionIsOverridableInBaseClasses(context, this._members[i] as MemberFunctionDefinition) == null)
-						context.errors.push(new CompileError(this._members[i].getToken(), "could not find function definition in base classes / mixins to be overridden"));
+						context.errors.push(new CompileError(this._members[i].getNameToken(), "could not find function definition in base classes / mixins to be overridden"));
 			for (var i = 0; i < this._implementTypes.length; ++i) {
 				if ((this._implementTypes[i].getClassDef().flags() & ClassDefinition.IS_MIXIN) == 0)
 					continue;
@@ -547,7 +548,7 @@ class ClassDefinition implements Stashable {
 						}
 					}
 					if (! done)
-						context.errors.push(new CompileError(this.getToken(), "could not find function definition to be overridden by '" + overrideFunctions[j].getClassDef().className() + "#" + overrideFunctions[j].name() + "'"));
+						context.errors.push(new CompileError(this.getToken(), "could not find function definition to be overridden by '" + overrideFunctions[j].getNotation() + "'"));
 				}
 			}
 		}
@@ -590,7 +591,7 @@ class ClassDefinition implements Stashable {
 				for (var i = 0; i < abstractMembers.length; ++i) {
 					if (i != 0)
 						msg += ", ";
-					msg += abstractMembers[i].getClassDef().className() + "#" + abstractMembers[i].name();
+					msg += abstractMembers[i].getNotation();
 				}
 				context.errors.push(new CompileError(this.getToken(), msg));
 			}
@@ -659,11 +660,11 @@ class ClassDefinition implements Stashable {
 		for (var i = 0; i < this._members.length; ++i) {
 			if (this._members[i].name() == member.name()) {
 				if ((this._members[i].flags() & ClassDefinition.IS_ABSTRACT) == 0) {
-					context.errors.push(new CompileError(token, "cannot define property '" + memberClassDef.className() + "#" + member.name() + "', the name is already used in '" + this.className() + "'"));
+					context.errors.push(new CompileError(member.getNameToken(), Util.format("cannot define property '%1', the name is already used in class '%2'", [member.getNotation(), this.className()])));
 					return false;
 				}
 				if (! this._members[i].getType().equals(member.getType())) {
-					context.errors.push(new CompileError(token, "cannot override property '" + this.className() + "#" + member.name() + "' of type '" + this._members[i].getType().toString() + "' in class '" + memberClassDef.className() + "' with different type '" + member.getType().toString() + "'"));
+					context.errors.push(new CompileError(member.getNameToken(), Util.format("cannot override property '%1' of type '%2' with different type '%3'", [member.getNotation(), this._members[i].getType().toString(), member.getType().toString() ])));
 					return false;
 				}
 			}
@@ -684,17 +685,16 @@ class ClassDefinition implements Stashable {
 				continue;
 			// property with the same name has been found, we can tell yes or no now
 			if (this._members[i] instanceof MemberVariableDefinition) {
-				context.errors.push(new CompileError(token, "cannot define property '" + memberClassDef.className() + "#" + member.name() + "', the name is already used in '" + this.className() + "'"));
-				return false;
+				throw new Error("logic flaw: " + member.getNotation());
 			}
 			if (! Util.typesAreEqual((this._members[i] as MemberFunctionDefinition).getArgumentTypes(), member.getArgumentTypes()))
 				continue;
 			if ((member.flags() & ClassDefinition.IS_OVERRIDE) == 0) {
-				context.errors.push(new CompileError(member.getToken(), "overriding functions must have 'override' attribute set (defined in base class '" + this.className() + "')"));
+				context.errors.push(new CompileError(member.getNameToken(), "overriding functions must have 'override' attribute set (defined in base class '" + this.className() + "')"));
 				return false;
 			}
 			if (reportOverridesAsWell && (this._members[i].flags() & ClassDefinition.IS_OVERRIDE) != 0) {
-				context.errors.push(new CompileError(member.getToken(), "definition of the function conflicts with sibling mix-in '" + this.className() + "'"));
+				context.errors.push(new CompileError(member.getNameToken(), "definition of the function conflicts with sibling mix-in '" + this.className() + "'"));
 				return false;
 			}
 			// assertion of function being overridden does not have 'final' attribute is done by assertFunctionIsOverridable
@@ -859,6 +859,7 @@ abstract class MemberDefinition implements Stashable {
 		this._classDef = classDef;
 	}
 
+	abstract function getNotation() : string;
 }
 
 class MemberVariableDefinition extends MemberDefinition {
@@ -907,7 +908,7 @@ class MemberVariableDefinition extends MemberDefinition {
 	}
 
 	function setAnalysisContext (context : AnalysisContext) : void {
-		this._analysisContext = context.clone() as AnalysisContext;
+		this._analysisContext = context.clone();
 	}
 
 	override function getType () : Type {
@@ -937,7 +938,7 @@ class MemberVariableDefinition extends MemberDefinition {
 			}
 			break;
 		case MemberVariableDefinition.IS_ANALYZING:
-			this._analysisContext.errors.push(new CompileError(this._token,
+			this._analysisContext.errors.push(new CompileError(this.getNameToken(),
 				"please declare type of variable '" + this.name() + "' (detected recursion while trying to reduce type)"));
 			break;
 		default:
@@ -954,6 +955,13 @@ class MemberVariableDefinition extends MemberDefinition {
 		this._initialValue = initialValue;
 	}
 
+	override function getNotation() : string {
+		var classDef = this.getClassDef();
+		var s = (classDef != null ? classDef.className(): "<<unknown>>");
+		s += (this.flags() & ClassDefinition.IS_STATIC) != 0 ? "." : "#";
+		s += this.name();
+		return s;
+	}
 }
 
 class MemberFunctionDefinition extends MemberDefinition implements Block {
@@ -982,6 +990,27 @@ class MemberFunctionDefinition extends MemberDefinition implements Block {
 		}
 	}
 
+	function isAnonymous() : boolean { // for anonymous function expression
+		return this._nameToken == null;
+	}
+
+
+	/**
+	 * Returns a simple notation of the function like "Class.classMethod(:string):void" or "Class.instanceMethod(:string):void".
+	 */
+	override function getNotation() : string {
+		var classDef = this.getClassDef();
+		var s = (classDef != null ? classDef.className(): "<<unknown>>");
+		s += (this.flags() & ClassDefinition.IS_STATIC) != 0 ? "." : "#";
+		s += this.getNameToken() != null ? this.name() : "$" +  this.getToken().getLineNumber()  as string + "_" + this.getToken().getColumnNumber() as string;
+		s += "(";
+		s += this._args.map.<string>(function (arg) {
+				return ":" + arg.getType().toString();
+			}).join(",");
+		s += ")";
+		return s;
+	}
+
 	override function toString () : string {
 		var argsText = this._args.map.<string>(function (arg) {
 				return arg.getName().getValue() + " : " + arg.getType().toString();
@@ -991,6 +1020,7 @@ class MemberFunctionDefinition extends MemberDefinition implements Block {
 			"(" + argsText + ") : " +
 			this._returnType.toString();
 	}
+
 
 	override function instantiate (instantiationContext : InstantiationContext) : MemberFunctionDefinition {
 		return this._instantiateCore(
@@ -1129,12 +1159,15 @@ class MemberFunctionDefinition extends MemberDefinition implements Block {
 			return;
 
 		// setup context
-		var context = (outerContext.clone() as AnalysisContext).setFuncDef(this);
+		var context = outerContext.clone().setFuncDef(this);
 		if (this._parent == null) {
 			context.setBlockStack([ new BlockContext(new LocalVariableStatuses(this, null), this) ]);
 		} else {
 			context.setBlockStack(outerContext.blockStack);
 			context.blockStack.push(new BlockContext(new LocalVariableStatuses(this, outerContext.getTopBlock().localVariableStatuses), this));
+			if (! this.isAnonymous()) { // named function expr
+				context.getTopBlock().localVariableStatuses._statuses[this.name()] = LocalVariableStatuses.ISSET;
+			}
 		}
 
 		try {
@@ -1395,7 +1428,7 @@ class InstantiatedMemberFunctionDefinition extends MemberFunctionDefinition {
 
 }
 
-class TemplateFunctionDefinition extends MemberFunctionDefinition {
+class TemplateFunctionDefinition extends MemberFunctionDefinition implements TemplateDefinition {
 
 	var _typeArgs : Token[];
 	var _resolvedTypemap : Map.<Type>;
@@ -1439,7 +1472,7 @@ class TemplateFunctionDefinition extends MemberFunctionDefinition {
 			return instantiated;
 		}
 		// instantiate
-		var instantiationContext = _Util.buildInstantiationContext(errors, token, this._typeArgs, typeArgs);
+		var instantiationContext = this.buildInstantiationContext(errors, token, this._typeArgs, typeArgs);
 		if (instantiationContext == null) {
 			return null;
 		}
@@ -1462,7 +1495,7 @@ class TemplateFunctionDefinition extends MemberFunctionDefinition {
 			instantiationContext.objectTypesUsed[i].resolveType(analysisContext);
 		instantiated.analyze(analysisContext);
 		// register, and return
-		this._instantiatedDefs.put(typeArgs.concat(new Type[]), instantiated);
+		this._instantiatedDefs.set(typeArgs.concat(new Type[]), instantiated);
 		return instantiated;
 	}
 
@@ -1588,7 +1621,7 @@ class ArgumentDeclaration extends LocalVariable {
 		super(name, type);
 	}
 
-	function clone () : Object {
+	function clone () : ArgumentDeclaration {
 		return new ArgumentDeclaration(this._name, this._type);
 	}
 
@@ -1672,7 +1705,7 @@ class LocalVariableStatuses {
 
 }
 
-class TemplateClassDefinition extends ClassDefinition {
+class TemplateClassDefinition extends ClassDefinition implements TemplateDefinition {
 
 	var _typeArgs : Token[];
 
@@ -1713,7 +1746,7 @@ class TemplateClassDefinition extends ClassDefinition {
 
 	function instantiate (errors : CompileError[], request : TemplateInstantiationRequest) : InstantiatedClassDefinition {
 		// prepare
-		var instantiationContext = _Util.buildInstantiationContext(errors, request.getToken(), this._typeArgs, request.getTypeArguments());
+		var instantiationContext = this.buildInstantiationContext(errors, request.getToken(), this._typeArgs, request.getTypeArguments());
 		if (instantiationContext == null) {
 			return null;
 		}

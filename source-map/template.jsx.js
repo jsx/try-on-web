@@ -108,29 +108,65 @@ _Main$.prototype = new _Main;
  * @param {Array.<undefined|!string>} args
  */
 _Main.main$AS = function (args) {
-	/** @type {!number} */
-	var i;
-	for (i = 1; i <= 100; ++ i) {
-		if (i % 15 === 0) {
-			console.log("FizzBuzz");
-		} else {
-			if (i % 3 === 0) {
-				console.log("Fizz");
-			} else {
-				if (i % 5 === 0) {
-					console.log("Buzz");
-				} else {
-					console.log(i);
-				}
-			}
-		}
-	}
+	/** @type {Queue$string$E} */
+	var queue;
+	queue = new Queue$string$E$();
+	queue.enqueue$S("foo");
+	queue.enqueue$S("bar");
+	console.log(queue.dequeue$());
+	console.log(queue.dequeue$());
 };
 
 var _Main$main$AS = _Main.main$AS;
 
+/**
+ * class Queue$string$E extends Object
+ * @constructor
+ */
+function Queue$string$E() {
+}
+
+/**
+ * @constructor
+ */
+function Queue$string$E$() {
+	this._buf = [];
+};
+
+Queue$string$E$.prototype = new Queue$string$E;
+
+/**
+ * @param {!string} value
+ */
+Queue$string$E.prototype.enqueue$S = function (value) {
+	this._buf.push(value);
+};
+
+/**
+ * @return {!string}
+ */
+Queue$string$E.prototype.dequeue$ = function () {
+	if (this.isEmpty$()) {
+		throw new Error("empty queue");
+	}
+	return (function (v) {
+		if (! (v != null)) {
+			debugger;
+			throw new Error("[/Users/gfx/repo/try-on-web/JSX/example/template.jsx:18:26] null access\n    return this._buf.shift();\n                          ^\n");
+		}
+		return v;
+	}(this._buf.shift()));
+};
+
+/**
+ * @return {!boolean}
+ */
+Queue$string$E.prototype.isEmpty$ = function () {
+	return this._buf.length === 0;
+};
+
 var $__jsx_classMap = {
-	"system:example/fizzbuzz.jsx": {
+	"system:example/template.jsx": {
 		_Main: _Main,
 		_Main$: _Main$
 	}
@@ -203,7 +239,7 @@ JSX.runTests = function (sourceFile, tests) {
 function $__jsx_onload (event) {
 	window.removeEventListener("load", $__jsx_onload);
 	document.removeEventListener("DOMContentLoaded", $__jsx_onload);
-	JSX.runMain("system:example/fizzbuzz.jsx", [])
+	JSX.runMain("system:example/template.jsx", [])
 }
 
 window.addEventListener("load", $__jsx_onload);
@@ -211,4 +247,4 @@ document.addEventListener("DOMContentLoaded", $__jsx_onload);
 
 })(JSX);
 
-//@ sourceMappingURL=fizzbuzz.jsx.js.mapping
+//@ sourceMappingURL=template.jsx.js.mapping

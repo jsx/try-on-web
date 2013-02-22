@@ -1,4 +1,4 @@
-// generatedy by JSX compiler 0.9.5 (2013-02-12 10:13:11 +0900; 3afedeed551a60eb5993ed7c28986ef77fa42878)
+// generatedy by JSX compiler 0.9.10 (2013-02-22 10:32:37 +0900; b6d8c560c5cbfa9820cf8415872d97185e916b1c)
 var JSX = {};
 (function (JSX) {
 /**
@@ -449,14 +449,13 @@ var $__jsx_classMap = {
 JSX.runMain = function (sourceFile, args) {
 	var module = JSX.require(sourceFile);
 	if (! module) {
-		throw new Error("entry point module not found in " + sourceFile);
+		throw new ReferenceError("entry point module not found in " + sourceFile);
 	}
-
 	if (! module._Main) {
-		throw new Error("entry point _Main not found in " + sourceFile);
+		throw new ReferenceError("entry point _Main not found in " + sourceFile);
 	}
 	if (! module._Main.main$AS) {
-		throw new Error("entry point _Main.main(:string[]):void not found in " + sourceFile);
+		throw new ReferenceError("entry point _Main.main(:string[]):void not found in " + sourceFile);
 	}
 	module._Main.main$AS(args);
 };

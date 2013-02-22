@@ -287,8 +287,12 @@ class Util {
 
 	static function _resolvedPathParts(path : string) : string[] {
 		var tokens = path.split(/[\\\/]+/);
+		if (tokens.length == 1) {
+			return tokens;
+		}
+
 		for (var i = 0; i < tokens.length;) {
-			if (i != 0 && tokens[i] == ".") {
+			if (tokens[i] == ".") {
 				tokens.splice(i, 1);
 			} else if (tokens[i] == ".." && i != 0 && tokens[i - 1] != "..") {
 				tokens.splice(i - 1, 2);
@@ -340,6 +344,17 @@ class Util {
 			pathParts.push("..");
 		}
 		return pathParts.concat(t.slice(samePartsIndex)).join("/");
+	}
+
+	static function basename(path : string) : string {
+		var parts = Util._resolvedPathParts(path);
+		return parts.pop();
+	}
+
+	static function dirname(path : string) : string {
+		var parts = Util._resolvedPathParts(path);
+		parts.pop();
+		return parts.join("/");
 	}
 
 	static function toOrdinal(n : number) : string {

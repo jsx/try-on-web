@@ -197,11 +197,11 @@ class ClassDefinition implements Stashable {
 		} : Map.<variant>;
 	}
 
-	static function serialize (classDefs : ClassDefinition[]) : string {
+	static function serialize (classDefs : ClassDefinition[]) : variant {
 		var s = new variant[];
 		for (var i = 0; i < classDefs.length; ++i)
 			s[i] = classDefs[i].serialize();
-		return JSON.stringify(s, null, 2);
+		return s;
 	}
 
 	function getParser () : Parser {

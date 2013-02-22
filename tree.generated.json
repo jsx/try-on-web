@@ -143,11 +143,14 @@
       "import.jsx" : "source-map/import.jsx",
       "hello.jsx.js.mapping" : "source-map/hello.jsx.js.mapping",
       "add.jsx.js" : "source-map/add.jsx.js",
+      "template.jsx" : "source-map/template.jsx",
       "point.jsx.js.mapping" : "source-map/point.jsx.js.mapping",
       "fib.jsx.js" : "source-map/fib.jsx.js",
+      "template.jsx.js.mapping" : "source-map/template.jsx.js.mapping",
       "flying-being.jsx" : "source-map/flying-being.jsx",
       "hello.jsx.js" : "source-map/hello.jsx.js",
-      "timers.jsx.js" : "source-map/timers.jsx.js"
+      "timers.jsx.js" : "source-map/timers.jsx.js",
+      "template.jsx.js" : "source-map/template.jsx.js"
    },
    "assets" : {
       "css" : {
@@ -394,6 +397,7 @@
          "168.local-function-declaration.jsx" : "t/run/168.local-function-declaration.jsx",
          "136.maybeundefined-as-obj.jsx" : "t/run/136.maybeundefined-as-obj.jsx",
          "033.many-class.jsx" : "t/run/033.many-class.jsx",
+         "231.utf8-literals.jsx" : "t/run/231.utf8-literals.jsx",
          "175.T-of-ArrayT-should-never-be-maybeundef.jsx" : "t/run/175.T-of-ArrayT-should-never-be-maybeundef.jsx",
          "127.base-prop-for-maybeundefined.jsx" : "t/run/127.base-prop-for-maybeundefined.jsx",
          "137.same-pred-op-with-parens.jsx" : "t/run/137.same-pred-op-with-parens.jsx",
@@ -772,6 +776,7 @@
          "017.lto-finalize-class.jsx" : "t/optimize/017.lto-finalize-class.jsx",
          "018.lto-finalize-func.jsx" : "t/optimize/018.lto-finalize-func.jsx",
          "001.no-assert.jsx" : "t/optimize/001.no-assert.jsx",
+         "040.inline-complex-arg.todo.jsx" : "t/optimize/040.inline-complex-arg.todo.jsx",
          "008.inline-simple-that.jsx" : "t/optimize/008.inline-simple-that.jsx",
          "014.fold-const-propagate-bitops.jsx" : "t/optimize/014.fold-const-propagate-bitops.jsx",
          "030.unbox-with-func-expr.jsx" : "t/optimize/030.unbox-with-func-expr.jsx",

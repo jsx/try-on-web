@@ -33,11 +33,6 @@
         padding: 9px 0;
       }
 
-      .CodeMirror-scroll {
-        height: 30em;
-        width:  28em;
-      }
-
       #source-list {
           max-height: 340px;
           overflow-y: scroll;
@@ -89,7 +84,17 @@
         <div class="span2" id="source-list">
           <div class="well sidebar-nav">
             <ul class="nav nav-list">
-              <li id="t-run" class="nav-header">t/run</li>
+              <li id="example" class="nav-header">example</li>
+<li class="source-file"><a href="source-map/add.jsx" data-path="source-map/add.jsx">add.jsx</a></li>
+<li class="source-file"><a href="source-map/fib.jsx" data-path="source-map/fib.jsx">fib.jsx</a></li>
+<li class="source-file"><a href="source-map/fizzbuzz.jsx" data-path="source-map/fizzbuzz.jsx">fizzbuzz.jsx</a></li>
+<li class="source-file"><a href="source-map/flying-being.jsx" data-path="source-map/flying-being.jsx">flying-being.jsx</a></li>
+<li class="source-file"><a href="source-map/hello.jsx" data-path="source-map/hello.jsx">hello.jsx</a></li>
+<li class="source-file"><a href="source-map/import.jsx" data-path="source-map/import.jsx">import.jsx</a></li>
+<li class="source-file"><a href="source-map/point.jsx" data-path="source-map/point.jsx">point.jsx</a></li>
+<li class="source-file"><a href="source-map/template.jsx" data-path="source-map/template.jsx">template.jsx</a></li>
+<li class="source-file"><a href="source-map/timers.jsx" data-path="source-map/timers.jsx">timers.jsx</a></li>
+<li id="t-run" class="nav-header">t/run</li>
 <li class="source-file"><a href="t/run/001.hello.jsx" data-path="t/run/001.hello.jsx">001.hello.jsx</a></li>
 <li class="source-file"><a href="t/run/002.increment.jsx" data-path="t/run/002.increment.jsx">002.increment.jsx</a></li>
 <li class="source-file"><a href="t/run/003.binaryops.jsx" data-path="t/run/003.binaryops.jsx">003.binaryops.jsx</a></li>
@@ -324,6 +329,9 @@
 <li class="source-file"><a href="t/run/230.test-case-module.jsx" data-path="t/run/230.test-case-module.jsx">230.test-case-module.jsx</a></li>
 <li class="source-file"><a href="t/run/231.utf8-literals.jsx" data-path="t/run/231.utf8-literals.jsx">231.utf8-literals.jsx</a></li>
 <li class="source-file"><a href="t/run/232.assing-func-to-variant.jsx" data-path="t/run/232.assing-func-to-variant.jsx">232.assing-func-to-variant.jsx</a></li>
+<li class="source-file"><a href="t/run/233.issue118-1.jsx" data-path="t/run/233.issue118-1.jsx">233.issue118-1.jsx</a></li>
+<li class="source-file"><a href="t/run/234.issue118-2.jsx" data-path="t/run/234.issue118-2.jsx">234.issue118-2.jsx</a></li>
+<li class="source-file"><a href="t/run/235.member-init-with-named-func.jsx" data-path="t/run/235.member-init-with-named-func.jsx">235.member-init-with-named-func.jsx</a></li>
 <li id="t-lib" class="nav-header">t/lib</li>
 <li class="source-file"><a href="t/lib/001.hello.jsx" data-path="t/lib/001.hello.jsx">001.hello.jsx</a></li>
 <li class="source-file"><a href="t/lib/002.timer.jsx" data-path="t/lib/002.timer.jsx">002.timer.jsx</a></li>
@@ -494,7 +502,6 @@
 <li class="source-file"><a href="t/compile_error/156.unreachable-catch.jsx" data-path="t/compile_error/156.unreachable-catch.jsx">156.unreachable-catch.jsx</a></li>
 <li class="source-file"><a href="t/compile_error/157.compile-note.jsx" data-path="t/compile_error/157.compile-note.jsx">157.compile-note.jsx</a></li>
 <li class="source-file"><a href="t/compile_error/157.funciton-expression-name.jsx" data-path="t/compile_error/157.funciton-expression-name.jsx">157.funciton-expression-name.jsx</a></li>
-<li class="source-file"><a href="t/compile_error/158.named-func-expr-outside-of-func.jsx" data-path="t/compile_error/158.named-func-expr-outside-of-func.jsx">158.named-func-expr-outside-of-func.jsx</a></li>
 <li class="source-file"><a href="t/compile_error/159.issue84.jsx" data-path="t/compile_error/159.issue84.jsx">159.issue84.jsx</a></li>
 <li class="source-file"><a href="t/compile_error/160.empty-literal-type-deduction.jsx" data-path="t/compile_error/160.empty-literal-type-deduction.jsx">160.empty-literal-type-deduction.jsx</a></li>
 
@@ -502,10 +509,10 @@
           </div><!--/.well -->
         </div><!--/span-->
         <div class="row">
-          <div class="span5">
+          <div class="span6">
             <textarea data-path="input" id="input">// write source code here</textarea>
           </div>
-          <div class="span5">
+          <div class="span3">
             <textarea id="output"></textarea>
           </div>
         </div><!--/span-->

@@ -743,18 +743,24 @@ class ThisExpression extends Expression {
 
 class FunctionExpression extends Expression {
 
+	var _funcName : LocalVariable;
 	var _funcDef : MemberFunctionDefinition;
 	var _isStatement : boolean;
 
-	function constructor (token : Token, funcDef : MemberFunctionDefinition, isStatement : boolean) {
+	function constructor (token : Token, funcName : LocalVariable, funcDef : MemberFunctionDefinition, isStatement : boolean) {
 		super(token);
+		this._funcName = funcName;
 		this._funcDef = funcDef;
 		this._isStatement = isStatement;
 	}
 
 	override function clone () : FunctionExpression {
 		// NOTE: funcDef is not cloned, but is later replaced in MemberFunctionDefitition#instantiate
-		return new FunctionExpression(this._token, this._funcDef, this._isStatement);
+		return new FunctionExpression(this._token, this._funcName, this._funcDef, this._isStatement);
+	}
+
+	function getFuncName () : LocalVariable {
+		return this._funcName;
 	}
 
 	function getFuncDef () : MemberFunctionDefinition {
@@ -800,6 +806,20 @@ class FunctionExpression extends Expression {
 		}
 		if (this._funcDef.getReturnType() == null)
 			return false;
+		return true;
+	}
+
+	function deductTypeIfUnknown (context : AnalysisContext, type : ResolvedFunctionType) : boolean {
+		if (! this._funcDef.deductTypeIfUnknown(context, type))
+			return false;
+		if (this._funcName != null) {
+			if (this._funcName.getType() != null) {
+				if (! this._funcName.getType().equals(this._funcDef.getType()))
+					throw new Error("unmatched type for local function: " + this._funcName.getName().getValue());
+			} else {
+				this._funcName.setType(this._funcDef.getType());
+			}
+		}
 		return true;
 	}
 
@@ -1455,6 +1475,7 @@ class ArrayExpression extends BinaryExpression {
 
 	function _analyzeApplicationOnObject (context : AnalysisContext, expr1Type : Type) : boolean {
 		var expr1ClassDef = expr1Type.getClassDef();
+		assert expr1ClassDef;
 		// obtain type of operator []
 		var funcType = expr1ClassDef.getMemberTypeByName(context.errors, this._token, "__native_index_operator__", false, new Type[], ClassDefinition.GET_MEMBER_MODE_ALL) as FunctionType;
 		if (funcType == null) {
@@ -1574,7 +1595,7 @@ class AssignmentExpression extends BinaryExpression {
 			}
 		}
 		else if (! this._expr1.getType().equals(Type.variantType)) {
-			if (! (this._expr2 as FunctionExpression).getFuncDef().deductTypeIfUnknown(context, this._expr1.getType() as ResolvedFunctionType)) {
+			if (! (this._expr2 as FunctionExpression).deductTypeIfUnknown(context, this._expr1.getType() as ResolvedFunctionType)) {
 				return false;
 			}
 		}

@@ -1,4 +1,4 @@
-// generatedy by JSX compiler 0.9.10 (2013-02-22 10:32:37 +0900; b6d8c560c5cbfa9820cf8415872d97185e916b1c)
+// generatedy by JSX compiler 0.9.10 (2013-02-26 02:11:58 +0900; 4204e74c10ddd693a462e609d43bb3d84fb5df66)
 var JSX = {};
 (function (JSX) {
 /**
@@ -11146,10 +11146,16 @@ Util.analyzeArgs$LAnalysisContext$ALExpression$LExpression$AALType$ = function (
 			if (j !== expectedTypes.length) {
 			} else {
 				if (expectedCallbackType != null) {
-					if (! funcDef.deductTypeIfUnknown$LAnalysisContext$LResolvedFunctionType$(context, (function (v) {
+					if (! (function (v) {
+						if (! (v == null || v instanceof FunctionExpression)) {
+							debugger;
+							throw new Error("[/Users/gfx/repo/try-on-web/JSX/src/util.jsx:115:35] detected invalid cast, value is not an instance of the designated type or null\n                    if (! (args[i] as FunctionExpression).deductTypeIfUnknown(context, expectedCallbackType as ResolvedFunctionType))\n                                   ^^\n");
+						}
+						return v;
+					}(args[i])).deductTypeIfUnknown$LAnalysisContext$LResolvedFunctionType$(context, (function (v) {
 						if (! (v == null || v instanceof ResolvedFunctionType)) {
 							debugger;
-							throw new Error("[/Users/gfx/repo/try-on-web/JSX/src/util.jsx:115:84] detected invalid cast, value is not an instance of the designated type or null\n                    if (! funcDef.deductTypeIfUnknown(context, expectedCallbackType as ResolvedFunctionType))\n                                                                                    ^^\n");
+							throw new Error("[/Users/gfx/repo/try-on-web/JSX/src/util.jsx:115:108] detected invalid cast, value is not an instance of the designated type or null\n                    if (! (args[i] as FunctionExpression).deductTypeIfUnknown(context, expectedCallbackType as ResolvedFunctionType))\n                                                                                                            ^^\n");
 						}
 						return v;
 					}(expectedCallbackType)))) {
@@ -19548,7 +19554,7 @@ Parser.prototype._lambdaExpr$LToken$ = function (token) {
 		return null;
 	}
 	this._closures.push(funcDef);
-	return new FunctionExpression$LToken$LMemberFunctionDefinition$B(token, funcDef, false);
+	return new FunctionExpression$LToken$LLocalVariable$LMemberFunctionDefinition$B(token, null, funcDef, false);
 };
 
 /**
@@ -19666,7 +19672,7 @@ Parser.prototype._functionExpr$LToken$B = function (token, isStatement) {
 	funcDef = new MemberFunctionDefinition$LToken$LToken$NLType$ALArgumentDeclaration$ALLocalVariable$ALStatement$ALMemberFunctionDefinition$LToken$LDocComment$(token, name, ClassDefinition.IS_STATIC, returnType, args, this._locals, this._statements, this._closures, lastToken, null);
 	this._popScope$();
 	this._closures.push(funcDef);
-	return new FunctionExpression$LToken$LMemberFunctionDefinition$B(token, funcDef, isStatement);
+	return new FunctionExpression$LToken$LLocalVariable$LMemberFunctionDefinition$B(token, funcName, funcDef, isStatement);
 };
 
 /**
@@ -26377,22 +26383,31 @@ FunctionExpression.prototype = new Expression;
 /**
  * @constructor
  * @param {Token} token
+ * @param {LocalVariable} funcName
  * @param {MemberFunctionDefinition} funcDef
  * @param {!boolean} isStatement
  */
-function FunctionExpression$LToken$LMemberFunctionDefinition$B(token, funcDef, isStatement) {
+function FunctionExpression$LToken$LLocalVariable$LMemberFunctionDefinition$B(token, funcName, funcDef, isStatement) {
 	Expression$LToken$.call(this, token);
+	this._funcName = funcName;
 	this._funcDef = funcDef;
 	this._isStatement = isStatement;
 };
 
-FunctionExpression$LToken$LMemberFunctionDefinition$B.prototype = new FunctionExpression;
+FunctionExpression$LToken$LLocalVariable$LMemberFunctionDefinition$B.prototype = new FunctionExpression;
 
 /**
  * @return {FunctionExpression}
  */
 FunctionExpression.prototype.clone$ = function () {
-	return new FunctionExpression$LToken$LMemberFunctionDefinition$B(this._token, this._funcDef, this._isStatement);
+	return new FunctionExpression$LToken$LLocalVariable$LMemberFunctionDefinition$B(this._token, this._funcName, this._funcDef, this._isStatement);
+};
+
+/**
+ * @return {LocalVariable}
+ */
+FunctionExpression.prototype.getFuncName$ = function () {
+	return this._funcName;
 };
 
 /**
@@ -26463,6 +26478,27 @@ FunctionExpression.prototype.typesAreIdentified$ = function () {
 	}
 	if (this._funcDef.getReturnType$() == null) {
 		return false;
+	}
+	return true;
+};
+
+/**
+ * @param {AnalysisContext} context
+ * @param {ResolvedFunctionType} type
+ * @return {!boolean}
+ */
+FunctionExpression.prototype.deductTypeIfUnknown$LAnalysisContext$LResolvedFunctionType$ = function (context, type) {
+	if (! this._funcDef.deductTypeIfUnknown$LAnalysisContext$LResolvedFunctionType$(context, type)) {
+		return false;
+	}
+	if (this._funcName != null) {
+		if (this._funcName.getType$() != null) {
+			if (! this._funcName.getType$().equals$LType$(this._funcDef.getType$())) {
+				throw new Error("unmatched type for local function: " + this._funcName.getName$().getValue$());
+			}
+		} else {
+			this._funcName.setType$LType$(this._funcDef.getType$());
+		}
 	}
 	return true;
 };
@@ -26743,13 +26779,13 @@ AsExpression.prototype.analyze$LAnalysisContext$LExpression$ = function (context
 						deducedType = (function (v) {
 							if (! (v == null || v instanceof PropertyExpression)) {
 								debugger;
-								throw new Error("[/Users/gfx/repo/try-on-web/JSX/src/expression.jsx:977:42] detected invalid cast, value is not an instance of the designated type or null\n            var deducedType = (this._expr as PropertyExpression).deduceByArgumentTypes(context, this._token, (this._type as StaticFunctionType).getArgumentTypes(), true);\n                                          ^^\n");
+								throw new Error("[/Users/gfx/repo/try-on-web/JSX/src/expression.jsx:997:42] detected invalid cast, value is not an instance of the designated type or null\n            var deducedType = (this._expr as PropertyExpression).deduceByArgumentTypes(context, this._token, (this._type as StaticFunctionType).getArgumentTypes(), true);\n                                          ^^\n");
 							}
 							return v;
 						}(this._expr)).deduceByArgumentTypes$LAnalysisContext$LToken$ALType$B(context, this._token, (function (v) {
 							if (! (v == null || v instanceof StaticFunctionType)) {
 								debugger;
-								throw new Error("[/Users/gfx/repo/try-on-web/JSX/src/expression.jsx:977:121] detected invalid cast, value is not an instance of the designated type or null\n            var deducedType = (this._expr as PropertyExpression).deduceByArgumentTypes(context, this._token, (this._type as StaticFunctionType).getArgumentTypes(), true);\n                                                                                                                         ^^\n");
+								throw new Error("[/Users/gfx/repo/try-on-web/JSX/src/expression.jsx:997:121] detected invalid cast, value is not an instance of the designated type or null\n            var deducedType = (this._expr as PropertyExpression).deduceByArgumentTypes(context, this._token, (this._type as StaticFunctionType).getArgumentTypes(), true);\n                                                                                                                         ^^\n");
 							}
 							return v;
 						}(this._type)).getArgumentTypes$(), true);
@@ -26758,7 +26794,7 @@ AsExpression.prototype.analyze$LAnalysisContext$LExpression$ = function (context
 							if (deducedType.getReturnType$().equals$LType$((function (v) {
 								if (! (v == null || v instanceof StaticFunctionType)) {
 									debugger;
-									throw new Error("[/Users/gfx/repo/try-on-web/JSX/src/expression.jsx:980:67] detected invalid cast, value is not an instance of the designated type or null\n                if (deducedType.getReturnType().equals((this._type as StaticFunctionType).getReturnType())) {\n                                                                   ^^\n");
+									throw new Error("[/Users/gfx/repo/try-on-web/JSX/src/expression.jsx:1000:67] detected invalid cast, value is not an instance of the designated type or null\n                if (deducedType.getReturnType().equals((this._type as StaticFunctionType).getReturnType())) {\n                                                                   ^^\n");
 								}
 								return v;
 							}(this._type)).getReturnType$())) {
@@ -27218,7 +27254,7 @@ PropertyExpression.prototype.deduceByArgumentTypes$LAnalysisContext$LToken$ALTyp
 	rhsType = (function (v) {
 		if (! (v == null || v instanceof FunctionType)) {
 			debugger;
-			throw new Error("[/Users/gfx/repo/try-on-web/JSX/src/expression.jsx:1261:34] detected invalid cast, value is not an instance of the designated type or null\n        var rhsType = (this._type as FunctionType).deduceByArgumentTypes(context, operatorToken, argTypes, isStatic);\n                                  ^^\n");
+			throw new Error("[/Users/gfx/repo/try-on-web/JSX/src/expression.jsx:1281:34] detected invalid cast, value is not an instance of the designated type or null\n        var rhsType = (this._type as FunctionType).deduceByArgumentTypes(context, operatorToken, argTypes, isStatic);\n                                  ^^\n");
 		}
 		return v;
 	}(this._type)).deduceByArgumentTypes$LAnalysisContext$LToken$ALType$B(context, operatorToken, argTypes, isStatic);
@@ -27565,10 +27601,14 @@ ArrayExpression.prototype._analyzeApplicationOnObject$LAnalysisContext$LType$ = 
 	/** @type {ResolvedFunctionType} */
 	var deducedFuncType;
 	expr1ClassDef = expr1Type.getClassDef$();
+	if (! (expr1ClassDef)) {
+		debugger;
+		throw new Error("[/Users/gfx/repo/try-on-web/JSX/src/expression.jsx:1478:15] assertion failure\n        assert expr1ClassDef;\n               ^^^^^^^^^^^^^\n");
+	}
 	funcType = (function (v) {
 		if (! (v == null || v instanceof FunctionType)) {
 			debugger;
-			throw new Error("[/Users/gfx/repo/try-on-web/JSX/src/expression.jsx:1459:171] detected invalid cast, value is not an instance of the designated type or null\n        var funcType = expr1ClassDef.getMemberTypeByName(context.errors, this._token, \"__native_index_operator__\", false, new Type[], ClassDefinition.GET_MEMBER_MODE_ALL) as FunctionType;\n                                                                                                                                                                           ^^\n");
+			throw new Error("[/Users/gfx/repo/try-on-web/JSX/src/expression.jsx:1480:171] detected invalid cast, value is not an instance of the designated type or null\n        var funcType = expr1ClassDef.getMemberTypeByName(context.errors, this._token, \"__native_index_operator__\", false, new Type[], ClassDefinition.GET_MEMBER_MODE_ALL) as FunctionType;\n                                                                                                                                                                           ^^\n");
 		}
 		return v;
 	}(expr1ClassDef.getMemberTypeByName$ALCompileError$LToken$SBALType$N(context.errors, this._token, "__native_index_operator__", false, [], ClassDefinition.GET_MEMBER_MODE_ALL)));
@@ -27689,13 +27729,13 @@ AssignmentExpression.prototype.analyze$LAnalysisContext$LExpression$ = function 
 			if ((rhsType = (function (v) {
 				if (! (v == null || v instanceof PropertyExpression)) {
 					debugger;
-					throw new Error("[/Users/gfx/repo/try-on-web/JSX/src/expression.jsx:1535:44] detected invalid cast, value is not an instance of the designated type or null\n                if ((rhsType = (this._expr2 as PropertyExpression).deduceByArgumentTypes(context, this._token, (lhsType as ResolvedFunctionType).getArgumentTypes(), lhsType instanceof StaticFunctionType)) == null)\n                                            ^^\n");
+					throw new Error("[/Users/gfx/repo/try-on-web/JSX/src/expression.jsx:1556:44] detected invalid cast, value is not an instance of the designated type or null\n                if ((rhsType = (this._expr2 as PropertyExpression).deduceByArgumentTypes(context, this._token, (lhsType as ResolvedFunctionType).getArgumentTypes(), lhsType instanceof StaticFunctionType)) == null)\n                                            ^^\n");
 				}
 				return v;
 			}(this._expr2)).deduceByArgumentTypes$LAnalysisContext$LToken$ALType$B(context, this._token, (function (v) {
 				if (! (v == null || v instanceof ResolvedFunctionType)) {
 					debugger;
-					throw new Error("[/Users/gfx/repo/try-on-web/JSX/src/expression.jsx:1535:120] detected invalid cast, value is not an instance of the designated type or null\n                if ((rhsType = (this._expr2 as PropertyExpression).deduceByArgumentTypes(context, this._token, (lhsType as ResolvedFunctionType).getArgumentTypes(), lhsType instanceof StaticFunctionType)) == null)\n                                                                                                                        ^^\n");
+					throw new Error("[/Users/gfx/repo/try-on-web/JSX/src/expression.jsx:1556:120] detected invalid cast, value is not an instance of the designated type or null\n                if ((rhsType = (this._expr2 as PropertyExpression).deduceByArgumentTypes(context, this._token, (lhsType as ResolvedFunctionType).getArgumentTypes(), lhsType instanceof StaticFunctionType)) == null)\n                                                                                                                        ^^\n");
 				}
 				return v;
 			}(lhsType)).getArgumentTypes$(), lhsType instanceof StaticFunctionType)) == null) {
@@ -27753,7 +27793,7 @@ AssignmentExpression.prototype._analyzeFunctionExpressionAssignment$LAnalysisCon
 		if (! (function (v) {
 			if (! (v == null || v instanceof FunctionExpression)) {
 				debugger;
-				throw new Error("[/Users/gfx/repo/try-on-web/JSX/src/expression.jsx:1571:31] detected invalid cast, value is not an instance of the designated type or null\n            if (! (this._expr2 as FunctionExpression).typesAreIdentified()) {\n                               ^^\n");
+				throw new Error("[/Users/gfx/repo/try-on-web/JSX/src/expression.jsx:1592:31] detected invalid cast, value is not an instance of the designated type or null\n            if (! (this._expr2 as FunctionExpression).typesAreIdentified()) {\n                               ^^\n");
 			}
 			return v;
 		}(this._expr2)).typesAreIdentified$()) {
@@ -27765,13 +27805,13 @@ AssignmentExpression.prototype._analyzeFunctionExpressionAssignment$LAnalysisCon
 			if (! (function (v) {
 				if (! (v == null || v instanceof FunctionExpression)) {
 					debugger;
-					throw new Error("[/Users/gfx/repo/try-on-web/JSX/src/expression.jsx:1577:31] detected invalid cast, value is not an instance of the designated type or null\n            if (! (this._expr2 as FunctionExpression).getFuncDef().deductTypeIfUnknown(context, this._expr1.getType() as ResolvedFunctionType)) {\n                               ^^\n");
+					throw new Error("[/Users/gfx/repo/try-on-web/JSX/src/expression.jsx:1598:31] detected invalid cast, value is not an instance of the designated type or null\n            if (! (this._expr2 as FunctionExpression).deductTypeIfUnknown(context, this._expr1.getType() as ResolvedFunctionType)) {\n                               ^^\n");
 				}
 				return v;
-			}(this._expr2)).getFuncDef$().deductTypeIfUnknown$LAnalysisContext$LResolvedFunctionType$(context, (function (v) {
+			}(this._expr2)).deductTypeIfUnknown$LAnalysisContext$LResolvedFunctionType$(context, (function (v) {
 				if (! (v == null || v instanceof ResolvedFunctionType)) {
 					debugger;
-					throw new Error("[/Users/gfx/repo/try-on-web/JSX/src/expression.jsx:1577:118] detected invalid cast, value is not an instance of the designated type or null\n            if (! (this._expr2 as FunctionExpression).getFuncDef().deductTypeIfUnknown(context, this._expr1.getType() as ResolvedFunctionType)) {\n                                                                                                                      ^^\n");
+					throw new Error("[/Users/gfx/repo/try-on-web/JSX/src/expression.jsx:1598:105] detected invalid cast, value is not an instance of the designated type or null\n            if (! (this._expr2 as FunctionExpression).deductTypeIfUnknown(context, this._expr1.getType() as ResolvedFunctionType)) {\n                                                                                                         ^^\n");
 				}
 				return v;
 			}(this._expr1.getType$())))) {
@@ -28007,7 +28047,7 @@ InExpression.prototype.analyze$LAnalysisContext$LExpression$ = function (context
 	if ((expr2Type = this._expr2.getType$().resolveIfNullable$()) instanceof ObjectType && (expr2ClassDef = expr2Type.getClassDef$()) instanceof InstantiatedClassDefinition && (function (v) {
 		if (! (v == null || v instanceof InstantiatedClassDefinition)) {
 			debugger;
-			throw new Error("[/Users/gfx/repo/try-on-web/JSX/src/expression.jsx:1720:30] detected invalid cast, value is not an instance of the designated type or null\n            && (expr2ClassDef as InstantiatedClassDefinition).getTemplateClassName() == \"Map\") {\n                              ^^\n");
+			throw new Error("[/Users/gfx/repo/try-on-web/JSX/src/expression.jsx:1741:30] detected invalid cast, value is not an instance of the designated type or null\n            && (expr2ClassDef as InstantiatedClassDefinition).getTemplateClassName() == \"Map\") {\n                              ^^\n");
 		}
 		return v;
 	}(expr2ClassDef)).getTemplateClassName$() === "Map") {
@@ -28372,13 +28412,13 @@ CallExpression.prototype.analyze$LAnalysisContext$LExpression$ = function (conte
 	argTypes = Util$analyzeArgs$LAnalysisContext$ALExpression$LExpression$AALType$(context, this._args, this, (function (v) {
 		if (! (v == null || v instanceof FunctionType)) {
 			debugger;
-			throw new Error("[/Users/gfx/repo/try-on-web/JSX/src/expression.jsx:1940:22] detected invalid cast, value is not an instance of the designated type or null\n            (exprType as FunctionType).getExpectedTypes(\n                      ^^\n");
+			throw new Error("[/Users/gfx/repo/try-on-web/JSX/src/expression.jsx:1961:22] detected invalid cast, value is not an instance of the designated type or null\n            (exprType as FunctionType).getExpectedTypes(\n                      ^^\n");
 		}
 		return v;
 	}(exprType)).getExpectedTypes$NB(this._args.length, ! (this._expr instanceof PropertyExpression && ! exprType.isAssignable$() && ! ((function (v) {
 		if (! (v == null || v instanceof PropertyExpression)) {
 			debugger;
-			throw new Error("[/Users/gfx/repo/try-on-web/JSX/src/expression.jsx:1942:107] detected invalid cast, value is not an instance of the designated type or null\n                ! (this._expr instanceof PropertyExpression && ! exprType.isAssignable() && ! ((this._expr as PropertyExpression).getExpr() instanceof ClassExpression))));\n                                                                                                           ^^\n");
+			throw new Error("[/Users/gfx/repo/try-on-web/JSX/src/expression.jsx:1963:107] detected invalid cast, value is not an instance of the designated type or null\n                ! (this._expr instanceof PropertyExpression && ! exprType.isAssignable() && ! ((this._expr as PropertyExpression).getExpr() instanceof ClassExpression))));\n                                                                                                           ^^\n");
 		}
 		return v;
 	}(this._expr)).getExpr$() instanceof ClassExpression))));
@@ -28389,14 +28429,14 @@ CallExpression.prototype.analyze$LAnalysisContext$LExpression$ = function (conte
 		isCallingStatic = (function (v) {
 			if (! (v == null || v instanceof PropertyExpression)) {
 				debugger;
-				throw new Error("[/Users/gfx/repo/try-on-web/JSX/src/expression.jsx:1946:46] detected invalid cast, value is not an instance of the designated type or null\n            var isCallingStatic = (this._expr as PropertyExpression).getExpr() instanceof ClassExpression;\n                                              ^^\n");
+				throw new Error("[/Users/gfx/repo/try-on-web/JSX/src/expression.jsx:1967:46] detected invalid cast, value is not an instance of the designated type or null\n            var isCallingStatic = (this._expr as PropertyExpression).getExpr() instanceof ClassExpression;\n                                              ^^\n");
 			}
 			return v;
 		}(this._expr)).getExpr$() instanceof ClassExpression;
 		if (! isCallingStatic && (function (v) {
 			if (! (v == null || v instanceof PropertyExpression)) {
 				debugger;
-				throw new Error("[/Users/gfx/repo/try-on-web/JSX/src/expression.jsx:1947:49] detected invalid cast, value is not an instance of the designated type or null\n            if (! isCallingStatic && (this._expr as PropertyExpression).getIdentifierToken().getValue() == \"constructor\") {\n                                                 ^^\n");
+				throw new Error("[/Users/gfx/repo/try-on-web/JSX/src/expression.jsx:1968:49] detected invalid cast, value is not an instance of the designated type or null\n            if (! isCallingStatic && (this._expr as PropertyExpression).getIdentifierToken().getValue() == \"constructor\") {\n                                                 ^^\n");
 			}
 			return v;
 		}(this._expr)).getIdentifierToken$().getValue$() === "constructor") {
@@ -28406,7 +28446,7 @@ CallExpression.prototype.analyze$LAnalysisContext$LExpression$ = function (conte
 		if ((function (v) {
 			if (! (v == null || v instanceof PropertyExpression)) {
 				debugger;
-				throw new Error("[/Users/gfx/repo/try-on-web/JSX/src/expression.jsx:1951:28] detected invalid cast, value is not an instance of the designated type or null\n            if ((this._expr as PropertyExpression).deduceByArgumentTypes(context, this._token, argTypes, isCallingStatic) == null)\n                            ^^\n");
+				throw new Error("[/Users/gfx/repo/try-on-web/JSX/src/expression.jsx:1972:28] detected invalid cast, value is not an instance of the designated type or null\n            if ((this._expr as PropertyExpression).deduceByArgumentTypes(context, this._token, argTypes, isCallingStatic) == null)\n                            ^^\n");
 			}
 			return v;
 		}(this._expr)).deduceByArgumentTypes$LAnalysisContext$LToken$ALType$B(context, this._token, argTypes, isCallingStatic) == null) {
@@ -28416,7 +28456,7 @@ CallExpression.prototype.analyze$LAnalysisContext$LExpression$ = function (conte
 		if ((function (v) {
 			if (! (v == null || v instanceof FunctionType)) {
 				debugger;
-				throw new Error("[/Users/gfx/repo/try-on-web/JSX/src/expression.jsx:1954:26] detected invalid cast, value is not an instance of the designated type or null\n            if ((exprType as FunctionType).deduceByArgumentTypes(context, this._token, argTypes, true) == null)\n                          ^^\n");
+				throw new Error("[/Users/gfx/repo/try-on-web/JSX/src/expression.jsx:1975:26] detected invalid cast, value is not an instance of the designated type or null\n            if ((exprType as FunctionType).deduceByArgumentTypes(context, this._token, argTypes, true) == null)\n                          ^^\n");
 			}
 			return v;
 		}(exprType)).deduceByArgumentTypes$LAnalysisContext$LToken$ALType$B(context, this._token, argTypes, true) == null) {
@@ -28439,7 +28479,7 @@ CallExpression.prototype.getType$ = function () {
 	return (function (v) {
 		if (! (v == null || v instanceof ResolvedFunctionType)) {
 			debugger;
-			throw new Error("[/Users/gfx/repo/try-on-web/JSX/src/expression.jsx:1964:41] detected invalid cast, value is not an instance of the designated type or null\n        return (type.resolveIfNullable() as ResolvedFunctionType).getReturnType();\n                                         ^^\n");
+			throw new Error("[/Users/gfx/repo/try-on-web/JSX/src/expression.jsx:1985:41] detected invalid cast, value is not an instance of the designated type or null\n        return (type.resolveIfNullable() as ResolvedFunctionType).getReturnType();\n                                         ^^\n");
 		}
 		return v;
 	}(type.resolveIfNullable$())).getReturnType$();
@@ -28556,7 +28596,7 @@ SuperExpression.prototype.analyze$LAnalysisContext$LExpression$ = function (cont
 	if ((funcType = (function (v) {
 		if (! (v == null || v instanceof FunctionType)) {
 			debugger;
-			throw new Error("[/Users/gfx/repo/try-on-web/JSX/src/expression.jsx:2033:163] detected invalid cast, value is not an instance of the designated type or null\n        if ((funcType = classDef.getMemberTypeByName(context.errors, this._token, this._name.getValue(), false, new Type[], ClassDefinition.GET_MEMBER_MODE_SUPER) as FunctionType) == null) {\n                                                                                                                                                                   ^^\n");
+			throw new Error("[/Users/gfx/repo/try-on-web/JSX/src/expression.jsx:2054:163] detected invalid cast, value is not an instance of the designated type or null\n        if ((funcType = classDef.getMemberTypeByName(context.errors, this._token, this._name.getValue(), false, new Type[], ClassDefinition.GET_MEMBER_MODE_SUPER) as FunctionType) == null) {\n                                                                                                                                                                   ^^\n");
 		}
 		return v;
 	}(classDef.getMemberTypeByName$ALCompileError$LToken$SBALType$N(context.errors, this._token, this._name.getValue$(), false, [], ClassDefinition.GET_MEMBER_MODE_SUPER)))) == null) {
@@ -28581,7 +28621,7 @@ SuperExpression.prototype.getType$ = function () {
 	return (function (v) {
 		if (! (v == null || v instanceof ResolvedFunctionType)) {
 			debugger;
-			throw new Error("[/Users/gfx/repo/try-on-web/JSX/src/expression.jsx:2052:31] detected invalid cast, value is not an instance of the designated type or null\n        return (this._funcType as ResolvedFunctionType).getReturnType();\n                               ^^\n");
+			throw new Error("[/Users/gfx/repo/try-on-web/JSX/src/expression.jsx:2073:31] detected invalid cast, value is not an instance of the designated type or null\n        return (this._funcType as ResolvedFunctionType).getReturnType();\n                               ^^\n");
 		}
 		return v;
 	}(this._funcType)).getReturnType$();
@@ -28693,7 +28733,7 @@ NewExpression.prototype.analyze$LAnalysisContext$LExpression$ = function (contex
 	ctors = (function (v) {
 		if (! (v == null || v instanceof FunctionType)) {
 			debugger;
-			throw new Error("[/Users/gfx/repo/try-on-web/JSX/src/expression.jsx:2121:156] detected invalid cast, value is not an instance of the designated type or null\n        var ctors = classDef.getMemberTypeByName(context.errors, this._token, \"constructor\", false, new Type[], ClassDefinition.GET_MEMBER_MODE_CLASS_ONLY) as FunctionType;\n                                                                                                                                                            ^^\n");
+			throw new Error("[/Users/gfx/repo/try-on-web/JSX/src/expression.jsx:2142:156] detected invalid cast, value is not an instance of the designated type or null\n        var ctors = classDef.getMemberTypeByName(context.errors, this._token, \"constructor\", false, new Type[], ClassDefinition.GET_MEMBER_MODE_CLASS_ONLY) as FunctionType;\n                                                                                                                                                            ^^\n");
 		}
 		return v;
 	}(classDef.getMemberTypeByName$ALCompileError$LToken$SBALType$N(context.errors, this._token, "constructor", false, [], ClassDefinition.GET_MEMBER_MODE_CLASS_ONLY)));
@@ -28764,11 +28804,11 @@ function CommaExpression$LToken$LExpression$LExpression$(token, expr1, expr2) {
 	this._expr2 = null;
 	if (! (expr1 != null)) {
 		debugger;
-		throw new Error("[/Users/gfx/repo/try-on-web/JSX/src/expression.jsx:2168:21] assertion failure\n        assert expr1 != null;\n                     ^^\n");
+		throw new Error("[/Users/gfx/repo/try-on-web/JSX/src/expression.jsx:2189:21] assertion failure\n        assert expr1 != null;\n                     ^^\n");
 	}
 	if (! (expr2 != null)) {
 		debugger;
-		throw new Error("[/Users/gfx/repo/try-on-web/JSX/src/expression.jsx:2169:21] assertion failure\n        assert expr2 != null;\n                     ^^\n");
+		throw new Error("[/Users/gfx/repo/try-on-web/JSX/src/expression.jsx:2190:21] assertion failure\n        assert expr2 != null;\n                     ^^\n");
 	}
 	this._expr1 = expr1;
 	this._expr2 = expr2;
@@ -29270,13 +29310,13 @@ ReturnStatement.prototype.doAnalyze$LAnalysisContext$ = function (context) {
 			if (! (function (v) {
 				if (! (v == null || v instanceof FunctionExpression)) {
 					debugger;
-					throw new Error("[/Users/gfx/repo/try-on-web/JSX/src/statement.jsx:294:34] detected invalid cast, value is not an instance of the designated type or null\n                if (! (this._expr as FunctionExpression).getFuncDef().deductTypeIfUnknown(context, returnType as StaticFunctionType))\n                                  ^^\n");
+					throw new Error("[/Users/gfx/repo/try-on-web/JSX/src/statement.jsx:294:34] detected invalid cast, value is not an instance of the designated type or null\n                if (! (this._expr as FunctionExpression).deductTypeIfUnknown(context, returnType as StaticFunctionType))\n                                  ^^\n");
 				}
 				return v;
-			}(this._expr)).getFuncDef$().deductTypeIfUnknown$LAnalysisContext$LResolvedFunctionType$(context, (function (v) {
+			}(this._expr)).deductTypeIfUnknown$LAnalysisContext$LResolvedFunctionType$(context, (function (v) {
 				if (! (v == null || v instanceof StaticFunctionType)) {
 					debugger;
-					throw new Error("[/Users/gfx/repo/try-on-web/JSX/src/statement.jsx:294:110] detected invalid cast, value is not an instance of the designated type or null\n                if (! (this._expr as FunctionExpression).getFuncDef().deductTypeIfUnknown(context, returnType as StaticFunctionType))\n                                                                                                              ^^\n");
+					throw new Error("[/Users/gfx/repo/try-on-web/JSX/src/statement.jsx:294:97] detected invalid cast, value is not an instance of the designated type or null\n                if (! (this._expr as FunctionExpression).deductTypeIfUnknown(context, returnType as StaticFunctionType))\n                                                                                                 ^^\n");
 				}
 				return v;
 			}(returnType)))) {
@@ -32456,8 +32496,8 @@ StringType._classDef = null;
 FunctionType._classDef = null;
 Meta.VERSION_STRING = "0.9.10";
 Meta.VERSION_NUMBER = 0.00901;
-Meta.LAST_COMMIT_HASH = "b6d8c560c5cbfa9820cf8415872d97185e916b1c";
-Meta.LAST_COMMIT_DATE = "2013-02-22 10:32:37 +0900";
+Meta.LAST_COMMIT_HASH = "4204e74c10ddd693a462e609d43bb3d84fb5df66";
+Meta.LAST_COMMIT_DATE = "2013-02-26 02:11:58 +0900";
 $__jsx_lazy_init(Meta, "IDENTIFIER", function () {
 	return Meta.VERSION_STRING + " (" + Meta.LAST_COMMIT_DATE + "; " + Meta.LAST_COMMIT_HASH + ")";
 });
@@ -32915,7 +32955,7 @@ var $__jsx_classMap = {
 		ThisExpression: ThisExpression,
 		ThisExpression$LToken$LClassDefinition$: ThisExpression$LToken$LClassDefinition$,
 		FunctionExpression: FunctionExpression,
-		FunctionExpression$LToken$LMemberFunctionDefinition$B: FunctionExpression$LToken$LMemberFunctionDefinition$B,
+		FunctionExpression$LToken$LLocalVariable$LMemberFunctionDefinition$B: FunctionExpression$LToken$LLocalVariable$LMemberFunctionDefinition$B,
 		UnaryExpression: UnaryExpression,
 		UnaryExpression$LToken$LExpression$: UnaryExpression$LToken$LExpression$,
 		BitwiseNotExpression: BitwiseNotExpression,

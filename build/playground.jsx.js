@@ -1,4 +1,4 @@
-// generatedy by JSX compiler 0.9.10 (2013-02-26 09:24:01 +0900; 45b174f4e019a02d5d2707c4abd56018a4ce0071)
+// generatedy by JSX compiler 0.9.10 (2013-02-27 11:48:24 +0900; 00a25ec6f510ce11034e389513b7d489c030e6cd)
 var JSX = {};
 (function (JSX) {
 /**
@@ -32637,8 +32637,8 @@ StringType._classDef = null;
 FunctionType._classDef = null;
 Meta.VERSION_STRING = "0.9.10";
 Meta.VERSION_NUMBER = 0.00901;
-Meta.LAST_COMMIT_HASH = "45b174f4e019a02d5d2707c4abd56018a4ce0071";
-Meta.LAST_COMMIT_DATE = "2013-02-26 09:24:01 +0900";
+Meta.LAST_COMMIT_HASH = "00a25ec6f510ce11034e389513b7d489c030e6cd";
+Meta.LAST_COMMIT_DATE = "2013-02-27 11:48:24 +0900";
 $__jsx_lazy_init(Meta, "IDENTIFIER", function () {
 	return Meta.VERSION_STRING + " (" + Meta.LAST_COMMIT_DATE + "; " + Meta.LAST_COMMIT_HASH + ")";
 });

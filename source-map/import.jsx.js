@@ -1,4 +1,4 @@
-// generatedy by JSX compiler 0.9.10 (2013-02-27 12:07:50 +0900; 422c219454c67047d16a70394392a9b3bed0249b)
+// generatedy by JSX compiler 0.9.10 (2013-03-06 10:41:15 +0900; 5c9afbd44f6ea873320fff781f5e1c931d03d191)
 var JSX = {};
 (function (JSX) {
 /**
@@ -221,7 +221,7 @@ _Main$0.main$AS = function (args) {
 	n = (args.length > 0 ? +(function (v) {
 		if (! (v != null)) {
 			debugger;
-			throw new Error("[/Users/fuji.goro/repo/try-on-web/JSX/example/fib.jsx:42:38] null access\n        var n = args.length > 0 ? args[0] as number : 10;\n                                      ^\n");
+			throw new Error("[/Users/gfx/repo/try-on-web/JSX/example/fib.jsx:42:38] null access\n        var n = args.length > 0 ? args[0] as number : 10;\n                                      ^\n");
 		}
 		return v;
 	}(args[0])) : 10);
@@ -305,7 +305,7 @@ TestCase.prototype.run$SF$V$ = function (name, testFunction) {
 		testFunction();
 	} catch ($__jsx_catch_0) {
 		if ($__jsx_catch_0 instanceof Error) {
-			if ($__jsx_catch_0 instanceof TestFailure) {
+			if ($__jsx_catch_0 instanceof TestCase$CFailure) {
 				msg = ($__jsx_catch_0.message ? " - " + $__jsx_catch_0.message : "");
 			} else {
 				msg = " - failed with exception";
@@ -366,7 +366,7 @@ TestCase.prototype.async$F$LAsyncContext$V$F$LAsyncContext$V$I = function (testB
 	async = new AsyncContext$LTestCase$SF$LAsyncContext$V$I(this, (function (v) {
 		if (! (v != null)) {
 			debugger;
-			throw new Error("[/Users/fuji.goro/repo/try-on-web/JSX/lib/common/test-case.jsx:185:47] null access\n        var async = new AsyncContext(this, this._currentName, timeoutHandler, timeoutMS);\n                                               ^\n");
+			throw new Error("[/Users/gfx/repo/try-on-web/JSX/lib/common/test-case.jsx:185:47] null access\n        var async = new AsyncContext(this, this._currentName, timeoutHandler, timeoutMS);\n                                               ^\n");
 		}
 		return v;
 	}(this._currentName)), timeoutHandler, timeoutMS);
@@ -389,21 +389,21 @@ TestCase.prototype.async$F$LAsyncContext$V$I = function (testBody, timeoutMS) {
 
 /**
  * @param {*} value
- * @return {_Matcher}
+ * @return {TestCase$CMatcher}
  */
 TestCase.prototype.expect$X = function (value) {
 	++ this._count;
-	return new _Matcher$LTestCase$X(this, value);
+	return new TestCase$CMatcher$LTestCase$X(this, value);
 };
 
 /**
  * @param {*} value
  * @param {!string} message
- * @return {_Matcher}
+ * @return {TestCase$CMatcher}
  */
 TestCase.prototype.expect$XS = function (value, message) {
 	++ this._count;
-	return new _Matcher$LTestCase$XS(this, value, message);
+	return new TestCase$CMatcher$LTestCase$XS(this, value, message);
 };
 
 /**
@@ -416,7 +416,7 @@ TestCase.prototype._ok$US = function (name) {
 	s = (name != null ? " - " + (function (v) {
 		if (! (v != null)) {
 			debugger;
-			throw new Error("[/Users/fuji.goro/repo/try-on-web/JSX/lib/common/test-case.jsx:222:39] null access\n        var s = name != null ? \" - \" + name :  \"\";\n                                       ^^^^\n");
+			throw new Error("[/Users/gfx/repo/try-on-web/JSX/lib/common/test-case.jsx:222:39] null access\n        var s = name != null ? \" - \" + name :  \"\";\n                                       ^^^^\n");
 		}
 		return v;
 	}(name)) : "");
@@ -442,7 +442,7 @@ TestCase.prototype._nok$USUSXX = function (name, op, got, expected) {
 	s = (name != null ? " - " + (function (v) {
 		if (! (v != null)) {
 			debugger;
-			throw new Error("[/Users/fuji.goro/repo/try-on-web/JSX/lib/common/test-case.jsx:237:39] null access\n        var s = name != null ? \" - \" + name :  \"\";\n                                       ^^^^\n");
+			throw new Error("[/Users/gfx/repo/try-on-web/JSX/lib/common/test-case.jsx:237:39] null access\n        var s = name != null ? \" - \" + name :  \"\";\n                                       ^^^^\n");
 		}
 		return v;
 	}(name)) : "");
@@ -451,17 +451,17 @@ TestCase.prototype._nok$USUSXX = function (name, op, got, expected) {
 		this.diag$S("comparing with " + (function (v) {
 			if (! (v != null)) {
 				debugger;
-				throw new Error("[/Users/fuji.goro/repo/try-on-web/JSX/lib/common/test-case.jsx:241:42] null access\n            this.diag(\"comparing with \" + op + s.replace(\" - \", \" for \"));\n                                          ^^\n");
+				throw new Error("[/Users/gfx/repo/try-on-web/JSX/lib/common/test-case.jsx:241:42] null access\n            this.diag(\"comparing with \" + op + s.replace(\" - \", \" for \"));\n                                          ^^\n");
 			}
 			return v;
 		}(op)) + s.replace(" - ", " for "));
 		this._dump$SX("got:      ", got);
 		this._dump$SX("expected: ", expected);
 	}
-	throw new TestFailure$S((function (v) {
+	throw new TestCase$CFailure$S((function (v) {
 		if (! (v != null)) {
 			debugger;
-			throw new Error("[/Users/fuji.goro/repo/try-on-web/JSX/lib/common/test-case.jsx:245:43] null access\n        throw new TestFailure(name != null ? name : \"\");\n                                           ^\n");
+			throw new Error("[/Users/gfx/repo/try-on-web/JSX/lib/common/test-case.jsx:245:48] null access\n        throw new TestCase.Failure(name != null ? name : \"\");\n                                                ^\n");
 		}
 		return v;
 	}(name != null ? name : "")));
@@ -481,7 +481,7 @@ TestCase.prototype.pass$S = function (reason) {
  */
 TestCase.prototype.fail$S = function (reason) {
 	++ this._count;
-	throw new TestFailure$S(reason);
+	throw new TestCase$CFailure$S(reason);
 };
 
 /**
@@ -553,14 +553,14 @@ TestCase.prototype._equals$XXI = function (a, b, recursion) {
 		aryA = (function (v) {
 			if (! (v == null || v instanceof Array)) {
 				debugger;
-				throw new Error("[/Users/fuji.goro/repo/try-on-web/JSX/lib/common/test-case.jsx:297:25] detected invalid cast, value is not an Array or null\n            var aryA = a as Array.<variant>;\n                         ^^\n");
+				throw new Error("[/Users/gfx/repo/try-on-web/JSX/lib/common/test-case.jsx:297:25] detected invalid cast, value is not an Array or null\n            var aryA = a as Array.<variant>;\n                         ^^\n");
 			}
 			return v;
 		}(a));
 		aryB = (function (v) {
 			if (! (v == null || v instanceof Array)) {
 				debugger;
-				throw new Error("[/Users/fuji.goro/repo/try-on-web/JSX/lib/common/test-case.jsx:298:25] detected invalid cast, value is not an Array or null\n            var aryB = b as Array.<variant>;\n                         ^^\n");
+				throw new Error("[/Users/gfx/repo/try-on-web/JSX/lib/common/test-case.jsx:298:25] detected invalid cast, value is not an Array or null\n            var aryB = b as Array.<variant>;\n                         ^^\n");
 			}
 			return v;
 		}(b));
@@ -581,14 +581,14 @@ TestCase.prototype._equals$XXI = function (a, b, recursion) {
 		mapA = (function (v) {
 			if (! (v == null || typeof v === "object" || typeof v === "function")) {
 				debugger;
-				throw new Error("[/Users/fuji.goro/repo/try-on-web/JSX/lib/common/test-case.jsx:315:25] detected invalid cast, value is not a Map or null\n            var mapA = a as Map.<variant>;\n                         ^^\n");
+				throw new Error("[/Users/gfx/repo/try-on-web/JSX/lib/common/test-case.jsx:315:25] detected invalid cast, value is not a Map or null\n            var mapA = a as Map.<variant>;\n                         ^^\n");
 			}
 			return v;
 		}(a));
 		mapB = (function (v) {
 			if (! (v == null || typeof v === "object" || typeof v === "function")) {
 				debugger;
-				throw new Error("[/Users/fuji.goro/repo/try-on-web/JSX/lib/common/test-case.jsx:316:25] detected invalid cast, value is not a Map or null\n            var mapB = b as Map.<variant>;\n                         ^^\n");
+				throw new Error("[/Users/gfx/repo/try-on-web/JSX/lib/common/test-case.jsx:316:25] detected invalid cast, value is not a Map or null\n            var mapB = b as Map.<variant>;\n                         ^^\n");
 			}
 			return v;
 		}(b));
@@ -615,14 +615,14 @@ TestCase.prototype._equals$XXI = function (a, b, recursion) {
 		dateA = (function (v) {
 			if (! (v == null || v instanceof Date)) {
 				debugger;
-				throw new Error("[/Users/fuji.goro/repo/try-on-web/JSX/lib/common/test-case.jsx:342:26] detected invalid cast, value is not an instance of the designated type or null\n            var dateA = a as Date;\n                          ^^\n");
+				throw new Error("[/Users/gfx/repo/try-on-web/JSX/lib/common/test-case.jsx:342:26] detected invalid cast, value is not an instance of the designated type or null\n            var dateA = a as Date;\n                          ^^\n");
 			}
 			return v;
 		}(a));
 		dateB = (function (v) {
 			if (! (v == null || v instanceof Date)) {
 				debugger;
-				throw new Error("[/Users/fuji.goro/repo/try-on-web/JSX/lib/common/test-case.jsx:343:26] detected invalid cast, value is not an instance of the designated type or null\n            var dateB = b as Date;\n                          ^^\n");
+				throw new Error("[/Users/gfx/repo/try-on-web/JSX/lib/common/test-case.jsx:343:26] detected invalid cast, value is not an instance of the designated type or null\n            var dateB = b as Date;\n                          ^^\n");
 			}
 			return v;
 		}(b));
@@ -655,11 +655,11 @@ TestCase.prototype.difflet$AXAX = function (a, b) {
 	var aIsLast;
 	if (! (a != null)) {
 		debugger;
-		throw new Error("[/Users/fuji.goro/repo/try-on-web/JSX/lib/common/test-case.jsx:354:17] assertion failure\n        assert a != null;\n                 ^^\n");
+		throw new Error("[/Users/gfx/repo/try-on-web/JSX/lib/common/test-case.jsx:354:17] assertion failure\n        assert a != null;\n                 ^^\n");
 	}
 	if (! (b != null)) {
 		debugger;
-		throw new Error("[/Users/fuji.goro/repo/try-on-web/JSX/lib/common/test-case.jsx:355:17] assertion failure\n        assert b != null;\n                 ^^\n");
+		throw new Error("[/Users/gfx/repo/try-on-web/JSX/lib/common/test-case.jsx:355:17] assertion failure\n        assert b != null;\n                 ^^\n");
 	}
 	s = "[\n";
 	for ((i = 0, l = Math.max(a.length, b.length)); i < l; ++ i) {
@@ -752,25 +752,6 @@ _Test.prototype.testFib4$ = function () {
 };
 
 /**
- * class TestFailure extends Error
- * @constructor
- */
-function TestFailure() {
-}
-
-TestFailure.prototype = new Error;
-/**
- * @constructor
- * @param {!string} reason
- */
-function TestFailure$S(reason) {
-	Error.call(this);
-	this.message = reason;
-};
-
-TestFailure$S.prototype = new TestFailure;
-
-/**
  * class AsyncContext extends Object
  * @constructor
  */
@@ -822,191 +803,6 @@ AsyncContext.prototype.done$ = function () {
 };
 
 /**
- * class _Matcher extends Object
- * @constructor
- */
-function _Matcher() {
-}
-
-/**
- * @constructor
- * @param {TestCase} test
- * @param {*} got
- */
-function _Matcher$LTestCase$X(test, got) {
-	this._name = null;
-	this._test = test;
-	this._got = got;
-};
-
-_Matcher$LTestCase$X.prototype = new _Matcher;
-
-/**
- * @constructor
- * @param {TestCase} test
- * @param {*} got
- * @param {!string} name
- */
-function _Matcher$LTestCase$XS(test, got, name) {
-	this._test = test;
-	this._got = got;
-	this._name = name;
-};
-
-_Matcher$LTestCase$XS.prototype = new _Matcher;
-
-/**
- * @param {*} x
- */
-_Matcher.prototype.toBe$X = function (x) {
-	this._match$BXXS(this._got == x, this._got, x, "==");
-};
-
-/**
- * @param {*} x
- */
-_Matcher.prototype.notToBe$X = function (x) {
-	this._match$BXXS(this._got != x, this._got, x, "!=");
-};
-
-/**
- * @param {!number} x
- */
-_Matcher.prototype.toBeLT$N = function (x) {
-	this._match$BXXS(+this._got < x, this._got, x, "<");
-};
-
-/**
- * @param {!number} x
- */
-_Matcher.prototype.toBeLE$N = function (x) {
-	this._match$BXXS(+this._got <= x, this._got, x, "<=");
-};
-
-/**
- * @param {!number} x
- */
-_Matcher.prototype.toBeGT$N = function (x) {
-	this._match$BXXS(+this._got > x, this._got, x, ">");
-};
-
-/**
- * @param {!number} x
- */
-_Matcher.prototype.toBeGE$N = function (x) {
-	this._match$BXXS(+this._got >= x, this._got, x, ">=");
-};
-
-/**
- * @param {RegExp} x
- */
-_Matcher.prototype.toMatch$LRegExp$ = function (x) {
-	this._match$BXXS(x.test(this._got + ""), this._got, x, "match");
-};
-
-/**
- * @param {RegExp} x
- */
-_Matcher.prototype.notToMatch$LRegExp$ = function (x) {
-	this._match$BXXS(! x.test(this._got + ""), this._got, x, "not match");
-};
-
-/**
- * @param {Array.<undefined|*>} x
- */
-_Matcher.prototype.toEqual$AX = function (x) {
-	/** @type {Array.<undefined|*>} */
-	var got;
-	if (! (x != null)) {
-		debugger;
-		throw new Error("[/Users/fuji.goro/repo/try-on-web/JSX/lib/common/test-case.jsx:514:17] assertion failure\n        assert x != null;\n                 ^^\n");
-	}
-	if (! (this._got instanceof Array)) {
-		this._test._nok$USUSXX(this._name, "equals", this._got, x);
-		return;
-	}
-	got = (function (v) {
-		if (! (v == null || v instanceof Array)) {
-			debugger;
-			throw new Error("[/Users/fuji.goro/repo/try-on-web/JSX/lib/common/test-case.jsx:521:28] detected invalid cast, value is not an Array or null\n        var got = this._got as Array.<variant>;\n                            ^^\n");
-		}
-		return v;
-	}(this._got));
-	if (this._test.equals$XX(got, x)) {
-		this._test._ok$US(this._name);
-	} else {
-		this._test._nok$USUSXX(this._name, "equals", got, x);
-		this._test.note$S(this._test.difflet$AXAX(got, x));
-	}
-};
-
-/**
- * @param {Array.<undefined|!string>} x
- */
-_Matcher.prototype.toEqual$AS = function (x) {
-	this.toEqual$AX((function (v) {
-		if (! (v == null || v instanceof Array)) {
-			debugger;
-			throw new Error("[/Users/fuji.goro/repo/try-on-web/JSX/lib/common/test-case.jsx:532:23] detected invalid cast, value is not an Array or null\n        this.toEqual(x as __noconvert__ Array.<variant>);\n                       ^^\n");
-		}
-		return v;
-	}(x)));
-};
-
-/**
- * @param {Array.<undefined|!number>} x
- */
-_Matcher.prototype.toEqual$AN = function (x) {
-	this.toEqual$AX((function (v) {
-		if (! (v == null || v instanceof Array)) {
-			debugger;
-			throw new Error("[/Users/fuji.goro/repo/try-on-web/JSX/lib/common/test-case.jsx:535:23] detected invalid cast, value is not an Array or null\n        this.toEqual(x as __noconvert__ Array.<variant>);\n                       ^^\n");
-		}
-		return v;
-	}(x)));
-};
-
-/**
- * @param {Array.<undefined|!number>} x
- */
-_Matcher.prototype.toEqual$AI = function (x) {
-	this.toEqual$AX((function (v) {
-		if (! (v == null || v instanceof Array)) {
-			debugger;
-			throw new Error("[/Users/fuji.goro/repo/try-on-web/JSX/lib/common/test-case.jsx:538:23] detected invalid cast, value is not an Array or null\n        this.toEqual(x as __noconvert__ Array.<variant>);\n                       ^^\n");
-		}
-		return v;
-	}(x)));
-};
-
-/**
- * @param {Array.<undefined|!boolean>} x
- */
-_Matcher.prototype.toEqual$AB = function (x) {
-	this.toEqual$AX((function (v) {
-		if (! (v == null || v instanceof Array)) {
-			debugger;
-			throw new Error("[/Users/fuji.goro/repo/try-on-web/JSX/lib/common/test-case.jsx:541:23] detected invalid cast, value is not an Array or null\n        this.toEqual(x as __noconvert__ Array.<variant>);\n                       ^^\n");
-		}
-		return v;
-	}(x)));
-};
-
-/**
- * @param {!boolean} value
- * @param {*} got
- * @param {*} expected
- * @param {!string} op
- */
-_Matcher.prototype._match$BXXS = function (value, got, expected, op) {
-	if (value) {
-		this._test._ok$US(this._name);
-	} else {
-		this._test._nok$USUSXX(this._name, op, got, expected);
-	}
-};
-
-/**
  * class Timer extends Object
  * @constructor
  */
@@ -1030,7 +826,7 @@ Timer.setTimeout$F$V$N = function (callback, intervalMS) {
 	return (function (v) {
 		if (! (v == null || typeof v === "function")) {
 			debugger;
-			throw new Error("[/Users/fuji.goro/repo/try-on-web/JSX/lib/js/timer.jsx:34:40] detected invalid cast, value is not a function or null\n        return (js.global[\"setTimeout\"] as __noconvert__ function(:function():void,:int) : TimerHandle)(callback, intervalMS);\n                                        ^^\n");
+			throw new Error("[/Users/gfx/repo/try-on-web/JSX/lib/js/timer.jsx:34:40] detected invalid cast, value is not a function or null\n        return (js.global[\"setTimeout\"] as __noconvert__ function(:function():void,:int) : TimerHandle)(callback, intervalMS);\n                                        ^^\n");
 		}
 		return v;
 	}(js.global.setTimeout))(callback, intervalMS);
@@ -1045,7 +841,7 @@ Timer.clearTimeout$LTimerHandle$ = function (timer) {
 	(function (v) {
 		if (! (v == null || typeof v === "function")) {
 			debugger;
-			throw new Error("[/Users/fuji.goro/repo/try-on-web/JSX/lib/js/timer.jsx:38:35] detected invalid cast, value is not a function or null\n        (js.global[\"clearTimeout\"] as __noconvert__ function(:TimerHandle) : void)(timer);\n                                   ^^\n");
+			throw new Error("[/Users/gfx/repo/try-on-web/JSX/lib/js/timer.jsx:38:35] detected invalid cast, value is not a function or null\n        (js.global[\"clearTimeout\"] as __noconvert__ function(:TimerHandle) : void)(timer);\n                                   ^^\n");
 		}
 		return v;
 	}(js.global.clearTimeout))(timer);
@@ -1062,7 +858,7 @@ Timer.setInterval$F$V$N = function (callback, intervalMS) {
 	return (function (v) {
 		if (! (v == null || typeof v === "function")) {
 			debugger;
-			throw new Error("[/Users/fuji.goro/repo/try-on-web/JSX/lib/js/timer.jsx:42:41] detected invalid cast, value is not a function or null\n        return (js.global[\"setInterval\"] as __noconvert__ function(:function():void,:int) : TimerHandle)(callback, intervalMS);\n                                         ^^\n");
+			throw new Error("[/Users/gfx/repo/try-on-web/JSX/lib/js/timer.jsx:42:41] detected invalid cast, value is not a function or null\n        return (js.global[\"setInterval\"] as __noconvert__ function(:function():void,:int) : TimerHandle)(callback, intervalMS);\n                                         ^^\n");
 		}
 		return v;
 	}(js.global.setInterval))(callback, intervalMS);
@@ -1077,7 +873,7 @@ Timer.clearInterval$LTimerHandle$ = function (timer) {
 	(function (v) {
 		if (! (v == null || typeof v === "function")) {
 			debugger;
-			throw new Error("[/Users/fuji.goro/repo/try-on-web/JSX/lib/js/timer.jsx:46:36] detected invalid cast, value is not a function or null\n        (js.global[\"clearInterval\"] as __noconvert__ function(:TimerHandle) : void)(timer);\n                                    ^^\n");
+			throw new Error("[/Users/gfx/repo/try-on-web/JSX/lib/js/timer.jsx:46:36] detected invalid cast, value is not a function or null\n        (js.global[\"clearInterval\"] as __noconvert__ function(:TimerHandle) : void)(timer);\n                                    ^^\n");
 		}
 		return v;
 	}(js.global.clearInterval))(timer);
@@ -1127,7 +923,7 @@ Timer._getRequestAnimationFrameImpl$B = function (useNativeImpl) {
 				return (function (v) {
 					if (! (v == null || typeof v === "function")) {
 						debugger;
-						throw new Error("[/Users/fuji.goro/repo/try-on-web/JSX/lib/js/timer.jsx:72:63] detected invalid cast, value is not a function or null\n                    return (js.global[\"requestAnimationFrame\"] as __noconvert__\n                                                               ^^\n");
+						throw new Error("[/Users/gfx/repo/try-on-web/JSX/lib/js/timer.jsx:72:63] detected invalid cast, value is not a function or null\n                    return (js.global[\"requestAnimationFrame\"] as __noconvert__\n                                                               ^^\n");
 					}
 					return v;
 				}(js.global.requestAnimationFrame))(callback);
@@ -1138,7 +934,7 @@ Timer._getRequestAnimationFrameImpl$B = function (useNativeImpl) {
 					return (function (v) {
 						if (! (v == null || typeof v === "function")) {
 							debugger;
-							throw new Error("[/Users/fuji.goro/repo/try-on-web/JSX/lib/js/timer.jsx:78:69] detected invalid cast, value is not a function or null\n                    return (js.global[\"webkitRequestAnimationFrame\"] as __noconvert__\n                                                                     ^^\n");
+							throw new Error("[/Users/gfx/repo/try-on-web/JSX/lib/js/timer.jsx:78:69] detected invalid cast, value is not a function or null\n                    return (js.global[\"webkitRequestAnimationFrame\"] as __noconvert__\n                                                                     ^^\n");
 						}
 						return v;
 					}(js.global.webkitRequestAnimationFrame))(callback);
@@ -1149,7 +945,7 @@ Timer._getRequestAnimationFrameImpl$B = function (useNativeImpl) {
 						return (function (v) {
 							if (! (v == null || typeof v === "function")) {
 								debugger;
-								throw new Error("[/Users/fuji.goro/repo/try-on-web/JSX/lib/js/timer.jsx:84:66] detected invalid cast, value is not a function or null\n                    return (js.global[\"mozRequestAnimationFrame\"] as __noconvert__\n                                                                  ^^\n");
+								throw new Error("[/Users/gfx/repo/try-on-web/JSX/lib/js/timer.jsx:84:66] detected invalid cast, value is not a function or null\n                    return (js.global[\"mozRequestAnimationFrame\"] as __noconvert__\n                                                                  ^^\n");
 							}
 							return v;
 						}(js.global.mozRequestAnimationFrame))(callback);
@@ -1160,7 +956,7 @@ Timer._getRequestAnimationFrameImpl$B = function (useNativeImpl) {
 							return (function (v) {
 								if (! (v == null || typeof v === "function")) {
 									debugger;
-									throw new Error("[/Users/fuji.goro/repo/try-on-web/JSX/lib/js/timer.jsx:90:64] detected invalid cast, value is not a function or null\n                    return (js.global[\"oRequestAnimationFrame\"] as __noconvert__\n                                                                ^^\n");
+									throw new Error("[/Users/gfx/repo/try-on-web/JSX/lib/js/timer.jsx:90:64] detected invalid cast, value is not a function or null\n                    return (js.global[\"oRequestAnimationFrame\"] as __noconvert__\n                                                                ^^\n");
 								}
 								return v;
 							}(js.global.oRequestAnimationFrame))(callback);
@@ -1171,7 +967,7 @@ Timer._getRequestAnimationFrameImpl$B = function (useNativeImpl) {
 								return (function (v) {
 									if (! (v == null || typeof v === "function")) {
 										debugger;
-										throw new Error("[/Users/fuji.goro/repo/try-on-web/JSX/lib/js/timer.jsx:96:65] detected invalid cast, value is not a function or null\n                    return (js.global[\"msRequestAnimationFrame\"] as __noconvert__\n                                                                 ^^\n");
+										throw new Error("[/Users/gfx/repo/try-on-web/JSX/lib/js/timer.jsx:96:65] detected invalid cast, value is not a function or null\n                    return (js.global[\"msRequestAnimationFrame\"] as __noconvert__\n                                                                 ^^\n");
 									}
 									return v;
 								}(js.global.msRequestAnimationFrame))(callback);
@@ -1210,7 +1006,7 @@ Timer._getCancelAnimationFrameImpl$B = function (useNativeImpl) {
 				(function (v) {
 					if (! (v == null || typeof v === "function")) {
 						debugger;
-						throw new Error("[/Users/fuji.goro/repo/try-on-web/JSX/lib/js/timer.jsx:119:55] detected invalid cast, value is not a function or null\n                    (js.global[\"cancelAnimationFrame\"] as __noconvert__\n                                                       ^^\n");
+						throw new Error("[/Users/gfx/repo/try-on-web/JSX/lib/js/timer.jsx:119:55] detected invalid cast, value is not a function or null\n                    (js.global[\"cancelAnimationFrame\"] as __noconvert__\n                                                       ^^\n");
 					}
 					return v;
 				}(js.global.cancelAnimationFrame))(timer);
@@ -1221,7 +1017,7 @@ Timer._getCancelAnimationFrameImpl$B = function (useNativeImpl) {
 					(function (v) {
 						if (! (v == null || typeof v === "function")) {
 							debugger;
-							throw new Error("[/Users/fuji.goro/repo/try-on-web/JSX/lib/js/timer.jsx:125:61] detected invalid cast, value is not a function or null\n                    (js.global[\"webkitCancelAnimationFrame\"] as __noconvert__\n                                                             ^^\n");
+							throw new Error("[/Users/gfx/repo/try-on-web/JSX/lib/js/timer.jsx:125:61] detected invalid cast, value is not a function or null\n                    (js.global[\"webkitCancelAnimationFrame\"] as __noconvert__\n                                                             ^^\n");
 						}
 						return v;
 					}(js.global.webkitCancelAnimationFrame))(timer);
@@ -1232,7 +1028,7 @@ Timer._getCancelAnimationFrameImpl$B = function (useNativeImpl) {
 						(function (v) {
 							if (! (v == null || typeof v === "function")) {
 								debugger;
-								throw new Error("[/Users/fuji.goro/repo/try-on-web/JSX/lib/js/timer.jsx:131:58] detected invalid cast, value is not a function or null\n                    (js.global[\"mozCancelAnimationFrame\"] as __noconvert__\n                                                          ^^\n");
+								throw new Error("[/Users/gfx/repo/try-on-web/JSX/lib/js/timer.jsx:131:58] detected invalid cast, value is not a function or null\n                    (js.global[\"mozCancelAnimationFrame\"] as __noconvert__\n                                                          ^^\n");
 							}
 							return v;
 						}(js.global.mozCancelAnimationFrame))(timer);
@@ -1243,7 +1039,7 @@ Timer._getCancelAnimationFrameImpl$B = function (useNativeImpl) {
 							(function (v) {
 								if (! (v == null || typeof v === "function")) {
 									debugger;
-									throw new Error("[/Users/fuji.goro/repo/try-on-web/JSX/lib/js/timer.jsx:137:56] detected invalid cast, value is not a function or null\n                    (js.global[\"oCancelAnimationFrame\"] as __noconvert__\n                                                        ^^\n");
+									throw new Error("[/Users/gfx/repo/try-on-web/JSX/lib/js/timer.jsx:137:56] detected invalid cast, value is not a function or null\n                    (js.global[\"oCancelAnimationFrame\"] as __noconvert__\n                                                        ^^\n");
 								}
 								return v;
 							}(js.global.oCancelAnimationFrame))(timer);
@@ -1254,7 +1050,7 @@ Timer._getCancelAnimationFrameImpl$B = function (useNativeImpl) {
 								(function (v) {
 									if (! (v == null || typeof v === "function")) {
 										debugger;
-										throw new Error("[/Users/fuji.goro/repo/try-on-web/JSX/lib/js/timer.jsx:143:57] detected invalid cast, value is not a function or null\n                    (js.global[\"msCancelAnimationFrame\"] as __noconvert__\n                                                         ^^\n");
+										throw new Error("[/Users/gfx/repo/try-on-web/JSX/lib/js/timer.jsx:143:57] detected invalid cast, value is not a function or null\n                    (js.global[\"msCancelAnimationFrame\"] as __noconvert__\n                                                         ^^\n");
 									}
 									return v;
 								}(js.global.msCancelAnimationFrame))(timer);
@@ -1300,6 +1096,210 @@ function js$() {
 
 js$.prototype = new js;
 
+/**
+ * class TestCase$CMatcher extends Object
+ * @constructor
+ */
+function TestCase$CMatcher() {
+}
+
+/**
+ * @constructor
+ * @param {TestCase} test
+ * @param {*} got
+ */
+function TestCase$CMatcher$LTestCase$X(test, got) {
+	this._name = null;
+	this._test = test;
+	this._got = got;
+};
+
+TestCase$CMatcher$LTestCase$X.prototype = new TestCase$CMatcher;
+
+/**
+ * @constructor
+ * @param {TestCase} test
+ * @param {*} got
+ * @param {!string} name
+ */
+function TestCase$CMatcher$LTestCase$XS(test, got, name) {
+	this._test = test;
+	this._got = got;
+	this._name = name;
+};
+
+TestCase$CMatcher$LTestCase$XS.prototype = new TestCase$CMatcher;
+
+/**
+ * @param {*} x
+ */
+TestCase$CMatcher.prototype.toBe$X = function (x) {
+	this._match$BXXS(this._got == x, this._got, x, "==");
+};
+
+/**
+ * @param {*} x
+ */
+TestCase$CMatcher.prototype.notToBe$X = function (x) {
+	this._match$BXXS(this._got != x, this._got, x, "!=");
+};
+
+/**
+ * @param {!number} x
+ */
+TestCase$CMatcher.prototype.toBeLT$N = function (x) {
+	this._match$BXXS(+this._got < x, this._got, x, "<");
+};
+
+/**
+ * @param {!number} x
+ */
+TestCase$CMatcher.prototype.toBeLE$N = function (x) {
+	this._match$BXXS(+this._got <= x, this._got, x, "<=");
+};
+
+/**
+ * @param {!number} x
+ */
+TestCase$CMatcher.prototype.toBeGT$N = function (x) {
+	this._match$BXXS(+this._got > x, this._got, x, ">");
+};
+
+/**
+ * @param {!number} x
+ */
+TestCase$CMatcher.prototype.toBeGE$N = function (x) {
+	this._match$BXXS(+this._got >= x, this._got, x, ">=");
+};
+
+/**
+ * @param {RegExp} x
+ */
+TestCase$CMatcher.prototype.toMatch$LRegExp$ = function (x) {
+	this._match$BXXS(x.test(this._got + ""), this._got, x, "match");
+};
+
+/**
+ * @param {RegExp} x
+ */
+TestCase$CMatcher.prototype.notToMatch$LRegExp$ = function (x) {
+	this._match$BXXS(! x.test(this._got + ""), this._got, x, "not match");
+};
+
+/**
+ * @param {Array.<undefined|*>} x
+ */
+TestCase$CMatcher.prototype.toEqual$AX = function (x) {
+	/** @type {Array.<undefined|*>} */
+	var got;
+	if (! (x != null)) {
+		debugger;
+		throw new Error("[/Users/gfx/repo/try-on-web/JSX/lib/common/test-case.jsx:470:21] assertion failure\n            assert x != null;\n                     ^^\n");
+	}
+	if (! (this._got instanceof Array)) {
+		this._test._nok$USUSXX(this._name, "equals", this._got, x);
+		return;
+	}
+	got = (function (v) {
+		if (! (v == null || v instanceof Array)) {
+			debugger;
+			throw new Error("[/Users/gfx/repo/try-on-web/JSX/lib/common/test-case.jsx:477:32] detected invalid cast, value is not an Array or null\n            var got = this._got as Array.<variant>;\n                                ^^\n");
+		}
+		return v;
+	}(this._got));
+	if (this._test.equals$XX(got, x)) {
+		this._test._ok$US(this._name);
+	} else {
+		this._test._nok$USUSXX(this._name, "equals", got, x);
+		this._test.note$S(this._test.difflet$AXAX(got, x));
+	}
+};
+
+/**
+ * @param {Array.<undefined|!string>} x
+ */
+TestCase$CMatcher.prototype.toEqual$AS = function (x) {
+	this.toEqual$AX((function (v) {
+		if (! (v == null || v instanceof Array)) {
+			debugger;
+			throw new Error("[/Users/gfx/repo/try-on-web/JSX/lib/common/test-case.jsx:488:27] detected invalid cast, value is not an Array or null\n            this.toEqual(x as __noconvert__ Array.<variant>);\n                           ^^\n");
+		}
+		return v;
+	}(x)));
+};
+
+/**
+ * @param {Array.<undefined|!number>} x
+ */
+TestCase$CMatcher.prototype.toEqual$AN = function (x) {
+	this.toEqual$AX((function (v) {
+		if (! (v == null || v instanceof Array)) {
+			debugger;
+			throw new Error("[/Users/gfx/repo/try-on-web/JSX/lib/common/test-case.jsx:491:27] detected invalid cast, value is not an Array or null\n            this.toEqual(x as __noconvert__ Array.<variant>);\n                           ^^\n");
+		}
+		return v;
+	}(x)));
+};
+
+/**
+ * @param {Array.<undefined|!number>} x
+ */
+TestCase$CMatcher.prototype.toEqual$AI = function (x) {
+	this.toEqual$AX((function (v) {
+		if (! (v == null || v instanceof Array)) {
+			debugger;
+			throw new Error("[/Users/gfx/repo/try-on-web/JSX/lib/common/test-case.jsx:494:27] detected invalid cast, value is not an Array or null\n            this.toEqual(x as __noconvert__ Array.<variant>);\n                           ^^\n");
+		}
+		return v;
+	}(x)));
+};
+
+/**
+ * @param {Array.<undefined|!boolean>} x
+ */
+TestCase$CMatcher.prototype.toEqual$AB = function (x) {
+	this.toEqual$AX((function (v) {
+		if (! (v == null || v instanceof Array)) {
+			debugger;
+			throw new Error("[/Users/gfx/repo/try-on-web/JSX/lib/common/test-case.jsx:497:27] detected invalid cast, value is not an Array or null\n            this.toEqual(x as __noconvert__ Array.<variant>);\n                           ^^\n");
+		}
+		return v;
+	}(x)));
+};
+
+/**
+ * @param {!boolean} value
+ * @param {*} got
+ * @param {*} expected
+ * @param {!string} op
+ */
+TestCase$CMatcher.prototype._match$BXXS = function (value, got, expected, op) {
+	if (value) {
+		this._test._ok$US(this._name);
+	} else {
+		this._test._nok$USUSXX(this._name, op, got, expected);
+	}
+};
+
+/**
+ * class TestCase$CFailure extends Error
+ * @constructor
+ */
+function TestCase$CFailure() {
+}
+
+TestCase$CFailure.prototype = new Error;
+/**
+ * @constructor
+ * @param {!string} reason
+ */
+function TestCase$CFailure$S(reason) {
+	Error.call(this);
+	this.message = reason;
+};
+
+TestCase$CFailure$S.prototype = new TestCase$CFailure;
+
 $__jsx_lazy_init(Timer, "_requestAnimationFrame", function () {
 	return Timer$_getRequestAnimationFrameImpl$B(true);
 });
@@ -1323,13 +1323,13 @@ var $__jsx_classMap = {
 	"system:lib/common/test-case.jsx": {
 		TestCase: TestCase,
 		TestCase$: TestCase$,
-		TestFailure: TestFailure,
-		TestFailure$S: TestFailure$S,
 		AsyncContext: AsyncContext,
 		AsyncContext$LTestCase$SF$LAsyncContext$V$I: AsyncContext$LTestCase$SF$LAsyncContext$V$I,
-		_Matcher: _Matcher,
-		_Matcher$LTestCase$X: _Matcher$LTestCase$X,
-		_Matcher$LTestCase$XS: _Matcher$LTestCase$XS
+		Matcher: TestCase$CMatcher,
+		Matcher$LTestCase$X: TestCase$CMatcher$LTestCase$X,
+		Matcher$LTestCase$XS: TestCase$CMatcher$LTestCase$XS,
+		Failure: TestCase$CFailure,
+		Failure$S: TestCase$CFailure$S
 	},
 	"system:lib/js/timer.jsx": {
 		Timer: Timer,

@@ -1,4 +1,4 @@
-// generatedy by JSX compiler 0.9.10 (2013-02-27 12:07:50 +0900; 422c219454c67047d16a70394392a9b3bed0249b)
+// generatedy by JSX compiler 0.9.10 (2013-03-06 10:41:15 +0900; 5c9afbd44f6ea873320fff781f5e1c931d03d191)
 var JSX = {};
 (function (JSX) {
 /**
@@ -152,7 +152,7 @@ Queue$string$E.prototype.dequeue$ = function () {
 	return (function (v) {
 		if (! (v != null)) {
 			debugger;
-			throw new Error("[/Users/fuji.goro/repo/try-on-web/JSX/example/template.jsx:18:26] null access\n    return this._buf.shift();\n                          ^\n");
+			throw new Error("[/Users/gfx/repo/try-on-web/JSX/example/template.jsx:18:26] null access\n    return this._buf.shift();\n                          ^\n");
 		}
 		return v;
 	}(this._buf.shift()));

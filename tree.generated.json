@@ -104,8 +104,9 @@
          "kbody.vs" : "example/kingyo/kbody.vs",
          "poi.jsx" : "example/kingyo/poi.jsx",
          "README.md" : "example/kingyo/README.md",
-         "kingyo.jsx" : "example/kingyo/kingyo.jsx",
+         "game.jsx.js" : "example/kingyo/game.jsx.js",
          "fish.mp3" : "example/kingyo/fish.mp3",
+         "kingyo.jsx" : "example/kingyo/kingyo.jsx",
          "kbody.fs" : "example/kingyo/kbody.fs",
          "poi.png" : "example/kingyo/poi.png"
       }
@@ -428,6 +429,7 @@
          "074.labelled-break.jsx" : "t/run/074.labelled-break.jsx",
          "014.break-loop.jsx" : "t/run/014.break-loop.jsx",
          "219.parameterize-nullable-type.jsx" : "t/run/219.parameterize-nullable-type.jsx",
+         "242.unclassify-use-this-in-constructor.jsx" : "t/run/242.unclassify-use-this-in-constructor.jsx",
          "207.alternate-constructor-invocation-in-template.jsx" : "t/run/207.alternate-constructor-invocation-in-template.jsx",
          "173.interface-or-mixin-as-object.jsx" : "t/run/173.interface-or-mixin-as-object.jsx",
          "040.delete.jsx" : "t/run/040.delete.jsx",

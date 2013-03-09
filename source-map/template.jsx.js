@@ -1,4 +1,4 @@
-// generatedy by JSX compiler 0.9.10 (2013-03-06 10:41:15 +0900; 5c9afbd44f6ea873320fff781f5e1c931d03d191)
+// generatedy by JSX compiler 0.9.12 (2013-03-10 01:51:09 +0900; b18dde2473e26fefc0cdfacd6b913238ef2eaaff)
 var JSX = {};
 (function (JSX) {
 /**

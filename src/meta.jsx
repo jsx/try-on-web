@@ -4,8 +4,8 @@
 final class Meta {
     static const VERSION_STRING   = "0.9.12";
     static const VERSION_NUMBER   =  0.009012;
-    static const LAST_COMMIT_HASH = "b18dde2473e26fefc0cdfacd6b913238ef2eaaff";
-    static const LAST_COMMIT_DATE = "2013-03-10 01:51:09 +0900";
+    static const LAST_COMMIT_HASH = "f3af45cd68c24b52d36a3e911b5774747511bb32";
+    static const LAST_COMMIT_DATE = "2013-03-11 23:45:20 +0900";
 
     static const IDENTIFIER = Meta.VERSION_STRING + " (" + Meta.LAST_COMMIT_DATE + "; " + Meta.LAST_COMMIT_HASH + ")";
 } // class Meta

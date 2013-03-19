@@ -1,4 +1,4 @@
-// generatedy by JSX compiler 0.9.12 (2013-03-11 23:45:20 +0900; f3af45cd68c24b52d36a3e911b5774747511bb32)
+// generatedy by JSX compiler 0.9.17 (2013-03-19 12:04:46 +0900; 7b65dcbd073de4267fd12dc27470c71e46c48c95)
 var JSX = {};
 (function (JSX) {
 /**
@@ -77,10 +77,10 @@ JSX.getProfileResults = function () {
 	return ($__jsx_profiler.getResults || function () { return {}; })();
 };
 
-JSX.postProfileResults = function (url) {
+JSX.postProfileResults = function (url, cb) {
 	if ($__jsx_profiler.postResults == null)
 		throw new Error("profiler has not been turned on");
-	return $__jsx_profiler.postResults(url);
+	return $__jsx_profiler.postResults(url, cb);
 };
 
 JSX.resetProfileResults = function () {

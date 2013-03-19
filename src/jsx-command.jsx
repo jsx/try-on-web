@@ -188,6 +188,14 @@ class JSXCommand {
 				}
 				optimizeCommands = optimizeCommands.concat(optarg.split(","));
 				break;
+			case "--disable-optimize":
+				if ((optarg = getoptarg()) == null) {
+					return 1;
+				}
+				optimizeCommands = optimizeCommands.filter((item) -> {
+					return optarg.split(",").indexOf(item) == -1;
+				});
+				break;
 			case "--warn":
 				if ((optarg = getoptarg()) == null) {
 					return 1;
@@ -248,6 +256,13 @@ class JSXCommand {
 				run = "_Test";
 				executable = executable ?: "node";
 				runImmediately = true;
+				tasks.push(function () : void {
+					// XXX: temporary hack; to be removed when "export to JS" feature is introduced
+					var idx = optimizeCommands.indexOf("staticize");
+					if (idx != -1) {
+						optimizeCommands.splice(idx, 1);
+					}
+				});
 				break;
 			case "--profile":
 				tasks.push(function () : void {
@@ -356,13 +371,15 @@ class JSXCommand {
 		}
 
 		optimizer = new Optimizer();
+
+		tasks.forEach(function(proc) { proc(); });
+
 		var err = optimizer.setup(optimizeCommands);
 		if (err != null) {
 			platform.error(err);
 			return 1;
 		}
 
-		tasks.forEach(function(proc) { proc(); });
 
 		emitter.setOutputFile(outputFile);
 

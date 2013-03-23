@@ -1,4 +1,4 @@
-// generatedy by JSX compiler 0.9.17 (2013-03-19 12:04:46 +0900; 7b65dcbd073de4267fd12dc27470c71e46c48c95)
+// generatedy by JSX compiler 0.9.19 (2013-03-23 15:11:21 +0900; 5d25e3f8ccaa6cdec3133370a58b917151eef865)
 var JSX = {};
 (function (JSX) {
 /**
@@ -16046,14 +16046,26 @@ JavaScriptEmitter.prototype._emitCallArguments$LToken$SALExpression$ALType$ = fu
 		if (i !== 0 || prefix.charAt(prefix.length - 1) !== '(') {
 			this._emit$SLToken$(", ", null);
 		}
-		argType = (argTypes != null ? argTypes[i] instanceof VariableLengthArgumentType ? (function (v) {
-			if (! (v == null || v instanceof VariableLengthArgumentType)) {
-				debugger;
-				throw new Error("[/Users/gfx/repo/try-on-web/JSX/src/jsemitter.jsx:2709:112] detected invalid cast, value is not an instance of the designated type or null\n            var argType = (argTypes != null ? (argTypes[i] instanceof VariableLengthArgumentType ? (argTypes[i] as VariableLengthArgumentType).getBaseType() : argTypes[i]) : null);\n                                                                                                                ^^\n");
+		argType = null;
+		if (argTypes != null) {
+			if (i < argTypes.length) {
+				argType = argTypes[i];
+			} else {
+				if (argTypes.length !== 0 && argTypes[argTypes.length - 1] instanceof VariableLengthArgumentType) {
+					argType = argTypes[argTypes.length - 1];
+				}
 			}
-			return v;
-		}(argTypes[i])).getBaseType$() : argTypes[i] : null);
-		if (argType != null && ! (argType instanceof NullableType || argType instanceof VariantType)) {
+			if (argType instanceof VariableLengthArgumentType) {
+				argType = (function (v) {
+					if (! (v == null || v instanceof VariableLengthArgumentType)) {
+						debugger;
+						throw new Error("[/Users/gfx/repo/try-on-web/JSX/src/jsemitter.jsx:2718:39] detected invalid cast, value is not an instance of the designated type or null\n                    argType = (argType as VariableLengthArgumentType).getBaseType();\n                                       ^^\n");
+					}
+					return v;
+				}(argType)).getBaseType$();
+			}
+		}
+		if (argType != null && ! Type.nullType.isConvertibleTo$LType$(argType)) {
 			this._emitWithNullableGuard$LExpression$N(args[i], 0);
 		} else {
 			this._getExpressionEmitterFor$LExpression$(args[i]).emit$N(0);
@@ -16125,7 +16137,7 @@ JavaScriptEmitter.prototype._emitRHSOfAssignment$LExpression$LType$ = function (
 			this._getExpressionEmitterFor$LExpression$(expr).emit$N((function (v) {
 				if (! (v != null)) {
 					debugger;
-					throw new Error("[/Users/gfx/repo/try-on-web/JSX/src/jsemitter.jsx:2760:107] null access\n                this._getExpressionEmitterFor(expr).emit(_BinaryNumberExpressionEmitter._operatorPrecedence[\"|\"]);\n                                                                                                           ^\n");
+					throw new Error("[/Users/gfx/repo/try-on-web/JSX/src/jsemitter.jsx:2771:107] null access\n                this._getExpressionEmitterFor(expr).emit(_BinaryNumberExpressionEmitter._operatorPrecedence[\"|\"]);\n                                                                                                           ^\n");
 				}
 				return v;
 			}(_BinaryNumberExpressionEmitter._operatorPrecedence["|"])));
@@ -16138,7 +16150,7 @@ JavaScriptEmitter.prototype._emitRHSOfAssignment$LExpression$LType$ = function (
 		this._emitWithNullableGuard$LExpression$N(expr, (function (v) {
 			if (! (v != null)) {
 				debugger;
-				throw new Error("[/Users/gfx/repo/try-on-web/JSX/src/jsemitter.jsx:2767:96] null access\n            this._emitWithNullableGuard(expr, _BinaryNumberExpressionEmitter._operatorPrecedence[\"|\"]);\n                                                                                                ^\n");
+				throw new Error("[/Users/gfx/repo/try-on-web/JSX/src/jsemitter.jsx:2778:96] null access\n            this._emitWithNullableGuard(expr, _BinaryNumberExpressionEmitter._operatorPrecedence[\"|\"]);\n                                                                                                ^\n");
 			}
 			return v;
 		}(_BinaryNumberExpressionEmitter._operatorPrecedence["|"])));
@@ -16148,13 +16160,13 @@ JavaScriptEmitter.prototype._emitRHSOfAssignment$LExpression$LType$ = function (
 	if (lhsType instanceof NullableType && (function (v) {
 		if (! (v == null || v instanceof NullableType)) {
 			debugger;
-			throw new Error("[/Users/gfx/repo/try-on-web/JSX/src/jsemitter.jsx:2771:57] detected invalid cast, value is not an instance of the designated type or null\n        if ((lhsType instanceof NullableType && (lhsType as NullableType).getBaseType().equals(Type.integerType))\n                                                         ^^\n");
+			throw new Error("[/Users/gfx/repo/try-on-web/JSX/src/jsemitter.jsx:2782:57] detected invalid cast, value is not an instance of the designated type or null\n        if ((lhsType instanceof NullableType && (lhsType as NullableType).getBaseType().equals(Type.integerType))\n                                                         ^^\n");
 		}
 		return v;
 	}(lhsType)).getBaseType$().equals$LType$(Type.integerType) && (exprType instanceof NullableType && (function (v) {
 		if (! (v == null || v instanceof NullableType)) {
 			debugger;
-			throw new Error("[/Users/gfx/repo/try-on-web/JSX/src/jsemitter.jsx:2772:62] detected invalid cast, value is not an instance of the designated type or null\n            && (exprType instanceof NullableType && (exprType as NullableType).getBaseType().equals(Type.numberType))) {\n                                                              ^^\n");
+			throw new Error("[/Users/gfx/repo/try-on-web/JSX/src/jsemitter.jsx:2783:62] detected invalid cast, value is not an instance of the designated type or null\n            && (exprType instanceof NullableType && (exprType as NullableType).getBaseType().equals(Type.numberType))) {\n                                                              ^^\n");
 		}
 		return v;
 	}(exprType)).getBaseType$().equals$LType$(Type.numberType))) {
@@ -16167,7 +16179,7 @@ JavaScriptEmitter.prototype._emitRHSOfAssignment$LExpression$LType$ = function (
 		this._getExpressionEmitterFor$LExpression$(expr).emit$N((function (v) {
 			if (! (v != null)) {
 				debugger;
-				throw new Error("[/Users/gfx/repo/try-on-web/JSX/src/jsemitter.jsx:2781:101] null access\n            this._getExpressionEmitterFor(expr).emit(_AssignmentExpressionEmitter._operatorPrecedence[\"=\"]);\n                                                                                                     ^\n");
+				throw new Error("[/Users/gfx/repo/try-on-web/JSX/src/jsemitter.jsx:2792:101] null access\n            this._getExpressionEmitterFor(expr).emit(_AssignmentExpressionEmitter._operatorPrecedence[\"=\"]);\n                                                                                                     ^\n");
 			}
 			return v;
 		}(_AssignmentExpressionEmitter._operatorPrecedence["="])));
@@ -16175,7 +16187,7 @@ JavaScriptEmitter.prototype._emitRHSOfAssignment$LExpression$LType$ = function (
 		this._emitWithNullableGuard$LExpression$N(expr, (function (v) {
 			if (! (v != null)) {
 				debugger;
-				throw new Error("[/Users/gfx/repo/try-on-web/JSX/src/jsemitter.jsx:2783:94] null access\n            this._emitWithNullableGuard(expr, _AssignmentExpressionEmitter._operatorPrecedence[\"=\"]);\n                                                                                              ^\n");
+				throw new Error("[/Users/gfx/repo/try-on-web/JSX/src/jsemitter.jsx:2794:94] null access\n            this._emitWithNullableGuard(expr, _AssignmentExpressionEmitter._operatorPrecedence[\"=\"]);\n                                                                                              ^\n");
 			}
 			return v;
 		}(_AssignmentExpressionEmitter._operatorPrecedence["="])));
@@ -33601,10 +33613,10 @@ IntegerType._classDef = null;
 NumberType._classDef = null;
 StringType._classDef = null;
 FunctionType._classDef = null;
-Meta.VERSION_STRING = "0.9.17";
-Meta.VERSION_NUMBER = 0.009017;
-Meta.LAST_COMMIT_HASH = "7b65dcbd073de4267fd12dc27470c71e46c48c95";
-Meta.LAST_COMMIT_DATE = "2013-03-19 12:04:46 +0900";
+Meta.VERSION_STRING = "0.9.19";
+Meta.VERSION_NUMBER = 0.009019;
+Meta.LAST_COMMIT_HASH = "5d25e3f8ccaa6cdec3133370a58b917151eef865";
+Meta.LAST_COMMIT_DATE = "2013-03-23 15:11:21 +0900";
 $__jsx_lazy_init(Meta, "IDENTIFIER", function () {
 	return Meta.VERSION_STRING + " (" + Meta.LAST_COMMIT_DATE + "; " + Meta.LAST_COMMIT_HASH + ")";
 });

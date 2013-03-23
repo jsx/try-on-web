@@ -1,4 +1,4 @@
-// generatedy by JSX compiler 0.9.19 (2013-03-23 15:38:16 +0900; 0b5db700474b4ab422b8e25511711ad5bd08435b)
+// generatedy by JSX compiler 0.9.19 (2013-03-23 15:59:15 +0900; d48260be68869ffeb5338fda730c5336d103de2f)
 var JSX = {};
 (function (JSX) {
 /**
@@ -32301,10 +32301,10 @@ SourceMapper.prototype.add$HNHNUSUS = function (generatedPos, originalPos, sourc
 		if (sourceFile.indexOf(this._rootDir + "/") === 0) {
 			sourceFile = sourceFile.substring(this._rootDir.length + 1);
 		}
-		if ($__jsx_ObjectHasOwnProperty.call(this._fileMap, (function (v) {
+		if (! $__jsx_ObjectHasOwnProperty.call(this._fileMap, (function (v) {
 			if (! (v != null)) {
 				debugger;
-				throw new Error("[/Users/gfx/repo/try-on-web/JSX/src/jssourcemap.jsx:76:45] null access\n            if (this._fileMap.hasOwnProperty(sourceFile)) {\n                                             ^^^^^^^^^^\n");
+				throw new Error("[/Users/gfx/repo/try-on-web/JSX/src/jssourcemap.jsx:76:47] null access\n            if (! this._fileMap.hasOwnProperty(sourceFile)) {\n                                               ^^^^^^^^^^\n");
 			}
 			return v;
 		}(sourceFile)))) {
@@ -33615,8 +33615,8 @@ StringType._classDef = null;
 FunctionType._classDef = null;
 Meta.VERSION_STRING = "0.9.19";
 Meta.VERSION_NUMBER = 0.009019;
-Meta.LAST_COMMIT_HASH = "0b5db700474b4ab422b8e25511711ad5bd08435b";
-Meta.LAST_COMMIT_DATE = "2013-03-23 15:38:16 +0900";
+Meta.LAST_COMMIT_HASH = "d48260be68869ffeb5338fda730c5336d103de2f";
+Meta.LAST_COMMIT_DATE = "2013-03-23 15:59:15 +0900";
 $__jsx_lazy_init(Meta, "IDENTIFIER", function () {
 	return Meta.VERSION_STRING + " (" + Meta.LAST_COMMIT_DATE + "; " + Meta.LAST_COMMIT_HASH + ")";
 });

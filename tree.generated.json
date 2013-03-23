@@ -151,33 +151,94 @@
    },
    "source-map" : {
       "hello.jsx" : "source-map/hello.jsx",
-      "import.jsx.js" : "source-map/import.jsx.js",
-      "add.jsx.js.mapping" : "source-map/add.jsx.js.mapping",
-      "import.jsx.js.mapping" : "source-map/import.jsx.js.mapping",
-      "fizzbuzz.jsx.js.mapping" : "source-map/fizzbuzz.jsx.js.mapping",
+      "fib.jsx.js.mapping.d" : {
+         "example" : {
+            "fib.jsx" : "source-map/fib.jsx.js.mapping.d/example/fib.jsx"
+         }
+      },
       "timers.jsx" : "source-map/timers.jsx",
       "add.jsx" : "source-map/add.jsx",
-      "fizzbuzz.jsx.js" : "source-map/fizzbuzz.jsx.js",
-      "fib.jsx.js.mapping" : "source-map/fib.jsx.js.mapping",
       "flying-being.jsx.js.mapping" : "source-map/flying-being.jsx.js.mapping",
       "fib.jsx" : "source-map/fib.jsx",
-      "timers.jsx.js.mapping" : "source-map/timers.jsx.js.mapping",
       "flying-being.jsx.js" : "source-map/flying-being.jsx.js",
-      "point.jsx" : "source-map/point.jsx",
       "fizzbuzz.jsx" : "source-map/fizzbuzz.jsx",
       "point.jsx.js" : "source-map/point.jsx.js",
       "index.html" : "source-map/index.html",
       "import.jsx" : "source-map/import.jsx",
-      "hello.jsx.js.mapping" : "source-map/hello.jsx.js.mapping",
       "add.jsx.js" : "source-map/add.jsx.js",
+      "template.jsx.js.mapping.d" : {
+         "example" : {
+            "template.jsx" : "source-map/template.jsx.js.mapping.d/example/template.jsx"
+         }
+      },
+      "import.jsx.js.mapping.d" : {
+         "example" : {
+            "fib.jsx" : "source-map/import.jsx.js.mapping.d/example/fib.jsx",
+            "import.jsx" : "source-map/import.jsx.js.mapping.d/example/import.jsx"
+         },
+         "lib" : {
+            "js" : {
+               "js.jsx" : "source-map/import.jsx.js.mapping.d/lib/js/js.jsx",
+               "timer.jsx" : "source-map/import.jsx.js.mapping.d/lib/js/timer.jsx"
+            },
+            "common" : {
+               "test-case.jsx" : "source-map/import.jsx.js.mapping.d/lib/common/test-case.jsx"
+            }
+         }
+      },
+      "timers.jsx.js.mapping.d" : {
+         "example" : {
+            "timers.jsx" : "source-map/timers.jsx.js.mapping.d/example/timers.jsx"
+         },
+         "lib" : {
+            "js" : {
+               "js.jsx" : "source-map/timers.jsx.js.mapping.d/lib/js/js.jsx",
+               "timer.jsx" : "source-map/timers.jsx.js.mapping.d/lib/js/timer.jsx"
+            }
+         }
+      },
       "template.jsx" : "source-map/template.jsx",
-      "point.jsx.js.mapping" : "source-map/point.jsx.js.mapping",
+      "add.jsx.js.mapping.d" : {
+         "example" : {
+            "add.jsx" : "source-map/add.jsx.js.mapping.d/example/add.jsx"
+         }
+      },
       "fib.jsx.js" : "source-map/fib.jsx.js",
-      "template.jsx.js.mapping" : "source-map/template.jsx.js.mapping",
-      "flying-being.jsx" : "source-map/flying-being.jsx",
       "hello.jsx.js" : "source-map/hello.jsx.js",
       "timers.jsx.js" : "source-map/timers.jsx.js",
-      "template.jsx.js" : "source-map/template.jsx.js"
+      "template.jsx.js" : "source-map/template.jsx.js",
+      "import.jsx.js" : "source-map/import.jsx.js",
+      "add.jsx.js.mapping" : "source-map/add.jsx.js.mapping",
+      "import.jsx.js.mapping" : "source-map/import.jsx.js.mapping",
+      "fizzbuzz.jsx.js.mapping" : "source-map/fizzbuzz.jsx.js.mapping",
+      "fizzbuzz.jsx.js.mapping.d" : {
+         "example" : {
+            "fizzbuzz.jsx" : "source-map/fizzbuzz.jsx.js.mapping.d/example/fizzbuzz.jsx"
+         }
+      },
+      "point.jsx.js.mapping.d" : {
+         "example" : {
+            "point.jsx" : "source-map/point.jsx.js.mapping.d/example/point.jsx"
+         }
+      },
+      "fib.jsx.js.mapping" : "source-map/fib.jsx.js.mapping",
+      "fizzbuzz.jsx.js" : "source-map/fizzbuzz.jsx.js",
+      "timers.jsx.js.mapping" : "source-map/timers.jsx.js.mapping",
+      "point.jsx" : "source-map/point.jsx",
+      "hello.jsx.js.mapping" : "source-map/hello.jsx.js.mapping",
+      "flying-being.jsx.js.mapping.d" : {
+         "example" : {
+            "flying-being.jsx" : "source-map/flying-being.jsx.js.mapping.d/example/flying-being.jsx"
+         }
+      },
+      "point.jsx.js.mapping" : "source-map/point.jsx.js.mapping",
+      "hello.jsx.js.mapping.d" : {
+         "example" : {
+            "hello.jsx" : "source-map/hello.jsx.js.mapping.d/example/hello.jsx"
+         }
+      },
+      "flying-being.jsx" : "source-map/flying-being.jsx",
+      "template.jsx.js.mapping" : "source-map/template.jsx.js.mapping"
    },
    "assets" : {
       "css" : {

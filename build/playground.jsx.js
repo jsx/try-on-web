@@ -1,4 +1,4 @@
-// generatedy by JSX compiler 0.9.19 (2013-03-23 15:11:21 +0900; 5d25e3f8ccaa6cdec3133370a58b917151eef865)
+// generatedy by JSX compiler 0.9.19 (2013-03-23 15:38:16 +0900; 0b5db700474b4ab422b8e25511711ad5bd08435b)
 var JSX = {};
 (function (JSX) {
 /**
@@ -15194,7 +15194,7 @@ JavaScriptEmitter.prototype._addSourceMapping$LToken$ = function (token) {
 	tokenValue = null;
 	origPos = null;
 	if (! $__jsx_isNaN(token.getLineNumber$())) {
-		origPos = ({ line: token.getLineNumber$(), column: token.getColumnNumber$() + 1 });
+		origPos = ({ line: token.getLineNumber$(), column: token.getColumnNumber$() });
 		if (token.isIdentifier$()) {
 			tokenValue = token.getValue$();
 		}
@@ -33615,8 +33615,8 @@ StringType._classDef = null;
 FunctionType._classDef = null;
 Meta.VERSION_STRING = "0.9.19";
 Meta.VERSION_NUMBER = 0.009019;
-Meta.LAST_COMMIT_HASH = "5d25e3f8ccaa6cdec3133370a58b917151eef865";
-Meta.LAST_COMMIT_DATE = "2013-03-23 15:11:21 +0900";
+Meta.LAST_COMMIT_HASH = "0b5db700474b4ab422b8e25511711ad5bd08435b";
+Meta.LAST_COMMIT_DATE = "2013-03-23 15:38:16 +0900";
 $__jsx_lazy_init(Meta, "IDENTIFIER", function () {
 	return Meta.VERSION_STRING + " (" + Meta.LAST_COMMIT_DATE + "; " + Meta.LAST_COMMIT_HASH + ")";
 });

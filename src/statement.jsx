@@ -242,6 +242,69 @@ class ExpressionStatement extends UnaryExpressionStatement {
 
 }
 
+class FunctionStatement extends Statement {
+
+	var _token : Token;
+	var _funcDef : MemberFunctionDefinition;
+
+	function constructor (token : Token, funcDef : MemberFunctionDefinition) {
+		super();
+		this._token = token;
+		this._funcDef = funcDef;
+	}
+
+	override function clone () : FunctionStatement {
+		// NOTE: funcDef is not cloned, but is later replaced in MemberFunctionDefitition#instantiate
+		return new FunctionStatement(this._token, this._funcDef);
+	}
+
+	override function getToken () : Token {
+		return this._token;
+	}
+
+	function getFuncDef () : MemberFunctionDefinition {
+		return this._funcDef;
+	}
+
+	function setFuncDef (funcDef : MemberFunctionDefinition) : void {
+		this._funcDef = funcDef;
+	}
+
+	override function serialize () : variant {
+		return [
+			"FunctionStatement",
+			this._funcDef.serialize()
+		] : variant[];
+	}
+
+	override function doAnalyze (context : AnalysisContext) : boolean {
+		if (! this._typesAreIdentified()) {
+			context.errors.push(new CompileError(this._token, "argument / return types were not automatically deductable, please specify them by hand"));
+			return false;
+		}
+		this._funcDef.analyze(context);
+		// the function can be used from the scope of the same level
+		context.getTopBlock().localVariableStatuses.setStatus(this._funcDef.getFuncLocal());
+		return true; // return true since everything is resolved correctly even if analysis of the function definition failed
+	}
+
+	function _typesAreIdentified () : boolean {
+		var argTypes = this._funcDef.getArgumentTypes();
+		for (var i = 0; i < argTypes.length; ++i) {
+			if (argTypes[i] == null)
+				return false;
+		}
+		if (this._funcDef.getReturnType() == null)
+			return false;
+		return true;
+	}
+
+	override function forEachExpression (cb : function(:Expression,:function(:Expression):void):boolean) : boolean {
+		return true;
+	}
+
+}
+
 class ReturnStatement extends Statement {
 
 	var _token : Token;
@@ -278,7 +341,18 @@ class ReturnStatement extends Statement {
 
 	override function doAnalyze (context : AnalysisContext) : boolean {
 		var returnType = context.funcDef.getReturnType();
-		if (returnType.equals(Type.voidType)) {
+		if (returnType == null) {
+			if (this._expr != null) {
+				if (! this._analyzeExpr(context, this._expr))
+					return true;
+				var exprType = this._expr.getType();
+				if (exprType == null)
+					return true;
+				context.funcDef.setReturnType(exprType);
+			} else {
+				context.funcDef.setReturnType(Type.voidType);
+			}
+		} else if (returnType.equals(Type.voidType)) {
 			// handle return(void);
 			if (this._expr != null) {
 				context.errors.push(new CompileError(this._token, "cannot return a value from a void function"));
@@ -290,13 +364,13 @@ class ReturnStatement extends Statement {
 				context.errors.push(new CompileError(this._token, "cannot return void, the function is declared to return a value of type '" + returnType.toString() + "'"));
 				return true;
 			}
-			if (this._expr instanceof FunctionExpression && ! (this._expr as FunctionExpression).typesAreIdentified() && returnType instanceof StaticFunctionType) {
+			if (this._expr instanceof FunctionExpression && ! (this._expr as FunctionExpression).argumentTypesAreIdentified() && returnType instanceof StaticFunctionType) {
 				if (! (this._expr as FunctionExpression).deductTypeIfUnknown(context, returnType as StaticFunctionType))
 					return false;
 			}
 			if (! this._analyzeExpr(context, this._expr))
 				return true;
-			var exprType = this._expr != null ? this._expr.getType() : (Type.voidType as Type);
+			var exprType = this._expr.getType();
 			if (exprType == null)
 				return true;
 			if (! exprType.isConvertibleTo(returnType)) {

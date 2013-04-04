@@ -1,4 +1,4 @@
-// generatedy by JSX compiler 0.9.19 (2013-03-23 15:59:15 +0900; d48260be68869ffeb5338fda730c5336d103de2f)
+// generatedy by JSX compiler 0.9.22 (2013-04-04 20:15:21 +0900; 37d29918a761fcc12e0b27fd1ff7e23c40bf9089)
 var JSX = {};
 (function (JSX) {
 /**
@@ -151,7 +151,7 @@ _Main.main$AS = function (args) {
 			}
 		}
 		return 0;
-	};
+	}
 	function jsxComplete(cm) {
 		CodeMirror.simpleHint(cm, (function (editor) {
 			/** @type {Cursor} */
@@ -203,7 +203,7 @@ _Main.main$AS = function (args) {
 			ret.to = ({ line: cur.line, ch: cur.ch });
 			return ret;
 		}));
-	};
+	}
 	list = dom$id$S('source-list');
 	input = (function (v) {
 		if (! (v == null || v instanceof HTMLTextAreaElement)) {
@@ -329,13 +329,13 @@ _Main.main$AS = function (args) {
 				output.setValue("ERROR!\n" + platform.getErrors$().join(""));
 			}
 		}
-	};
+	}
 	function saveInput(input) {
 		/** @type {Object.<string, undefined|*>} */
 		var session;
 		session = ({ inputPath: input.dataset.path, source: editor.getValue(), cursor: editor.getCursor(), optimizationLevel: getOptimizationLevel() });
 		dom.window.sessionStorage.setItem("jsx.session", JSON.stringify(session));
-	};
+	}
 	function retrieveInput(input) {
 		/** @type {undefined|!string} */
 		var serializedSession;
@@ -377,14 +377,14 @@ _Main.main$AS = function (args) {
 			}
 			compile(({ mode: 'run' }));
 		}
-	};
+	}
 	function forEach(collection, block) {
 		/** @type {!number} */
 		var i;
 		for (i = 0; i < collection.length; ++ i) {
 			block(collection[i]);
 		}
-	};
+	}
 	forEach(list.getElementsByTagName("li"), (function (elem) {
 		/** @type {HTMLLIElement} */
 		var li;
@@ -1754,7 +1754,7 @@ Compiler.prototype.forEachClassDef$F$LParser$LClassDefinition$B$ = function (f) 
 			}
 		}
 		return true;
-	};
+	}
 	for (i = 0; i < this._parsers.length; ++ i) {
 		parser = this._parsers[i];
 		classDefs = parser.getClassDefs$();
@@ -2225,7 +2225,7 @@ _Util.exprHasSideEffects$LExpression$ = function (expr) {
 			}
 		}
 		return expr.forEachExpression$F$LExpression$F$LExpression$V$B$(onExpr);
-	};
+	}
 	return ! onExpr(expr, null);
 };
 
@@ -2365,7 +2365,7 @@ _Util.optimizeBasicBlock$LMemberFunctionDefinition$F$ALExpression$V$ = function 
 				}
 			}
 		}
-	};
+	}
 	statements = funcDef.getStatements$();
 	if (statements != null) {
 		optimizeStatements(statements);
@@ -2423,7 +2423,7 @@ Optimizer.prototype.setup$AS = function (cmds) {
 			$this._commands.push(new _DetermineCalleeCommand$());
 			calleesAreDetermined = true;
 		}
-	};
+	}
 	for (i = 0; i < cmds.length; ++ i) {
 		cmd = cmds[i];
 		if (cmd == "lto") {
@@ -2671,7 +2671,7 @@ _OptimizeCommand.prototype.createVar$LMemberFunctionDefinition$LType$S = functio
 			}
 		}
 		return false;
-	};
+	}
 	for (i = 0; nameExists(baseName + "$" + (i + "")); ++ i) {
 	}
 	newLocal = new LocalVariable$LToken$LType$(new Token$SB(baseName + "$" + (i + ""), false), type);
@@ -2725,7 +2725,7 @@ _FunctionOptimizeCommand.prototype.performOptimization$ = function () {
 		$this.log$S("starting optimization of " + funcDef.getNotation$());
 		$this.optimizeFunction$LMemberFunctionDefinition$(funcDef);
 		$this.log$S("finished optimization of " + funcDef.getNotation$());
-	};
+	}
 	this.getCompiler$().forEachClassDef$F$LParser$LClassDefinition$B$((function (parser, classDef) {
 		classDef.forEachMemberFunction$F$LMemberFunctionDefinition$B$((function (funcDef) {
 			if (funcDef.getStatements$() != null) {
@@ -2894,7 +2894,7 @@ _LinkTimeOptimizationCommand.prototype._getOverridesByClass$LClassDefinition$LCl
 			return false;
 		}
 		return true;
-	};
+	}
 	classDef.forEachMemberFunction$F$LMemberFunctionDefinition$B$(addOverride);
 	implementClassDefs = classDef.implementTypes$().map((function (type) {
 		return type.getClassDef$();
@@ -2954,7 +2954,7 @@ _NoAssertCommand.prototype._optimizeStatements$ALStatement$ = function (statemen
 			}
 		}
 		return false;
-	};
+	}
 	optimize(statements);
 };
 
@@ -3003,7 +3003,7 @@ _NoLogCommand.prototype._optimizeStatements$ALStatement$ = function (statements)
 			}
 		}
 		return false;
-	};
+	}
 	optimize(statements);
 };
 
@@ -3064,6 +3064,16 @@ _DetermineCalleeCommand.prototype.optimizeFunction$LMemberFunctionDefinition$ = 
 				throw new Error("could not determine the associated parent ctor");
 			}
 			$this._setCallingFuncDef$LStashable$LMemberFunctionDefinition$(statement, callingFuncDef);
+		} else {
+			if (statement instanceof FunctionStatement) {
+				(function (v) {
+					if (! (v == null || v instanceof FunctionStatement)) {
+						debugger;
+						throw new Error("[/Users/gfx/repo/try-on-web/JSX/src/optimizer.jsx:611:27] detected invalid cast, value is not an instance of the designated type or null\n                (statement as FunctionStatement).getFuncDef().forEachStatement(onStatement);\n                           ^^\n");
+					}
+					return v;
+				}(statement)).getFuncDef$().forEachStatement$F$LStatement$B$(onStatement);
+			}
 		}
 		statement.forEachExpression$F$LExpression$B$((function onExpr(expr) {
 			/** @type {Expression} */
@@ -3078,21 +3088,21 @@ _DetermineCalleeCommand.prototype.optimizeFunction$LMemberFunctionDefinition$ = 
 				calleeExpr = (function (v) {
 					if (! (v == null || v instanceof CallExpression)) {
 						debugger;
-						throw new Error("[/Users/gfx/repo/try-on-web/JSX/src/optimizer.jsx:615:43] detected invalid cast, value is not an instance of the designated type or null\n                    var calleeExpr = (expr as CallExpression).getExpr();\n                                           ^^\n");
+						throw new Error("[/Users/gfx/repo/try-on-web/JSX/src/optimizer.jsx:617:43] detected invalid cast, value is not an instance of the designated type or null\n                    var calleeExpr = (expr as CallExpression).getExpr();\n                                           ^^\n");
 					}
 					return v;
 				}(expr)).getExpr$();
 				if (calleeExpr instanceof PropertyExpression && ! (function (v) {
 					if (! (v == null || v instanceof PropertyExpression)) {
 						debugger;
-						throw new Error("[/Users/gfx/repo/try-on-web/JSX/src/optimizer.jsx:616:82] detected invalid cast, value is not an instance of the designated type or null\n                    if (calleeExpr instanceof PropertyExpression && ! (calleeExpr as PropertyExpression).getType().isAssignable()) {\n                                                                                  ^^\n");
+						throw new Error("[/Users/gfx/repo/try-on-web/JSX/src/optimizer.jsx:618:82] detected invalid cast, value is not an instance of the designated type or null\n                    if (calleeExpr instanceof PropertyExpression && ! (calleeExpr as PropertyExpression).getType().isAssignable()) {\n                                                                                  ^^\n");
 					}
 					return v;
 				}(calleeExpr)).getType$().isAssignable$()) {
 					propertyExpr = (function (v) {
 						if (! (v == null || v instanceof PropertyExpression)) {
 							debugger;
-							throw new Error("[/Users/gfx/repo/try-on-web/JSX/src/optimizer.jsx:617:54] detected invalid cast, value is not an instance of the designated type or null\n                        var propertyExpr = calleeExpr as PropertyExpression;\n                                                      ^^\n");
+							throw new Error("[/Users/gfx/repo/try-on-web/JSX/src/optimizer.jsx:619:54] detected invalid cast, value is not an instance of the designated type or null\n                        var propertyExpr = calleeExpr as PropertyExpression;\n                                                      ^^\n");
 						}
 						return v;
 					}(calleeExpr));
@@ -3100,7 +3110,7 @@ _DetermineCalleeCommand.prototype.optimizeFunction$LMemberFunctionDefinition$ = 
 					callingFuncDef = _DetermineCalleeCommand$findCallingFunction$LClassDefinition$SALType$B(holderType.getClassDef$(), propertyExpr.getIdentifierToken$().getValue$(), (function (v) {
 						if (! (v == null || v instanceof ResolvedFunctionType)) {
 							debugger;
-							throw new Error("[/Users/gfx/repo/try-on-web/JSX/src/optimizer.jsx:623:52] detected invalid cast, value is not an instance of the designated type or null\n                            (propertyExpr.getType() as ResolvedFunctionType).getArgumentTypes(),\n                                                    ^^\n");
+							throw new Error("[/Users/gfx/repo/try-on-web/JSX/src/optimizer.jsx:625:52] detected invalid cast, value is not an instance of the designated type or null\n                            (propertyExpr.getType() as ResolvedFunctionType).getArgumentTypes(),\n                                                    ^^\n");
 						}
 						return v;
 					}(propertyExpr.getType$())).getArgumentTypes$(), propertyExpr.getExpr$() instanceof ClassExpression);
@@ -3110,7 +3120,7 @@ _DetermineCalleeCommand.prototype.optimizeFunction$LMemberFunctionDefinition$ = 
 						$this._setCallingFuncDef$LStashable$LMemberFunctionDefinition$(expr, (function (v) {
 							if (! (v == null || v instanceof FunctionExpression)) {
 								debugger;
-								throw new Error("[/Users/gfx/repo/try-on-web/JSX/src/optimizer.jsx:627:66] detected invalid cast, value is not an instance of the designated type or null\n                        this._setCallingFuncDef(expr, (calleeExpr as FunctionExpression).getFuncDef());\n                                                                  ^^\n");
+								throw new Error("[/Users/gfx/repo/try-on-web/JSX/src/optimizer.jsx:629:66] detected invalid cast, value is not an instance of the designated type or null\n                        this._setCallingFuncDef(expr, (calleeExpr as FunctionExpression).getFuncDef());\n                                                                  ^^\n");
 							}
 							return v;
 						}(calleeExpr)).getFuncDef$());
@@ -3123,13 +3133,13 @@ _DetermineCalleeCommand.prototype.optimizeFunction$LMemberFunctionDefinition$ = 
 					callingFuncDef = _DetermineCalleeCommand$findCallingFunctionInClass$LClassDefinition$SALType$B((function (v) {
 						if (! (v == null || v instanceof NewExpression)) {
 							debugger;
-							throw new Error("[/Users/gfx/repo/try-on-web/JSX/src/optimizer.jsx:633:30] detected invalid cast, value is not an instance of the designated type or null\n                        (expr as NewExpression).getType().getClassDef(), \"constructor\", (expr as NewExpression).getConstructor().getArgumentTypes(), false);\n                              ^^\n");
+							throw new Error("[/Users/gfx/repo/try-on-web/JSX/src/optimizer.jsx:635:30] detected invalid cast, value is not an instance of the designated type or null\n                        (expr as NewExpression).getType().getClassDef(), \"constructor\", (expr as NewExpression).getConstructor().getArgumentTypes(), false);\n                              ^^\n");
 						}
 						return v;
 					}(expr)).getType$().getClassDef$(), "constructor", (function (v) {
 						if (! (v == null || v instanceof NewExpression)) {
 							debugger;
-							throw new Error("[/Users/gfx/repo/try-on-web/JSX/src/optimizer.jsx:633:94] detected invalid cast, value is not an instance of the designated type or null\n                        (expr as NewExpression).getType().getClassDef(), \"constructor\", (expr as NewExpression).getConstructor().getArgumentTypes(), false);\n                                                                                              ^^\n");
+							throw new Error("[/Users/gfx/repo/try-on-web/JSX/src/optimizer.jsx:635:94] detected invalid cast, value is not an instance of the designated type or null\n                        (expr as NewExpression).getType().getClassDef(), \"constructor\", (expr as NewExpression).getConstructor().getArgumentTypes(), false);\n                                                                                              ^^\n");
 						}
 						return v;
 					}(expr)).getConstructor$().getArgumentTypes$(), false);
@@ -3137,7 +3147,7 @@ _DetermineCalleeCommand.prototype.optimizeFunction$LMemberFunctionDefinition$ = 
 						throw new Error("could not find matching constructor for " + (function (v) {
 							if (! (v == null || v instanceof NewExpression)) {
 								debugger;
-								throw new Error("[/Users/gfx/repo/try-on-web/JSX/src/optimizer.jsx:635:91] detected invalid cast, value is not an instance of the designated type or null\n                        throw new Error(\"could not find matching constructor for \" + (expr as NewExpression).getConstructor().toString());\n                                                                                           ^^\n");
+								throw new Error("[/Users/gfx/repo/try-on-web/JSX/src/optimizer.jsx:637:91] detected invalid cast, value is not an instance of the designated type or null\n                        throw new Error(\"could not find matching constructor for \" + (expr as NewExpression).getConstructor().toString());\n                                                                                           ^^\n");
 							}
 							return v;
 						}(expr)).getConstructor$().toString());
@@ -3145,7 +3155,7 @@ _DetermineCalleeCommand.prototype.optimizeFunction$LMemberFunctionDefinition$ = 
 					$this._setCallingFuncDef$LStashable$LMemberFunctionDefinition$((function (v) {
 						if (! (v == null || v instanceof NewExpression)) {
 							debugger;
-							throw new Error("[/Users/gfx/repo/try-on-web/JSX/src/optimizer.jsx:637:49] detected invalid cast, value is not an instance of the designated type or null\n                    this._setCallingFuncDef(expr as NewExpression, callingFuncDef);\n                                                 ^^\n");
+							throw new Error("[/Users/gfx/repo/try-on-web/JSX/src/optimizer.jsx:639:49] detected invalid cast, value is not an instance of the designated type or null\n                    this._setCallingFuncDef(expr as NewExpression, callingFuncDef);\n                                                 ^^\n");
 						}
 						return v;
 					}(expr)), callingFuncDef);
@@ -3155,7 +3165,7 @@ _DetermineCalleeCommand.prototype.optimizeFunction$LMemberFunctionDefinition$ = 
 				return (function (v) {
 					if (! (v == null || v instanceof FunctionExpression)) {
 						debugger;
-						throw new Error("[/Users/gfx/repo/try-on-web/JSX/src/optimizer.jsx:640:33] detected invalid cast, value is not an instance of the designated type or null\n                    return (expr as FunctionExpression).getFuncDef().forEachStatement(onStatement);\n                                 ^^\n");
+						throw new Error("[/Users/gfx/repo/try-on-web/JSX/src/optimizer.jsx:642:33] detected invalid cast, value is not an instance of the designated type or null\n                    return (expr as FunctionExpression).getFuncDef().forEachStatement(onStatement);\n                                 ^^\n");
 					}
 					return v;
 				}(expr)).getFuncDef$().forEachStatement$F$LStatement$B$(onStatement);
@@ -3176,7 +3186,7 @@ _DetermineCalleeCommand.prototype._setCallingFuncDef$LStashable$LMemberFunctionD
 	(function (v) {
 		if (! (v == null || v instanceof _DetermineCalleeCommand$CStash)) {
 			debugger;
-			throw new Error("[/Users/gfx/repo/try-on-web/JSX/src/optimizer.jsx:652:34] detected invalid cast, value is not an instance of the designated type or null\n        (this.getStash(stashable) as _DetermineCalleeCommand.Stash).callingFuncDef = funcDef;\n                                  ^^\n");
+			throw new Error("[/Users/gfx/repo/try-on-web/JSX/src/optimizer.jsx:654:34] detected invalid cast, value is not an instance of the designated type or null\n        (this.getStash(stashable) as _DetermineCalleeCommand.Stash).callingFuncDef = funcDef;\n                                  ^^\n");
 		}
 		return v;
 	}(this.getStash$LStashable$(stashable))).callingFuncDef = funcDef;
@@ -3235,7 +3245,7 @@ _DetermineCalleeCommand.getCallingFuncDef$LStashable$ = function (stashable) {
 	stash = (function (v) {
 		if (! (v == null || v instanceof _DetermineCalleeCommand$CStash)) {
 			debugger;
-			throw new Error("[/Users/gfx/repo/try-on-web/JSX/src/optimizer.jsx:677:86] detected invalid cast, value is not an instance of the designated type or null\n        var stash = stashable.getOptimizerStash()[_DetermineCalleeCommand.IDENTIFIER] as _DetermineCalleeCommand.Stash;\n                                                                                      ^^\n");
+			throw new Error("[/Users/gfx/repo/try-on-web/JSX/src/optimizer.jsx:679:86] detected invalid cast, value is not an instance of the designated type or null\n        var stash = stashable.getOptimizerStash()[_DetermineCalleeCommand.IDENTIFIER] as _DetermineCalleeCommand.Stash;\n                                                                                      ^^\n");
 		}
 		return v;
 	}(stashable.getOptimizerStash$()[_DetermineCalleeCommand.IDENTIFIER]));
@@ -3303,10 +3313,10 @@ _StaticizeOptimizeCommand.prototype.performOptimization$ = function () {
 					return true;
 				}));
 				return statement.forEachStatement$F$LStatement$B$(onStatement);
-			};
+			}
 			funcDef.forEachStatement$F$LStatement$B$(onStatement);
 			return funcDef.forEachClosure$F$LMemberFunctionDefinition$B$(onFunction);
-		};
+		}
 		classDef.forEachMemberFunction$F$LMemberFunctionDefinition$B$(onFunction);
 		return true;
 	}));
@@ -3322,6 +3332,15 @@ _StaticizeOptimizeCommand.prototype._rewriteFunctionAsStatic$LMemberFunctionDefi
 	thisArg = new ArgumentDeclaration$LToken$LType$(new Token$SB("$this", false), new ObjectType$LClassDefinition$(funcDef.getClassDef$()));
 	funcDef.getArguments$().unshift(thisArg);
 	funcDef.forEachStatement$F$LStatement$B$((function onStatement(statement) {
+		if (statement instanceof FunctionStatement) {
+			(function (v) {
+				if (! (v == null || v instanceof FunctionStatement)) {
+					debugger;
+					throw new Error("[/Users/gfx/repo/try-on-web/JSX/src/optimizer.jsx:747:27] detected invalid cast, value is not an instance of the designated type or null\n                (statement as FunctionStatement).getFuncDef().forEachStatement(onStatement);\n                           ^^\n");
+				}
+				return v;
+			}(statement)).getFuncDef$().forEachStatement$F$LStatement$B$(onStatement);
+		}
 		return statement.forEachExpression$F$LExpression$F$LExpression$V$B$((function onExpr(expr, replaceCb) {
 			if (expr instanceof ThisExpression) {
 				replaceCb(new LocalExpression$LToken$LLocalVariable$(thisArg.getName$(), thisArg));
@@ -3330,7 +3349,7 @@ _StaticizeOptimizeCommand.prototype._rewriteFunctionAsStatic$LMemberFunctionDefi
 					return (function (v) {
 						if (! (v == null || v instanceof FunctionExpression)) {
 							debugger;
-							throw new Error("[/Users/gfx/repo/try-on-web/JSX/src/optimizer.jsx:748:33] detected invalid cast, value is not an instance of the designated type or null\n                    return (expr as FunctionExpression).getFuncDef().forEachStatement(onStatement);\n                                 ^^\n");
+							throw new Error("[/Users/gfx/repo/try-on-web/JSX/src/optimizer.jsx:753:33] detected invalid cast, value is not an instance of the designated type or null\n                    return (expr as FunctionExpression).getFuncDef().forEachStatement(onStatement);\n                                 ^^\n");
 						}
 						return v;
 					}(expr)).getFuncDef$().forEachStatement$F$LStatement$B$(onStatement);
@@ -3367,27 +3386,27 @@ _StaticizeOptimizeCommand.prototype._rewriteMethodCallsToStatic$LExpression$F$LE
 			calleeExpr = (function (v) {
 				if (! (v == null || v instanceof CallExpression)) {
 					debugger;
-					throw new Error("[/Users/gfx/repo/try-on-web/JSX/src/optimizer.jsx:760:39] detected invalid cast, value is not an instance of the designated type or null\n                var calleeExpr = (expr as CallExpression).getExpr();\n                                       ^^\n");
+					throw new Error("[/Users/gfx/repo/try-on-web/JSX/src/optimizer.jsx:765:39] detected invalid cast, value is not an instance of the designated type or null\n                var calleeExpr = (expr as CallExpression).getExpr();\n                                       ^^\n");
 				}
 				return v;
 			}(expr)).getExpr$();
 			if (calleeExpr instanceof PropertyExpression && ! ((function (v) {
 				if (! (v == null || v instanceof PropertyExpression)) {
 					debugger;
-					throw new Error("[/Users/gfx/repo/try-on-web/JSX/src/optimizer.jsx:762:38] detected invalid cast, value is not an instance of the designated type or null\n                    && ! ((calleeExpr as PropertyExpression).getExpr() instanceof ClassExpression)\n                                      ^^\n");
+					throw new Error("[/Users/gfx/repo/try-on-web/JSX/src/optimizer.jsx:767:38] detected invalid cast, value is not an instance of the designated type or null\n                    && ! ((calleeExpr as PropertyExpression).getExpr() instanceof ClassExpression)\n                                      ^^\n");
 				}
 				return v;
 			}(calleeExpr)).getExpr$() instanceof ClassExpression) && ! (function (v) {
 				if (! (v == null || v instanceof PropertyExpression)) {
 					debugger;
-					throw new Error("[/Users/gfx/repo/try-on-web/JSX/src/optimizer.jsx:763:37] detected invalid cast, value is not an instance of the designated type or null\n                    && ! (calleeExpr as PropertyExpression).getType().isAssignable()) {\n                                     ^^\n");
+					throw new Error("[/Users/gfx/repo/try-on-web/JSX/src/optimizer.jsx:768:37] detected invalid cast, value is not an instance of the designated type or null\n                    && ! (calleeExpr as PropertyExpression).getType().isAssignable()) {\n                                     ^^\n");
 				}
 				return v;
 			}(calleeExpr)).getType$().isAssignable$()) {
 				propertyExpr = (function (v) {
 					if (! (v == null || v instanceof PropertyExpression)) {
 						debugger;
-						throw new Error("[/Users/gfx/repo/try-on-web/JSX/src/optimizer.jsx:764:54] detected invalid cast, value is not an instance of the designated type or null\n                        var propertyExpr = calleeExpr as PropertyExpression;\n                                                      ^^\n");
+						throw new Error("[/Users/gfx/repo/try-on-web/JSX/src/optimizer.jsx:769:54] detected invalid cast, value is not an instance of the designated type or null\n                        var propertyExpr = calleeExpr as PropertyExpression;\n                                                      ^^\n");
 					}
 					return v;
 				}(calleeExpr));
@@ -3396,7 +3415,7 @@ _StaticizeOptimizeCommand.prototype._rewriteMethodCallsToStatic$LExpression$F$LE
 					found = $this._findRewrittenFunctionInClass$LType$SALType$B(receiverType, propertyExpr.getIdentifierToken$().getValue$(), (function (v) {
 						if (! (v == null || v instanceof ResolvedFunctionType)) {
 							debugger;
-							throw new Error("[/Users/gfx/repo/try-on-web/JSX/src/optimizer.jsx:769:159] detected invalid cast, value is not an instance of the designated type or null\n                            var found = this._findRewrittenFunctionInClass(receiverType, propertyExpr.getIdentifierToken().getValue(), (propertyExpr.getType() as ResolvedFunctionType).getArgumentTypes(), true);\n                                                                                                                                                               ^^\n");
+							throw new Error("[/Users/gfx/repo/try-on-web/JSX/src/optimizer.jsx:774:159] detected invalid cast, value is not an instance of the designated type or null\n                            var found = this._findRewrittenFunctionInClass(receiverType, propertyExpr.getIdentifierToken().getValue(), (propertyExpr.getType() as ResolvedFunctionType).getArgumentTypes(), true);\n                                                                                                                                                               ^^\n");
 						}
 						return v;
 					}(propertyExpr.getType$())).getArgumentTypes$(), true);
@@ -3408,20 +3427,20 @@ _StaticizeOptimizeCommand.prototype._rewriteMethodCallsToStatic$LExpression$F$LE
 						Util$forEachExpression$F$LExpression$F$LExpression$V$B$ALExpression$(onExpr, (function (v) {
 							if (! (v == null || v instanceof CallExpression)) {
 								debugger;
-								throw new Error("[/Users/gfx/repo/try-on-web/JSX/src/optimizer.jsx:776:69] detected invalid cast, value is not an instance of the designated type or null\n                                Util.forEachExpression(onExpr, (expr as CallExpression).getArguments());\n                                                                     ^^\n");
+								throw new Error("[/Users/gfx/repo/try-on-web/JSX/src/optimizer.jsx:781:69] detected invalid cast, value is not an instance of the designated type or null\n                                Util.forEachExpression(onExpr, (expr as CallExpression).getArguments());\n                                                                     ^^\n");
 							}
 							return v;
 						}(expr)).getArguments$());
 						replaceCb(new CallExpression$LToken$LExpression$ALExpression$(expr.getToken$(), new PropertyExpression$LToken$LExpression$LToken$ALType$LType$(propertyExpr.getToken$(), new ClassExpression$LToken$LType$(new Token$SB(classDef.className$(), true), new ObjectType$LClassDefinition$(classDef)), propertyExpr.getIdentifierToken$(), propertyExpr.getTypeArguments$(), (function (v) {
 							if (! (v == null || v instanceof ResolvedFunctionType)) {
 								debugger;
-								throw new Error("[/Users/gfx/repo/try-on-web/JSX/src/optimizer.jsx:785:62] detected invalid cast, value is not an instance of the designated type or null\n                                            funcDef.getType() as ResolvedFunctionType),\n                                                              ^^\n");
+								throw new Error("[/Users/gfx/repo/try-on-web/JSX/src/optimizer.jsx:790:62] detected invalid cast, value is not an instance of the designated type or null\n                                            funcDef.getType() as ResolvedFunctionType),\n                                                              ^^\n");
 							}
 							return v;
 						}(funcDef.getType$()))), [ propertyExpr.getExpr$() ].concat((function (v) {
 							if (! (v == null || v instanceof CallExpression)) {
 								debugger;
-								throw new Error("[/Users/gfx/repo/try-on-web/JSX/src/optimizer.jsx:786:80] detected invalid cast, value is not an instance of the designated type or null\n                                        [ propertyExpr.getExpr() ].concat((expr as CallExpression).getArguments())));\n                                                                                ^^\n");
+								throw new Error("[/Users/gfx/repo/try-on-web/JSX/src/optimizer.jsx:791:80] detected invalid cast, value is not an instance of the designated type or null\n                                        [ propertyExpr.getExpr() ].concat((expr as CallExpression).getArguments())));\n                                                                                ^^\n");
 							}
 							return v;
 						}(expr)).getArguments$())));
@@ -3515,10 +3534,10 @@ _UnclassifyOptimizationCommand.prototype.performOptimization$ = function () {
 					return true;
 				}));
 				return statement.forEachStatement$F$LStatement$B$(onStatement);
-			};
+			}
 			funcDef.forEachStatement$F$LStatement$B$(onStatement);
 			return funcDef.forEachClosure$F$LMemberFunctionDefinition$B$(onFunction);
-		};
+		}
 		classDef.forEachMemberFunction$F$LMemberFunctionDefinition$B$(onFunction);
 		classDef.forEachMemberVariable$F$LMemberVariableDefinition$B$((function (varDef) {
 			if ((varDef.flags$() & ClassDefinition.IS_STATIC) !== 0) {
@@ -3565,13 +3584,13 @@ _UnclassifyOptimizationCommand.prototype._getClassesToUnclassify$ = function () 
 			var foundClassDefIndex;
 			if (! (expr != null)) {
 				debugger;
-				throw new Error("[/Users/gfx/repo/try-on-web/JSX/src/optimizer.jsx:910:28] assertion failure\n                assert expr != null;\n                            ^^\n");
+				throw new Error("[/Users/gfx/repo/try-on-web/JSX/src/optimizer.jsx:915:28] assertion failure\n                assert expr != null;\n                            ^^\n");
 			}
 			if (expr instanceof InstanceofExpression) {
 				foundClassDefIndex = candidates.indexOf((function (v) {
 					if (! (v == null || v instanceof InstanceofExpression)) {
 						debugger;
-						throw new Error("[/Users/gfx/repo/try-on-web/JSX/src/optimizer.jsx:912:70] detected invalid cast, value is not an instance of the designated type or null\n                    var foundClassDefIndex = candidates.indexOf((expr as InstanceofExpression).getExpectedType().getClassDef());\n                                                                      ^^\n");
+						throw new Error("[/Users/gfx/repo/try-on-web/JSX/src/optimizer.jsx:917:70] detected invalid cast, value is not an instance of the designated type or null\n                    var foundClassDefIndex = candidates.indexOf((expr as InstanceofExpression).getExpectedType().getClassDef());\n                                                                      ^^\n");
 					}
 					return v;
 				}(expr)).getExpectedType$().getClassDef$());
@@ -3593,7 +3612,7 @@ _UnclassifyOptimizationCommand.prototype._getClassesToUnclassify$ = function () 
 				}
 			}
 			return expr.forEachExpression$F$LExpression$B$(onExpr);
-		};
+		}
 		classDef.forEachMemberFunction$F$LMemberFunctionDefinition$B$((function onFunction(funcDef) {
 			funcDef.forEachStatement$F$LStatement$B$((function onStatement(statement) {
 				statement.forEachExpression$F$LExpression$B$(onExpr);
@@ -3623,7 +3642,7 @@ _UnclassifyOptimizationCommand.prototype._getClassesToUnclassify$ = function () 
 					(function (v) {
 						if (! (v == null || v instanceof _UnclassifyOptimizationCommand$CStash)) {
 							debugger;
-							throw new Error("[/Users/gfx/repo/try-on-web/JSX/src/optimizer.jsx:956:48] detected invalid cast, value is not an instance of the designated type or null\n                        (this.getStash(funcDef) as _UnclassifyOptimizationCommand.Stash).inliner = inliner;\n                                                ^^\n");
+							throw new Error("[/Users/gfx/repo/try-on-web/JSX/src/optimizer.jsx:961:48] detected invalid cast, value is not an instance of the designated type or null\n                        (this.getStash(funcDef) as _UnclassifyOptimizationCommand.Stash).inliner = inliner;\n                                                ^^\n");
 						}
 						return v;
 					}($this.getStash$LStashable$(funcDef))).inliner = inliner;
@@ -3694,7 +3713,7 @@ _UnclassifyOptimizationCommand.prototype._createInliner$LMemberFunctionDefinitio
 		statementExpr = (function (v) {
 			if (! (v == null || v instanceof ExpressionStatement)) {
 				debugger;
-				throw new Error("[/Users/gfx/repo/try-on-web/JSX/src/optimizer.jsx:996:60] detected invalid cast, value is not an instance of the designated type or null\n            var statementExpr = (statements[statementIndex] as ExpressionStatement).getExpr();\n                                                            ^^\n");
+				throw new Error("[/Users/gfx/repo/try-on-web/JSX/src/optimizer.jsx:1001:60] detected invalid cast, value is not an instance of the designated type or null\n            var statementExpr = (statements[statementIndex] as ExpressionStatement).getExpr();\n                                                            ^^\n");
 			}
 			return v;
 		}(statements[statementIndex])).getExpr$();
@@ -3704,14 +3723,14 @@ _UnclassifyOptimizationCommand.prototype._createInliner$LMemberFunctionDefinitio
 		lhsExpr = (function (v) {
 			if (! (v == null || v instanceof AssignmentExpression)) {
 				debugger;
-				throw new Error("[/Users/gfx/repo/try-on-web/JSX/src/optimizer.jsx:1000:41] detected invalid cast, value is not an instance of the designated type or null\n            var lhsExpr = (statementExpr as AssignmentExpression).getFirstExpr();\n                                         ^^\n");
+				throw new Error("[/Users/gfx/repo/try-on-web/JSX/src/optimizer.jsx:1005:41] detected invalid cast, value is not an instance of the designated type or null\n            var lhsExpr = (statementExpr as AssignmentExpression).getFirstExpr();\n                                         ^^\n");
 			}
 			return v;
 		}(statementExpr)).getFirstExpr$();
 		if (! (lhsExpr instanceof PropertyExpression && (function (v) {
 			if (! (v == null || v instanceof PropertyExpression)) {
 				debugger;
-				throw new Error("[/Users/gfx/repo/try-on-web/JSX/src/optimizer.jsx:1001:69] detected invalid cast, value is not an instance of the designated type or null\n            if (! (lhsExpr instanceof PropertyExpression && (lhsExpr as PropertyExpression).getExpr() instanceof ThisExpression)) {\n                                                                     ^^\n");
+				throw new Error("[/Users/gfx/repo/try-on-web/JSX/src/optimizer.jsx:1006:69] detected invalid cast, value is not an instance of the designated type or null\n            if (! (lhsExpr instanceof PropertyExpression && (lhsExpr as PropertyExpression).getExpr() instanceof ThisExpression)) {\n                                                                     ^^\n");
 			}
 			return v;
 		}(lhsExpr)).getExpr$() instanceof ThisExpression)) {
@@ -3735,7 +3754,7 @@ _UnclassifyOptimizationCommand.prototype._createInliner$LMemberFunctionDefinitio
 							})).indexOf((function (v) {
 								if (! (v == null || v instanceof LocalExpression)) {
 									debugger;
-									throw new Error("[/Users/gfx/repo/try-on-web/JSX/src/optimizer.jsx:1017:102] detected invalid cast, value is not an instance of the designated type or null\n                    var argIndex = funcDef.getArguments().map.<LocalVariable>((i) -> i).indexOf((expr as LocalExpression).getLocal());\n                                                                                                      ^^\n");
+									throw new Error("[/Users/gfx/repo/try-on-web/JSX/src/optimizer.jsx:1022:102] detected invalid cast, value is not an instance of the designated type or null\n                    var argIndex = funcDef.getArguments().map.<LocalVariable>((i) -> i).indexOf((expr as LocalExpression).getLocal());\n                                                                                                      ^^\n");
 								}
 								return v;
 							}(expr)).getLocal$());
@@ -3743,7 +3762,7 @@ _UnclassifyOptimizationCommand.prototype._createInliner$LMemberFunctionDefinitio
 								throw new Error("logic flaw; could not find argument: " + (function (v) {
 									if (! (v == null || v instanceof LocalExpression)) {
 										debugger;
-										throw new Error("[/Users/gfx/repo/try-on-web/JSX/src/optimizer.jsx:1019:88] detected invalid cast, value is not an instance of the designated type or null\n                        throw new Error(\"logic flaw; could not find argument: \" + (expr as LocalExpression).getLocal().getName().getValue());\n                                                                                        ^^\n");
+										throw new Error("[/Users/gfx/repo/try-on-web/JSX/src/optimizer.jsx:1024:88] detected invalid cast, value is not an instance of the designated type or null\n                        throw new Error(\"logic flaw; could not find argument: \" + (expr as LocalExpression).getLocal().getName().getValue());\n                                                                                        ^^\n");
 									}
 									return v;
 								}(expr)).getLocal$().getName$().getValue$());
@@ -3761,7 +3780,7 @@ _UnclassifyOptimizationCommand.prototype._createInliner$LMemberFunctionDefinitio
 		if (! onRHSExpr((function (v) {
 			if (! (v == null || v instanceof AssignmentExpression)) {
 				debugger;
-				throw new Error("[/Users/gfx/repo/try-on-web/JSX/src/optimizer.jsx:1028:43] detected invalid cast, value is not an instance of the designated type or null\n            if (! onRHSExpr((statementExpr as AssignmentExpression).getSecondExpr())) {\n                                           ^^\n");
+				throw new Error("[/Users/gfx/repo/try-on-web/JSX/src/optimizer.jsx:1033:43] detected invalid cast, value is not an instance of the designated type or null\n            if (! onRHSExpr((statementExpr as AssignmentExpression).getSecondExpr())) {\n                                           ^^\n");
 			}
 			return v;
 		}(statementExpr)).getSecondExpr$())) {
@@ -3770,7 +3789,7 @@ _UnclassifyOptimizationCommand.prototype._createInliner$LMemberFunctionDefinitio
 		propertyIndex = propertyNames.indexOf((function (v) {
 			if (! (v == null || v instanceof PropertyExpression)) {
 				debugger;
-				throw new Error("[/Users/gfx/repo/try-on-web/JSX/src/optimizer.jsx:1032:63] detected invalid cast, value is not an instance of the designated type or null\n            var propertyIndex = propertyNames.indexOf((lhsExpr as PropertyExpression).getIdentifierToken().getValue());\n                                                               ^^\n");
+				throw new Error("[/Users/gfx/repo/try-on-web/JSX/src/optimizer.jsx:1037:63] detected invalid cast, value is not an instance of the designated type or null\n            var propertyIndex = propertyNames.indexOf((lhsExpr as PropertyExpression).getIdentifierToken().getValue());\n                                                               ^^\n");
 			}
 			return v;
 		}(lhsExpr)).getIdentifierToken$().getValue$());
@@ -3778,7 +3797,7 @@ _UnclassifyOptimizationCommand.prototype._createInliner$LMemberFunctionDefinitio
 			throw new Error("logic flaw; could not find property: " + (function (v) {
 				if (! (v == null || v instanceof PropertyExpression)) {
 					debugger;
-					throw new Error("[/Users/gfx/repo/try-on-web/JSX/src/optimizer.jsx:1034:83] detected invalid cast, value is not an instance of the designated type or null\n                throw new Error(\"logic flaw; could not find property: \" + (lhsExpr as PropertyExpression).getIdentifierToken().getValue());\n                                                                                   ^^\n");
+					throw new Error("[/Users/gfx/repo/try-on-web/JSX/src/optimizer.jsx:1039:83] detected invalid cast, value is not an instance of the designated type or null\n                throw new Error(\"logic flaw; could not find property: \" + (lhsExpr as PropertyExpression).getIdentifierToken().getValue());\n                                                                                   ^^\n");
 				}
 				return v;
 			}(lhsExpr)).getIdentifierToken$().getValue$());
@@ -3794,7 +3813,7 @@ _UnclassifyOptimizationCommand.prototype._createInliner$LMemberFunctionDefinitio
 		propertyExprs[propertyIndex] = (function (v) {
 			if (! (v == null || v instanceof AssignmentExpression)) {
 				debugger;
-				throw new Error("[/Users/gfx/repo/try-on-web/JSX/src/optimizer.jsx:1047:58] detected invalid cast, value is not an instance of the designated type or null\n            propertyExprs[propertyIndex] = (statementExpr as AssignmentExpression).getSecondExpr().clone();\n                                                          ^^\n");
+				throw new Error("[/Users/gfx/repo/try-on-web/JSX/src/optimizer.jsx:1052:58] detected invalid cast, value is not an instance of the designated type or null\n            propertyExprs[propertyIndex] = (statementExpr as AssignmentExpression).getSecondExpr().clone();\n                                                          ^^\n");
 			}
 			return v;
 		}(statementExpr)).getSecondExpr$().clone$();
@@ -3816,7 +3835,7 @@ _UnclassifyOptimizationCommand.prototype._createInliner$LMemberFunctionDefinitio
 						if (args[i] == (function (v) {
 							if (! (v == null || v instanceof LocalExpression)) {
 								debugger;
-								throw new Error("[/Users/gfx/repo/try-on-web/JSX/src/optimizer.jsx:1057:49] detected invalid cast, value is not an instance of the designated type or null\n                            if (args[i] == (expr as LocalExpression).getLocal()) {\n                                                 ^^\n");
+								throw new Error("[/Users/gfx/repo/try-on-web/JSX/src/optimizer.jsx:1062:49] detected invalid cast, value is not an instance of the designated type or null\n                            if (args[i] == (expr as LocalExpression).getLocal()) {\n                                                 ^^\n");
 							}
 							return v;
 						}(expr)).getLocal$()) {
@@ -3831,7 +3850,7 @@ _UnclassifyOptimizationCommand.prototype._createInliner$LMemberFunctionDefinitio
 					return true;
 				}
 				return expr.forEachExpression$F$LExpression$F$LExpression$V$B$(onExpr);
-			};
+			}
 			expr = expr.clone$();
 			onExpr(expr, (function (newExpr) {
 				expr = newExpr;
@@ -3851,6 +3870,15 @@ _UnclassifyOptimizationCommand.prototype._rewriteFunctionAsStatic$LMemberFunctio
 	thisArg = new ArgumentDeclaration$LToken$LType$(new Token$SB("$this", false), new ObjectType$LClassDefinition$(funcDef.getClassDef$()));
 	funcDef.getArguments$().unshift(thisArg);
 	funcDef.forEachStatement$F$LStatement$B$((function onStatement(statement) {
+		if (statement instanceof FunctionStatement) {
+			(function (v) {
+				if (! (v == null || v instanceof FunctionStatement)) {
+					debugger;
+					throw new Error("[/Users/gfx/repo/try-on-web/JSX/src/optimizer.jsx:1089:27] detected invalid cast, value is not an instance of the designated type or null\n                (statement as FunctionStatement).getFuncDef().forEachStatement(onStatement);\n                           ^^\n");
+				}
+				return v;
+			}(statement)).getFuncDef$().forEachStatement$F$LStatement$B$(onStatement);
+		}
 		return statement.forEachExpression$F$LExpression$F$LExpression$V$B$((function onExpr(expr, replaceCb) {
 			if (expr instanceof ThisExpression) {
 				replaceCb(new LocalExpression$LToken$LLocalVariable$(thisArg.getName$(), thisArg));
@@ -3859,7 +3887,7 @@ _UnclassifyOptimizationCommand.prototype._rewriteFunctionAsStatic$LMemberFunctio
 					return (function (v) {
 						if (! (v == null || v instanceof FunctionExpression)) {
 							debugger;
-							throw new Error("[/Users/gfx/repo/try-on-web/JSX/src/optimizer.jsx:1087:33] detected invalid cast, value is not an instance of the designated type or null\n                    return (expr as FunctionExpression).getFuncDef().forEachStatement(onStatement);\n                                 ^^\n");
+							throw new Error("[/Users/gfx/repo/try-on-web/JSX/src/optimizer.jsx:1095:33] detected invalid cast, value is not an instance of the designated type or null\n                    return (expr as FunctionExpression).getFuncDef().forEachStatement(onStatement);\n                                 ^^\n");
 						}
 						return v;
 					}(expr)).getFuncDef$().forEachStatement$F$LStatement$B$(onStatement);
@@ -3895,27 +3923,27 @@ _UnclassifyOptimizationCommand.prototype._rewriteMethodCallsToStatic$LExpression
 			calleeExpr = (function (v) {
 				if (! (v == null || v instanceof CallExpression)) {
 					debugger;
-					throw new Error("[/Users/gfx/repo/try-on-web/JSX/src/optimizer.jsx:1099:39] detected invalid cast, value is not an instance of the designated type or null\n                var calleeExpr = (expr as CallExpression).getExpr();\n                                       ^^\n");
+					throw new Error("[/Users/gfx/repo/try-on-web/JSX/src/optimizer.jsx:1107:39] detected invalid cast, value is not an instance of the designated type or null\n                var calleeExpr = (expr as CallExpression).getExpr();\n                                       ^^\n");
 				}
 				return v;
 			}(expr)).getExpr$();
 			if (calleeExpr instanceof PropertyExpression && ! ((function (v) {
 				if (! (v == null || v instanceof PropertyExpression)) {
 					debugger;
-					throw new Error("[/Users/gfx/repo/try-on-web/JSX/src/optimizer.jsx:1101:38] detected invalid cast, value is not an instance of the designated type or null\n                    && ! ((calleeExpr as PropertyExpression).getExpr() instanceof ClassExpression)\n                                      ^^\n");
+					throw new Error("[/Users/gfx/repo/try-on-web/JSX/src/optimizer.jsx:1109:38] detected invalid cast, value is not an instance of the designated type or null\n                    && ! ((calleeExpr as PropertyExpression).getExpr() instanceof ClassExpression)\n                                      ^^\n");
 				}
 				return v;
 			}(calleeExpr)).getExpr$() instanceof ClassExpression) && ! (function (v) {
 				if (! (v == null || v instanceof PropertyExpression)) {
 					debugger;
-					throw new Error("[/Users/gfx/repo/try-on-web/JSX/src/optimizer.jsx:1102:37] detected invalid cast, value is not an instance of the designated type or null\n                    && ! (calleeExpr as PropertyExpression).getType().isAssignable()) {\n                                     ^^\n");
+					throw new Error("[/Users/gfx/repo/try-on-web/JSX/src/optimizer.jsx:1110:37] detected invalid cast, value is not an instance of the designated type or null\n                    && ! (calleeExpr as PropertyExpression).getType().isAssignable()) {\n                                     ^^\n");
 				}
 				return v;
 			}(calleeExpr)).getType$().isAssignable$()) {
 				propertyExpr = (function (v) {
 					if (! (v == null || v instanceof PropertyExpression)) {
 						debugger;
-						throw new Error("[/Users/gfx/repo/try-on-web/JSX/src/optimizer.jsx:1103:54] detected invalid cast, value is not an instance of the designated type or null\n                        var propertyExpr = calleeExpr as PropertyExpression;\n                                                      ^^\n");
+						throw new Error("[/Users/gfx/repo/try-on-web/JSX/src/optimizer.jsx:1111:54] detected invalid cast, value is not an instance of the designated type or null\n                        var propertyExpr = calleeExpr as PropertyExpression;\n                                                      ^^\n");
 					}
 					return v;
 				}(calleeExpr));
@@ -3928,7 +3956,7 @@ _UnclassifyOptimizationCommand.prototype._rewriteMethodCallsToStatic$LExpression
 					Util$forEachExpression$F$LExpression$F$LExpression$V$B$ALExpression$(onExpr, (function (v) {
 						if (! (v == null || v instanceof CallExpression)) {
 							debugger;
-							throw new Error("[/Users/gfx/repo/try-on-web/JSX/src/optimizer.jsx:1112:65] detected invalid cast, value is not an instance of the designated type or null\n                            Util.forEachExpression(onExpr, (expr as CallExpression).getArguments());\n                                                                 ^^\n");
+							throw new Error("[/Users/gfx/repo/try-on-web/JSX/src/optimizer.jsx:1120:65] detected invalid cast, value is not an instance of the designated type or null\n                            Util.forEachExpression(onExpr, (expr as CallExpression).getArguments());\n                                                                 ^^\n");
 						}
 						return v;
 					}(expr)).getArguments$());
@@ -3936,19 +3964,19 @@ _UnclassifyOptimizationCommand.prototype._rewriteMethodCallsToStatic$LExpression
 					replaceCb(new CallExpression$LToken$LExpression$ALExpression$(expr.getToken$(), new PropertyExpression$LToken$LExpression$LToken$ALType$LType$(propertyExpr.getToken$(), new ClassExpression$LToken$LType$(new Token$SB(receiverClassDef.className$(), true), receiverType), propertyExpr.getIdentifierToken$(), propertyExpr.getTypeArguments$(), new StaticFunctionType$LToken$LType$ALType$B(null, (function (v) {
 						if (! (v == null || v instanceof ResolvedFunctionType)) {
 							debugger;
-							throw new Error("[/Users/gfx/repo/try-on-web/JSX/src/optimizer.jsx:1124:54] detected invalid cast, value is not an instance of the designated type or null\n                                            (funcType as ResolvedFunctionType).getReturnType(),\n                                                      ^^\n");
+							throw new Error("[/Users/gfx/repo/try-on-web/JSX/src/optimizer.jsx:1132:54] detected invalid cast, value is not an instance of the designated type or null\n                                            (funcType as ResolvedFunctionType).getReturnType(),\n                                                      ^^\n");
 						}
 						return v;
 					}(funcType)).getReturnType$(), [ receiverType ].concat((function (v) {
 						if (! (v == null || v instanceof ResolvedFunctionType)) {
 							debugger;
-							throw new Error("[/Users/gfx/repo/try-on-web/JSX/src/optimizer.jsx:1125:78] detected invalid cast, value is not an instance of the designated type or null\n                                            [ receiverType ].concat((funcType as ResolvedFunctionType).getArgumentTypes()),\n                                                                              ^^\n");
+							throw new Error("[/Users/gfx/repo/try-on-web/JSX/src/optimizer.jsx:1133:78] detected invalid cast, value is not an instance of the designated type or null\n                                            [ receiverType ].concat((funcType as ResolvedFunctionType).getArgumentTypes()),\n                                                                              ^^\n");
 						}
 						return v;
 					}(funcType)).getArgumentTypes$()), false)), [ propertyExpr.getExpr$() ].concat((function (v) {
 						if (! (v == null || v instanceof CallExpression)) {
 							debugger;
-							throw new Error("[/Users/gfx/repo/try-on-web/JSX/src/optimizer.jsx:1127:76] detected invalid cast, value is not an instance of the designated type or null\n                                    [ propertyExpr.getExpr() ].concat((expr as CallExpression).getArguments())));\n                                                                            ^^\n");
+							throw new Error("[/Users/gfx/repo/try-on-web/JSX/src/optimizer.jsx:1135:76] detected invalid cast, value is not an instance of the designated type or null\n                                    [ propertyExpr.getExpr() ].concat((expr as CallExpression).getArguments())));\n                                                                            ^^\n");
 						}
 						return v;
 					}(expr)).getArguments$())));
@@ -4029,14 +4057,14 @@ _FoldConstantCommand.prototype._optimizeExpression$LExpression$F$LExpression$V$ 
 		holderType = (function (v) {
 			if (! (v == null || v instanceof PropertyExpression)) {
 				debugger;
-				throw new Error("[/Users/gfx/repo/try-on-web/JSX/src/optimizer.jsx:1189:35] detected invalid cast, value is not an instance of the designated type or null\n            var holderType = (expr as PropertyExpression).getHolderType();\n                                   ^^\n");
+				throw new Error("[/Users/gfx/repo/try-on-web/JSX/src/optimizer.jsx:1197:35] detected invalid cast, value is not an instance of the designated type or null\n            var holderType = (expr as PropertyExpression).getHolderType();\n                                   ^^\n");
 			}
 			return v;
 		}(expr)).getHolderType$();
 		if ((function (v) {
 			if (! (v == null || v instanceof PropertyExpression)) {
 				debugger;
-				throw new Error("[/Users/gfx/repo/try-on-web/JSX/src/optimizer.jsx:1190:22] detected invalid cast, value is not an instance of the designated type or null\n            if ((expr as PropertyExpression).getExpr() instanceof ClassExpression) {\n                      ^^\n");
+				throw new Error("[/Users/gfx/repo/try-on-web/JSX/src/optimizer.jsx:1198:22] detected invalid cast, value is not an instance of the designated type or null\n            if ((expr as PropertyExpression).getExpr() instanceof ClassExpression) {\n                      ^^\n");
 			}
 			return v;
 		}(expr)).getExpr$() instanceof ClassExpression) {
@@ -4045,7 +4073,7 @@ _FoldConstantCommand.prototype._optimizeExpression$LExpression$F$LExpression$V$ 
 				if (m instanceof MemberVariableDefinition && m.name$() === (function (v) {
 					if (! (v == null || v instanceof PropertyExpression)) {
 						debugger;
-						throw new Error("[/Users/gfx/repo/try-on-web/JSX/src/optimizer.jsx:1193:113] detected invalid cast, value is not an instance of the designated type or null\n                    if (m instanceof MemberVariableDefinition && (m as MemberVariableDefinition).name() == (expr as PropertyExpression).getIdentifierToken().getValue())\n                                                                                                                 ^^\n");
+						throw new Error("[/Users/gfx/repo/try-on-web/JSX/src/optimizer.jsx:1201:113] detected invalid cast, value is not an instance of the designated type or null\n                    if (m instanceof MemberVariableDefinition && (m as MemberVariableDefinition).name() == (expr as PropertyExpression).getIdentifierToken().getValue())\n                                                                                                                 ^^\n");
 					}
 					return v;
 				}(expr)).getIdentifierToken$().getValue$()) {
@@ -4060,7 +4088,7 @@ _FoldConstantCommand.prototype._optimizeExpression$LExpression$F$LExpression$V$ 
 					foldedExpr = this._toFoldedExpr$LExpression$LType$(foldedExpr, (function (v) {
 						if (! (v == null || v instanceof PropertyExpression)) {
 							debugger;
-							throw new Error("[/Users/gfx/repo/try-on-web/JSX/src/optimizer.jsx:1201:74] detected invalid cast, value is not an instance of the designated type or null\n                        foldedExpr = this._toFoldedExpr(foldedExpr, (expr as PropertyExpression).getType());\n                                                                          ^^\n");
+							throw new Error("[/Users/gfx/repo/try-on-web/JSX/src/optimizer.jsx:1209:74] detected invalid cast, value is not an instance of the designated type or null\n                        foldedExpr = this._toFoldedExpr(foldedExpr, (expr as PropertyExpression).getType());\n                                                                          ^^\n");
 						}
 						return v;
 					}(expr)).getType$());
@@ -4089,14 +4117,14 @@ _FoldConstantCommand.prototype._optimizeExpression$LExpression$F$LExpression$V$ 
 			this.log$S("folding operator '" + expr.getToken$().getValue$() + "' at '" + (function (v) {
 				if (! (v != null)) {
 					debugger;
-					throw new Error("[/Users/gfx/repo/try-on-web/JSX/src/optimizer.jsx:1219:111] null access\n            this.log(\"folding operator \'\" + expr.getToken().getValue() + \"\' at \'\" + expr.getToken().getFilename() + \":\" + expr.getToken().getLineNumber() as string);\n                                                                                                               ^\n");
+					throw new Error("[/Users/gfx/repo/try-on-web/JSX/src/optimizer.jsx:1227:111] null access\n            this.log(\"folding operator \'\" + expr.getToken().getValue() + \"\' at \'\" + expr.getToken().getFilename() + \":\" + expr.getToken().getLineNumber() as string);\n                                                                                                               ^\n");
 				}
 				return v;
 			}(expr.getToken$().getFilename$())) + ":" + (expr.getToken$().getLineNumber$() + ""));
 			baseExpr = (function (v) {
 				if (! (v == null || v instanceof SignExpression)) {
 					debugger;
-					throw new Error("[/Users/gfx/repo/try-on-web/JSX/src/optimizer.jsx:1220:33] detected invalid cast, value is not an instance of the designated type or null\n            var baseExpr = (expr as SignExpression).getExpr();\n                                 ^^\n");
+					throw new Error("[/Users/gfx/repo/try-on-web/JSX/src/optimizer.jsx:1228:33] detected invalid cast, value is not an instance of the designated type or null\n            var baseExpr = (expr as SignExpression).getExpr();\n                                 ^^\n");
 				}
 				return v;
 			}(expr)).getExpr$();
@@ -4104,7 +4132,7 @@ _FoldConstantCommand.prototype._optimizeExpression$LExpression$F$LExpression$V$ 
 				replaceCb(new IntegerLiteralExpression$LToken$(new Token$SB(calculateCb(+(function (v) {
 					if (! (v == null || v instanceof IntegerLiteralExpression)) {
 						debugger;
-						throw new Error("[/Users/gfx/repo/try-on-web/JSX/src/optimizer.jsx:1222:87] detected invalid cast, value is not an instance of the designated type or null\n                replaceCb(new IntegerLiteralExpression(new Token(calculateCb((baseExpr as IntegerLiteralExpression).getToken().getValue() as number) as string, false)));\n                                                                                       ^^\n");
+						throw new Error("[/Users/gfx/repo/try-on-web/JSX/src/optimizer.jsx:1230:87] detected invalid cast, value is not an instance of the designated type or null\n                replaceCb(new IntegerLiteralExpression(new Token(calculateCb((baseExpr as IntegerLiteralExpression).getToken().getValue() as number) as string, false)));\n                                                                                       ^^\n");
 					}
 					return v;
 				}(baseExpr)).getToken$().getValue$()) + "", false)));
@@ -4113,7 +4141,7 @@ _FoldConstantCommand.prototype._optimizeExpression$LExpression$F$LExpression$V$ 
 					replaceCb(new NumberLiteralExpression$LToken$(new Token$SB(calculateCb(+(function (v) {
 						if (! (v == null || v instanceof NumberLiteralExpression)) {
 							debugger;
-							throw new Error("[/Users/gfx/repo/try-on-web/JSX/src/optimizer.jsx:1224:86] detected invalid cast, value is not an instance of the designated type or null\n                replaceCb(new NumberLiteralExpression(new Token(calculateCb((baseExpr as NumberLiteralExpression).getToken().getValue() as number) as string, false)));\n                                                                                      ^^\n");
+							throw new Error("[/Users/gfx/repo/try-on-web/JSX/src/optimizer.jsx:1232:86] detected invalid cast, value is not an instance of the designated type or null\n                replaceCb(new NumberLiteralExpression(new Token(calculateCb((baseExpr as NumberLiteralExpression).getToken().getValue() as number) as string, false)));\n                                                                                      ^^\n");
 						}
 						return v;
 					}(baseExpr)).getToken$().getValue$()) + "", false)));
@@ -4124,21 +4152,21 @@ _FoldConstantCommand.prototype._optimizeExpression$LExpression$F$LExpression$V$ 
 				firstExpr = (function (v) {
 					if (! (v == null || v instanceof AdditiveExpression)) {
 						debugger;
-						throw new Error("[/Users/gfx/repo/try-on-web/JSX/src/optimizer.jsx:1230:34] detected invalid cast, value is not an instance of the designated type or null\n            var firstExpr = (expr as AdditiveExpression).getFirstExpr();\n                                  ^^\n");
+						throw new Error("[/Users/gfx/repo/try-on-web/JSX/src/optimizer.jsx:1238:34] detected invalid cast, value is not an instance of the designated type or null\n            var firstExpr = (expr as AdditiveExpression).getFirstExpr();\n                                  ^^\n");
 					}
 					return v;
 				}(expr)).getFirstExpr$();
 				secondExpr = (function (v) {
 					if (! (v == null || v instanceof AdditiveExpression)) {
 						debugger;
-						throw new Error("[/Users/gfx/repo/try-on-web/JSX/src/optimizer.jsx:1231:35] detected invalid cast, value is not an instance of the designated type or null\n            var secondExpr = (expr as AdditiveExpression).getSecondExpr();\n                                   ^^\n");
+						throw new Error("[/Users/gfx/repo/try-on-web/JSX/src/optimizer.jsx:1239:35] detected invalid cast, value is not an instance of the designated type or null\n            var secondExpr = (expr as AdditiveExpression).getSecondExpr();\n                                   ^^\n");
 					}
 					return v;
 				}(expr)).getSecondExpr$();
 				if (this._foldNumericBinaryExpression$LBinaryExpression$F$LExpression$V$((function (v) {
 					if (! (v == null || v instanceof AdditiveExpression)) {
 						debugger;
-						throw new Error("[/Users/gfx/repo/try-on-web/JSX/src/optimizer.jsx:1232:55] detected invalid cast, value is not an instance of the designated type or null\n            if (this._foldNumericBinaryExpression(expr as AdditiveExpression, replaceCb)) {\n                                                       ^^\n");
+						throw new Error("[/Users/gfx/repo/try-on-web/JSX/src/optimizer.jsx:1240:55] detected invalid cast, value is not an instance of the designated type or null\n            if (this._foldNumericBinaryExpression(expr as AdditiveExpression, replaceCb)) {\n                                                       ^^\n");
 					}
 					return v;
 				}(expr)), replaceCb)) {
@@ -4147,13 +4175,13 @@ _FoldConstantCommand.prototype._optimizeExpression$LExpression$F$LExpression$V$ 
 						replaceCb(new StringLiteralExpression$LToken$(new Token$SB(Util$encodeStringLiteral$S(Util$decodeStringLiteral$S((function (v) {
 							if (! (v == null || v instanceof StringLiteralExpression)) {
 								debugger;
-								throw new Error("[/Users/gfx/repo/try-on-web/JSX/src/optimizer.jsx:1239:68] detected invalid cast, value is not an instance of the designated type or null\n                                Util.decodeStringLiteral((firstExpr as StringLiteralExpression).getToken().getValue()) +\n                                                                    ^^\n");
+								throw new Error("[/Users/gfx/repo/try-on-web/JSX/src/optimizer.jsx:1247:68] detected invalid cast, value is not an instance of the designated type or null\n                                Util.decodeStringLiteral((firstExpr as StringLiteralExpression).getToken().getValue()) +\n                                                                    ^^\n");
 							}
 							return v;
 						}(firstExpr)).getToken$().getValue$()) + Util$decodeStringLiteral$S((function (v) {
 							if (! (v == null || v instanceof StringLiteralExpression)) {
 								debugger;
-								throw new Error("[/Users/gfx/repo/try-on-web/JSX/src/optimizer.jsx:1240:69] detected invalid cast, value is not an instance of the designated type or null\n                                Util.decodeStringLiteral((secondExpr as StringLiteralExpression).getToken().getValue())),\n                                                                     ^^\n");
+								throw new Error("[/Users/gfx/repo/try-on-web/JSX/src/optimizer.jsx:1248:69] detected invalid cast, value is not an instance of the designated type or null\n                                Util.decodeStringLiteral((secondExpr as StringLiteralExpression).getToken().getValue())),\n                                                                     ^^\n");
 							}
 							return v;
 						}(secondExpr)).getToken$().getValue$())), false)));
@@ -4164,7 +4192,7 @@ _FoldConstantCommand.prototype._optimizeExpression$LExpression$F$LExpression$V$ 
 					this._foldEqualityExpression$LEqualityExpression$F$LExpression$V$((function (v) {
 						if (! (v == null || v instanceof EqualityExpression)) {
 							debugger;
-							throw new Error("[/Users/gfx/repo/try-on-web/JSX/src/optimizer.jsx:1246:46] detected invalid cast, value is not an instance of the designated type or null\n            this._foldEqualityExpression(expr as EqualityExpression, replaceCb);\n                                              ^^\n");
+							throw new Error("[/Users/gfx/repo/try-on-web/JSX/src/optimizer.jsx:1254:46] detected invalid cast, value is not an instance of the designated type or null\n            this._foldEqualityExpression(expr as EqualityExpression, replaceCb);\n                                              ^^\n");
 						}
 						return v;
 					}(expr)), replaceCb);
@@ -4173,7 +4201,7 @@ _FoldConstantCommand.prototype._optimizeExpression$LExpression$F$LExpression$V$ 
 						this._foldNumericBinaryExpression$LBinaryExpression$F$LExpression$V$((function (v) {
 							if (! (v == null || v instanceof BinaryExpression)) {
 								debugger;
-								throw new Error("[/Users/gfx/repo/try-on-web/JSX/src/optimizer.jsx:1251:51] detected invalid cast, value is not an instance of the designated type or null\n            this._foldNumericBinaryExpression(expr as BinaryExpression, replaceCb);\n                                                   ^^\n");
+								throw new Error("[/Users/gfx/repo/try-on-web/JSX/src/optimizer.jsx:1259:51] detected invalid cast, value is not an instance of the designated type or null\n            this._foldNumericBinaryExpression(expr as BinaryExpression, replaceCb);\n                                                   ^^\n");
 							}
 							return v;
 						}(expr)), replaceCb);
@@ -4183,7 +4211,7 @@ _FoldConstantCommand.prototype._optimizeExpression$LExpression$F$LExpression$V$ 
 								baseExpr = (function (v) {
 									if (! (v == null || v instanceof AsExpression)) {
 										debugger;
-										throw new Error("[/Users/gfx/repo/try-on-web/JSX/src/optimizer.jsx:1257:37] detected invalid cast, value is not an instance of the designated type or null\n                var baseExpr = (expr as AsExpression).getExpr();\n                                     ^^\n");
+										throw new Error("[/Users/gfx/repo/try-on-web/JSX/src/optimizer.jsx:1265:37] detected invalid cast, value is not an instance of the designated type or null\n                var baseExpr = (expr as AsExpression).getExpr();\n                                     ^^\n");
 									}
 									return v;
 								}(expr)).getExpr$();
@@ -4227,7 +4255,7 @@ _FoldConstantCommand.prototype._foldEqualityExpression$LEqualityExpression$F$LEx
 		result = (expr.getToken$().getValue$() === "==" ? (function (v) {
 			if (! (v != null)) {
 				debugger;
-				throw new Error("[/Users/gfx/repo/try-on-web/JSX/src/optimizer.jsx:1280:62] null access\n            var result = expr.getToken().getValue() == \"==\" ? isEqual as boolean : ! isEqual;\n                                                              ^^^^^^^\n");
+				throw new Error("[/Users/gfx/repo/try-on-web/JSX/src/optimizer.jsx:1288:62] null access\n            var result = expr.getToken().getValue() == \"==\" ? isEqual as boolean : ! isEqual;\n                                                              ^^^^^^^\n");
 			}
 			return v;
 		}(isEqual)) : ! isEqual);
@@ -4249,7 +4277,7 @@ _FoldConstantCommand.prototype._foldNumericBinaryExpression$LBinaryExpression$F$
 	}
 	function exprIsZero(expr) {
 		return expr instanceof NumberLiteralExpression && +expr.getToken$().getValue$() === 0;
-	};
+	}
 	switch (expr.getToken$().getValue$()) {
 	case "+":
 		if (exprIsZero(expr.getFirstExpr$())) {
@@ -4366,7 +4394,7 @@ _FoldConstantCommand.prototype._foldNumericBinaryExpressionAsInteger$LBinaryExpr
 	this.log$S("folding operator '" + expr.getToken$().getValue$() + "' at " + (function (v) {
 		if (! (v != null)) {
 			debugger;
-			throw new Error("[/Users/gfx/repo/try-on-web/JSX/src/optimizer.jsx:1357:101] null access\n            \"folding operator \'\" + expr.getToken().getValue() + \"\' at \" + expr.getToken().getFilename() + \":\" + expr.getToken().getLineNumber() as string +\n                                                                                                     ^\n");
+			throw new Error("[/Users/gfx/repo/try-on-web/JSX/src/optimizer.jsx:1365:101] null access\n            \"folding operator \'\" + expr.getToken().getValue() + \"\' at \" + expr.getToken().getFilename() + \":\" + expr.getToken().getLineNumber() as string +\n                                                                                                     ^\n");
 		}
 		return v;
 	}(expr.getToken$().getFilename$())) + ":" + (expr.getToken$().getLineNumber$() + "") + " to int: " + (value + ""));
@@ -4388,7 +4416,7 @@ _FoldConstantCommand.prototype._foldNumericBinaryExpressionAsNumber$LBinaryExpre
 	this.log$S("folding operator '" + expr.getToken$().getValue$() + "' at " + (function (v) {
 		if (! (v != null)) {
 			debugger;
-			throw new Error("[/Users/gfx/repo/try-on-web/JSX/src/optimizer.jsx:1367:101] null access\n            \"folding operator \'\" + expr.getToken().getValue() + \"\' at \" + expr.getToken().getFilename() + \":\" + expr.getToken().getLineNumber() as string +\n                                                                                                     ^\n");
+			throw new Error("[/Users/gfx/repo/try-on-web/JSX/src/optimizer.jsx:1375:101] null access\n            \"folding operator \'\" + expr.getToken().getValue() + \"\' at \" + expr.getToken().getFilename() + \":\" + expr.getToken().getLineNumber() as string +\n                                                                                                     ^\n");
 		}
 		return v;
 	}(expr.getToken$().getFilename$())) + ":" + (expr.getToken$().getLineNumber$() + "") + " to number: " + (value + ""));
@@ -4415,7 +4443,7 @@ _FoldConstantCommand.prototype._foldStaticConst$LMemberVariableDefinition$ = fun
 	stash = (function (v) {
 		if (! (v == null || v instanceof _FoldConstantCommand$CStash)) {
 			debugger;
-			throw new Error("[/Users/gfx/repo/try-on-web/JSX/src/optimizer.jsx:1377:42] detected invalid cast, value is not an instance of the designated type or null\n        var stash = this.getStash(member) as _FoldConstantCommand.Stash;\n                                          ^^\n");
+			throw new Error("[/Users/gfx/repo/try-on-web/JSX/src/optimizer.jsx:1385:42] detected invalid cast, value is not an instance of the designated type or null\n        var stash = this.getStash(member) as _FoldConstantCommand.Stash;\n                                          ^^\n");
 		}
 		return v;
 	}(this.getStash$LStashable$(member)));
@@ -4508,7 +4536,7 @@ _DeadCodeEliminationOptimizeCommand.prototype._removeExpressionStatementsWithout
 			if (statements[i] instanceof ExpressionStatement && ! _Util$exprHasSideEffects$LExpression$((function (v) {
 				if (! (v == null || v instanceof ExpressionStatement)) {
 					debugger;
-					throw new Error("[/Users/gfx/repo/try-on-web/JSX/src/optimizer.jsx:1430:110] detected invalid cast, value is not an instance of the designated type or null\n                if (statements[i] instanceof ExpressionStatement && ! _Util.exprHasSideEffects((statements[i] as ExpressionStatement).getExpr())) {\n                                                                                                              ^^\n");
+					throw new Error("[/Users/gfx/repo/try-on-web/JSX/src/optimizer.jsx:1438:110] detected invalid cast, value is not an instance of the designated type or null\n                if (statements[i] instanceof ExpressionStatement && ! _Util.exprHasSideEffects((statements[i] as ExpressionStatement).getExpr())) {\n                                                                                                              ^^\n");
 				}
 				return v;
 			}(statements[i])).getExpr$())) {
@@ -4557,7 +4585,7 @@ _DeadCodeEliminationOptimizeCommand.prototype._optimizeFunction$LMemberFunctionD
 				if (! _Util$exprHasSideEffects$LExpression$((function (v) {
 					if (! (v == null || v instanceof ExpressionStatement)) {
 						debugger;
-						throw new Error("[/Users/gfx/repo/try-on-web/JSX/src/optimizer.jsx:1456:62] detected invalid cast, value is not an instance of the designated type or null\n                    if (! _Util.exprHasSideEffects((statement as ExpressionStatement).getExpr())) {\n                                                              ^^\n");
+						throw new Error("[/Users/gfx/repo/try-on-web/JSX/src/optimizer.jsx:1464:62] detected invalid cast, value is not an instance of the designated type or null\n                    if (! _Util.exprHasSideEffects((statement as ExpressionStatement).getExpr())) {\n                                                              ^^\n");
 					}
 					return v;
 				}(statement)).getExpr$())) {
@@ -4571,32 +4599,41 @@ _DeadCodeEliminationOptimizeCommand.prototype._optimizeFunction$LMemberFunctionD
 	locals = funcDef.getLocals$();
 	localsUsed = new Array(locals.length);
 	funcDef.forEachStatement$F$LStatement$B$((function onStatement(statement) {
+		if (statement instanceof FunctionStatement) {
+			(function (v) {
+				if (! (v == null || v instanceof FunctionStatement)) {
+					debugger;
+					throw new Error("[/Users/gfx/repo/try-on-web/JSX/src/optimizer.jsx:1477:27] detected invalid cast, value is not an instance of the designated type or null\n                (statement as FunctionStatement).getFuncDef().forEachStatement(onStatement);\n                           ^^\n");
+				}
+				return v;
+			}(statement)).getFuncDef$().forEachStatement$F$LStatement$B$(onStatement);
+		}
 		statement.forEachExpression$F$LExpression$B$((function onExpr(expr) {
 			/** @type {!number} */
 			var i;
 			if (expr instanceof AssignmentExpression && (function (v) {
 				if (! (v == null || v instanceof AssignmentExpression)) {
 					debugger;
-					throw new Error("[/Users/gfx/repo/try-on-web/JSX/src/optimizer.jsx:1470:29] detected invalid cast, value is not an instance of the designated type or null\n                    && (expr as AssignmentExpression).getFirstExpr() instanceof LocalExpression\n                             ^^\n");
+					throw new Error("[/Users/gfx/repo/try-on-web/JSX/src/optimizer.jsx:1481:29] detected invalid cast, value is not an instance of the designated type or null\n                    && (expr as AssignmentExpression).getFirstExpr() instanceof LocalExpression\n                             ^^\n");
 				}
 				return v;
 			}(expr)).getFirstExpr$() instanceof LocalExpression && (function (v) {
 				if (! (v == null || v instanceof AssignmentExpression)) {
 					debugger;
-					throw new Error("[/Users/gfx/repo/try-on-web/JSX/src/optimizer.jsx:1471:29] detected invalid cast, value is not an instance of the designated type or null\n                    && (expr as AssignmentExpression).getFirstExpr().getType().equals((expr as AssignmentExpression).getSecondExpr().getType())) {\n                             ^^\n");
+					throw new Error("[/Users/gfx/repo/try-on-web/JSX/src/optimizer.jsx:1482:29] detected invalid cast, value is not an instance of the designated type or null\n                    && (expr as AssignmentExpression).getFirstExpr().getType().equals((expr as AssignmentExpression).getSecondExpr().getType())) {\n                             ^^\n");
 				}
 				return v;
 			}(expr)).getFirstExpr$().getType$().equals$LType$((function (v) {
 				if (! (v == null || v instanceof AssignmentExpression)) {
 					debugger;
-					throw new Error("[/Users/gfx/repo/try-on-web/JSX/src/optimizer.jsx:1471:92] detected invalid cast, value is not an instance of the designated type or null\n                    && (expr as AssignmentExpression).getFirstExpr().getType().equals((expr as AssignmentExpression).getSecondExpr().getType())) {\n                                                                                            ^^\n");
+					throw new Error("[/Users/gfx/repo/try-on-web/JSX/src/optimizer.jsx:1482:92] detected invalid cast, value is not an instance of the designated type or null\n                    && (expr as AssignmentExpression).getFirstExpr().getType().equals((expr as AssignmentExpression).getSecondExpr().getType())) {\n                                                                                            ^^\n");
 				}
 				return v;
 			}(expr)).getSecondExpr$().getType$())) {
 				return onExpr((function (v) {
 					if (! (v == null || v instanceof AssignmentExpression)) {
 						debugger;
-						throw new Error("[/Users/gfx/repo/try-on-web/JSX/src/optimizer.jsx:1473:44] detected invalid cast, value is not an instance of the designated type or null\n                        return onExpr((expr as AssignmentExpression).getSecondExpr());\n                                            ^^\n");
+						throw new Error("[/Users/gfx/repo/try-on-web/JSX/src/optimizer.jsx:1484:44] detected invalid cast, value is not an instance of the designated type or null\n                        return onExpr((expr as AssignmentExpression).getSecondExpr());\n                                            ^^\n");
 					}
 					return v;
 				}(expr)).getSecondExpr$());
@@ -4606,7 +4643,7 @@ _DeadCodeEliminationOptimizeCommand.prototype._optimizeFunction$LMemberFunctionD
 						if (locals[i] == (function (v) {
 							if (! (v == null || v instanceof LocalExpression)) {
 								debugger;
-								throw new Error("[/Users/gfx/repo/try-on-web/JSX/src/optimizer.jsx:1476:51] detected invalid cast, value is not an instance of the designated type or null\n                            if (locals[i] == (expr as LocalExpression).getLocal()) {\n                                                   ^^\n");
+								throw new Error("[/Users/gfx/repo/try-on-web/JSX/src/optimizer.jsx:1487:51] detected invalid cast, value is not an instance of the designated type or null\n                            if (locals[i] == (expr as LocalExpression).getLocal()) {\n                                                   ^^\n");
 							}
 							return v;
 						}(expr)).getLocal$()) {
@@ -4621,7 +4658,7 @@ _DeadCodeEliminationOptimizeCommand.prototype._optimizeFunction$LMemberFunctionD
 						(function (v) {
 							if (! (v == null || v instanceof FunctionExpression)) {
 								debugger;
-								throw new Error("[/Users/gfx/repo/try-on-web/JSX/src/optimizer.jsx:1484:30] detected invalid cast, value is not an instance of the designated type or null\n                        (expr as FunctionExpression).getFuncDef().forEachStatement(onStatement);\n                              ^^\n");
+								throw new Error("[/Users/gfx/repo/try-on-web/JSX/src/optimizer.jsx:1495:30] detected invalid cast, value is not an instance of the designated type or null\n                        (expr as FunctionExpression).getFuncDef().forEachStatement(onStatement);\n                              ^^\n");
 							}
 							return v;
 						}(expr)).getFuncDef$().forEachStatement$F$LStatement$B$(onStatement);
@@ -4638,32 +4675,41 @@ _DeadCodeEliminationOptimizeCommand.prototype._optimizeFunction$LMemberFunctionD
 			continue;
 		}
 		funcDef.forEachStatement$F$LStatement$B$((function onStatement(statement) {
+			if (statement instanceof FunctionStatement) {
+				(function (v) {
+					if (! (v == null || v instanceof FunctionStatement)) {
+						debugger;
+						throw new Error("[/Users/gfx/repo/try-on-web/JSX/src/optimizer.jsx:1510:31] detected invalid cast, value is not an instance of the designated type or null\n                    (statement as FunctionStatement).getFuncDef().forEachStatement(onStatement);\n                               ^^\n");
+					}
+					return v;
+				}(statement)).getFuncDef$().forEachStatement$F$LStatement$B$(onStatement);
+			}
 			statement.forEachExpression$F$LExpression$F$LExpression$V$B$((function onExpr(expr, replaceCb) {
 				/** @type {Expression} */
 				var rhsExpr;
 				if (expr instanceof AssignmentExpression && (function (v) {
 					if (! (v == null || v instanceof AssignmentExpression)) {
 						debugger;
-						throw new Error("[/Users/gfx/repo/try-on-web/JSX/src/optimizer.jsx:1500:33] detected invalid cast, value is not an instance of the designated type or null\n                        && (expr as AssignmentExpression).getFirstExpr() instanceof LocalExpression\n                                 ^^\n");
+						throw new Error("[/Users/gfx/repo/try-on-web/JSX/src/optimizer.jsx:1514:33] detected invalid cast, value is not an instance of the designated type or null\n                        && (expr as AssignmentExpression).getFirstExpr() instanceof LocalExpression\n                                 ^^\n");
 					}
 					return v;
 				}(expr)).getFirstExpr$() instanceof LocalExpression && (function (v) {
 					if (! (v == null || v instanceof LocalExpression)) {
 						debugger;
-						throw new Error("[/Users/gfx/repo/try-on-web/JSX/src/optimizer.jsx:1501:74] detected invalid cast, value is not an instance of the designated type or null\n                        && ((expr as AssignmentExpression).getFirstExpr() as LocalExpression).getLocal() == locals[localIndex]) {\n                                                                          ^^\n");
+						throw new Error("[/Users/gfx/repo/try-on-web/JSX/src/optimizer.jsx:1515:74] detected invalid cast, value is not an instance of the designated type or null\n                        && ((expr as AssignmentExpression).getFirstExpr() as LocalExpression).getLocal() == locals[localIndex]) {\n                                                                          ^^\n");
 					}
 					return v;
 				}((function (v) {
 					if (! (v == null || v instanceof AssignmentExpression)) {
 						debugger;
-						throw new Error("[/Users/gfx/repo/try-on-web/JSX/src/optimizer.jsx:1501:34] detected invalid cast, value is not an instance of the designated type or null\n                        && ((expr as AssignmentExpression).getFirstExpr() as LocalExpression).getLocal() == locals[localIndex]) {\n                                  ^^\n");
+						throw new Error("[/Users/gfx/repo/try-on-web/JSX/src/optimizer.jsx:1515:34] detected invalid cast, value is not an instance of the designated type or null\n                        && ((expr as AssignmentExpression).getFirstExpr() as LocalExpression).getLocal() == locals[localIndex]) {\n                                  ^^\n");
 					}
 					return v;
 				}(expr)).getFirstExpr$())).getLocal$() == locals[localIndex]) {
 					rhsExpr = (function (v) {
 						if (! (v == null || v instanceof AssignmentExpression)) {
 							debugger;
-							throw new Error("[/Users/gfx/repo/try-on-web/JSX/src/optimizer.jsx:1502:48] detected invalid cast, value is not an instance of the designated type or null\n                            var rhsExpr = (expr as AssignmentExpression).getSecondExpr();\n                                                ^^\n");
+							throw new Error("[/Users/gfx/repo/try-on-web/JSX/src/optimizer.jsx:1516:48] detected invalid cast, value is not an instance of the designated type or null\n                            var rhsExpr = (expr as AssignmentExpression).getSecondExpr();\n                                                ^^\n");
 						}
 						return v;
 					}(expr)).getSecondExpr$();
@@ -4674,7 +4720,7 @@ _DeadCodeEliminationOptimizeCommand.prototype._optimizeFunction$LMemberFunctionD
 					if (expr instanceof LocalExpression && (function (v) {
 						if (! (v == null || v instanceof LocalExpression)) {
 							debugger;
-							throw new Error("[/Users/gfx/repo/try-on-web/JSX/src/optimizer.jsx:1506:76] detected invalid cast, value is not an instance of the designated type or null\n                        } else if (expr instanceof LocalExpression && (expr as LocalExpression).getLocal() == locals[localIndex]) {\n                                                                            ^^\n");
+							throw new Error("[/Users/gfx/repo/try-on-web/JSX/src/optimizer.jsx:1520:76] detected invalid cast, value is not an instance of the designated type or null\n                        } else if (expr instanceof LocalExpression && (expr as LocalExpression).getLocal() == locals[localIndex]) {\n                                                                            ^^\n");
 						}
 						return v;
 					}(expr)).getLocal$() == locals[localIndex]) {
@@ -4684,7 +4730,7 @@ _DeadCodeEliminationOptimizeCommand.prototype._optimizeFunction$LMemberFunctionD
 							(function (v) {
 								if (! (v == null || v instanceof FunctionExpression)) {
 									debugger;
-									throw new Error("[/Users/gfx/repo/try-on-web/JSX/src/optimizer.jsx:1509:34] detected invalid cast, value is not an instance of the designated type or null\n                            (expr as FunctionExpression).getFuncDef().forEachStatement(onStatement);\n                                  ^^\n");
+									throw new Error("[/Users/gfx/repo/try-on-web/JSX/src/optimizer.jsx:1523:34] detected invalid cast, value is not an instance of the designated type or null\n                            (expr as FunctionExpression).getFuncDef().forEachStatement(onStatement);\n                                  ^^\n");
 								}
 								return v;
 							}(expr)).getFuncDef$().forEachStatement$F$LStatement$B$(onStatement);
@@ -4722,26 +4768,26 @@ _DeadCodeEliminationOptimizeCommand.prototype._delayAssignmentsBetweenLocals$LMe
 		if (expr instanceof AssignmentExpression && (function (v) {
 			if (! (v == null || v instanceof AssignmentExpression)) {
 				debugger;
-				throw new Error("[/Users/gfx/repo/try-on-web/JSX/src/optimizer.jsx:1528:25] detected invalid cast, value is not an instance of the designated type or null\n                && (expr as AssignmentExpression).getToken().getValue() != \"=\"\n                         ^^\n");
+				throw new Error("[/Users/gfx/repo/try-on-web/JSX/src/optimizer.jsx:1542:25] detected invalid cast, value is not an instance of the designated type or null\n                && (expr as AssignmentExpression).getToken().getValue() != \"=\"\n                         ^^\n");
 			}
 			return v;
 		}(expr)).getToken$().getValue$() !== "=" && (function (v) {
 			if (! (v == null || v instanceof AssignmentExpression)) {
 				debugger;
-				throw new Error("[/Users/gfx/repo/try-on-web/JSX/src/optimizer.jsx:1529:25] detected invalid cast, value is not an instance of the designated type or null\n                && (expr as AssignmentExpression).getFirstExpr() instanceof LocalExpression) {\n                         ^^\n");
+				throw new Error("[/Users/gfx/repo/try-on-web/JSX/src/optimizer.jsx:1543:25] detected invalid cast, value is not an instance of the designated type or null\n                && (expr as AssignmentExpression).getFirstExpr() instanceof LocalExpression) {\n                         ^^\n");
 			}
 			return v;
 		}(expr)).getFirstExpr$() instanceof LocalExpression) {
 			local = (function (v) {
 				if (! (v == null || v instanceof LocalExpression)) {
 					debugger;
-					throw new Error("[/Users/gfx/repo/try-on-web/JSX/src/optimizer.jsx:1530:79] detected invalid cast, value is not an instance of the designated type or null\n                    var local = ((expr as AssignmentExpression).getFirstExpr() as LocalExpression).getLocal();\n                                                                               ^^\n");
+					throw new Error("[/Users/gfx/repo/try-on-web/JSX/src/optimizer.jsx:1544:79] detected invalid cast, value is not an instance of the designated type or null\n                    var local = ((expr as AssignmentExpression).getFirstExpr() as LocalExpression).getLocal();\n                                                                               ^^\n");
 				}
 				return v;
 			}((function (v) {
 				if (! (v == null || v instanceof AssignmentExpression)) {
 					debugger;
-					throw new Error("[/Users/gfx/repo/try-on-web/JSX/src/optimizer.jsx:1530:39] detected invalid cast, value is not an instance of the designated type or null\n                    var local = ((expr as AssignmentExpression).getFirstExpr() as LocalExpression).getLocal();\n                                       ^^\n");
+					throw new Error("[/Users/gfx/repo/try-on-web/JSX/src/optimizer.jsx:1544:39] detected invalid cast, value is not an instance of the designated type or null\n                    var local = ((expr as AssignmentExpression).getFirstExpr() as LocalExpression).getLocal();\n                                       ^^\n");
 				}
 				return v;
 			}(expr)).getFirstExpr$())).getLocal$();
@@ -4751,20 +4797,20 @@ _DeadCodeEliminationOptimizeCommand.prototype._delayAssignmentsBetweenLocals$LMe
 			if (expr instanceof IncrementExpression && (function (v) {
 				if (! (v == null || v instanceof IncrementExpression)) {
 					debugger;
-					throw new Error("[/Users/gfx/repo/try-on-web/JSX/src/optimizer.jsx:1534:29] detected invalid cast, value is not an instance of the designated type or null\n                    && (expr as IncrementExpression).getExpr() instanceof LocalExpression) {\n                             ^^\n");
+					throw new Error("[/Users/gfx/repo/try-on-web/JSX/src/optimizer.jsx:1548:29] detected invalid cast, value is not an instance of the designated type or null\n                    && (expr as IncrementExpression).getExpr() instanceof LocalExpression) {\n                             ^^\n");
 				}
 				return v;
 			}(expr)).getExpr$() instanceof LocalExpression) {
 				local = (function (v) {
 					if (! (v == null || v instanceof LocalExpression)) {
 						debugger;
-						throw new Error("[/Users/gfx/repo/try-on-web/JSX/src/optimizer.jsx:1535:73] detected invalid cast, value is not an instance of the designated type or null\n                    var local = ((expr as IncrementExpression).getExpr() as LocalExpression).getLocal();\n                                                                         ^^\n");
+						throw new Error("[/Users/gfx/repo/try-on-web/JSX/src/optimizer.jsx:1549:73] detected invalid cast, value is not an instance of the designated type or null\n                    var local = ((expr as IncrementExpression).getExpr() as LocalExpression).getLocal();\n                                                                         ^^\n");
 					}
 					return v;
 				}((function (v) {
 					if (! (v == null || v instanceof IncrementExpression)) {
 						debugger;
-						throw new Error("[/Users/gfx/repo/try-on-web/JSX/src/optimizer.jsx:1535:39] detected invalid cast, value is not an instance of the designated type or null\n                    var local = ((expr as IncrementExpression).getExpr() as LocalExpression).getLocal();\n                                       ^^\n");
+						throw new Error("[/Users/gfx/repo/try-on-web/JSX/src/optimizer.jsx:1549:39] detected invalid cast, value is not an instance of the designated type or null\n                    var local = ((expr as IncrementExpression).getExpr() as LocalExpression).getLocal();\n                                       ^^\n");
 					}
 					return v;
 				}(expr)).getExpr$())).getLocal$();
@@ -4792,7 +4838,7 @@ _DeadCodeEliminationOptimizeCommand.prototype._delayAssignmentsBetweenLocals$LMe
 			assignmentExpr = (function (v) {
 				if (! (v == null || v instanceof AssignmentExpression)) {
 					debugger;
-					throw new Error("[/Users/gfx/repo/try-on-web/JSX/src/optimizer.jsx:1545:42] detected invalid cast, value is not an instance of the designated type or null\n                var assignmentExpr = expr as AssignmentExpression;\n                                          ^^\n");
+					throw new Error("[/Users/gfx/repo/try-on-web/JSX/src/optimizer.jsx:1559:42] detected invalid cast, value is not an instance of the designated type or null\n                var assignmentExpr = expr as AssignmentExpression;\n                                          ^^\n");
 				}
 				return v;
 			}(expr));
@@ -4803,20 +4849,20 @@ _DeadCodeEliminationOptimizeCommand.prototype._delayAssignmentsBetweenLocals$LMe
 				if (! localsUntouchable.get$LLocalVariable$((function (v) {
 					if (! (v == null || v instanceof LocalExpression)) {
 						debugger;
-						throw new Error("[/Users/gfx/repo/try-on-web/JSX/src/optimizer.jsx:1550:79] detected invalid cast, value is not an instance of the designated type or null\n                    if (! localsUntouchable.get((assignmentExpr.getFirstExpr() as LocalExpression).getLocal())\n                                                                               ^^\n");
+						throw new Error("[/Users/gfx/repo/try-on-web/JSX/src/optimizer.jsx:1564:79] detected invalid cast, value is not an instance of the designated type or null\n                    if (! localsUntouchable.get((assignmentExpr.getFirstExpr() as LocalExpression).getLocal())\n                                                                               ^^\n");
 					}
 					return v;
 				}(assignmentExpr.getFirstExpr$())).getLocal$()) && (function (v) {
 					if (! (v == null || v instanceof LocalExpression)) {
 						debugger;
-						throw new Error("[/Users/gfx/repo/try-on-web/JSX/src/optimizer.jsx:1551:58] detected invalid cast, value is not an instance of the designated type or null\n                        && (assignmentExpr.getFirstExpr() as LocalExpression).getType().equals(assignmentExpr.getSecondExpr().getType())) {\n                                                          ^^\n");
+						throw new Error("[/Users/gfx/repo/try-on-web/JSX/src/optimizer.jsx:1565:58] detected invalid cast, value is not an instance of the designated type or null\n                        && (assignmentExpr.getFirstExpr() as LocalExpression).getType().equals(assignmentExpr.getSecondExpr().getType())) {\n                                                          ^^\n");
 					}
 					return v;
 				}(assignmentExpr.getFirstExpr$())).getType$().equals$LType$(assignmentExpr.getSecondExpr$().getType$())) {
 					lhsLocal = (function (v) {
 						if (! (v == null || v instanceof LocalExpression)) {
 							debugger;
-							throw new Error("[/Users/gfx/repo/try-on-web/JSX/src/optimizer.jsx:1552:74] detected invalid cast, value is not an instance of the designated type or null\n                            var lhsLocal = (assignmentExpr.getFirstExpr() as LocalExpression).getLocal();\n                                                                          ^^\n");
+							throw new Error("[/Users/gfx/repo/try-on-web/JSX/src/optimizer.jsx:1566:74] detected invalid cast, value is not an instance of the designated type or null\n                            var lhsLocal = (assignmentExpr.getFirstExpr() as LocalExpression).getLocal();\n                                                                          ^^\n");
 						}
 						return v;
 					}(assignmentExpr.getFirstExpr$())).getLocal$();
@@ -4829,7 +4875,7 @@ _DeadCodeEliminationOptimizeCommand.prototype._delayAssignmentsBetweenLocals$LMe
 							if (expr instanceof LocalExpression && (function (v) {
 								if (! (v == null || v instanceof LocalExpression)) {
 									debugger;
-									throw new Error("[/Users/gfx/repo/try-on-web/JSX/src/optimizer.jsx:1558:84] detected invalid cast, value is not an instance of the designated type or null\n                                } else if (expr instanceof LocalExpression && (expr as LocalExpression).getLocal() == lhsLocal) {\n                                                                                    ^^\n");
+									throw new Error("[/Users/gfx/repo/try-on-web/JSX/src/optimizer.jsx:1572:84] detected invalid cast, value is not an instance of the designated type or null\n                                } else if (expr instanceof LocalExpression && (expr as LocalExpression).getLocal() == lhsLocal) {\n                                                                                    ^^\n");
 								}
 								return v;
 							}(expr)).getLocal$() == lhsLocal) {
@@ -4845,7 +4891,7 @@ _DeadCodeEliminationOptimizeCommand.prototype._delayAssignmentsBetweenLocals$LMe
 							rhsLocal = (function (v) {
 								if (! (v == null || v instanceof LocalExpression)) {
 									debugger;
-									throw new Error("[/Users/gfx/repo/try-on-web/JSX/src/optimizer.jsx:1567:60] detected invalid cast, value is not an instance of the designated type or null\n                                    var rhsLocal = (rhsExpr as LocalExpression).getLocal();\n                                                            ^^\n");
+									throw new Error("[/Users/gfx/repo/try-on-web/JSX/src/optimizer.jsx:1581:60] detected invalid cast, value is not an instance of the designated type or null\n                                    var rhsLocal = (rhsExpr as LocalExpression).getLocal();\n                                                            ^^\n");
 								}
 								return v;
 							}(rhsExpr)).getLocal$();
@@ -4868,7 +4914,7 @@ _DeadCodeEliminationOptimizeCommand.prototype._delayAssignmentsBetweenLocals$LMe
 				cachedExpr = locals.get$LLocalVariable$((function (v) {
 					if (! (v == null || v instanceof LocalExpression)) {
 						debugger;
-						throw new Error("[/Users/gfx/repo/try-on-web/JSX/src/optimizer.jsx:1584:50] detected invalid cast, value is not an instance of the designated type or null\n                var cachedExpr = locals.get((expr as LocalExpression).getLocal());\n                                                  ^^\n");
+						throw new Error("[/Users/gfx/repo/try-on-web/JSX/src/optimizer.jsx:1598:50] detected invalid cast, value is not an instance of the designated type or null\n                var cachedExpr = locals.get((expr as LocalExpression).getLocal());\n                                                  ^^\n");
 					}
 					return v;
 				}(expr)).getLocal$());
@@ -4881,7 +4927,7 @@ _DeadCodeEliminationOptimizeCommand.prototype._delayAssignmentsBetweenLocals$LMe
 					callingFuncDef = _DetermineCalleeCommand$getCallingFuncDef$LStashable$((function (v) {
 						if (! (v == null || v instanceof CallExpression)) {
 							debugger;
-							throw new Error("[/Users/gfx/repo/try-on-web/JSX/src/optimizer.jsx:1590:84] detected invalid cast, value is not an instance of the designated type or null\n                var callingFuncDef = _DetermineCalleeCommand.getCallingFuncDef(expr as CallExpression);\n                                                                                    ^^\n");
+							throw new Error("[/Users/gfx/repo/try-on-web/JSX/src/optimizer.jsx:1604:84] detected invalid cast, value is not an instance of the designated type or null\n                var callingFuncDef = _DetermineCalleeCommand.getCallingFuncDef(expr as CallExpression);\n                                                                                    ^^\n");
 						}
 						return v;
 					}(expr)));
@@ -4890,7 +4936,7 @@ _DeadCodeEliminationOptimizeCommand.prototype._delayAssignmentsBetweenLocals$LMe
 						(function (v) {
 							if (! (v == null || v instanceof CallExpression)) {
 								debugger;
-								throw new Error("[/Users/gfx/repo/try-on-web/JSX/src/optimizer.jsx:1594:26] detected invalid cast, value is not an instance of the designated type or null\n                    (expr as CallExpression).forEachExpression(onExpr);\n                          ^^\n");
+								throw new Error("[/Users/gfx/repo/try-on-web/JSX/src/optimizer.jsx:1608:26] detected invalid cast, value is not an instance of the designated type or null\n                    (expr as CallExpression).forEachExpression(onExpr);\n                          ^^\n");
 							}
 							return v;
 						}(expr)).forEachExpression$F$LExpression$F$LExpression$V$B$(onExpr);
@@ -4904,7 +4950,7 @@ _DeadCodeEliminationOptimizeCommand.prototype._delayAssignmentsBetweenLocals$LMe
 						(function (v) {
 							if (! (v == null || v instanceof NewExpression)) {
 								debugger;
-								throw new Error("[/Users/gfx/repo/try-on-web/JSX/src/optimizer.jsx:1601:22] detected invalid cast, value is not an instance of the designated type or null\n                (expr as NewExpression).forEachExpression(onExpr);\n                      ^^\n");
+								throw new Error("[/Users/gfx/repo/try-on-web/JSX/src/optimizer.jsx:1615:22] detected invalid cast, value is not an instance of the designated type or null\n                (expr as NewExpression).forEachExpression(onExpr);\n                      ^^\n");
 							}
 							return v;
 						}(expr)).forEachExpression$F$LExpression$F$LExpression$V$B$(onExpr);
@@ -4941,20 +4987,20 @@ _DeadCodeEliminationOptimizeCommand.prototype._eliminateDeadStores$LMemberFuncti
 			if ((function (v) {
 				if (! (v == null || v instanceof AssignmentExpression)) {
 					debugger;
-					throw new Error("[/Users/gfx/repo/try-on-web/JSX/src/optimizer.jsx:1614:26] detected invalid cast, value is not an instance of the designated type or null\n                if ((expr as AssignmentExpression).getToken().getValue() == \"=\"\n                          ^^\n");
+					throw new Error("[/Users/gfx/repo/try-on-web/JSX/src/optimizer.jsx:1628:26] detected invalid cast, value is not an instance of the designated type or null\n                if ((expr as AssignmentExpression).getToken().getValue() == \"=\"\n                          ^^\n");
 				}
 				return v;
 			}(expr)).getToken$().getValue$() === "=" && (function (v) {
 				if (! (v == null || v instanceof AssignmentExpression)) {
 					debugger;
-					throw new Error("[/Users/gfx/repo/try-on-web/JSX/src/optimizer.jsx:1615:29] detected invalid cast, value is not an instance of the designated type or null\n                    && (expr as AssignmentExpression).getFirstExpr() instanceof LocalExpression) {\n                             ^^\n");
+					throw new Error("[/Users/gfx/repo/try-on-web/JSX/src/optimizer.jsx:1629:29] detected invalid cast, value is not an instance of the designated type or null\n                    && (expr as AssignmentExpression).getFirstExpr() instanceof LocalExpression) {\n                             ^^\n");
 				}
 				return v;
 			}(expr)).getFirstExpr$() instanceof LocalExpression) {
 				onExpr((function (v) {
 					if (! (v == null || v instanceof AssignmentExpression)) {
 						debugger;
-						throw new Error("[/Users/gfx/repo/try-on-web/JSX/src/optimizer.jsx:1616:37] detected invalid cast, value is not an instance of the designated type or null\n                        onExpr((expr as AssignmentExpression).getSecondExpr(), function (assignExpr : AssignmentExpression) : function(:Expression):void {\n                                     ^^\n");
+						throw new Error("[/Users/gfx/repo/try-on-web/JSX/src/optimizer.jsx:1630:37] detected invalid cast, value is not an instance of the designated type or null\n                        onExpr((expr as AssignmentExpression).getSecondExpr(), function (assignExpr : AssignmentExpression) : function(:Expression):void {\n                                     ^^\n");
 					}
 					return v;
 				}(expr)).getSecondExpr$(), (function (assignExpr) {
@@ -4964,20 +5010,20 @@ _DeadCodeEliminationOptimizeCommand.prototype._eliminateDeadStores$LMemberFuncti
 				})((function (v) {
 					if (! (v == null || v instanceof AssignmentExpression)) {
 						debugger;
-						throw new Error("[/Users/gfx/repo/try-on-web/JSX/src/optimizer.jsx:1620:32] detected invalid cast, value is not an instance of the designated type or null\n                        }((expr as AssignmentExpression)));\n                                ^^\n");
+						throw new Error("[/Users/gfx/repo/try-on-web/JSX/src/optimizer.jsx:1634:32] detected invalid cast, value is not an instance of the designated type or null\n                        }((expr as AssignmentExpression)));\n                                ^^\n");
 					}
 					return v;
 				}(expr))));
 				lhsLocal = (function (v) {
 					if (! (v == null || v instanceof LocalExpression)) {
 						debugger;
-						throw new Error("[/Users/gfx/repo/try-on-web/JSX/src/optimizer.jsx:1621:86] detected invalid cast, value is not an instance of the designated type or null\n                        var lhsLocal = ((expr as AssignmentExpression).getFirstExpr() as LocalExpression).getLocal();\n                                                                                      ^^\n");
+						throw new Error("[/Users/gfx/repo/try-on-web/JSX/src/optimizer.jsx:1635:86] detected invalid cast, value is not an instance of the designated type or null\n                        var lhsLocal = ((expr as AssignmentExpression).getFirstExpr() as LocalExpression).getLocal();\n                                                                                      ^^\n");
 					}
 					return v;
 				}((function (v) {
 					if (! (v == null || v instanceof AssignmentExpression)) {
 						debugger;
-						throw new Error("[/Users/gfx/repo/try-on-web/JSX/src/optimizer.jsx:1621:46] detected invalid cast, value is not an instance of the designated type or null\n                        var lhsLocal = ((expr as AssignmentExpression).getFirstExpr() as LocalExpression).getLocal();\n                                              ^^\n");
+						throw new Error("[/Users/gfx/repo/try-on-web/JSX/src/optimizer.jsx:1635:46] detected invalid cast, value is not an instance of the designated type or null\n                        var lhsLocal = ((expr as AssignmentExpression).getFirstExpr() as LocalExpression).getLocal();\n                                              ^^\n");
 					}
 					return v;
 				}(expr)).getFirstExpr$())).getLocal$();
@@ -4993,7 +5039,7 @@ _DeadCodeEliminationOptimizeCommand.prototype._eliminateDeadStores$LMemberFuncti
 				lastAssignExpr[i] = new Triple$LocalVariable$AssignmentExpression$function$$$$Expression$$$$void$E$LLocalVariable$LAssignmentExpression$F$LExpression$V$(lhsLocal, (function (v) {
 					if (! (v == null || v instanceof AssignmentExpression)) {
 						debugger;
-						throw new Error("[/Users/gfx/repo/try-on-web/JSX/src/optimizer.jsx:1631:136] detected invalid cast, value is not an instance of the designated type or null\n                        lastAssignExpr[i] = new Triple.<LocalVariable, AssignmentExpression, function(:Expression):void>(lhsLocal, expr as AssignmentExpression, rewriteCb);\n                                                                                                                                        ^^\n");
+						throw new Error("[/Users/gfx/repo/try-on-web/JSX/src/optimizer.jsx:1645:136] detected invalid cast, value is not an instance of the designated type or null\n                        lastAssignExpr[i] = new Triple.<LocalVariable, AssignmentExpression, function(:Expression):void>(lhsLocal, expr as AssignmentExpression, rewriteCb);\n                                                                                                                                        ^^\n");
 					}
 					return v;
 				}(expr)), rewriteCb);
@@ -5005,7 +5051,7 @@ _DeadCodeEliminationOptimizeCommand.prototype._eliminateDeadStores$LMemberFuncti
 					if (lastAssignExpr[i].first == (function (v) {
 						if (! (v == null || v instanceof LocalExpression)) {
 							debugger;
-							throw new Error("[/Users/gfx/repo/try-on-web/JSX/src/optimizer.jsx:1636:57] detected invalid cast, value is not an instance of the designated type or null\n                    if (lastAssignExpr[i].first == (expr as LocalExpression).getLocal()) {\n                                                         ^^\n");
+							throw new Error("[/Users/gfx/repo/try-on-web/JSX/src/optimizer.jsx:1650:57] detected invalid cast, value is not an instance of the designated type or null\n                    if (lastAssignExpr[i].first == (expr as LocalExpression).getLocal()) {\n                                                         ^^\n");
 						}
 						return v;
 					}(expr)).getLocal$()) {
@@ -5018,7 +5064,7 @@ _DeadCodeEliminationOptimizeCommand.prototype._eliminateDeadStores$LMemberFuncti
 					onExpr((function (v) {
 						if (! (v == null || v instanceof CallExpression)) {
 							debugger;
-							throw new Error("[/Users/gfx/repo/try-on-web/JSX/src/optimizer.jsx:1642:29] detected invalid cast, value is not an instance of the designated type or null\n                onExpr((expr as CallExpression).getExpr(), function (callExpr : CallExpression) : function(:Expression):void {\n                             ^^\n");
+							throw new Error("[/Users/gfx/repo/try-on-web/JSX/src/optimizer.jsx:1656:29] detected invalid cast, value is not an instance of the designated type or null\n                onExpr((expr as CallExpression).getExpr(), function (callExpr : CallExpression) : function(:Expression):void {\n                             ^^\n");
 						}
 						return v;
 					}(expr)).getExpr$(), (function (callExpr) {
@@ -5028,14 +5074,14 @@ _DeadCodeEliminationOptimizeCommand.prototype._eliminateDeadStores$LMemberFuncti
 					})((function (v) {
 						if (! (v == null || v instanceof CallExpression)) {
 							debugger;
-							throw new Error("[/Users/gfx/repo/try-on-web/JSX/src/optimizer.jsx:1646:23] detected invalid cast, value is not an instance of the designated type or null\n                }(expr as CallExpression));\n                       ^^\n");
+							throw new Error("[/Users/gfx/repo/try-on-web/JSX/src/optimizer.jsx:1660:23] detected invalid cast, value is not an instance of the designated type or null\n                }(expr as CallExpression));\n                       ^^\n");
 						}
 						return v;
 					}(expr))));
 					Util$forEachExpression$F$LExpression$F$LExpression$V$B$ALExpression$(onExpr, (function (v) {
 						if (! (v == null || v instanceof CallExpression)) {
 							debugger;
-							throw new Error("[/Users/gfx/repo/try-on-web/JSX/src/optimizer.jsx:1647:53] detected invalid cast, value is not an instance of the designated type or null\n                Util.forEachExpression(onExpr, (expr as CallExpression).getArguments());\n                                                     ^^\n");
+							throw new Error("[/Users/gfx/repo/try-on-web/JSX/src/optimizer.jsx:1661:53] detected invalid cast, value is not an instance of the designated type or null\n                Util.forEachExpression(onExpr, (expr as CallExpression).getArguments());\n                                                     ^^\n");
 						}
 						return v;
 					}(expr)).getArguments$());
@@ -5050,7 +5096,7 @@ _DeadCodeEliminationOptimizeCommand.prototype._eliminateDeadStores$LMemberFuncti
 						Util$forEachExpression$F$LExpression$F$LExpression$V$B$ALExpression$(onExpr, (function (v) {
 							if (! (v == null || v instanceof NewExpression)) {
 								debugger;
-								throw new Error("[/Users/gfx/repo/try-on-web/JSX/src/optimizer.jsx:1656:53] detected invalid cast, value is not an instance of the designated type or null\n                Util.forEachExpression(onExpr, (expr as NewExpression).getArguments());\n                                                     ^^\n");
+								throw new Error("[/Users/gfx/repo/try-on-web/JSX/src/optimizer.jsx:1670:53] detected invalid cast, value is not an instance of the designated type or null\n                Util.forEachExpression(onExpr, (expr as NewExpression).getArguments());\n                                                     ^^\n");
 							}
 							return v;
 						}(expr)).getArguments$());
@@ -5088,7 +5134,7 @@ _DeadCodeEliminationOptimizeCommand.prototype._eliminateDeadStoresToProperties$L
 		baseExpr = (function (v) {
 			if (! (v == null || v instanceof PropertyExpression)) {
 				debugger;
-				throw new Error("[/Users/gfx/repo/try-on-web/JSX/src/optimizer.jsx:1670:33] detected invalid cast, value is not an instance of the designated type or null\n            var baseExpr = (expr as PropertyExpression).getExpr();\n                                 ^^\n");
+				throw new Error("[/Users/gfx/repo/try-on-web/JSX/src/optimizer.jsx:1684:33] detected invalid cast, value is not an instance of the designated type or null\n            var baseExpr = (expr as PropertyExpression).getExpr();\n                                 ^^\n");
 			}
 			return v;
 		}(expr)).getExpr$();
@@ -5097,19 +5143,19 @@ _DeadCodeEliminationOptimizeCommand.prototype._eliminateDeadStoresToProperties$L
 		} else {
 			return false;
 		}
-	};
+	}
 	function baseExprsAreEqual(x, y) {
 		if (x instanceof LocalExpression && y instanceof LocalExpression) {
 			return (function (v) {
 				if (! (v == null || v instanceof LocalExpression)) {
 					debugger;
-					throw new Error("[/Users/gfx/repo/try-on-web/JSX/src/optimizer.jsx:1681:26] detected invalid cast, value is not an instance of the designated type or null\n                return (x as LocalExpression).getLocal() == (y as LocalExpression).getLocal();\n                          ^^\n");
+					throw new Error("[/Users/gfx/repo/try-on-web/JSX/src/optimizer.jsx:1695:26] detected invalid cast, value is not an instance of the designated type or null\n                return (x as LocalExpression).getLocal() == (y as LocalExpression).getLocal();\n                          ^^\n");
 				}
 				return v;
 			}(x)).getLocal$() == (function (v) {
 				if (! (v == null || v instanceof LocalExpression)) {
 					debugger;
-					throw new Error("[/Users/gfx/repo/try-on-web/JSX/src/optimizer.jsx:1681:63] detected invalid cast, value is not an instance of the designated type or null\n                return (x as LocalExpression).getLocal() == (y as LocalExpression).getLocal();\n                                                               ^^\n");
+					throw new Error("[/Users/gfx/repo/try-on-web/JSX/src/optimizer.jsx:1695:63] detected invalid cast, value is not an instance of the designated type or null\n                return (x as LocalExpression).getLocal() == (y as LocalExpression).getLocal();\n                                                               ^^\n");
 				}
 				return v;
 			}(y)).getLocal$();
@@ -5121,13 +5167,13 @@ _DeadCodeEliminationOptimizeCommand.prototype._eliminateDeadStoresToProperties$L
 					return (function (v) {
 						if (! (v == null || v instanceof ClassExpression)) {
 							debugger;
-							throw new Error("[/Users/gfx/repo/try-on-web/JSX/src/optimizer.jsx:1685:26] detected invalid cast, value is not an instance of the designated type or null\n                return (x as ClassExpression).getType().equals((y as ClassExpression).getType());\n                          ^^\n");
+							throw new Error("[/Users/gfx/repo/try-on-web/JSX/src/optimizer.jsx:1699:26] detected invalid cast, value is not an instance of the designated type or null\n                return (x as ClassExpression).getType().equals((y as ClassExpression).getType());\n                          ^^\n");
 						}
 						return v;
 					}(x)).getType$().equals$LType$((function (v) {
 						if (! (v == null || v instanceof ClassExpression)) {
 							debugger;
-							throw new Error("[/Users/gfx/repo/try-on-web/JSX/src/optimizer.jsx:1685:66] detected invalid cast, value is not an instance of the designated type or null\n                return (x as ClassExpression).getType().equals((y as ClassExpression).getType());\n                                                                  ^^\n");
+							throw new Error("[/Users/gfx/repo/try-on-web/JSX/src/optimizer.jsx:1699:66] detected invalid cast, value is not an instance of the designated type or null\n                return (x as ClassExpression).getType().equals((y as ClassExpression).getType());\n                                                                  ^^\n");
 						}
 						return v;
 					}(y)).getType$());
@@ -5135,7 +5181,7 @@ _DeadCodeEliminationOptimizeCommand.prototype._eliminateDeadStoresToProperties$L
 			}
 		}
 		return false;
-	};
+	}
 	lastAssignExpr = {};
 	onExpr = (function (expr, rewriteCb) {
 		/** @type {AssignmentExpression} */
@@ -5152,7 +5198,7 @@ _DeadCodeEliminationOptimizeCommand.prototype._eliminateDeadStoresToProperties$L
 			assignmentExpr = (function (v) {
 				if (! (v == null || v instanceof AssignmentExpression)) {
 					debugger;
-					throw new Error("[/Users/gfx/repo/try-on-web/JSX/src/optimizer.jsx:1692:42] detected invalid cast, value is not an instance of the designated type or null\n                var assignmentExpr = expr as AssignmentExpression;\n                                          ^^\n");
+					throw new Error("[/Users/gfx/repo/try-on-web/JSX/src/optimizer.jsx:1706:42] detected invalid cast, value is not an instance of the designated type or null\n                var assignmentExpr = expr as AssignmentExpression;\n                                          ^^\n");
 				}
 				return v;
 			}(expr));
@@ -5160,14 +5206,14 @@ _DeadCodeEliminationOptimizeCommand.prototype._eliminateDeadStoresToProperties$L
 			if (expr.getToken$().getValue$() === "=" && isFirstLevelPropertyAccess(firstExpr) && ! _Util$classIsNative$LClassDefinition$((function (v) {
 				if (! (v == null || v instanceof PropertyExpression)) {
 					debugger;
-					throw new Error("[/Users/gfx/repo/try-on-web/JSX/src/optimizer.jsx:1696:56] detected invalid cast, value is not an instance of the designated type or null\n                    && ! _Util.classIsNative((firstExpr as PropertyExpression).getExpr().getType().getClassDef())) {\n                                                        ^^\n");
+					throw new Error("[/Users/gfx/repo/try-on-web/JSX/src/optimizer.jsx:1710:56] detected invalid cast, value is not an instance of the designated type or null\n                    && ! _Util.classIsNative((firstExpr as PropertyExpression).getExpr().getType().getClassDef())) {\n                                                        ^^\n");
 				}
 				return v;
 			}(firstExpr)).getExpr$().getType$().getClassDef$())) {
 				propertyName = (function (v) {
 					if (! (v == null || v instanceof PropertyExpression)) {
 						debugger;
-						throw new Error("[/Users/gfx/repo/try-on-web/JSX/src/optimizer.jsx:1697:54] detected invalid cast, value is not an instance of the designated type or null\n                        var propertyName = (firstExpr as PropertyExpression).getIdentifierToken().getValue();\n                                                      ^^\n");
+						throw new Error("[/Users/gfx/repo/try-on-web/JSX/src/optimizer.jsx:1711:54] detected invalid cast, value is not an instance of the designated type or null\n                        var propertyName = (firstExpr as PropertyExpression).getIdentifierToken().getValue();\n                                                      ^^\n");
 					}
 					return v;
 				}(firstExpr)).getIdentifierToken$().getValue$();
@@ -5175,13 +5221,13 @@ _DeadCodeEliminationOptimizeCommand.prototype._eliminateDeadStoresToProperties$L
 				if (lastAssignExpr[propertyName] && lastAssignExpr[propertyName].second != null && baseExprsAreEqual((function (v) {
 					if (! (v == null || v instanceof PropertyExpression)) {
 						debugger;
-						throw new Error("[/Users/gfx/repo/try-on-web/JSX/src/optimizer.jsx:1701:64] detected invalid cast, value is not an instance of the designated type or null\n                                && baseExprsAreEqual((firstExpr as PropertyExpression).getExpr(), (lastAssignExpr[propertyName].first.getFirstExpr() as PropertyExpression).getExpr())) {\n                                                                ^^\n");
+						throw new Error("[/Users/gfx/repo/try-on-web/JSX/src/optimizer.jsx:1715:64] detected invalid cast, value is not an instance of the designated type or null\n                                && baseExprsAreEqual((firstExpr as PropertyExpression).getExpr(), (lastAssignExpr[propertyName].first.getFirstExpr() as PropertyExpression).getExpr())) {\n                                                                ^^\n");
 					}
 					return v;
 				}(firstExpr)).getExpr$(), (function (v) {
 					if (! (v == null || v instanceof PropertyExpression)) {
 						debugger;
-						throw new Error("[/Users/gfx/repo/try-on-web/JSX/src/optimizer.jsx:1701:149] detected invalid cast, value is not an instance of the designated type or null\n                                && baseExprsAreEqual((firstExpr as PropertyExpression).getExpr(), (lastAssignExpr[propertyName].first.getFirstExpr() as PropertyExpression).getExpr())) {\n                                                                                                                                                     ^^\n");
+						throw new Error("[/Users/gfx/repo/try-on-web/JSX/src/optimizer.jsx:1715:149] detected invalid cast, value is not an instance of the designated type or null\n                                && baseExprsAreEqual((firstExpr as PropertyExpression).getExpr(), (lastAssignExpr[propertyName].first.getFirstExpr() as PropertyExpression).getExpr())) {\n                                                                                                                                                     ^^\n");
 					}
 					return v;
 				}(lastAssignExpr[propertyName].first.getFirstExpr$())).getExpr$())) {
@@ -5196,26 +5242,26 @@ _DeadCodeEliminationOptimizeCommand.prototype._eliminateDeadStoresToProperties$L
 						baseExpr = (function (v) {
 							if (! (v == null || v instanceof PropertyExpression)) {
 								debugger;
-								throw new Error("[/Users/gfx/repo/try-on-web/JSX/src/optimizer.jsx:1709:83] detected invalid cast, value is not an instance of the designated type or null\n                            var baseExpr = (lastAssignExpr[k].first.getFirstExpr() as PropertyExpression).getExpr();\n                                                                                   ^^\n");
+								throw new Error("[/Users/gfx/repo/try-on-web/JSX/src/optimizer.jsx:1723:83] detected invalid cast, value is not an instance of the designated type or null\n                            var baseExpr = (lastAssignExpr[k].first.getFirstExpr() as PropertyExpression).getExpr();\n                                                                                   ^^\n");
 							}
 							return v;
 						}(lastAssignExpr[k].first.getFirstExpr$())).getExpr$();
 						if (baseExpr instanceof LocalExpression && (function (v) {
 							if (! (v == null || v instanceof LocalExpression)) {
 								debugger;
-								throw new Error("[/Users/gfx/repo/try-on-web/JSX/src/optimizer.jsx:1711:45] detected invalid cast, value is not an instance of the designated type or null\n                                && (baseExpr as LocalExpression).getLocal() == ((expr as AssignmentExpression).getFirstExpr() as LocalExpression).getLocal()) {\n                                             ^^\n");
+								throw new Error("[/Users/gfx/repo/try-on-web/JSX/src/optimizer.jsx:1725:45] detected invalid cast, value is not an instance of the designated type or null\n                                && (baseExpr as LocalExpression).getLocal() == ((expr as AssignmentExpression).getFirstExpr() as LocalExpression).getLocal()) {\n                                             ^^\n");
 							}
 							return v;
 						}(baseExpr)).getLocal$() == (function (v) {
 							if (! (v == null || v instanceof LocalExpression)) {
 								debugger;
-								throw new Error("[/Users/gfx/repo/try-on-web/JSX/src/optimizer.jsx:1711:126] detected invalid cast, value is not an instance of the designated type or null\n                                && (baseExpr as LocalExpression).getLocal() == ((expr as AssignmentExpression).getFirstExpr() as LocalExpression).getLocal()) {\n                                                                                                                              ^^\n");
+								throw new Error("[/Users/gfx/repo/try-on-web/JSX/src/optimizer.jsx:1725:126] detected invalid cast, value is not an instance of the designated type or null\n                                && (baseExpr as LocalExpression).getLocal() == ((expr as AssignmentExpression).getFirstExpr() as LocalExpression).getLocal()) {\n                                                                                                                              ^^\n");
 							}
 							return v;
 						}((function (v) {
 							if (! (v == null || v instanceof AssignmentExpression)) {
 								debugger;
-								throw new Error("[/Users/gfx/repo/try-on-web/JSX/src/optimizer.jsx:1711:86] detected invalid cast, value is not an instance of the designated type or null\n                                && (baseExpr as LocalExpression).getLocal() == ((expr as AssignmentExpression).getFirstExpr() as LocalExpression).getLocal()) {\n                                                                                      ^^\n");
+								throw new Error("[/Users/gfx/repo/try-on-web/JSX/src/optimizer.jsx:1725:86] detected invalid cast, value is not an instance of the designated type or null\n                                && (baseExpr as LocalExpression).getLocal() == ((expr as AssignmentExpression).getFirstExpr() as LocalExpression).getLocal()) {\n                                                                                      ^^\n");
 							}
 							return v;
 						}(expr)).getFirstExpr$())).getLocal$()) {
@@ -5230,7 +5276,7 @@ _DeadCodeEliminationOptimizeCommand.prototype._eliminateDeadStoresToProperties$L
 				propertyName = (function (v) {
 					if (! (v == null || v instanceof PropertyExpression)) {
 						debugger;
-						throw new Error("[/Users/gfx/repo/try-on-web/JSX/src/optimizer.jsx:1718:41] detected invalid cast, value is not an instance of the designated type or null\n                var propertyName = (expr as PropertyExpression).getIdentifierToken().getValue();\n                                         ^^\n");
+						throw new Error("[/Users/gfx/repo/try-on-web/JSX/src/optimizer.jsx:1732:41] detected invalid cast, value is not an instance of the designated type or null\n                var propertyName = (expr as PropertyExpression).getIdentifierToken().getValue();\n                                         ^^\n");
 					}
 					return v;
 				}(expr)).getIdentifierToken$().getValue$();
@@ -5240,14 +5286,14 @@ _DeadCodeEliminationOptimizeCommand.prototype._eliminateDeadStoresToProperties$L
 					onExpr((function (v) {
 						if (! (v == null || v instanceof CallExpression)) {
 							debugger;
-							throw new Error("[/Users/gfx/repo/try-on-web/JSX/src/optimizer.jsx:1721:29] detected invalid cast, value is not an instance of the designated type or null\n                onExpr((expr as CallExpression).getExpr(), null);\n                             ^^\n");
+							throw new Error("[/Users/gfx/repo/try-on-web/JSX/src/optimizer.jsx:1735:29] detected invalid cast, value is not an instance of the designated type or null\n                onExpr((expr as CallExpression).getExpr(), null);\n                             ^^\n");
 						}
 						return v;
 					}(expr)).getExpr$(), null);
 					Util$forEachExpression$F$LExpression$F$LExpression$V$B$ALExpression$(onExpr, (function (v) {
 						if (! (v == null || v instanceof CallExpression)) {
 							debugger;
-							throw new Error("[/Users/gfx/repo/try-on-web/JSX/src/optimizer.jsx:1722:53] detected invalid cast, value is not an instance of the designated type or null\n                Util.forEachExpression(onExpr, (expr as CallExpression).getArguments());\n                                                     ^^\n");
+							throw new Error("[/Users/gfx/repo/try-on-web/JSX/src/optimizer.jsx:1736:53] detected invalid cast, value is not an instance of the designated type or null\n                Util.forEachExpression(onExpr, (expr as CallExpression).getArguments());\n                                                     ^^\n");
 						}
 						return v;
 					}(expr)).getArguments$());
@@ -5258,7 +5304,7 @@ _DeadCodeEliminationOptimizeCommand.prototype._eliminateDeadStoresToProperties$L
 						Util$forEachExpression$F$LExpression$F$LExpression$V$B$ALExpression$(onExpr, (function (v) {
 							if (! (v == null || v instanceof NewExpression)) {
 								debugger;
-								throw new Error("[/Users/gfx/repo/try-on-web/JSX/src/optimizer.jsx:1726:53] detected invalid cast, value is not an instance of the designated type or null\n                Util.forEachExpression(onExpr, (expr as NewExpression).getArguments());\n                                                     ^^\n");
+								throw new Error("[/Users/gfx/repo/try-on-web/JSX/src/optimizer.jsx:1740:53] detected invalid cast, value is not an instance of the designated type or null\n                Util.forEachExpression(onExpr, (expr as NewExpression).getArguments());\n                                                     ^^\n");
 							}
 							return v;
 						}(expr)).getArguments$());
@@ -5300,7 +5346,7 @@ _DeadCodeEliminationOptimizeCommand.prototype._eliminateDeadConditions$LMemberFu
 			}
 		}
 		return null;
-	};
+	}
 	function spliceStatements(dest, index, src) {
 		/** @type {!number} */
 		var i;
@@ -5308,7 +5354,7 @@ _DeadCodeEliminationOptimizeCommand.prototype._eliminateDeadConditions$LMemberFu
 		for (i = 0; i < src.length; ++ i) {
 			dest.splice(index + i, 0, src[i]);
 		}
-	};
+	}
 	(function onStatements(statements) {
 		/** @type {!number} */
 		var i;
@@ -5324,7 +5370,7 @@ _DeadCodeEliminationOptimizeCommand.prototype._eliminateDeadConditions$LMemberFu
 				ifStatement = (function (v) {
 					if (! (v == null || v instanceof IfStatement)) {
 						debugger;
-						throw new Error("[/Users/gfx/repo/try-on-web/JSX/src/optimizer.jsx:1758:48] detected invalid cast, value is not an instance of the designated type or null\n                    var ifStatement = statement as IfStatement;\n                                                ^^\n");
+						throw new Error("[/Users/gfx/repo/try-on-web/JSX/src/optimizer.jsx:1772:48] detected invalid cast, value is not an instance of the designated type or null\n                    var ifStatement = statement as IfStatement;\n                                                ^^\n");
 					}
 					return v;
 				}(statement));
@@ -5384,7 +5430,7 @@ _InlineOptimizeCommand.prototype.optimizeFunction$LMemberFunctionDefinition$ = f
 	stash = (function (v) {
 		if (! (v == null || v instanceof _InlineOptimizeCommand$CStash)) {
 			debugger;
-			throw new Error("[/Users/gfx/repo/try-on-web/JSX/src/optimizer.jsx:1814:43] detected invalid cast, value is not an instance of the designated type or null\n        var stash = this.getStash(funcDef) as _InlineOptimizeCommand.Stash;\n                                           ^^\n");
+			throw new Error("[/Users/gfx/repo/try-on-web/JSX/src/optimizer.jsx:1828:43] detected invalid cast, value is not an instance of the designated type or null\n        var stash = this.getStash(funcDef) as _InlineOptimizeCommand.Stash;\n                                           ^^\n");
 		}
 		return v;
 	}(this.getStash$LStashable$(funcDef)));
@@ -5404,7 +5450,7 @@ _InlineOptimizeCommand.prototype.optimizeFunction$LMemberFunctionDefinition$ = f
 			(function (v) {
 				if (! (v == null || v instanceof _DetermineCalleeCommand)) {
 					debugger;
-					throw new Error("[/Users/gfx/repo/try-on-web/JSX/src/optimizer.jsx:1828:66] detected invalid cast, value is not an instance of the designated type or null\n                (this.setupCommand(new _DetermineCalleeCommand()) as _DetermineCalleeCommand).optimizeFunction(funcDef);\n                                                                  ^^\n");
+					throw new Error("[/Users/gfx/repo/try-on-web/JSX/src/optimizer.jsx:1842:66] detected invalid cast, value is not an instance of the designated type or null\n                (this.setupCommand(new _DetermineCalleeCommand()) as _DetermineCalleeCommand).optimizeFunction(funcDef);\n                                                                  ^^\n");
 				}
 				return v;
 			}(this.setupCommand$L_OptimizeCommand$(new _DetermineCalleeCommand$()))).optimizeFunction$LMemberFunctionDefinition$(funcDef);
@@ -5412,7 +5458,7 @@ _InlineOptimizeCommand.prototype.optimizeFunction$LMemberFunctionDefinition$ = f
 		if (! (function (v) {
 			if (! (v == null || v instanceof _ReturnIfOptimizeCommand)) {
 				debugger;
-				throw new Error("[/Users/gfx/repo/try-on-web/JSX/src/optimizer.jsx:1830:69] detected invalid cast, value is not an instance of the designated type or null\n            if (! (this.setupCommand(new _ReturnIfOptimizeCommand()) as _ReturnIfOptimizeCommand).optimizeFunction(funcDef))\n                                                                     ^^\n");
+				throw new Error("[/Users/gfx/repo/try-on-web/JSX/src/optimizer.jsx:1844:69] detected invalid cast, value is not an instance of the designated type or null\n            if (! (this.setupCommand(new _ReturnIfOptimizeCommand()) as _ReturnIfOptimizeCommand).optimizeFunction(funcDef))\n                                                                     ^^\n");
 			}
 			return v;
 		}(this.setupCommand$L_OptimizeCommand$(new _ReturnIfOptimizeCommand$()))).optimizeFunction$LMemberFunctionDefinition$(funcDef)) {
@@ -5476,7 +5522,7 @@ _InlineOptimizeCommand.prototype._handleStatement$LMemberFunctionDefinition$ALSt
 			args = $this._getArgsAndThisIfCallExprIsInlineable$LCallExpression$B((function (v) {
 				if (! (v == null || v instanceof CallExpression)) {
 					debugger;
-					throw new Error("[/Users/gfx/repo/try-on-web/JSX/src/optimizer.jsx:1856:75] detected invalid cast, value is not an instance of the designated type or null\n                var args = this._getArgsAndThisIfCallExprIsInlineable(expr as CallExpression, true);\n                                                                           ^^\n");
+					throw new Error("[/Users/gfx/repo/try-on-web/JSX/src/optimizer.jsx:1870:75] detected invalid cast, value is not an instance of the designated type or null\n                var args = this._getArgsAndThisIfCallExprIsInlineable(expr as CallExpression, true);\n                                                                           ^^\n");
 				}
 				return v;
 			}(expr)), true);
@@ -5488,7 +5534,7 @@ _InlineOptimizeCommand.prototype._handleStatement$LMemberFunctionDefinition$ALSt
 					expr = (function (v) {
 						if (! (v == null || v instanceof ExpressionStatement)) {
 							debugger;
-							throw new Error("[/Users/gfx/repo/try-on-web/JSX/src/optimizer.jsx:1862:41] detected invalid cast, value is not an instance of the designated type or null\n                        var expr = (stmt as ExpressionStatement).getExpr();\n                                         ^^\n");
+							throw new Error("[/Users/gfx/repo/try-on-web/JSX/src/optimizer.jsx:1876:41] detected invalid cast, value is not an instance of the designated type or null\n                        var expr = (stmt as ExpressionStatement).getExpr();\n                                         ^^\n");
 						}
 						return v;
 					}(stmt)).getExpr$();
@@ -5497,7 +5543,7 @@ _InlineOptimizeCommand.prototype._handleStatement$LMemberFunctionDefinition$ALSt
 						expr = (function (v) {
 							if (! (v == null || v instanceof ReturnStatement)) {
 								debugger;
-								throw new Error("[/Users/gfx/repo/try-on-web/JSX/src/optimizer.jsx:1864:37] detected invalid cast, value is not an instance of the designated type or null\n                        expr = (stmt as ReturnStatement).getExpr();\n                                     ^^\n");
+								throw new Error("[/Users/gfx/repo/try-on-web/JSX/src/optimizer.jsx:1878:37] detected invalid cast, value is not an instance of the designated type or null\n                        expr = (stmt as ReturnStatement).getExpr();\n                                     ^^\n");
 							}
 							return v;
 						}(stmt)).getExpr$();
@@ -5520,7 +5566,7 @@ _InlineOptimizeCommand.prototype._handleStatement$LMemberFunctionDefinition$ALSt
 		if (this._functionIsInlineable$LMemberFunctionDefinition$(callingFuncDef) && this._argsAreInlineable$LMemberFunctionDefinition$ALExpression$B(callingFuncDef, (function (v) {
 			if (! (v == null || v instanceof ConstructorInvocationStatement)) {
 				debugger;
-				throw new Error("[/Users/gfx/repo/try-on-web/JSX/src/optimizer.jsx:1885:113] detected invalid cast, value is not an instance of the designated type or null\n            if (this._functionIsInlineable(callingFuncDef) && this._argsAreInlineable(callingFuncDef, (statement as ConstructorInvocationStatement).getArguments(), false)) {\n                                                                                                                 ^^\n");
+				throw new Error("[/Users/gfx/repo/try-on-web/JSX/src/optimizer.jsx:1899:113] detected invalid cast, value is not an instance of the designated type or null\n            if (this._functionIsInlineable(callingFuncDef) && this._argsAreInlineable(callingFuncDef, (statement as ConstructorInvocationStatement).getArguments(), false)) {\n                                                                                                                 ^^\n");
 			}
 			return v;
 		}(statement)).getArguments$(), false)) {
@@ -5528,7 +5574,7 @@ _InlineOptimizeCommand.prototype._handleStatement$LMemberFunctionDefinition$ALSt
 			this._expandCallingFunction$LMemberFunctionDefinition$ALStatement$NLMemberFunctionDefinition$ALExpression$(funcDef, statements, stmtIndex, callingFuncDef, (function (v) {
 				if (! (v == null || v instanceof ConstructorInvocationStatement)) {
 					debugger;
-					throw new Error("[/Users/gfx/repo/try-on-web/JSX/src/optimizer.jsx:1887:103] detected invalid cast, value is not an instance of the designated type or null\n                this._expandCallingFunction(funcDef, statements, stmtIndex, callingFuncDef, (statement as ConstructorInvocationStatement).getArguments().concat([ new ThisExpression(null, funcDef.getClassDef()) as Expression ]));\n                                                                                                       ^^\n");
+					throw new Error("[/Users/gfx/repo/try-on-web/JSX/src/optimizer.jsx:1901:103] detected invalid cast, value is not an instance of the designated type or null\n                this._expandCallingFunction(funcDef, statements, stmtIndex, callingFuncDef, (statement as ConstructorInvocationStatement).getArguments().concat([ new ThisExpression(null, funcDef.getClassDef()) as Expression ]));\n                                                                                                       ^^\n");
 				}
 				return v;
 			}(statement)).getArguments$().concat([ new ThisExpression$LToken$LClassDefinition$(null, funcDef.getClassDef$()) ]));
@@ -5538,7 +5584,7 @@ _InlineOptimizeCommand.prototype._handleStatement$LMemberFunctionDefinition$ALSt
 			if (this._expandStatementExpression$LMemberFunctionDefinition$ALStatement$NLExpression$F$NV$(funcDef, statements, stmtIndex, (function (v) {
 				if (! (v == null || v instanceof ExpressionStatement)) {
 					debugger;
-					throw new Error("[/Users/gfx/repo/try-on-web/JSX/src/optimizer.jsx:1892:91] detected invalid cast, value is not an instance of the designated type or null\n            if (this._expandStatementExpression(funcDef, statements, stmtIndex, (statement as ExpressionStatement).getExpr(), function (stmtIndex) {\n                                                                                           ^^\n");
+					throw new Error("[/Users/gfx/repo/try-on-web/JSX/src/optimizer.jsx:1906:91] detected invalid cast, value is not an instance of the designated type or null\n            if (this._expandStatementExpression(funcDef, statements, stmtIndex, (statement as ExpressionStatement).getExpr(), function (stmtIndex) {\n                                                                                           ^^\n");
 				}
 				return v;
 			}(statement)).getExpr$(), (function (stmtIndex) {
@@ -5551,7 +5597,7 @@ _InlineOptimizeCommand.prototype._handleStatement$LMemberFunctionDefinition$ALSt
 				if (this._expandStatementExpression$LMemberFunctionDefinition$ALStatement$NLExpression$F$NV$(funcDef, statements, stmtIndex, (function (v) {
 					if (! (v == null || v instanceof ReturnStatement)) {
 						debugger;
-						throw new Error("[/Users/gfx/repo/try-on-web/JSX/src/optimizer.jsx:1900:91] detected invalid cast, value is not an instance of the designated type or null\n            if (this._expandStatementExpression(funcDef, statements, stmtIndex, (statement as ReturnStatement).getExpr(), function (stmtIndex) {\n                                                                                           ^^\n");
+						throw new Error("[/Users/gfx/repo/try-on-web/JSX/src/optimizer.jsx:1914:91] detected invalid cast, value is not an instance of the designated type or null\n            if (this._expandStatementExpression(funcDef, statements, stmtIndex, (statement as ReturnStatement).getExpr(), function (stmtIndex) {\n                                                                                           ^^\n");
 					}
 					return v;
 				}(statement)).getExpr$(), (function (stmtIndex) {
@@ -5559,13 +5605,13 @@ _InlineOptimizeCommand.prototype._handleStatement$LMemberFunctionDefinition$ALSt
 					statements[stmtIndex - 1] = new ReturnStatement$LToken$LExpression$(statement.getToken$(), statements[stmtIndex - 1] instanceof ReturnStatement ? (function (v) {
 						if (! (v == null || v instanceof ReturnStatement)) {
 							debugger;
-							throw new Error("[/Users/gfx/repo/try-on-web/JSX/src/optimizer.jsx:1904:49] detected invalid cast, value is not an instance of the designated type or null\n                    ? (statements[stmtIndex - 1] as ReturnStatement).getExpr()\n                                                 ^^\n");
+							throw new Error("[/Users/gfx/repo/try-on-web/JSX/src/optimizer.jsx:1918:49] detected invalid cast, value is not an instance of the designated type or null\n                    ? (statements[stmtIndex - 1] as ReturnStatement).getExpr()\n                                                 ^^\n");
 						}
 						return v;
 					}(statements[stmtIndex - 1])).getExpr$() : (function (v) {
 						if (! (v == null || v instanceof ExpressionStatement)) {
 							debugger;
-							throw new Error("[/Users/gfx/repo/try-on-web/JSX/src/optimizer.jsx:1905:49] detected invalid cast, value is not an instance of the designated type or null\n                    : (statements[stmtIndex - 1] as ExpressionStatement).getExpr());\n                                                 ^^\n");
+							throw new Error("[/Users/gfx/repo/try-on-web/JSX/src/optimizer.jsx:1919:49] detected invalid cast, value is not an instance of the designated type or null\n                    : (statements[stmtIndex - 1] as ExpressionStatement).getExpr());\n                                                 ^^\n");
 						}
 						return v;
 					}(statements[stmtIndex - 1])).getExpr$());
@@ -5577,26 +5623,26 @@ _InlineOptimizeCommand.prototype._handleStatement$LMemberFunctionDefinition$ALSt
 					if (this._expandStatementExpression$LMemberFunctionDefinition$ALStatement$NLExpression$F$NV$(funcDef, statements, stmtIndex, (function (v) {
 						if (! (v == null || v instanceof IfStatement)) {
 							debugger;
-							throw new Error("[/Users/gfx/repo/try-on-web/JSX/src/optimizer.jsx:1912:91] detected invalid cast, value is not an instance of the designated type or null\n            if (this._expandStatementExpression(funcDef, statements, stmtIndex, (statement as IfStatement).getExpr(), function (stmtIndex) {\n                                                                                           ^^\n");
+							throw new Error("[/Users/gfx/repo/try-on-web/JSX/src/optimizer.jsx:1926:91] detected invalid cast, value is not an instance of the designated type or null\n            if (this._expandStatementExpression(funcDef, statements, stmtIndex, (statement as IfStatement).getExpr(), function (stmtIndex) {\n                                                                                           ^^\n");
 						}
 						return v;
 					}(statement)).getExpr$(), (function (stmtIndex) {
 						(function (v) {
 							if (! (v == null || v instanceof IfStatement)) {
 								debugger;
-								throw new Error("[/Users/gfx/repo/try-on-web/JSX/src/optimizer.jsx:1913:27] detected invalid cast, value is not an instance of the designated type or null\n                (statement as IfStatement).setExpr((statements[stmtIndex - 1] instanceof ReturnStatement)\n                           ^^\n");
+								throw new Error("[/Users/gfx/repo/try-on-web/JSX/src/optimizer.jsx:1927:27] detected invalid cast, value is not an instance of the designated type or null\n                (statement as IfStatement).setExpr((statements[stmtIndex - 1] instanceof ReturnStatement)\n                           ^^\n");
 							}
 							return v;
 						}(statement)).setExpr$LExpression$(statements[stmtIndex - 1] instanceof ReturnStatement ? (function (v) {
 							if (! (v == null || v instanceof ReturnStatement)) {
 								debugger;
-								throw new Error("[/Users/gfx/repo/try-on-web/JSX/src/optimizer.jsx:1914:49] detected invalid cast, value is not an instance of the designated type or null\n                    ? (statements[stmtIndex - 1] as ReturnStatement).getExpr()\n                                                 ^^\n");
+								throw new Error("[/Users/gfx/repo/try-on-web/JSX/src/optimizer.jsx:1928:49] detected invalid cast, value is not an instance of the designated type or null\n                    ? (statements[stmtIndex - 1] as ReturnStatement).getExpr()\n                                                 ^^\n");
 							}
 							return v;
 						}(statements[stmtIndex - 1])).getExpr$() : (function (v) {
 							if (! (v == null || v instanceof ExpressionStatement)) {
 								debugger;
-								throw new Error("[/Users/gfx/repo/try-on-web/JSX/src/optimizer.jsx:1915:49] detected invalid cast, value is not an instance of the designated type or null\n                    : (statements[stmtIndex - 1] as ExpressionStatement).getExpr());\n                                                 ^^\n");
+								throw new Error("[/Users/gfx/repo/try-on-web/JSX/src/optimizer.jsx:1929:49] detected invalid cast, value is not an instance of the designated type or null\n                    : (statements[stmtIndex - 1] as ExpressionStatement).getExpr());\n                                                 ^^\n");
 							}
 							return v;
 						}(statements[stmtIndex - 1])).getExpr$());
@@ -5651,7 +5697,7 @@ _InlineOptimizeCommand.prototype._expandStatementExpression$LMemberFunctionDefin
 		args = this._getArgsAndThisIfCallExprIsInlineable$LCallExpression$B((function (v) {
 			if (! (v == null || v instanceof CallExpression)) {
 				debugger;
-				throw new Error("[/Users/gfx/repo/try-on-web/JSX/src/optimizer.jsx:1947:71] detected invalid cast, value is not an instance of the designated type or null\n            var args = this._getArgsAndThisIfCallExprIsInlineable(expr as CallExpression, false);\n                                                                       ^^\n");
+				throw new Error("[/Users/gfx/repo/try-on-web/JSX/src/optimizer.jsx:1961:71] detected invalid cast, value is not an instance of the designated type or null\n            var args = this._getArgsAndThisIfCallExprIsInlineable(expr as CallExpression, false);\n                                                                       ^^\n");
 			}
 			return v;
 		}(expr)), false);
@@ -5664,26 +5710,26 @@ _InlineOptimizeCommand.prototype._expandStatementExpression$LMemberFunctionDefin
 		if (expr instanceof AssignmentExpression && this._lhsHasNoSideEffects$LExpression$((function (v) {
 			if (! (v == null || v instanceof AssignmentExpression)) {
 				debugger;
-				throw new Error("[/Users/gfx/repo/try-on-web/JSX/src/optimizer.jsx:1955:50] detected invalid cast, value is not an instance of the designated type or null\n               && this._lhsHasNoSideEffects((expr as AssignmentExpression).getFirstExpr())\n                                                  ^^\n");
+				throw new Error("[/Users/gfx/repo/try-on-web/JSX/src/optimizer.jsx:1969:50] detected invalid cast, value is not an instance of the designated type or null\n               && this._lhsHasNoSideEffects((expr as AssignmentExpression).getFirstExpr())\n                                                  ^^\n");
 			}
 			return v;
 		}(expr)).getFirstExpr$()) && (function (v) {
 			if (! (v == null || v instanceof AssignmentExpression)) {
 				debugger;
-				throw new Error("[/Users/gfx/repo/try-on-web/JSX/src/optimizer.jsx:1956:21] detected invalid cast, value is not an instance of the designated type or null\n            && (expr as AssignmentExpression).getSecondExpr() instanceof CallExpression) {\n                     ^^\n");
+				throw new Error("[/Users/gfx/repo/try-on-web/JSX/src/optimizer.jsx:1970:21] detected invalid cast, value is not an instance of the designated type or null\n            && (expr as AssignmentExpression).getSecondExpr() instanceof CallExpression) {\n                     ^^\n");
 			}
 			return v;
 		}(expr)).getSecondExpr$() instanceof CallExpression) {
 			args = this._getArgsAndThisIfCallExprIsInlineable$LCallExpression$B((function (v) {
 				if (! (v == null || v instanceof CallExpression)) {
 					debugger;
-					throw new Error("[/Users/gfx/repo/try-on-web/JSX/src/optimizer.jsx:1959:117] detected invalid cast, value is not an instance of the designated type or null\n                var args = this._getArgsAndThisIfCallExprIsInlineable((expr as AssignmentExpression).getSecondExpr() as CallExpression, false);\n                                                                                                                     ^^\n");
+					throw new Error("[/Users/gfx/repo/try-on-web/JSX/src/optimizer.jsx:1973:117] detected invalid cast, value is not an instance of the designated type or null\n                var args = this._getArgsAndThisIfCallExprIsInlineable((expr as AssignmentExpression).getSecondExpr() as CallExpression, false);\n                                                                                                                     ^^\n");
 				}
 				return v;
 			}((function (v) {
 				if (! (v == null || v instanceof AssignmentExpression)) {
 					debugger;
-					throw new Error("[/Users/gfx/repo/try-on-web/JSX/src/optimizer.jsx:1959:76] detected invalid cast, value is not an instance of the designated type or null\n                var args = this._getArgsAndThisIfCallExprIsInlineable((expr as AssignmentExpression).getSecondExpr() as CallExpression, false);\n                                                                            ^^\n");
+					throw new Error("[/Users/gfx/repo/try-on-web/JSX/src/optimizer.jsx:1973:76] detected invalid cast, value is not an instance of the designated type or null\n                var args = this._getArgsAndThisIfCallExprIsInlineable((expr as AssignmentExpression).getSecondExpr() as CallExpression, false);\n                                                                            ^^\n");
 				}
 				return v;
 			}(expr)).getSecondExpr$())), false);
@@ -5691,13 +5737,13 @@ _InlineOptimizeCommand.prototype._expandStatementExpression$LMemberFunctionDefin
 				stmtIndex = this._expandCallingFunction$LMemberFunctionDefinition$ALStatement$NLMemberFunctionDefinition$ALExpression$(funcDef, statements, stmtIndex, _DetermineCalleeCommand$getCallingFuncDef$LStashable$((function (v) {
 					if (! (v == null || v instanceof CallExpression)) {
 						debugger;
-						throw new Error("[/Users/gfx/repo/try-on-web/JSX/src/optimizer.jsx:1961:181] detected invalid cast, value is not an instance of the designated type or null\n                    stmtIndex = this._expandCallingFunction(funcDef, statements, stmtIndex, _DetermineCalleeCommand.getCallingFuncDef((expr as AssignmentExpression).getSecondExpr() as CallExpression), args);\n                                                                                                                                                                                     ^^\n");
+						throw new Error("[/Users/gfx/repo/try-on-web/JSX/src/optimizer.jsx:1975:181] detected invalid cast, value is not an instance of the designated type or null\n                    stmtIndex = this._expandCallingFunction(funcDef, statements, stmtIndex, _DetermineCalleeCommand.getCallingFuncDef((expr as AssignmentExpression).getSecondExpr() as CallExpression), args);\n                                                                                                                                                                                     ^^\n");
 					}
 					return v;
 				}((function (v) {
 					if (! (v == null || v instanceof AssignmentExpression)) {
 						debugger;
-						throw new Error("[/Users/gfx/repo/try-on-web/JSX/src/optimizer.jsx:1961:140] detected invalid cast, value is not an instance of the designated type or null\n                    stmtIndex = this._expandCallingFunction(funcDef, statements, stmtIndex, _DetermineCalleeCommand.getCallingFuncDef((expr as AssignmentExpression).getSecondExpr() as CallExpression), args);\n                                                                                                                                            ^^\n");
+						throw new Error("[/Users/gfx/repo/try-on-web/JSX/src/optimizer.jsx:1975:140] detected invalid cast, value is not an instance of the designated type or null\n                    stmtIndex = this._expandCallingFunction(funcDef, statements, stmtIndex, _DetermineCalleeCommand.getCallingFuncDef((expr as AssignmentExpression).getSecondExpr() as CallExpression), args);\n                                                                                                                                            ^^\n");
 					}
 					return v;
 				}(expr)).getSecondExpr$()))), args);
@@ -5706,7 +5752,7 @@ _InlineOptimizeCommand.prototype._expandStatementExpression$LMemberFunctionDefin
 					rhsExpr = (function (v) {
 						if (! (v == null || v instanceof ReturnStatement)) {
 							debugger;
-							throw new Error("[/Users/gfx/repo/try-on-web/JSX/src/optimizer.jsx:1964:44] detected invalid cast, value is not an instance of the designated type or null\n                        var rhsExpr = (stmt as ReturnStatement).getExpr();\n                                            ^^\n");
+							throw new Error("[/Users/gfx/repo/try-on-web/JSX/src/optimizer.jsx:1978:44] detected invalid cast, value is not an instance of the designated type or null\n                        var rhsExpr = (stmt as ReturnStatement).getExpr();\n                                            ^^\n");
 						}
 						return v;
 					}(stmt)).getExpr$();
@@ -5715,7 +5761,7 @@ _InlineOptimizeCommand.prototype._expandStatementExpression$LMemberFunctionDefin
 						rhsExpr = (function (v) {
 							if (! (v == null || v instanceof ExpressionStatement)) {
 								debugger;
-								throw new Error("[/Users/gfx/repo/try-on-web/JSX/src/optimizer.jsx:1966:40] detected invalid cast, value is not an instance of the designated type or null\n                        rhsExpr = (stmt as ExpressionStatement).getExpr();\n                                        ^^\n");
+								throw new Error("[/Users/gfx/repo/try-on-web/JSX/src/optimizer.jsx:1980:40] detected invalid cast, value is not an instance of the designated type or null\n                        rhsExpr = (stmt as ExpressionStatement).getExpr();\n                                        ^^\n");
 							}
 							return v;
 						}(stmt)).getExpr$();
@@ -5726,7 +5772,7 @@ _InlineOptimizeCommand.prototype._expandStatementExpression$LMemberFunctionDefin
 				lastExpr = new AssignmentExpression$LToken$LExpression$LExpression$(expr.getToken$(), (function (v) {
 					if (! (v == null || v instanceof AssignmentExpression)) {
 						debugger;
-						throw new Error("[/Users/gfx/repo/try-on-web/JSX/src/optimizer.jsx:1972:30] detected invalid cast, value is not an instance of the designated type or null\n                        (expr as AssignmentExpression).getFirstExpr(),\n                              ^^\n");
+						throw new Error("[/Users/gfx/repo/try-on-web/JSX/src/optimizer.jsx:1986:30] detected invalid cast, value is not an instance of the designated type or null\n                        (expr as AssignmentExpression).getFirstExpr(),\n                              ^^\n");
 					}
 					return v;
 				}(expr)).getFirstExpr$(), rhsExpr);
@@ -5755,7 +5801,7 @@ _InlineOptimizeCommand.prototype._lhsHasNoSideEffects$LExpression$ = function (l
 		holderExpr = (function (v) {
 			if (! (v == null || v instanceof PropertyExpression)) {
 				debugger;
-				throw new Error("[/Users/gfx/repo/try-on-web/JSX/src/optimizer.jsx:1989:38] detected invalid cast, value is not an instance of the designated type or null\n            var holderExpr = (lhsExpr as PropertyExpression).getExpr();\n                                      ^^\n");
+				throw new Error("[/Users/gfx/repo/try-on-web/JSX/src/optimizer.jsx:2003:38] detected invalid cast, value is not an instance of the designated type or null\n            var holderExpr = (lhsExpr as PropertyExpression).getExpr();\n                                      ^^\n");
 			}
 			return v;
 		}(lhsExpr)).getExpr$();
@@ -5770,7 +5816,7 @@ _InlineOptimizeCommand.prototype._lhsHasNoSideEffects$LExpression$ = function (l
 			arrayExpr = (function (v) {
 				if (! (v == null || v instanceof ArrayExpression)) {
 					debugger;
-					throw new Error("[/Users/gfx/repo/try-on-web/JSX/src/optimizer.jsx:1995:36] detected invalid cast, value is not an instance of the designated type or null\n            var arrayExpr = lhsExpr as ArrayExpression;\n                                    ^^\n");
+					throw new Error("[/Users/gfx/repo/try-on-web/JSX/src/optimizer.jsx:2009:36] detected invalid cast, value is not an instance of the designated type or null\n            var arrayExpr = lhsExpr as ArrayExpression;\n                                    ^^\n");
 				}
 				return v;
 			}(lhsExpr));
@@ -5813,7 +5859,7 @@ _InlineOptimizeCommand.prototype._getArgsAndThisIfCallExprIsInlineable$LCallExpr
 		receiverExpr = (function (v) {
 			if (! (v == null || v instanceof PropertyExpression)) {
 				debugger;
-				throw new Error("[/Users/gfx/repo/try-on-web/JSX/src/optimizer.jsx:2019:39] detected invalid cast, value is not an instance of the designated type or null\n            receiverExpr = (calleeExpr as PropertyExpression).getExpr();\n                                       ^^\n");
+				throw new Error("[/Users/gfx/repo/try-on-web/JSX/src/optimizer.jsx:2033:39] detected invalid cast, value is not an instance of the designated type or null\n            receiverExpr = (calleeExpr as PropertyExpression).getExpr();\n                                       ^^\n");
 			}
 			return v;
 		}(calleeExpr)).getExpr$();
@@ -5840,7 +5886,7 @@ _InlineOptimizeCommand.prototype._getArgsAndThisIfCallExprIsInlineable$LCallExpr
 				if (expr instanceof AssignmentExpression && (function (v) {
 					if (! (v == null || v instanceof AssignmentExpression)) {
 						debugger;
-						throw new Error("[/Users/gfx/repo/try-on-web/JSX/src/optimizer.jsx:2038:70] detected invalid cast, value is not an instance of the designated type or null\n                    if (expr instanceof AssignmentExpression && (expr as AssignmentExpression).getFirstExpr() instanceof LocalExpression)\n                                                                      ^^\n");
+						throw new Error("[/Users/gfx/repo/try-on-web/JSX/src/optimizer.jsx:2052:70] detected invalid cast, value is not an instance of the designated type or null\n                    if (expr instanceof AssignmentExpression && (expr as AssignmentExpression).getFirstExpr() instanceof LocalExpression)\n                                                                      ^^\n");
 					}
 					return v;
 				}(expr)).getFirstExpr$() instanceof LocalExpression) {
@@ -5956,7 +6002,7 @@ _InlineOptimizeCommand.prototype._functionIsInlineable$LMemberFunctionDefinition
 	stash = (function (v) {
 		if (! (v == null || v instanceof _InlineOptimizeCommand$CStash)) {
 			debugger;
-			throw new Error("[/Users/gfx/repo/try-on-web/JSX/src/optimizer.jsx:2118:43] detected invalid cast, value is not an instance of the designated type or null\n        var stash = this.getStash(funcDef) as _InlineOptimizeCommand.Stash;\n                                           ^^\n");
+			throw new Error("[/Users/gfx/repo/try-on-web/JSX/src/optimizer.jsx:2132:43] detected invalid cast, value is not an instance of the designated type or null\n        var stash = this.getStash(funcDef) as _InlineOptimizeCommand.Stash;\n                                           ^^\n");
 		}
 		return v;
 	}(this.getStash$LStashable$(funcDef)));
@@ -5995,6 +6041,17 @@ _InlineOptimizeCommand.prototype._functionIsInlineable$LMemberFunctionDefinition
 					if (expr instanceof SuperExpression) {
 						return false;
 					}
+					if (expr instanceof LocalExpression) {
+						if (funcDef.getFuncLocal$() != null && funcDef.getFuncLocal$() == (function (v) {
+							if (! (v == null || v instanceof LocalExpression)) {
+								debugger;
+								throw new Error("[/Users/gfx/repo/try-on-web/JSX/src/optimizer.jsx:2168:98] detected invalid cast, value is not an instance of the designated type or null\n                            if (funcDef.getFuncLocal() != null && funcDef.getFuncLocal() == (expr as LocalExpression).getLocal()) {\n                                                                                                  ^^\n");
+							}
+							return v;
+						}(expr)).getLocal$()) {
+							return false;
+						}
+					}
 					return expr.forEachExpression$F$LExpression$B$(onExpr);
 				}))) {
 					return false;
@@ -6007,7 +6064,7 @@ _InlineOptimizeCommand.prototype._functionIsInlineable$LMemberFunctionDefinition
 	return (function (v) {
 		if (! (v != null)) {
 			debugger;
-			throw new Error("[/Users/gfx/repo/try-on-web/JSX/src/optimizer.jsx:2162:20] null access\n        return stash.isInlineable;\n                    ^\n");
+			throw new Error("[/Users/gfx/repo/try-on-web/JSX/src/optimizer.jsx:2181:20] null access\n        return stash.isInlineable;\n                    ^\n");
 		}
 		return v;
 	}(stash.isInlineable));
@@ -6041,7 +6098,7 @@ _InlineOptimizeCommand.prototype._expandCallingFunction$LMemberFunctionDefinitio
 		statement = (calleeStatements[i] instanceof ReturnStatement ? new ExpressionStatement$LExpression$((function (v) {
 			if (! (v == null || v instanceof ReturnStatement)) {
 				debugger;
-				throw new Error("[/Users/gfx/repo/try-on-web/JSX/src/optimizer.jsx:2174:59] detected invalid cast, value is not an instance of the designated type or null\n            ? new ExpressionStatement((calleeStatements[i] as ReturnStatement).getExpr().clone()) as Statement\n                                                           ^^\n");
+				throw new Error("[/Users/gfx/repo/try-on-web/JSX/src/optimizer.jsx:2193:59] detected invalid cast, value is not an instance of the designated type or null\n            ? new ExpressionStatement((calleeStatements[i] as ReturnStatement).getExpr().clone()) as Statement\n                                                           ^^\n");
 			}
 			return v;
 		}(calleeStatements[i])).getExpr$().clone$()) : calleeStatements[i].clone$());
@@ -6120,7 +6177,7 @@ _InlineOptimizeCommand.prototype._getNumberOfTimesArgIsUsed$LMemberFunctionDefin
 			if (expr instanceof LocalExpression && (function (v) {
 				if (! (v == null || v instanceof LocalExpression)) {
 					debugger;
-					throw new Error("[/Users/gfx/repo/try-on-web/JSX/src/optimizer.jsx:2229:61] detected invalid cast, value is not an instance of the designated type or null\n                if (expr instanceof LocalExpression && (expr as LocalExpression).getLocal() == local) {\n                                                             ^^\n");
+					throw new Error("[/Users/gfx/repo/try-on-web/JSX/src/optimizer.jsx:2248:61] detected invalid cast, value is not an instance of the designated type or null\n                if (expr instanceof LocalExpression && (expr as LocalExpression).getLocal() == local) {\n                                                             ^^\n");
 				}
 				return v;
 			}(expr)).getLocal$() == local) {
@@ -6280,7 +6337,7 @@ _ReturnIfOptimizeCommand.prototype._optimizeStatements$ALStatement$ = function (
 		ifStatement = (function (v) {
 			if (! (v == null || v instanceof IfStatement)) {
 				debugger;
-				throw new Error("[/Users/gfx/repo/try-on-web/JSX/src/optimizer.jsx:2341:64] detected invalid cast, value is not an instance of the designated type or null\n            var ifStatement = statements[statements.length - 1] as IfStatement;\n                                                                ^^\n");
+				throw new Error("[/Users/gfx/repo/try-on-web/JSX/src/optimizer.jsx:2360:64] detected invalid cast, value is not an instance of the designated type or null\n            var ifStatement = statements[statements.length - 1] as IfStatement;\n                                                                ^^\n");
 			}
 			return v;
 		}(statements[statements.length - 1]));
@@ -6288,13 +6345,13 @@ _ReturnIfOptimizeCommand.prototype._optimizeStatements$ALStatement$ = function (
 			statements[statements.length - 1] = this._createReturnStatement$LToken$LExpression$LExpression$LExpression$(ifStatement.getToken$(), ifStatement.getExpr$(), (function (v) {
 				if (! (v == null || v instanceof ReturnStatement)) {
 					debugger;
-					throw new Error("[/Users/gfx/repo/try-on-web/JSX/src/optimizer.jsx:2347:62] detected invalid cast, value is not an instance of the designated type or null\n                        (ifStatement.getOnTrueStatements()[0] as ReturnStatement).getExpr(),\n                                                              ^^\n");
+					throw new Error("[/Users/gfx/repo/try-on-web/JSX/src/optimizer.jsx:2366:62] detected invalid cast, value is not an instance of the designated type or null\n                        (ifStatement.getOnTrueStatements()[0] as ReturnStatement).getExpr(),\n                                                              ^^\n");
 				}
 				return v;
 			}(ifStatement.getOnTrueStatements$()[0])).getExpr$(), (function (v) {
 				if (! (v == null || v instanceof ReturnStatement)) {
 					debugger;
-					throw new Error("[/Users/gfx/repo/try-on-web/JSX/src/optimizer.jsx:2348:63] detected invalid cast, value is not an instance of the designated type or null\n                        (ifStatement.getOnFalseStatements()[0] as ReturnStatement).getExpr());\n                                                               ^^\n");
+					throw new Error("[/Users/gfx/repo/try-on-web/JSX/src/optimizer.jsx:2367:63] detected invalid cast, value is not an instance of the designated type or null\n                        (ifStatement.getOnFalseStatements()[0] as ReturnStatement).getExpr());\n                                                               ^^\n");
 				}
 				return v;
 			}(ifStatement.getOnFalseStatements$()[0])).getExpr$());
@@ -6306,7 +6363,7 @@ _ReturnIfOptimizeCommand.prototype._optimizeStatements$ALStatement$ = function (
 			ifStatement = (function (v) {
 				if (! (v == null || v instanceof IfStatement)) {
 					debugger;
-					throw new Error("[/Users/gfx/repo/try-on-web/JSX/src/optimizer.jsx:2355:64] detected invalid cast, value is not an instance of the designated type or null\n            var ifStatement = statements[statements.length - 2] as IfStatement;\n                                                                ^^\n");
+					throw new Error("[/Users/gfx/repo/try-on-web/JSX/src/optimizer.jsx:2374:64] detected invalid cast, value is not an instance of the designated type or null\n            var ifStatement = statements[statements.length - 2] as IfStatement;\n                                                                ^^\n");
 				}
 				return v;
 			}(statements[statements.length - 2]));
@@ -6316,13 +6373,13 @@ _ReturnIfOptimizeCommand.prototype._optimizeStatements$ALStatement$ = function (
 					statements.splice(statements.length - 2, 2, this._createReturnStatement$LToken$LExpression$LExpression$LExpression$(ifStatement.getToken$(), ifStatement.getExpr$(), (function (v) {
 						if (! (v == null || v instanceof ReturnStatement)) {
 							debugger;
-							throw new Error("[/Users/gfx/repo/try-on-web/JSX/src/optimizer.jsx:2366:66] detected invalid cast, value is not an instance of the designated type or null\n                            (ifStatement.getOnTrueStatements()[0] as ReturnStatement).getExpr(),\n                                                                  ^^\n");
+							throw new Error("[/Users/gfx/repo/try-on-web/JSX/src/optimizer.jsx:2385:66] detected invalid cast, value is not an instance of the designated type or null\n                            (ifStatement.getOnTrueStatements()[0] as ReturnStatement).getExpr(),\n                                                                  ^^\n");
 						}
 						return v;
 					}(ifStatement.getOnTrueStatements$()[0])).getExpr$(), (function (v) {
 						if (! (v == null || v instanceof ReturnStatement)) {
 							debugger;
-							throw new Error("[/Users/gfx/repo/try-on-web/JSX/src/optimizer.jsx:2367:63] detected invalid cast, value is not an instance of the designated type or null\n                            (statements[statements.length - 1] as ReturnStatement).getExpr()));\n                                                               ^^\n");
+							throw new Error("[/Users/gfx/repo/try-on-web/JSX/src/optimizer.jsx:2386:63] detected invalid cast, value is not an instance of the designated type or null\n                            (statements[statements.length - 1] as ReturnStatement).getExpr()));\n                                                               ^^\n");
 						}
 						return v;
 					}(statements[statements.length - 1])).getExpr$()));
@@ -6332,14 +6389,14 @@ _ReturnIfOptimizeCommand.prototype._optimizeStatements$ALStatement$ = function (
 					if (onFalseStatements.length === 1 && onFalseStatements[0] instanceof IfStatement && (function (v) {
 						if (! (v == null || v instanceof IfStatement)) {
 							debugger;
-							throw new Error("[/Users/gfx/repo/try-on-web/JSX/src/optimizer.jsx:2372:48] detected invalid cast, value is not an instance of the designated type or null\n                       && (onFalseStatements[0] as IfStatement).getOnFalseStatements().length == 0) {\n                                                ^^\n");
+							throw new Error("[/Users/gfx/repo/try-on-web/JSX/src/optimizer.jsx:2391:48] detected invalid cast, value is not an instance of the designated type or null\n                       && (onFalseStatements[0] as IfStatement).getOnFalseStatements().length == 0) {\n                                                ^^\n");
 						}
 						return v;
 					}(onFalseStatements[0])).getOnFalseStatements$().length === 0) {
 						(function (v) {
 							if (! (v == null || v instanceof IfStatement)) {
 								debugger;
-								throw new Error("[/Users/gfx/repo/try-on-web/JSX/src/optimizer.jsx:2382:42] detected invalid cast, value is not an instance of the designated type or null\n                    (onFalseStatements[0] as IfStatement).getOnFalseStatements().push(statements[statements.length - 1]);\n                                          ^^\n");
+								throw new Error("[/Users/gfx/repo/try-on-web/JSX/src/optimizer.jsx:2401:42] detected invalid cast, value is not an instance of the designated type or null\n                    (onFalseStatements[0] as IfStatement).getOnFalseStatements().push(statements[statements.length - 1]);\n                                          ^^\n");
 							}
 							return v;
 						}(onFalseStatements[0])).getOnFalseStatements$().push(statements[statements.length - 1]);
@@ -6400,7 +6457,7 @@ _LCSECachedExpression.prototype.getLocalExpr$F$LType$SLLocalExpression$$ = funct
 		this._localExpr = createVarCb(this._origExpr.getType$(), (function (v) {
 			if (! (v == null || v instanceof PropertyExpression)) {
 				debugger;
-				throw new Error("[/Users/gfx/repo/try-on-web/JSX/src/optimizer.jsx:2423:84] detected invalid cast, value is not an instance of the designated type or null\n            this._localExpr = createVarCb(this._origExpr.getType(), (this._origExpr as PropertyExpression).getIdentifierToken().getValue());\n                                                                                    ^^\n");
+				throw new Error("[/Users/gfx/repo/try-on-web/JSX/src/optimizer.jsx:2442:84] detected invalid cast, value is not an instance of the designated type or null\n            this._localExpr = createVarCb(this._origExpr.getType(), (this._origExpr as PropertyExpression).getIdentifierToken().getValue());\n                                                                                    ^^\n");
 			}
 			return v;
 		}(this._origExpr)).getIdentifierToken$().getValue$());
@@ -6471,7 +6528,7 @@ _LCSEOptimizeCommand.prototype._optimizeExpressions$LMemberFunctionDefinition$AL
 			propertyExpr = (function (v) {
 				if (! (v == null || v instanceof PropertyExpression)) {
 					debugger;
-					throw new Error("[/Users/gfx/repo/try-on-web/JSX/src/optimizer.jsx:2455:40] detected invalid cast, value is not an instance of the designated type or null\n                var propertyExpr = expr as PropertyExpression;\n                                        ^^\n");
+					throw new Error("[/Users/gfx/repo/try-on-web/JSX/src/optimizer.jsx:2474:40] detected invalid cast, value is not an instance of the designated type or null\n                var propertyExpr = expr as PropertyExpression;\n                                        ^^\n");
 				}
 				return v;
 			}(expr));
@@ -6486,7 +6543,7 @@ _LCSEOptimizeCommand.prototype._optimizeExpressions$LMemberFunctionDefinition$AL
 			return (function (v) {
 				if (! (v != null)) {
 					debugger;
-					throw new Error("[/Users/gfx/repo/try-on-web/JSX/src/optimizer.jsx:2464:23] null access\n                return base + \".\" + propertyExpr.getIdentifierToken().getValue();\n                       ^^^^\n");
+					throw new Error("[/Users/gfx/repo/try-on-web/JSX/src/optimizer.jsx:2483:23] null access\n                return base + \".\" + propertyExpr.getIdentifierToken().getValue();\n                       ^^^^\n");
 				}
 				return v;
 			}(base)) + "." + propertyExpr.getIdentifierToken$().getValue$();
@@ -6495,7 +6552,7 @@ _LCSEOptimizeCommand.prototype._optimizeExpressions$LMemberFunctionDefinition$AL
 				return (function (v) {
 					if (! (v == null || v instanceof LocalExpression)) {
 						debugger;
-						throw new Error("[/Users/gfx/repo/try-on-web/JSX/src/optimizer.jsx:2466:29] detected invalid cast, value is not an instance of the designated type or null\n                return (expr as LocalExpression).getLocal().getName().getValue();\n                             ^^\n");
+						throw new Error("[/Users/gfx/repo/try-on-web/JSX/src/optimizer.jsx:2485:29] detected invalid cast, value is not an instance of the designated type or null\n                return (expr as LocalExpression).getLocal().getName().getValue();\n                             ^^\n");
 					}
 					return v;
 				}(expr)).getLocal$().getName$().getValue$();
@@ -6536,7 +6593,7 @@ _LCSEOptimizeCommand.prototype._optimizeExpressions$LMemberFunctionDefinition$AL
 				if ((function (v) {
 					if (! (v == null || v instanceof PropertyExpression)) {
 						debugger;
-						throw new Error("[/Users/gfx/repo/try-on-web/JSX/src/optimizer.jsx:2497:30] detected invalid cast, value is not an instance of the designated type or null\n                    if ((expr as PropertyExpression).getIdentifierToken().getValue() == name) {\n                              ^^\n");
+						throw new Error("[/Users/gfx/repo/try-on-web/JSX/src/optimizer.jsx:2516:30] detected invalid cast, value is not an instance of the designated type or null\n                    if ((expr as PropertyExpression).getIdentifierToken().getValue() == name) {\n                              ^^\n");
 					}
 					return v;
 				}(expr)).getIdentifierToken$().getValue$() === name) {
@@ -6545,7 +6602,7 @@ _LCSEOptimizeCommand.prototype._optimizeExpressions$LMemberFunctionDefinition$AL
 				return onExpr((function (v) {
 					if (! (v == null || v instanceof PropertyExpression)) {
 						debugger;
-						throw new Error("[/Users/gfx/repo/try-on-web/JSX/src/optimizer.jsx:2500:40] detected invalid cast, value is not an instance of the designated type or null\n                    return onExpr((expr as PropertyExpression).getExpr());\n                                        ^^\n");
+						throw new Error("[/Users/gfx/repo/try-on-web/JSX/src/optimizer.jsx:2519:40] detected invalid cast, value is not an instance of the designated type or null\n                    return onExpr((expr as PropertyExpression).getExpr());\n                                        ^^\n");
 					}
 					return v;
 				}(expr)).getExpr$());
@@ -6585,7 +6642,7 @@ _LCSEOptimizeCommand.prototype._optimizeExpressions$LMemberFunctionDefinition$AL
 			assignmentExpr = (function (v) {
 				if (! (v == null || v instanceof AssignmentExpression)) {
 					debugger;
-					throw new Error("[/Users/gfx/repo/try-on-web/JSX/src/optimizer.jsx:2518:41] detected invalid cast, value is not an instance of the designated type or null\n                var assignmentExpr =expr as AssignmentExpression;\n                                         ^^\n");
+					throw new Error("[/Users/gfx/repo/try-on-web/JSX/src/optimizer.jsx:2537:41] detected invalid cast, value is not an instance of the designated type or null\n                var assignmentExpr =expr as AssignmentExpression;\n                                         ^^\n");
 				}
 				return v;
 			}(expr));
@@ -6597,7 +6654,7 @@ _LCSEOptimizeCommand.prototype._optimizeExpressions$LMemberFunctionDefinition$AL
 				clearCacheByLocalName((function (v) {
 					if (! (v == null || v instanceof LocalExpression)) {
 						debugger;
-						throw new Error("[/Users/gfx/repo/try-on-web/JSX/src/optimizer.jsx:2524:51] detected invalid cast, value is not an instance of the designated type or null\n                    clearCacheByLocalName((lhsExpr as LocalExpression).getLocal().getName().getValue());\n                                                   ^^\n");
+						throw new Error("[/Users/gfx/repo/try-on-web/JSX/src/optimizer.jsx:2543:51] detected invalid cast, value is not an instance of the designated type or null\n                    clearCacheByLocalName((lhsExpr as LocalExpression).getLocal().getName().getValue());\n                                                   ^^\n");
 					}
 					return v;
 				}(lhsExpr)).getLocal$().getName$().getValue$());
@@ -6606,14 +6663,14 @@ _LCSEOptimizeCommand.prototype._optimizeExpressions$LMemberFunctionDefinition$AL
 					lhsPropertyExpr = (function (v) {
 						if (! (v == null || v instanceof PropertyExpression)) {
 							debugger;
-							throw new Error("[/Users/gfx/repo/try-on-web/JSX/src/optimizer.jsx:2526:50] detected invalid cast, value is not an instance of the designated type or null\n                    var lhsPropertyExpr = lhsExpr as PropertyExpression;\n                                                  ^^\n");
+							throw new Error("[/Users/gfx/repo/try-on-web/JSX/src/optimizer.jsx:2545:50] detected invalid cast, value is not an instance of the designated type or null\n                    var lhsPropertyExpr = lhsExpr as PropertyExpression;\n                                                  ^^\n");
 						}
 						return v;
 					}(lhsExpr));
 					onExpr((function (v) {
 						if (! (v == null || v instanceof PropertyExpression)) {
 							debugger;
-							throw new Error("[/Users/gfx/repo/try-on-web/JSX/src/optimizer.jsx:2527:36] detected invalid cast, value is not an instance of the designated type or null\n                    onExpr((lhsExpr as PropertyExpression).getExpr(), function (expr) {\n                                    ^^\n");
+							throw new Error("[/Users/gfx/repo/try-on-web/JSX/src/optimizer.jsx:2546:36] detected invalid cast, value is not an instance of the designated type or null\n                    onExpr((lhsExpr as PropertyExpression).getExpr(), function (expr) {\n                                    ^^\n");
 						}
 						return v;
 					}(lhsExpr)).getExpr$(), (function (expr) {
@@ -6629,7 +6686,7 @@ _LCSEOptimizeCommand.prototype._optimizeExpressions$LMemberFunctionDefinition$AL
 							registerCacheable((function (v) {
 								if (! (v != null)) {
 									debugger;
-									throw new Error("[/Users/gfx/repo/try-on-web/JSX/src/optimizer.jsx:2538:46] null access\n                            registerCacheable(cacheKey, lhsExpr, function (expr) {\n                                              ^^^^^^^^\n");
+									throw new Error("[/Users/gfx/repo/try-on-web/JSX/src/optimizer.jsx:2557:46] null access\n                            registerCacheable(cacheKey, lhsExpr, function (expr) {\n                                              ^^^^^^^^\n");
 								}
 								return v;
 							}(cacheKey)), lhsExpr, (function (expr) {
@@ -6647,7 +6704,7 @@ _LCSEOptimizeCommand.prototype._optimizeExpressions$LMemberFunctionDefinition$AL
 				incrementExpr = (function (v) {
 					if (! (v == null || v instanceof IncrementExpression)) {
 						debugger;
-						throw new Error("[/Users/gfx/repo/try-on-web/JSX/src/optimizer.jsx:2548:41] detected invalid cast, value is not an instance of the designated type or null\n                var incrementExpr = expr as IncrementExpression;\n                                         ^^\n");
+						throw new Error("[/Users/gfx/repo/try-on-web/JSX/src/optimizer.jsx:2567:41] detected invalid cast, value is not an instance of the designated type or null\n                var incrementExpr = expr as IncrementExpression;\n                                         ^^\n");
 					}
 					return v;
 				}(expr));
@@ -6655,7 +6712,7 @@ _LCSEOptimizeCommand.prototype._optimizeExpressions$LMemberFunctionDefinition$AL
 					propertyExpr = (function (v) {
 						if (! (v == null || v instanceof PropertyExpression)) {
 							debugger;
-							throw new Error("[/Users/gfx/repo/try-on-web/JSX/src/optimizer.jsx:2551:63] detected invalid cast, value is not an instance of the designated type or null\n                    var propertyExpr = incrementExpr.getExpr() as PropertyExpression;\n                                                               ^^\n");
+							throw new Error("[/Users/gfx/repo/try-on-web/JSX/src/optimizer.jsx:2570:63] detected invalid cast, value is not an instance of the designated type or null\n                    var propertyExpr = incrementExpr.getExpr() as PropertyExpression;\n                                                               ^^\n");
 						}
 						return v;
 					}(incrementExpr.getExpr$()));
@@ -6670,7 +6727,7 @@ _LCSEOptimizeCommand.prototype._optimizeExpressions$LMemberFunctionDefinition$AL
 					conditionalExpr = (function (v) {
 						if (! (v == null || v instanceof ConditionalExpression)) {
 							debugger;
-							throw new Error("[/Users/gfx/repo/try-on-web/JSX/src/optimizer.jsx:2559:43] detected invalid cast, value is not an instance of the designated type or null\n                var conditionalExpr = expr as ConditionalExpression;\n                                           ^^\n");
+							throw new Error("[/Users/gfx/repo/try-on-web/JSX/src/optimizer.jsx:2578:43] detected invalid cast, value is not an instance of the designated type or null\n                var conditionalExpr = expr as ConditionalExpression;\n                                           ^^\n");
 						}
 						return v;
 					}(expr));
@@ -6688,7 +6745,7 @@ _LCSEOptimizeCommand.prototype._optimizeExpressions$LMemberFunctionDefinition$AL
 							funcExpr = (function (v) {
 								if (! (v == null || v instanceof CallExpression)) {
 									debugger;
-									throw new Error("[/Users/gfx/repo/try-on-web/JSX/src/optimizer.jsx:2571:37] detected invalid cast, value is not an instance of the designated type or null\n                var funcExpr = (expr as CallExpression).getExpr();\n                                     ^^\n");
+									throw new Error("[/Users/gfx/repo/try-on-web/JSX/src/optimizer.jsx:2590:37] detected invalid cast, value is not an instance of the designated type or null\n                var funcExpr = (expr as CallExpression).getExpr();\n                                     ^^\n");
 								}
 								return v;
 							}(expr)).getExpr$();
@@ -6698,7 +6755,7 @@ _LCSEOptimizeCommand.prototype._optimizeExpressions$LMemberFunctionDefinition$AL
 									propertyExpr = (function (v) {
 										if (! (v == null || v instanceof PropertyExpression)) {
 											debugger;
-											throw new Error("[/Users/gfx/repo/try-on-web/JSX/src/optimizer.jsx:2575:48] detected invalid cast, value is not an instance of the designated type or null\n                    var propertyExpr = funcExpr as PropertyExpression;\n                                                ^^\n");
+											throw new Error("[/Users/gfx/repo/try-on-web/JSX/src/optimizer.jsx:2594:48] detected invalid cast, value is not an instance of the designated type or null\n                    var propertyExpr = funcExpr as PropertyExpression;\n                                                ^^\n");
 										}
 										return v;
 									}(funcExpr));
@@ -6712,7 +6769,7 @@ _LCSEOptimizeCommand.prototype._optimizeExpressions$LMemberFunctionDefinition$AL
 							args = (function (v) {
 								if (! (v == null || v instanceof CallExpression)) {
 									debugger;
-									throw new Error("[/Users/gfx/repo/try-on-web/JSX/src/optimizer.jsx:2582:33] detected invalid cast, value is not an instance of the designated type or null\n                var args = (expr as CallExpression).getArguments();\n                                 ^^\n");
+									throw new Error("[/Users/gfx/repo/try-on-web/JSX/src/optimizer.jsx:2601:33] detected invalid cast, value is not an instance of the designated type or null\n                var args = (expr as CallExpression).getArguments();\n                                 ^^\n");
 								}
 								return v;
 							}(expr)).getArguments$();
@@ -6731,7 +6788,7 @@ _LCSEOptimizeCommand.prototype._optimizeExpressions$LMemberFunctionDefinition$AL
 								args = (function (v) {
 									if (! (v == null || v instanceof NewExpression)) {
 										debugger;
-										throw new Error("[/Users/gfx/repo/try-on-web/JSX/src/optimizer.jsx:2595:33] detected invalid cast, value is not an instance of the designated type or null\n                var args = (expr as NewExpression).getArguments();\n                                 ^^\n");
+										throw new Error("[/Users/gfx/repo/try-on-web/JSX/src/optimizer.jsx:2614:33] detected invalid cast, value is not an instance of the designated type or null\n                var args = (expr as NewExpression).getArguments();\n                                 ^^\n");
 									}
 									return v;
 								}(expr)).getArguments$();
@@ -6754,7 +6811,7 @@ _LCSEOptimizeCommand.prototype._optimizeExpressions$LMemberFunctionDefinition$AL
 			if ((function (v) {
 				if (! (v == null || v instanceof PropertyExpression)) {
 					debugger;
-					throw new Error("[/Users/gfx/repo/try-on-web/JSX/src/optimizer.jsx:2608:26] detected invalid cast, value is not an instance of the designated type or null\n                if ((expr as PropertyExpression).getIdentifierToken().getValue() == \"length\") {\n                          ^^\n");
+					throw new Error("[/Users/gfx/repo/try-on-web/JSX/src/optimizer.jsx:2627:26] detected invalid cast, value is not an instance of the designated type or null\n                if ((expr as PropertyExpression).getIdentifierToken().getValue() == \"length\") {\n                          ^^\n");
 				}
 				return v;
 			}(expr)).getIdentifierToken$().getValue$() === "length") {
@@ -6764,7 +6821,7 @@ _LCSEOptimizeCommand.prototype._optimizeExpressions$LMemberFunctionDefinition$AL
 					$this.log$S("rewriting cse for: " + (function (v) {
 						if (! (v != null)) {
 							debugger;
-							throw new Error("[/Users/gfx/repo/try-on-web/JSX/src/optimizer.jsx:2614:57] null access\n                        this.log(\"rewriting cse for: \" + cacheKey);\n                                                         ^^^^^^^^\n");
+							throw new Error("[/Users/gfx/repo/try-on-web/JSX/src/optimizer.jsx:2633:57] null access\n                        this.log(\"rewriting cse for: \" + cacheKey);\n                                                         ^^^^^^^^\n");
 						}
 						return v;
 					}(cacheKey)));
@@ -6779,7 +6836,7 @@ _LCSEOptimizeCommand.prototype._optimizeExpressions$LMemberFunctionDefinition$AL
 						registerCacheable((function (v) {
 							if (! (v != null)) {
 								debugger;
-								throw new Error("[/Users/gfx/repo/try-on-web/JSX/src/optimizer.jsx:2623:46] null access\n                            registerCacheable(cacheKey, expr, replaceCb);\n                                              ^^^^^^^^\n");
+								throw new Error("[/Users/gfx/repo/try-on-web/JSX/src/optimizer.jsx:2642:46] null access\n                            registerCacheable(cacheKey, expr, replaceCb);\n                                              ^^^^^^^^\n");
 							}
 							return v;
 						}(cacheKey)), expr, replaceCb);
@@ -6876,21 +6933,21 @@ _UnboxOptimizeCommand.prototype._optimizeLocal$LMemberFunctionDefinition$LLocalV
 				baseExpr = (function (v) {
 					if (! (v == null || v instanceof PropertyExpression)) {
 						debugger;
-						throw new Error("[/Users/gfx/repo/try-on-web/JSX/src/optimizer.jsx:2694:41] detected invalid cast, value is not an instance of the designated type or null\n                    var baseExpr = (expr as PropertyExpression).getExpr();\n                                         ^^\n");
+						throw new Error("[/Users/gfx/repo/try-on-web/JSX/src/optimizer.jsx:2713:41] detected invalid cast, value is not an instance of the designated type or null\n                    var baseExpr = (expr as PropertyExpression).getExpr();\n                                         ^^\n");
 					}
 					return v;
 				}(expr)).getExpr$();
 				if (baseExpr instanceof LocalExpression && (function (v) {
 					if (! (v == null || v instanceof LocalExpression)) {
 						debugger;
-						throw new Error("[/Users/gfx/repo/try-on-web/JSX/src/optimizer.jsx:2695:73] detected invalid cast, value is not an instance of the designated type or null\n                    if (baseExpr instanceof LocalExpression && (baseExpr as LocalExpression).getLocal() == local) {\n                                                                         ^^\n");
+						throw new Error("[/Users/gfx/repo/try-on-web/JSX/src/optimizer.jsx:2714:73] detected invalid cast, value is not an instance of the designated type or null\n                    if (baseExpr instanceof LocalExpression && (baseExpr as LocalExpression).getLocal() == local) {\n                                                                         ^^\n");
 					}
 					return v;
 				}(baseExpr)).getLocal$() == local) {
 					if (! (function (v) {
 						if (! (v == null || v instanceof PropertyExpression)) {
 							debugger;
-							throw new Error("[/Users/gfx/repo/try-on-web/JSX/src/optimizer.jsx:2696:36] detected invalid cast, value is not an instance of the designated type or null\n                        if (! (expr as PropertyExpression).getType().isAssignable()) {\n                                    ^^\n");
+							throw new Error("[/Users/gfx/repo/try-on-web/JSX/src/optimizer.jsx:2715:36] detected invalid cast, value is not an instance of the designated type or null\n                        if (! (expr as PropertyExpression).getType().isAssignable()) {\n                                    ^^\n");
 						}
 						return v;
 					}(expr)).getType$().isAssignable$()) {
@@ -6903,7 +6960,7 @@ _UnboxOptimizeCommand.prototype._optimizeLocal$LMemberFunctionDefinition$LLocalV
 					if ((function (v) {
 						if (! (v == null || v instanceof LocalExpression)) {
 							debugger;
-							throw new Error("[/Users/gfx/repo/try-on-web/JSX/src/optimizer.jsx:2704:30] detected invalid cast, value is not an instance of the designated type or null\n                    if ((expr as LocalExpression).getLocal() == local) {\n                              ^^\n");
+							throw new Error("[/Users/gfx/repo/try-on-web/JSX/src/optimizer.jsx:2723:30] detected invalid cast, value is not an instance of the designated type or null\n                    if ((expr as LocalExpression).getLocal() == local) {\n                              ^^\n");
 						}
 						return v;
 					}(expr)).getLocal$() == local) {
@@ -6914,7 +6971,7 @@ _UnboxOptimizeCommand.prototype._optimizeLocal$LMemberFunctionDefinition$LLocalV
 						return (function (v) {
 							if (! (v == null || v instanceof FunctionExpression)) {
 								debugger;
-								throw new Error("[/Users/gfx/repo/try-on-web/JSX/src/optimizer.jsx:2710:33] detected invalid cast, value is not an instance of the designated type or null\n                    return (expr as FunctionExpression).getFuncDef().forEachStatement(onStatement);\n                                 ^^\n");
+								throw new Error("[/Users/gfx/repo/try-on-web/JSX/src/optimizer.jsx:2729:33] detected invalid cast, value is not an instance of the designated type or null\n                    return (expr as FunctionExpression).getFuncDef().forEachStatement(onStatement);\n                                 ^^\n");
 							}
 							return v;
 						}(expr)).getFuncDef$().forEachStatement$F$LStatement$B$(onStatement);
@@ -6941,6 +6998,15 @@ _UnboxOptimizeCommand.prototype._optimizeLocal$LMemberFunctionDefinition$LLocalV
 			}
 			foundNew = true;
 			return true;
+		}
+		if (statement instanceof FunctionStatement) {
+			(function (v) {
+				if (! (v == null || v instanceof FunctionStatement)) {
+					debugger;
+					throw new Error("[/Users/gfx/repo/try-on-web/JSX/src/optimizer.jsx:2755:27] detected invalid cast, value is not an instance of the designated type or null\n                (statement as FunctionStatement).getFuncDef().forEachStatement(onStatement);\n                           ^^\n");
+				}
+				return v;
+			}(statement)).getFuncDef$().forEachStatement$F$LStatement$B$(onStatement);
 		}
 		if (! statement.forEachExpression$F$LExpression$B$(onExpr)) {
 			return false;
@@ -6970,7 +7036,7 @@ _UnboxOptimizeCommand.prototype._newExpressionCanUnbox$LExpression$ = function (
 	stash = (function (v) {
 		if (! (v == null || v instanceof _UnboxOptimizeCommand$CStash)) {
 			debugger;
-			throw new Error("[/Users/gfx/repo/try-on-web/JSX/src/optimizer.jsx:2752:40] detected invalid cast, value is not an instance of the designated type or null\n        var stash = this.getStash(ctor) as _UnboxOptimizeCommand.Stash;\n                                        ^^\n");
+			throw new Error("[/Users/gfx/repo/try-on-web/JSX/src/optimizer.jsx:2774:40] detected invalid cast, value is not an instance of the designated type or null\n        var stash = this.getStash(ctor) as _UnboxOptimizeCommand.Stash;\n                                        ^^\n");
 		}
 		return v;
 	}(this.getStash$LStashable$(ctor)));
@@ -6978,7 +7044,7 @@ _UnboxOptimizeCommand.prototype._newExpressionCanUnbox$LExpression$ = function (
 		return (function (v) {
 			if (! (v != null)) {
 				debugger;
-				throw new Error("[/Users/gfx/repo/try-on-web/JSX/src/optimizer.jsx:2754:24] null access\n            return stash.canUnbox;\n                        ^\n");
+				throw new Error("[/Users/gfx/repo/try-on-web/JSX/src/optimizer.jsx:2776:24] null access\n            return stash.canUnbox;\n                        ^\n");
 			}
 			return v;
 		}(stash.canUnbox));
@@ -6986,7 +7052,7 @@ _UnboxOptimizeCommand.prototype._newExpressionCanUnbox$LExpression$ = function (
 	return (function (v) {
 		if (! (v != null)) {
 			debugger;
-			throw new Error("[/Users/gfx/repo/try-on-web/JSX/src/optimizer.jsx:2756:30] null access\n        return stash.canUnbox = function () : boolean {\n                              ^\n");
+			throw new Error("[/Users/gfx/repo/try-on-web/JSX/src/optimizer.jsx:2778:30] null access\n        return stash.canUnbox = function () : boolean {\n                              ^\n");
 		}
 		return v;
 	}(stash.canUnbox = (function () {
@@ -7009,7 +7075,7 @@ _UnboxOptimizeCommand.prototype._newExpressionCanUnbox$LExpression$ = function (
 			expr = (function (v) {
 				if (! (v == null || v instanceof ExpressionStatement)) {
 					debugger;
-					throw new Error("[/Users/gfx/repo/try-on-web/JSX/src/optimizer.jsx:2766:38] detected invalid cast, value is not an instance of the designated type or null\n                var expr = (statement as ExpressionStatement).getExpr();\n                                      ^^\n");
+					throw new Error("[/Users/gfx/repo/try-on-web/JSX/src/optimizer.jsx:2788:38] detected invalid cast, value is not an instance of the designated type or null\n                var expr = (statement as ExpressionStatement).getExpr();\n                                      ^^\n");
 				}
 				return v;
 			}(statement)).getExpr$();
@@ -7019,14 +7085,14 @@ _UnboxOptimizeCommand.prototype._newExpressionCanUnbox$LExpression$ = function (
 			lhsExpr = (function (v) {
 				if (! (v == null || v instanceof AssignmentExpression)) {
 					debugger;
-					throw new Error("[/Users/gfx/repo/try-on-web/JSX/src/optimizer.jsx:2770:36] detected invalid cast, value is not an instance of the designated type or null\n                var lhsExpr = (expr as AssignmentExpression).getFirstExpr();\n                                    ^^\n");
+					throw new Error("[/Users/gfx/repo/try-on-web/JSX/src/optimizer.jsx:2792:36] detected invalid cast, value is not an instance of the designated type or null\n                var lhsExpr = (expr as AssignmentExpression).getFirstExpr();\n                                    ^^\n");
 				}
 				return v;
 			}(expr)).getFirstExpr$();
 			if (! (lhsExpr instanceof PropertyExpression && (function (v) {
 				if (! (v == null || v instanceof PropertyExpression)) {
 					debugger;
-					throw new Error("[/Users/gfx/repo/try-on-web/JSX/src/optimizer.jsx:2771:73] detected invalid cast, value is not an instance of the designated type or null\n                if (! (lhsExpr instanceof PropertyExpression && (lhsExpr as PropertyExpression).getExpr() instanceof ThisExpression)) {\n                                                                         ^^\n");
+					throw new Error("[/Users/gfx/repo/try-on-web/JSX/src/optimizer.jsx:2793:73] detected invalid cast, value is not an instance of the designated type or null\n                if (! (lhsExpr instanceof PropertyExpression && (lhsExpr as PropertyExpression).getExpr() instanceof ThisExpression)) {\n                                                                         ^^\n");
 				}
 				return v;
 			}(lhsExpr)).getExpr$() instanceof ThisExpression)) {
@@ -7035,7 +7101,7 @@ _UnboxOptimizeCommand.prototype._newExpressionCanUnbox$LExpression$ = function (
 			propertyName = (function (v) {
 				if (! (v == null || v instanceof PropertyExpression)) {
 					debugger;
-					throw new Error("[/Users/gfx/repo/try-on-web/JSX/src/optimizer.jsx:2774:44] detected invalid cast, value is not an instance of the designated type or null\n                var propertyName = (lhsExpr as PropertyExpression).getIdentifierToken().getValue();\n                                            ^^\n");
+					throw new Error("[/Users/gfx/repo/try-on-web/JSX/src/optimizer.jsx:2796:44] detected invalid cast, value is not an instance of the designated type or null\n                var propertyName = (lhsExpr as PropertyExpression).getIdentifierToken().getValue();\n                                            ^^\n");
 				}
 				return v;
 			}(lhsExpr)).getIdentifierToken$().getValue$();
@@ -7055,7 +7121,7 @@ _UnboxOptimizeCommand.prototype._newExpressionCanUnbox$LExpression$ = function (
 			})((function (v) {
 				if (! (v == null || v instanceof AssignmentExpression)) {
 					debugger;
-					throw new Error("[/Users/gfx/repo/try-on-web/JSX/src/optimizer.jsx:2787:24] detected invalid cast, value is not an instance of the designated type or null\n                }((expr as AssignmentExpression).getSecondExpr());\n                        ^^\n");
+					throw new Error("[/Users/gfx/repo/try-on-web/JSX/src/optimizer.jsx:2809:24] detected invalid cast, value is not an instance of the designated type or null\n                }((expr as AssignmentExpression).getSecondExpr());\n                        ^^\n");
 				}
 				return v;
 			}(expr)).getSecondExpr$());
@@ -7108,32 +7174,32 @@ _UnboxOptimizeCommand.prototype._unboxVariable$LMemberFunctionDefinition$LLocalV
 			propertyName = (function (v) {
 				if (! (v == null || v instanceof PropertyExpression)) {
 					debugger;
-					throw new Error("[/Users/gfx/repo/try-on-web/JSX/src/optimizer.jsx:2816:122] detected invalid cast, value is not an instance of the designated type or null\n                var propertyName = (((statement as ExpressionStatement).getExpr() as AssignmentExpression).getFirstExpr() as PropertyExpression).getIdentifierToken().getValue();\n                                                                                                                          ^^\n");
+					throw new Error("[/Users/gfx/repo/try-on-web/JSX/src/optimizer.jsx:2838:122] detected invalid cast, value is not an instance of the designated type or null\n                var propertyName = (((statement as ExpressionStatement).getExpr() as AssignmentExpression).getFirstExpr() as PropertyExpression).getIdentifierToken().getValue();\n                                                                                                                          ^^\n");
 				}
 				return v;
 			}((function (v) {
 				if (! (v == null || v instanceof AssignmentExpression)) {
 					debugger;
-					throw new Error("[/Users/gfx/repo/try-on-web/JSX/src/optimizer.jsx:2816:82] detected invalid cast, value is not an instance of the designated type or null\n                var propertyName = (((statement as ExpressionStatement).getExpr() as AssignmentExpression).getFirstExpr() as PropertyExpression).getIdentifierToken().getValue();\n                                                                                  ^^\n");
+					throw new Error("[/Users/gfx/repo/try-on-web/JSX/src/optimizer.jsx:2838:82] detected invalid cast, value is not an instance of the designated type or null\n                var propertyName = (((statement as ExpressionStatement).getExpr() as AssignmentExpression).getFirstExpr() as PropertyExpression).getIdentifierToken().getValue();\n                                                                                  ^^\n");
 				}
 				return v;
 			}((function (v) {
 				if (! (v == null || v instanceof ExpressionStatement)) {
 					debugger;
-					throw new Error("[/Users/gfx/repo/try-on-web/JSX/src/optimizer.jsx:2816:48] detected invalid cast, value is not an instance of the designated type or null\n                var propertyName = (((statement as ExpressionStatement).getExpr() as AssignmentExpression).getFirstExpr() as PropertyExpression).getIdentifierToken().getValue();\n                                                ^^\n");
+					throw new Error("[/Users/gfx/repo/try-on-web/JSX/src/optimizer.jsx:2838:48] detected invalid cast, value is not an instance of the designated type or null\n                var propertyName = (((statement as ExpressionStatement).getExpr() as AssignmentExpression).getFirstExpr() as PropertyExpression).getIdentifierToken().getValue();\n                                                ^^\n");
 				}
 				return v;
 			}(statement)).getExpr$())).getFirstExpr$())).getIdentifierToken$().getValue$();
 			rhsExpr = (function (v) {
 				if (! (v == null || v instanceof AssignmentExpression)) {
 					debugger;
-					throw new Error("[/Users/gfx/repo/try-on-web/JSX/src/optimizer.jsx:2817:76] detected invalid cast, value is not an instance of the designated type or null\n                var rhsExpr = ((statement as ExpressionStatement).getExpr() as AssignmentExpression).getSecondExpr().clone();\n                                                                            ^^\n");
+					throw new Error("[/Users/gfx/repo/try-on-web/JSX/src/optimizer.jsx:2839:76] detected invalid cast, value is not an instance of the designated type or null\n                var rhsExpr = ((statement as ExpressionStatement).getExpr() as AssignmentExpression).getSecondExpr().clone();\n                                                                            ^^\n");
 				}
 				return v;
 			}((function (v) {
 				if (! (v == null || v instanceof ExpressionStatement)) {
 					debugger;
-					throw new Error("[/Users/gfx/repo/try-on-web/JSX/src/optimizer.jsx:2817:42] detected invalid cast, value is not an instance of the designated type or null\n                var rhsExpr = ((statement as ExpressionStatement).getExpr() as AssignmentExpression).getSecondExpr().clone();\n                                          ^^\n");
+					throw new Error("[/Users/gfx/repo/try-on-web/JSX/src/optimizer.jsx:2839:42] detected invalid cast, value is not an instance of the designated type or null\n                var rhsExpr = ((statement as ExpressionStatement).getExpr() as AssignmentExpression).getSecondExpr().clone();\n                                          ^^\n");
 				}
 				return v;
 			}(statement)).getExpr$())).getSecondExpr$().clone$();
@@ -7145,7 +7211,7 @@ _UnboxOptimizeCommand.prototype._unboxVariable$LMemberFunctionDefinition$LLocalV
 						if ((function (v) {
 							if (! (v == null || v instanceof LocalExpression)) {
 								debugger;
-								throw new Error("[/Users/gfx/repo/try-on-web/JSX/src/optimizer.jsx:2821:38] detected invalid cast, value is not an instance of the designated type or null\n                            if ((expr as LocalExpression).getLocal() == ctor.getArguments()[argIndex]) {\n                                      ^^\n");
+								throw new Error("[/Users/gfx/repo/try-on-web/JSX/src/optimizer.jsx:2843:38] detected invalid cast, value is not an instance of the designated type or null\n                            if ((expr as LocalExpression).getLocal() == ctor.getArguments()[argIndex]) {\n                                      ^^\n");
 							}
 							return v;
 						}(expr)).getLocal$() == ctor.getArguments$()[argIndex]) {
@@ -7179,26 +7245,26 @@ _UnboxOptimizeCommand.prototype._unboxVariable$LMemberFunctionDefinition$LLocalV
 				if (expr instanceof PropertyExpression && (function (v) {
 					if (! (v == null || v instanceof PropertyExpression)) {
 						debugger;
-						throw new Error("[/Users/gfx/repo/try-on-web/JSX/src/optimizer.jsx:2848:33] detected invalid cast, value is not an instance of the designated type or null\n                        && (expr as PropertyExpression).getExpr() instanceof LocalExpression\n                                 ^^\n");
+						throw new Error("[/Users/gfx/repo/try-on-web/JSX/src/optimizer.jsx:2870:33] detected invalid cast, value is not an instance of the designated type or null\n                        && (expr as PropertyExpression).getExpr() instanceof LocalExpression\n                                 ^^\n");
 					}
 					return v;
 				}(expr)).getExpr$() instanceof LocalExpression && (function (v) {
 					if (! (v == null || v instanceof LocalExpression)) {
 						debugger;
-						throw new Error("[/Users/gfx/repo/try-on-web/JSX/src/optimizer.jsx:2849:67] detected invalid cast, value is not an instance of the designated type or null\n                        && ((expr as PropertyExpression).getExpr() as LocalExpression).getLocal() == local) {\n                                                                   ^^\n");
+						throw new Error("[/Users/gfx/repo/try-on-web/JSX/src/optimizer.jsx:2871:67] detected invalid cast, value is not an instance of the designated type or null\n                        && ((expr as PropertyExpression).getExpr() as LocalExpression).getLocal() == local) {\n                                                                   ^^\n");
 					}
 					return v;
 				}((function (v) {
 					if (! (v == null || v instanceof PropertyExpression)) {
 						debugger;
-						throw new Error("[/Users/gfx/repo/try-on-web/JSX/src/optimizer.jsx:2849:34] detected invalid cast, value is not an instance of the designated type or null\n                        && ((expr as PropertyExpression).getExpr() as LocalExpression).getLocal() == local) {\n                                  ^^\n");
+						throw new Error("[/Users/gfx/repo/try-on-web/JSX/src/optimizer.jsx:2871:34] detected invalid cast, value is not an instance of the designated type or null\n                        && ((expr as PropertyExpression).getExpr() as LocalExpression).getLocal() == local) {\n                                  ^^\n");
 					}
 					return v;
 				}(expr)).getExpr$())).getLocal$() == local) {
 					replaceCb(createLocalExpressionFor((function (v) {
 						if (! (v == null || v instanceof PropertyExpression)) {
 							debugger;
-							throw new Error("[/Users/gfx/repo/try-on-web/JSX/src/optimizer.jsx:2851:69] detected invalid cast, value is not an instance of the designated type or null\n                            replaceCb(createLocalExpressionFor((expr as PropertyExpression).getIdentifierToken().getValue()));\n                                                                     ^^\n");
+							throw new Error("[/Users/gfx/repo/try-on-web/JSX/src/optimizer.jsx:2873:69] detected invalid cast, value is not an instance of the designated type or null\n                            replaceCb(createLocalExpressionFor((expr as PropertyExpression).getIdentifierToken().getValue()));\n                                                                     ^^\n");
 						}
 						return v;
 					}(expr)).getIdentifierToken$().getValue$()));
@@ -7208,7 +7274,7 @@ _UnboxOptimizeCommand.prototype._unboxVariable$LMemberFunctionDefinition$LLocalV
 						return onStatements((function (v) {
 							if (! (v == null || v instanceof FunctionExpression)) {
 								debugger;
-								throw new Error("[/Users/gfx/repo/try-on-web/JSX/src/optimizer.jsx:2854:54] detected invalid cast, value is not an instance of the designated type or null\n                            return onStatements((expr as FunctionExpression).getFuncDef().getStatements());\n                                                      ^^\n");
+								throw new Error("[/Users/gfx/repo/try-on-web/JSX/src/optimizer.jsx:2876:54] detected invalid cast, value is not an instance of the designated type or null\n                            return onStatements((expr as FunctionExpression).getFuncDef().getStatements());\n                                                      ^^\n");
 							}
 							return v;
 						}(expr)).getFuncDef$().getStatements$());
@@ -7216,7 +7282,7 @@ _UnboxOptimizeCommand.prototype._unboxVariable$LMemberFunctionDefinition$LLocalV
 						if (expr instanceof LocalExpression && (function (v) {
 							if (! (v == null || v instanceof LocalExpression)) {
 								debugger;
-								throw new Error("[/Users/gfx/repo/try-on-web/JSX/src/optimizer.jsx:2855:76] detected invalid cast, value is not an instance of the designated type or null\n                        } else if (expr instanceof LocalExpression && (expr as LocalExpression).getLocal() == local) {\n                                                                            ^^\n");
+								throw new Error("[/Users/gfx/repo/try-on-web/JSX/src/optimizer.jsx:2877:76] detected invalid cast, value is not an instance of the designated type or null\n                        } else if (expr instanceof LocalExpression && (expr as LocalExpression).getLocal() == local) {\n                                                                            ^^\n");
 							}
 							return v;
 						}(expr)).getLocal$() == local) {
@@ -7260,7 +7326,7 @@ _UnboxOptimizeCommand.prototype._statementIsConstructingTheLocal$LStatement$LLoc
 	expr = (function (v) {
 		if (! (v == null || v instanceof ExpressionStatement)) {
 			debugger;
-			throw new Error("[/Users/gfx/repo/try-on-web/JSX/src/optimizer.jsx:2880:30] detected invalid cast, value is not an instance of the designated type or null\n        var expr = (statement as ExpressionStatement).getExpr();\n                              ^^\n");
+			throw new Error("[/Users/gfx/repo/try-on-web/JSX/src/optimizer.jsx:2902:30] detected invalid cast, value is not an instance of the designated type or null\n        var expr = (statement as ExpressionStatement).getExpr();\n                              ^^\n");
 		}
 		return v;
 	}(statement)).getExpr$();
@@ -7270,7 +7336,7 @@ _UnboxOptimizeCommand.prototype._statementIsConstructingTheLocal$LStatement$LLoc
 	lhsExpr = (function (v) {
 		if (! (v == null || v instanceof AssignmentExpression)) {
 			debugger;
-			throw new Error("[/Users/gfx/repo/try-on-web/JSX/src/optimizer.jsx:2884:28] detected invalid cast, value is not an instance of the designated type or null\n        var lhsExpr = (expr as AssignmentExpression).getFirstExpr();\n                            ^^\n");
+			throw new Error("[/Users/gfx/repo/try-on-web/JSX/src/optimizer.jsx:2906:28] detected invalid cast, value is not an instance of the designated type or null\n        var lhsExpr = (expr as AssignmentExpression).getFirstExpr();\n                            ^^\n");
 		}
 		return v;
 	}(expr)).getFirstExpr$();
@@ -7280,7 +7346,7 @@ _UnboxOptimizeCommand.prototype._statementIsConstructingTheLocal$LStatement$LLoc
 	if ((function (v) {
 		if (! (v == null || v instanceof LocalExpression)) {
 			debugger;
-			throw new Error("[/Users/gfx/repo/try-on-web/JSX/src/optimizer.jsx:2888:21] detected invalid cast, value is not an instance of the designated type or null\n        if ((lhsExpr as LocalExpression).getLocal() != local) {\n                     ^^\n");
+			throw new Error("[/Users/gfx/repo/try-on-web/JSX/src/optimizer.jsx:2910:21] detected invalid cast, value is not an instance of the designated type or null\n        if ((lhsExpr as LocalExpression).getLocal() != local) {\n                     ^^\n");
 		}
 		return v;
 	}(lhsExpr)).getLocal$() != local) {
@@ -7289,7 +7355,7 @@ _UnboxOptimizeCommand.prototype._statementIsConstructingTheLocal$LStatement$LLoc
 	rhsExpr = (function (v) {
 		if (! (v == null || v instanceof AssignmentExpression)) {
 			debugger;
-			throw new Error("[/Users/gfx/repo/try-on-web/JSX/src/optimizer.jsx:2891:28] detected invalid cast, value is not an instance of the designated type or null\n        var rhsExpr = (expr as AssignmentExpression).getSecondExpr();\n                            ^^\n");
+			throw new Error("[/Users/gfx/repo/try-on-web/JSX/src/optimizer.jsx:2913:28] detected invalid cast, value is not an instance of the designated type or null\n        var rhsExpr = (expr as AssignmentExpression).getSecondExpr();\n                            ^^\n");
 		}
 		return v;
 	}(expr)).getSecondExpr$();
@@ -7299,7 +7365,7 @@ _UnboxOptimizeCommand.prototype._statementIsConstructingTheLocal$LStatement$LLoc
 	return (function (v) {
 		if (! (v == null || v instanceof NewExpression)) {
 			debugger;
-			throw new Error("[/Users/gfx/repo/try-on-web/JSX/src/optimizer.jsx:2895:23] detected invalid cast, value is not an instance of the designated type or null\n        return rhsExpr as NewExpression;\n                       ^^\n");
+			throw new Error("[/Users/gfx/repo/try-on-web/JSX/src/optimizer.jsx:2917:23] detected invalid cast, value is not an instance of the designated type or null\n        return rhsExpr as NewExpression;\n                       ^^\n");
 		}
 		return v;
 	}(rhsExpr));
@@ -7338,7 +7404,7 @@ _ArrayLengthOptimizeCommand.prototype.optimizeFunction$LMemberFunctionDefinition
 			condExpr = (function (v) {
 				if (! (v == null || v instanceof ForStatement)) {
 					debugger;
-					throw new Error("[/Users/gfx/repo/try-on-web/JSX/src/optimizer.jsx:2911:42] detected invalid cast, value is not an instance of the designated type or null\n                var condExpr = (statement as ForStatement).getCondExpr();\n                                          ^^\n");
+					throw new Error("[/Users/gfx/repo/try-on-web/JSX/src/optimizer.jsx:2933:42] detected invalid cast, value is not an instance of the designated type or null\n                var condExpr = (statement as ForStatement).getCondExpr();\n                                          ^^\n");
 				}
 				return v;
 			}(statement)).getCondExpr$();
@@ -7347,7 +7413,7 @@ _ArrayLengthOptimizeCommand.prototype.optimizeFunction$LMemberFunctionDefinition
 				$this._optimizeArrayLength$LMemberFunctionDefinition$LForStatement$LLocalVariable$(funcDef, (function (v) {
 					if (! (v == null || v instanceof ForStatement)) {
 						debugger;
-						throw new Error("[/Users/gfx/repo/try-on-web/JSX/src/optimizer.jsx:2914:65] detected invalid cast, value is not an instance of the designated type or null\n                    this._optimizeArrayLength(funcDef, statement as ForStatement, arrayLocal);\n                                                                 ^^\n");
+						throw new Error("[/Users/gfx/repo/try-on-web/JSX/src/optimizer.jsx:2936:65] detected invalid cast, value is not an instance of the designated type or null\n                    this._optimizeArrayLength(funcDef, statement as ForStatement, arrayLocal);\n                                                                 ^^\n");
 					}
 					return v;
 				}(statement)), arrayLocal);
@@ -7386,25 +7452,25 @@ _ArrayLengthOptimizeCommand.prototype._optimizeArrayLength$LMemberFunctionDefini
 			if (expr instanceof PropertyExpression && (function (v) {
 				if (! (v == null || v instanceof PropertyExpression)) {
 					debugger;
-					throw new Error("[/Users/gfx/repo/try-on-web/JSX/src/optimizer.jsx:2955:29] detected invalid cast, value is not an instance of the designated type or null\n                    && (expr as PropertyExpression).getIdentifierToken().getValue() == \"length\"\n                             ^^\n");
+					throw new Error("[/Users/gfx/repo/try-on-web/JSX/src/optimizer.jsx:2977:29] detected invalid cast, value is not an instance of the designated type or null\n                    && (expr as PropertyExpression).getIdentifierToken().getValue() == \"length\"\n                             ^^\n");
 				}
 				return v;
 			}(expr)).getIdentifierToken$().getValue$() === "length" && (function (v) {
 				if (! (v == null || v instanceof PropertyExpression)) {
 					debugger;
-					throw new Error("[/Users/gfx/repo/try-on-web/JSX/src/optimizer.jsx:2956:29] detected invalid cast, value is not an instance of the designated type or null\n                    && (expr as PropertyExpression).getExpr() instanceof LocalExpression\n                             ^^\n");
+					throw new Error("[/Users/gfx/repo/try-on-web/JSX/src/optimizer.jsx:2978:29] detected invalid cast, value is not an instance of the designated type or null\n                    && (expr as PropertyExpression).getExpr() instanceof LocalExpression\n                             ^^\n");
 				}
 				return v;
 			}(expr)).getExpr$() instanceof LocalExpression && (function (v) {
 				if (! (v == null || v instanceof LocalExpression)) {
 					debugger;
-					throw new Error("[/Users/gfx/repo/try-on-web/JSX/src/optimizer.jsx:2957:63] detected invalid cast, value is not an instance of the designated type or null\n                    && ((expr as PropertyExpression).getExpr() as LocalExpression).getLocal() == arrayLocal) {\n                                                               ^^\n");
+					throw new Error("[/Users/gfx/repo/try-on-web/JSX/src/optimizer.jsx:2979:63] detected invalid cast, value is not an instance of the designated type or null\n                    && ((expr as PropertyExpression).getExpr() as LocalExpression).getLocal() == arrayLocal) {\n                                                               ^^\n");
 				}
 				return v;
 			}((function (v) {
 				if (! (v == null || v instanceof PropertyExpression)) {
 					debugger;
-					throw new Error("[/Users/gfx/repo/try-on-web/JSX/src/optimizer.jsx:2957:30] detected invalid cast, value is not an instance of the designated type or null\n                    && ((expr as PropertyExpression).getExpr() as LocalExpression).getLocal() == arrayLocal) {\n                              ^^\n");
+					throw new Error("[/Users/gfx/repo/try-on-web/JSX/src/optimizer.jsx:2979:30] detected invalid cast, value is not an instance of the designated type or null\n                    && ((expr as PropertyExpression).getExpr() as LocalExpression).getLocal() == arrayLocal) {\n                              ^^\n");
 				}
 				return v;
 			}(expr)).getExpr$())).getLocal$() == arrayLocal) {
@@ -7437,32 +7503,32 @@ _ArrayLengthOptimizeCommand.prototype._hasLengthExprOfLocalArray$LExpression$ = 
 		if (expr instanceof PropertyExpression && (function (v) {
 			if (! (v == null || v instanceof PropertyExpression)) {
 				debugger;
-				throw new Error("[/Users/gfx/repo/try-on-web/JSX/src/optimizer.jsx:2978:25] detected invalid cast, value is not an instance of the designated type or null\n                && (expr as PropertyExpression).getIdentifierToken().getValue() == \"length\"\n                         ^^\n");
+				throw new Error("[/Users/gfx/repo/try-on-web/JSX/src/optimizer.jsx:3000:25] detected invalid cast, value is not an instance of the designated type or null\n                && (expr as PropertyExpression).getIdentifierToken().getValue() == \"length\"\n                         ^^\n");
 			}
 			return v;
 		}(expr)).getIdentifierToken$().getValue$() === "length" && (function (v) {
 			if (! (v == null || v instanceof PropertyExpression)) {
 				debugger;
-				throw new Error("[/Users/gfx/repo/try-on-web/JSX/src/optimizer.jsx:2979:25] detected invalid cast, value is not an instance of the designated type or null\n                && (expr as PropertyExpression).getExpr() instanceof LocalExpression\n                         ^^\n");
+				throw new Error("[/Users/gfx/repo/try-on-web/JSX/src/optimizer.jsx:3001:25] detected invalid cast, value is not an instance of the designated type or null\n                && (expr as PropertyExpression).getExpr() instanceof LocalExpression\n                         ^^\n");
 			}
 			return v;
 		}(expr)).getExpr$() instanceof LocalExpression && $this._typeIsArray$LType$((function (v) {
 			if (! (v == null || v instanceof PropertyExpression)) {
 				debugger;
-				throw new Error("[/Users/gfx/repo/try-on-web/JSX/src/optimizer.jsx:2980:43] detected invalid cast, value is not an instance of the designated type or null\n                && this._typeIsArray((expr as PropertyExpression).getExpr().getType().resolveIfNullable())) {\n                                           ^^\n");
+				throw new Error("[/Users/gfx/repo/try-on-web/JSX/src/optimizer.jsx:3002:43] detected invalid cast, value is not an instance of the designated type or null\n                && this._typeIsArray((expr as PropertyExpression).getExpr().getType().resolveIfNullable())) {\n                                           ^^\n");
 			}
 			return v;
 		}(expr)).getExpr$().getType$().resolveIfNullable$())) {
 			local = (function (v) {
 				if (! (v == null || v instanceof LocalExpression)) {
 					debugger;
-					throw new Error("[/Users/gfx/repo/try-on-web/JSX/src/optimizer.jsx:2981:68] detected invalid cast, value is not an instance of the designated type or null\n                    local = ((expr as PropertyExpression).getExpr() as LocalExpression).getLocal();\n                                                                    ^^\n");
+					throw new Error("[/Users/gfx/repo/try-on-web/JSX/src/optimizer.jsx:3003:68] detected invalid cast, value is not an instance of the designated type or null\n                    local = ((expr as PropertyExpression).getExpr() as LocalExpression).getLocal();\n                                                                    ^^\n");
 				}
 				return v;
 			}((function (v) {
 				if (! (v == null || v instanceof PropertyExpression)) {
 					debugger;
-					throw new Error("[/Users/gfx/repo/try-on-web/JSX/src/optimizer.jsx:2981:35] detected invalid cast, value is not an instance of the designated type or null\n                    local = ((expr as PropertyExpression).getExpr() as LocalExpression).getLocal();\n                                   ^^\n");
+					throw new Error("[/Users/gfx/repo/try-on-web/JSX/src/optimizer.jsx:3003:35] detected invalid cast, value is not an instance of the designated type or null\n                    local = ((expr as PropertyExpression).getExpr() as LocalExpression).getLocal();\n                                   ^^\n");
 				}
 				return v;
 			}(expr)).getExpr$())).getLocal$();
@@ -7498,7 +7564,7 @@ _ArrayLengthOptimizeCommand.prototype._lengthIsUnmodifiedInExpr$LExpression$ = f
 		if (this._lhsMayModifyLength$LExpression$((function (v) {
 			if (! (v == null || v instanceof AssignmentExpression)) {
 				debugger;
-				throw new Error("[/Users/gfx/repo/try-on-web/JSX/src/optimizer.jsx:2997:47] detected invalid cast, value is not an instance of the designated type or null\n            if (this._lhsMayModifyLength((expr as AssignmentExpression).getFirstExpr())) {\n                                               ^^\n");
+				throw new Error("[/Users/gfx/repo/try-on-web/JSX/src/optimizer.jsx:3019:47] detected invalid cast, value is not an instance of the designated type or null\n            if (this._lhsMayModifyLength((expr as AssignmentExpression).getFirstExpr())) {\n                                               ^^\n");
 			}
 			return v;
 		}(expr)).getFirstExpr$())) {
@@ -7512,7 +7578,7 @@ _ArrayLengthOptimizeCommand.prototype._lengthIsUnmodifiedInExpr$LExpression$ = f
 				if (this._lhsMayModifyLength$LExpression$((function (v) {
 					if (! (v == null || v instanceof IncrementExpression)) {
 						debugger;
-						throw new Error("[/Users/gfx/repo/try-on-web/JSX/src/optimizer.jsx:3003:47] detected invalid cast, value is not an instance of the designated type or null\n            if (this._lhsMayModifyLength((expr as IncrementExpression).getExpr())) {\n                                               ^^\n");
+						throw new Error("[/Users/gfx/repo/try-on-web/JSX/src/optimizer.jsx:3025:47] detected invalid cast, value is not an instance of the designated type or null\n            if (this._lhsMayModifyLength((expr as IncrementExpression).getExpr())) {\n                                               ^^\n");
 					}
 					return v;
 				}(expr)).getExpr$())) {
@@ -7534,7 +7600,7 @@ _ArrayLengthOptimizeCommand.prototype._lhsMayModifyLength$LExpression$ = functio
 	if (expr instanceof PropertyExpression && (function (v) {
 		if (! (v == null || v instanceof PropertyExpression)) {
 			debugger;
-			throw new Error("[/Users/gfx/repo/try-on-web/JSX/src/optimizer.jsx:3011:56] detected invalid cast, value is not an instance of the designated type or null\n        if (expr instanceof PropertyExpression && (expr as PropertyExpression).getIdentifierToken().getValue() == \"length\")\n                                                        ^^\n");
+			throw new Error("[/Users/gfx/repo/try-on-web/JSX/src/optimizer.jsx:3033:56] detected invalid cast, value is not an instance of the designated type or null\n        if (expr instanceof PropertyExpression && (expr as PropertyExpression).getIdentifierToken().getValue() == \"length\")\n                                                        ^^\n");
 		}
 		return v;
 	}(expr)).getIdentifierToken$().getValue$() === "length") {
@@ -7570,7 +7636,7 @@ _ArrayLengthOptimizeCommand.prototype._typeIsArray$LType$ = function (type) {
 	return (function (v) {
 		if (! (v == null || v instanceof InstantiatedClassDefinition)) {
 			debugger;
-			throw new Error("[/Users/gfx/repo/try-on-web/JSX/src/optimizer.jsx:3029:25] detected invalid cast, value is not an instance of the designated type or null\n        return (classDef as InstantiatedClassDefinition).getTemplateClassName() == \"Array\";\n                         ^^\n");
+			throw new Error("[/Users/gfx/repo/try-on-web/JSX/src/optimizer.jsx:3051:25] detected invalid cast, value is not an instance of the designated type or null\n        return (classDef as InstantiatedClassDefinition).getTemplateClassName() == \"Array\";\n                         ^^\n");
 		}
 		return v;
 	}(classDef)).getTemplateClassName$() === "Array";
@@ -7609,7 +7675,7 @@ _NoDebugCommand.prototype.performOptimization$ = function () {
 	stash = (function (v) {
 		if (! (v == null || v instanceof _NoDebugCommand$CStash)) {
 			debugger;
-			throw new Error("[/Users/gfx/repo/try-on-web/JSX/src/optimizer.jsx:3060:67] detected invalid cast, value is not an instance of the designated type or null\n        var stash = this.getStash(this.getCompiler().getEmitter()) as _NoDebugCommand.Stash;\n                                                                   ^^\n");
+			throw new Error("[/Users/gfx/repo/try-on-web/JSX/src/optimizer.jsx:3082:67] detected invalid cast, value is not an instance of the designated type or null\n        var stash = this.getStash(this.getCompiler().getEmitter()) as _NoDebugCommand.Stash;\n                                                                   ^^\n");
 		}
 		return v;
 	}(this.getStash$LStashable$(this.getCompiler$().getEmitter$())));
@@ -7875,6 +7941,51 @@ _ExpressionStatementEmitter$LJavaScriptEmitter$LExpressionStatement$.prototype =
 _ExpressionStatementEmitter.prototype.emit$ = function () {
 	this._emitter._getExpressionEmitterFor$LExpression$(this._statement.getExpr$()).emit$N(0);
 	this._emitter._emit$SLToken$(";\n", null);
+};
+
+/**
+ * class _FunctionStatementEmitter extends _StatementEmitter
+ * @constructor
+ */
+function _FunctionStatementEmitter() {
+}
+
+_FunctionStatementEmitter.prototype = new _StatementEmitter;
+/**
+ * @constructor
+ * @param {JavaScriptEmitter} emitter
+ * @param {FunctionStatement} statement
+ */
+function _FunctionStatementEmitter$LJavaScriptEmitter$LFunctionStatement$(emitter, statement) {
+	_StatementEmitter$LJavaScriptEmitter$.call(this, emitter);
+	this._statement = statement;
+};
+
+_FunctionStatementEmitter$LJavaScriptEmitter$LFunctionStatement$.prototype = new _FunctionStatementEmitter;
+
+/**
+ */
+_FunctionStatementEmitter.prototype.emit$ = function () {
+	/** @type {MemberFunctionDefinition} */
+	var funcDef;
+	/** @type {Array.<undefined|ArgumentDeclaration>} */
+	var args;
+	/** @type {!number} */
+	var i;
+	funcDef = this._statement.getFuncDef$();
+	this._emitter._emit$SLToken$("function " + (funcDef.getNameToken$() != null ? funcDef.name$() : "") + "(", funcDef.getToken$());
+	args = funcDef.getArguments$();
+	for (i = 0; i < args.length; ++ i) {
+		if (i !== 0) {
+			this._emitter._emit$SLToken$(", ", funcDef.getToken$());
+		}
+		this._emitter._emit$SLToken$(args[i].getName$().getValue$(), funcDef.getToken$());
+	}
+	this._emitter._emit$SLToken$(") {\n", funcDef.getToken$());
+	this._emitter._advanceIndent$();
+	this._emitter._emitFunctionBody$LMemberFunctionDefinition$(funcDef);
+	this._emitter._reduceIndent$();
+	this._emitter._emit$SLToken$("}\n", funcDef.getToken$());
 };
 
 /**
@@ -8396,7 +8507,7 @@ _CatchStatementEmitter.prototype.emit$ = function () {
 		tryStatement = (function (v) {
 			if (! (v == null || v instanceof _TryStatementEmitter)) {
 				debugger;
-				throw new Error("[/Users/gfx/repo/try-on-web/JSX/src/jsemitter.jsx:476:119] detected invalid cast, value is not an instance of the designated type or null\n            var tryStatement = this._emitter._emittingStatementStack[this._emitter._emittingStatementStack.length - 2] as _TryStatementEmitter;\n                                                                                                                       ^^\n");
+				throw new Error("[/Users/gfx/repo/try-on-web/JSX/src/jsemitter.jsx:503:119] detected invalid cast, value is not an instance of the designated type or null\n            var tryStatement = this._emitter._emittingStatementStack[this._emitter._emittingStatementStack.length - 2] as _TryStatementEmitter;\n                                                                                                                       ^^\n");
 			}
 			return v;
 		}(this._emitter._emittingStatementStack[this._emitter._emittingStatementStack.length - 2]));
@@ -8430,7 +8541,7 @@ _CatchStatementEmitter.getLocalNameFor$LJavaScriptEmitter$S = function (emitter,
 		catchStatement = (function (v) {
 			if (! (v == null || v instanceof _CatchStatementEmitter)) {
 				debugger;
-				throw new Error("[/Users/gfx/repo/try-on-web/JSX/src/jsemitter.jsx:492:68] detected invalid cast, value is not an instance of the designated type or null\n            var catchStatement = emitter._emittingStatementStack[i] as _CatchStatementEmitter;\n                                                                    ^^\n");
+				throw new Error("[/Users/gfx/repo/try-on-web/JSX/src/jsemitter.jsx:519:68] detected invalid cast, value is not an instance of the designated type or null\n            var catchStatement = emitter._emittingStatementStack[i] as _CatchStatementEmitter;\n                                                                    ^^\n");
 			}
 			return v;
 		}(emitter._emittingStatementStack[i]));
@@ -8442,7 +8553,7 @@ _CatchStatementEmitter.getLocalNameFor$LJavaScriptEmitter$S = function (emitter,
 			return (function (v) {
 				if (! (v == null || v instanceof _TryStatementEmitter)) {
 					debugger;
-					throw new Error("[/Users/gfx/repo/try-on-web/JSX/src/jsemitter.jsx:497:35] detected invalid cast, value is not an instance of the designated type or null\n                return (tryEmitter as _TryStatementEmitter).getEmittingLocalName();\n                                   ^^\n");
+					throw new Error("[/Users/gfx/repo/try-on-web/JSX/src/jsemitter.jsx:524:35] detected invalid cast, value is not an instance of the designated type or null\n                return (tryEmitter as _TryStatementEmitter).getEmittingLocalName();\n                                   ^^\n");
 				}
 				return v;
 			}(tryEmitter)).getEmittingLocalName$();
@@ -9027,13 +9138,13 @@ _AsExpressionEmitter.prototype.emit$N = function (outerOpPrecedence) {
 			this._emitWithParens$NNNUSUS(outerOpPrecedence, (function (v) {
 				if (! (v != null)) {
 					debugger;
-					throw new Error("[/Users/gfx/repo/try-on-web/JSX/src/jsemitter.jsx:832:56] null access\n                this._emitWithParens(outerOpPrecedence, prec, prec, \"+\", null);\n                                                        ^^^^\n");
+					throw new Error("[/Users/gfx/repo/try-on-web/JSX/src/jsemitter.jsx:859:56] null access\n                this._emitWithParens(outerOpPrecedence, prec, prec, \"+\", null);\n                                                        ^^^^\n");
 				}
 				return v;
 			}(prec)), (function (v) {
 				if (! (v != null)) {
 					debugger;
-					throw new Error("[/Users/gfx/repo/try-on-web/JSX/src/jsemitter.jsx:832:62] null access\n                this._emitWithParens(outerOpPrecedence, prec, prec, \"+\", null);\n                                                              ^^^^\n");
+					throw new Error("[/Users/gfx/repo/try-on-web/JSX/src/jsemitter.jsx:859:62] null access\n                this._emitWithParens(outerOpPrecedence, prec, prec, \"+\", null);\n                                                              ^^^^\n");
 				}
 				return v;
 			}(prec)), "+", null);
@@ -9044,13 +9155,13 @@ _AsExpressionEmitter.prototype.emit$N = function (outerOpPrecedence) {
 			this._emitWithParens$NNNUSUS(outerOpPrecedence, (function (v) {
 				if (! (v != null)) {
 					debugger;
-					throw new Error("[/Users/gfx/repo/try-on-web/JSX/src/jsemitter.jsx:837:56] null access\n                this._emitWithParens(outerOpPrecedence, prec, prec, null, \" + \\\"\\\"\");\n                                                        ^^^^\n");
+					throw new Error("[/Users/gfx/repo/try-on-web/JSX/src/jsemitter.jsx:864:56] null access\n                this._emitWithParens(outerOpPrecedence, prec, prec, null, \" + \\\"\\\"\");\n                                                        ^^^^\n");
 				}
 				return v;
 			}(prec)), (function (v) {
 				if (! (v != null)) {
 					debugger;
-					throw new Error("[/Users/gfx/repo/try-on-web/JSX/src/jsemitter.jsx:837:62] null access\n                this._emitWithParens(outerOpPrecedence, prec, prec, null, \" + \\\"\\\"\");\n                                                              ^^^^\n");
+					throw new Error("[/Users/gfx/repo/try-on-web/JSX/src/jsemitter.jsx:864:62] null access\n                this._emitWithParens(outerOpPrecedence, prec, prec, null, \" + \\\"\\\"\");\n                                                              ^^^^\n");
 				}
 				return v;
 			}(prec)), null, " + \"\"");
@@ -9063,13 +9174,13 @@ _AsExpressionEmitter.prototype.emit$N = function (outerOpPrecedence) {
 			this._emitWithParens$NNNUSUS(outerOpPrecedence, (function (v) {
 				if (! (v != null)) {
 					debugger;
-					throw new Error("[/Users/gfx/repo/try-on-web/JSX/src/jsemitter.jsx:845:56] null access\n                this._emitWithParens(outerOpPrecedence, prec, prec, \"!! \", null);\n                                                        ^^^^\n");
+					throw new Error("[/Users/gfx/repo/try-on-web/JSX/src/jsemitter.jsx:872:56] null access\n                this._emitWithParens(outerOpPrecedence, prec, prec, \"!! \", null);\n                                                        ^^^^\n");
 				}
 				return v;
 			}(prec)), (function (v) {
 				if (! (v != null)) {
 					debugger;
-					throw new Error("[/Users/gfx/repo/try-on-web/JSX/src/jsemitter.jsx:845:62] null access\n                this._emitWithParens(outerOpPrecedence, prec, prec, \"!! \", null);\n                                                              ^^^^\n");
+					throw new Error("[/Users/gfx/repo/try-on-web/JSX/src/jsemitter.jsx:872:62] null access\n                this._emitWithParens(outerOpPrecedence, prec, prec, \"!! \", null);\n                                                              ^^^^\n");
 				}
 				return v;
 			}(prec)), "!! ", null);
@@ -9084,13 +9195,13 @@ _AsExpressionEmitter.prototype.emit$N = function (outerOpPrecedence) {
 			this._emitWithParens$NNNUSUS(outerOpPrecedence, (function (v) {
 				if (! (v != null)) {
 					debugger;
-					throw new Error("[/Users/gfx/repo/try-on-web/JSX/src/jsemitter.jsx:854:56] null access\n                this._emitWithParens(outerOpPrecedence, prec, prec, null, \" + \\\"\\\"\");\n                                                        ^^^^\n");
+					throw new Error("[/Users/gfx/repo/try-on-web/JSX/src/jsemitter.jsx:881:56] null access\n                this._emitWithParens(outerOpPrecedence, prec, prec, null, \" + \\\"\\\"\");\n                                                        ^^^^\n");
 				}
 				return v;
 			}(prec)), (function (v) {
 				if (! (v != null)) {
 					debugger;
-					throw new Error("[/Users/gfx/repo/try-on-web/JSX/src/jsemitter.jsx:854:62] null access\n                this._emitWithParens(outerOpPrecedence, prec, prec, null, \" + \\\"\\\"\");\n                                                              ^^^^\n");
+					throw new Error("[/Users/gfx/repo/try-on-web/JSX/src/jsemitter.jsx:881:62] null access\n                this._emitWithParens(outerOpPrecedence, prec, prec, null, \" + \\\"\\\"\");\n                                                              ^^^^\n");
 				}
 				return v;
 			}(prec)), null, " + \"\"");
@@ -9103,13 +9214,13 @@ _AsExpressionEmitter.prototype.emit$N = function (outerOpPrecedence) {
 			this._emitWithParens$NNNUSUS(outerOpPrecedence, (function (v) {
 				if (! (v != null)) {
 					debugger;
-					throw new Error("[/Users/gfx/repo/try-on-web/JSX/src/jsemitter.jsx:862:56] null access\n                this._emitWithParens(outerOpPrecedence, prec, prec, \"!! \", null);\n                                                        ^^^^\n");
+					throw new Error("[/Users/gfx/repo/try-on-web/JSX/src/jsemitter.jsx:889:56] null access\n                this._emitWithParens(outerOpPrecedence, prec, prec, \"!! \", null);\n                                                        ^^^^\n");
 				}
 				return v;
 			}(prec)), (function (v) {
 				if (! (v != null)) {
 					debugger;
-					throw new Error("[/Users/gfx/repo/try-on-web/JSX/src/jsemitter.jsx:862:62] null access\n                this._emitWithParens(outerOpPrecedence, prec, prec, \"!! \", null);\n                                                              ^^^^\n");
+					throw new Error("[/Users/gfx/repo/try-on-web/JSX/src/jsemitter.jsx:889:62] null access\n                this._emitWithParens(outerOpPrecedence, prec, prec, \"!! \", null);\n                                                              ^^^^\n");
 				}
 				return v;
 			}(prec)), "!! ", null);
@@ -9120,13 +9231,13 @@ _AsExpressionEmitter.prototype.emit$N = function (outerOpPrecedence) {
 			this._emitWithParens$NNNUSUS(outerOpPrecedence, (function (v) {
 				if (! (v != null)) {
 					debugger;
-					throw new Error("[/Users/gfx/repo/try-on-web/JSX/src/jsemitter.jsx:867:56] null access\n                this._emitWithParens(outerOpPrecedence, prec, prec, null, \" | 0\");\n                                                        ^^^^\n");
+					throw new Error("[/Users/gfx/repo/try-on-web/JSX/src/jsemitter.jsx:894:56] null access\n                this._emitWithParens(outerOpPrecedence, prec, prec, null, \" | 0\");\n                                                        ^^^^\n");
 				}
 				return v;
 			}(prec)), (function (v) {
 				if (! (v != null)) {
 					debugger;
-					throw new Error("[/Users/gfx/repo/try-on-web/JSX/src/jsemitter.jsx:867:62] null access\n                this._emitWithParens(outerOpPrecedence, prec, prec, null, \" | 0\");\n                                                              ^^^^\n");
+					throw new Error("[/Users/gfx/repo/try-on-web/JSX/src/jsemitter.jsx:894:62] null access\n                this._emitWithParens(outerOpPrecedence, prec, prec, null, \" | 0\");\n                                                              ^^^^\n");
 				}
 				return v;
 			}(prec)), null, " | 0");
@@ -9137,13 +9248,13 @@ _AsExpressionEmitter.prototype.emit$N = function (outerOpPrecedence) {
 			this._emitWithParens$NNNUSUS(outerOpPrecedence, (function (v) {
 				if (! (v != null)) {
 					debugger;
-					throw new Error("[/Users/gfx/repo/try-on-web/JSX/src/jsemitter.jsx:872:56] null access\n                this._emitWithParens(outerOpPrecedence, prec, prec, null, \" + \\\"\\\"\");\n                                                        ^^^^\n");
+					throw new Error("[/Users/gfx/repo/try-on-web/JSX/src/jsemitter.jsx:899:56] null access\n                this._emitWithParens(outerOpPrecedence, prec, prec, null, \" + \\\"\\\"\");\n                                                        ^^^^\n");
 				}
 				return v;
 			}(prec)), (function (v) {
 				if (! (v != null)) {
 					debugger;
-					throw new Error("[/Users/gfx/repo/try-on-web/JSX/src/jsemitter.jsx:872:62] null access\n                this._emitWithParens(outerOpPrecedence, prec, prec, null, \" + \\\"\\\"\");\n                                                              ^^^^\n");
+					throw new Error("[/Users/gfx/repo/try-on-web/JSX/src/jsemitter.jsx:899:62] null access\n                this._emitWithParens(outerOpPrecedence, prec, prec, null, \" + \\\"\\\"\");\n                                                              ^^^^\n");
 				}
 				return v;
 			}(prec)), null, " + \"\"");
@@ -9156,13 +9267,13 @@ _AsExpressionEmitter.prototype.emit$N = function (outerOpPrecedence) {
 			this._emitWithParens$NNNUSUS(outerOpPrecedence, (function (v) {
 				if (! (v != null)) {
 					debugger;
-					throw new Error("[/Users/gfx/repo/try-on-web/JSX/src/jsemitter.jsx:880:56] null access\n                this._emitWithParens(outerOpPrecedence, prec, prec, \"!! \", null);\n                                                        ^^^^\n");
+					throw new Error("[/Users/gfx/repo/try-on-web/JSX/src/jsemitter.jsx:907:56] null access\n                this._emitWithParens(outerOpPrecedence, prec, prec, \"!! \", null);\n                                                        ^^^^\n");
 				}
 				return v;
 			}(prec)), (function (v) {
 				if (! (v != null)) {
 					debugger;
-					throw new Error("[/Users/gfx/repo/try-on-web/JSX/src/jsemitter.jsx:880:62] null access\n                this._emitWithParens(outerOpPrecedence, prec, prec, \"!! \", null);\n                                                              ^^^^\n");
+					throw new Error("[/Users/gfx/repo/try-on-web/JSX/src/jsemitter.jsx:907:62] null access\n                this._emitWithParens(outerOpPrecedence, prec, prec, \"!! \", null);\n                                                              ^^^^\n");
 				}
 				return v;
 			}(prec)), "!! ", null);
@@ -9173,13 +9284,13 @@ _AsExpressionEmitter.prototype.emit$N = function (outerOpPrecedence) {
 			this._emitWithParens$NNNUSUS(outerOpPrecedence, (function (v) {
 				if (! (v != null)) {
 					debugger;
-					throw new Error("[/Users/gfx/repo/try-on-web/JSX/src/jsemitter.jsx:885:56] null access\n                this._emitWithParens(outerOpPrecedence, prec, prec, null, \" | 0\");\n                                                        ^^^^\n");
+					throw new Error("[/Users/gfx/repo/try-on-web/JSX/src/jsemitter.jsx:912:56] null access\n                this._emitWithParens(outerOpPrecedence, prec, prec, null, \" | 0\");\n                                                        ^^^^\n");
 				}
 				return v;
 			}(prec)), (function (v) {
 				if (! (v != null)) {
 					debugger;
-					throw new Error("[/Users/gfx/repo/try-on-web/JSX/src/jsemitter.jsx:885:62] null access\n                this._emitWithParens(outerOpPrecedence, prec, prec, null, \" | 0\");\n                                                              ^^^^\n");
+					throw new Error("[/Users/gfx/repo/try-on-web/JSX/src/jsemitter.jsx:912:62] null access\n                this._emitWithParens(outerOpPrecedence, prec, prec, null, \" | 0\");\n                                                              ^^^^\n");
 				}
 				return v;
 			}(prec)), null, " | 0");
@@ -9190,13 +9301,13 @@ _AsExpressionEmitter.prototype.emit$N = function (outerOpPrecedence) {
 			this._emitWithParens$NNNUSUS(outerOpPrecedence, (function (v) {
 				if (! (v != null)) {
 					debugger;
-					throw new Error("[/Users/gfx/repo/try-on-web/JSX/src/jsemitter.jsx:890:56] null access\n                this._emitWithParens(outerOpPrecedence, prec, prec, \"+\", null);\n                                                        ^^^^\n");
+					throw new Error("[/Users/gfx/repo/try-on-web/JSX/src/jsemitter.jsx:917:56] null access\n                this._emitWithParens(outerOpPrecedence, prec, prec, \"+\", null);\n                                                        ^^^^\n");
 				}
 				return v;
 			}(prec)), (function (v) {
 				if (! (v != null)) {
 					debugger;
-					throw new Error("[/Users/gfx/repo/try-on-web/JSX/src/jsemitter.jsx:890:62] null access\n                this._emitWithParens(outerOpPrecedence, prec, prec, \"+\", null);\n                                                              ^^^^\n");
+					throw new Error("[/Users/gfx/repo/try-on-web/JSX/src/jsemitter.jsx:917:62] null access\n                this._emitWithParens(outerOpPrecedence, prec, prec, \"+\", null);\n                                                              ^^^^\n");
 				}
 				return v;
 			}(prec)), "+", null);
@@ -9209,13 +9320,13 @@ _AsExpressionEmitter.prototype.emit$N = function (outerOpPrecedence) {
 			this._emitWithParens$NNNUSUS(outerOpPrecedence, (function (v) {
 				if (! (v != null)) {
 					debugger;
-					throw new Error("[/Users/gfx/repo/try-on-web/JSX/src/jsemitter.jsx:898:56] null access\n                this._emitWithParens(outerOpPrecedence, prec, prec, \"!! \", null);\n                                                        ^^^^\n");
+					throw new Error("[/Users/gfx/repo/try-on-web/JSX/src/jsemitter.jsx:925:56] null access\n                this._emitWithParens(outerOpPrecedence, prec, prec, \"!! \", null);\n                                                        ^^^^\n");
 				}
 				return v;
 			}(prec)), (function (v) {
 				if (! (v != null)) {
 					debugger;
-					throw new Error("[/Users/gfx/repo/try-on-web/JSX/src/jsemitter.jsx:898:62] null access\n                this._emitWithParens(outerOpPrecedence, prec, prec, \"!! \", null);\n                                                              ^^^^\n");
+					throw new Error("[/Users/gfx/repo/try-on-web/JSX/src/jsemitter.jsx:925:62] null access\n                this._emitWithParens(outerOpPrecedence, prec, prec, \"!! \", null);\n                                                              ^^^^\n");
 				}
 				return v;
 			}(prec)), "!! ", null);
@@ -9226,13 +9337,13 @@ _AsExpressionEmitter.prototype.emit$N = function (outerOpPrecedence) {
 			this._emitWithParens$NNNUSUS(outerOpPrecedence, (function (v) {
 				if (! (v != null)) {
 					debugger;
-					throw new Error("[/Users/gfx/repo/try-on-web/JSX/src/jsemitter.jsx:903:56] null access\n                this._emitWithParens(outerOpPrecedence, prec, prec, null, \" | 0\");\n                                                        ^^^^\n");
+					throw new Error("[/Users/gfx/repo/try-on-web/JSX/src/jsemitter.jsx:930:56] null access\n                this._emitWithParens(outerOpPrecedence, prec, prec, null, \" | 0\");\n                                                        ^^^^\n");
 				}
 				return v;
 			}(prec)), (function (v) {
 				if (! (v != null)) {
 					debugger;
-					throw new Error("[/Users/gfx/repo/try-on-web/JSX/src/jsemitter.jsx:903:62] null access\n                this._emitWithParens(outerOpPrecedence, prec, prec, null, \" | 0\");\n                                                              ^^^^\n");
+					throw new Error("[/Users/gfx/repo/try-on-web/JSX/src/jsemitter.jsx:930:62] null access\n                this._emitWithParens(outerOpPrecedence, prec, prec, null, \" | 0\");\n                                                              ^^^^\n");
 				}
 				return v;
 			}(prec)), null, " | 0");
@@ -9243,13 +9354,13 @@ _AsExpressionEmitter.prototype.emit$N = function (outerOpPrecedence) {
 			this._emitWithParens$NNNUSUS(outerOpPrecedence, (function (v) {
 				if (! (v != null)) {
 					debugger;
-					throw new Error("[/Users/gfx/repo/try-on-web/JSX/src/jsemitter.jsx:908:56] null access\n                this._emitWithParens(outerOpPrecedence, prec, prec, \"+\", null);\n                                                        ^^^^\n");
+					throw new Error("[/Users/gfx/repo/try-on-web/JSX/src/jsemitter.jsx:935:56] null access\n                this._emitWithParens(outerOpPrecedence, prec, prec, \"+\", null);\n                                                        ^^^^\n");
 				}
 				return v;
 			}(prec)), (function (v) {
 				if (! (v != null)) {
 					debugger;
-					throw new Error("[/Users/gfx/repo/try-on-web/JSX/src/jsemitter.jsx:908:62] null access\n                this._emitWithParens(outerOpPrecedence, prec, prec, \"+\", null);\n                                                              ^^^^\n");
+					throw new Error("[/Users/gfx/repo/try-on-web/JSX/src/jsemitter.jsx:935:62] null access\n                this._emitWithParens(outerOpPrecedence, prec, prec, \"+\", null);\n                                                              ^^^^\n");
 				}
 				return v;
 			}(prec)), "+", null);
@@ -9260,13 +9371,13 @@ _AsExpressionEmitter.prototype.emit$N = function (outerOpPrecedence) {
 			this._emitWithParens$NNNUSUS(outerOpPrecedence, (function (v) {
 				if (! (v != null)) {
 					debugger;
-					throw new Error("[/Users/gfx/repo/try-on-web/JSX/src/jsemitter.jsx:913:56] null access\n                this._emitWithParens(outerOpPrecedence, prec, prec, null, \" + \\\"\\\"\");\n                                                        ^^^^\n");
+					throw new Error("[/Users/gfx/repo/try-on-web/JSX/src/jsemitter.jsx:940:56] null access\n                this._emitWithParens(outerOpPrecedence, prec, prec, null, \" + \\\"\\\"\");\n                                                        ^^^^\n");
 				}
 				return v;
 			}(prec)), (function (v) {
 				if (! (v != null)) {
 					debugger;
-					throw new Error("[/Users/gfx/repo/try-on-web/JSX/src/jsemitter.jsx:913:62] null access\n                this._emitWithParens(outerOpPrecedence, prec, prec, null, \" + \\\"\\\"\");\n                                                              ^^^^\n");
+					throw new Error("[/Users/gfx/repo/try-on-web/JSX/src/jsemitter.jsx:940:62] null access\n                this._emitWithParens(outerOpPrecedence, prec, prec, null, \" + \\\"\\\"\");\n                                                              ^^^^\n");
 				}
 				return v;
 			}(prec)), null, " + \"\"");
@@ -9299,7 +9410,7 @@ _AsExpressionEmitter.prototype._emitWithParens$NNNUSUS = function (outerOpPreced
 		this._emitter._emit$SLToken$((function (v) {
 			if (! (v != null)) {
 				debugger;
-				throw new Error("[/Users/gfx/repo/try-on-web/JSX/src/jsemitter.jsx:934:32] null access\n            this._emitter._emit(prefix, this._expr.getToken());\n                                ^^^^^^\n");
+				throw new Error("[/Users/gfx/repo/try-on-web/JSX/src/jsemitter.jsx:961:32] null access\n            this._emitter._emit(prefix, this._expr.getToken());\n                                ^^^^^^\n");
 			}
 			return v;
 		}(prefix)), this._expr.getToken$());
@@ -9309,7 +9420,7 @@ _AsExpressionEmitter.prototype._emitWithParens$NNNUSUS = function (outerOpPreced
 		this._emitter._emit$SLToken$((function (v) {
 			if (! (v != null)) {
 				debugger;
-				throw new Error("[/Users/gfx/repo/try-on-web/JSX/src/jsemitter.jsx:937:32] null access\n            this._emitter._emit(postfix, this._expr.getToken());\n                                ^^^^^^^\n");
+				throw new Error("[/Users/gfx/repo/try-on-web/JSX/src/jsemitter.jsx:964:32] null access\n            this._emitter._emit(postfix, this._expr.getToken());\n                                ^^^^^^^\n");
 			}
 			return v;
 		}(postfix)), this._expr.getToken$());
@@ -9435,7 +9546,7 @@ _AsNoConvertExpressionEmitter.prototype.emit$N = function (outerOpPrecedence) {
 																if (destClassDef instanceof InstantiatedClassDefinition && (function (v) {
 																	if (! (v == null || v instanceof InstantiatedClassDefinition)) {
 																		debugger;
-																		throw new Error("[/Users/gfx/repo/try-on-web/JSX/src/jsemitter.jsx:1023:96] detected invalid cast, value is not an instance of the designated type or null\n                } else if (destClassDef instanceof InstantiatedClassDefinition && (destClassDef as InstantiatedClassDefinition).getTemplateClassName() == \"Array\") {\n                                                                                                ^^\n");
+																		throw new Error("[/Users/gfx/repo/try-on-web/JSX/src/jsemitter.jsx:1050:96] detected invalid cast, value is not an instance of the designated type or null\n                } else if (destClassDef instanceof InstantiatedClassDefinition && (destClassDef as InstantiatedClassDefinition).getTemplateClassName() == \"Array\") {\n                                                                                                ^^\n");
 																	}
 																	return v;
 																}(destClassDef)).getTemplateClassName$() === "Array") {
@@ -9447,7 +9558,7 @@ _AsNoConvertExpressionEmitter.prototype.emit$N = function (outerOpPrecedence) {
 																	if (destClassDef instanceof InstantiatedClassDefinition && (function (v) {
 																		if (! (v == null || v instanceof InstantiatedClassDefinition)) {
 																			debugger;
-																			throw new Error("[/Users/gfx/repo/try-on-web/JSX/src/jsemitter.jsx:1028:96] detected invalid cast, value is not an instance of the designated type or null\n                } else if (destClassDef instanceof InstantiatedClassDefinition && (destClassDef as InstantiatedClassDefinition).getTemplateClassName() == \"Map\") {\n                                                                                                ^^\n");
+																			throw new Error("[/Users/gfx/repo/try-on-web/JSX/src/jsemitter.jsx:1055:96] detected invalid cast, value is not an instance of the designated type or null\n                } else if (destClassDef instanceof InstantiatedClassDefinition && (destClassDef as InstantiatedClassDefinition).getTemplateClassName() == \"Map\") {\n                                                                                                ^^\n");
 																		}
 																		return v;
 																	}(destClassDef)).getTemplateClassName$() === "Map") {
@@ -9566,7 +9677,7 @@ _UnaryExpressionEmitter.prototype._getPrecedence$ = function () {
 	return (function (v) {
 		if (! (v != null)) {
 			debugger;
-			throw new Error("[/Users/gfx/repo/try-on-web/JSX/src/jsemitter.jsx:1094:58] null access\n        return _UnaryExpressionEmitter._operatorPrecedence[this._expr.getToken().getValue()];\n                                                          ^\n");
+			throw new Error("[/Users/gfx/repo/try-on-web/JSX/src/jsemitter.jsx:1121:58] null access\n        return _UnaryExpressionEmitter._operatorPrecedence[this._expr.getToken().getValue()];\n                                                          ^\n");
 		}
 		return v;
 	}(_UnaryExpressionEmitter._operatorPrecedence[this._expr.getToken$().getValue$()]));
@@ -9618,7 +9729,7 @@ _PostfixExpressionEmitter.prototype._getPrecedence$ = function () {
 	return (function (v) {
 		if (! (v != null)) {
 			debugger;
-			throw new Error("[/Users/gfx/repo/try-on-web/JSX/src/jsemitter.jsx:1118:60] null access\n        return _PostfixExpressionEmitter._operatorPrecedence[this._expr.getToken().getValue()];\n                                                            ^\n");
+			throw new Error("[/Users/gfx/repo/try-on-web/JSX/src/jsemitter.jsx:1145:60] null access\n        return _PostfixExpressionEmitter._operatorPrecedence[this._expr.getToken().getValue()];\n                                                            ^\n");
 		}
 		return v;
 	}(_PostfixExpressionEmitter._operatorPrecedence[this._expr.getToken$().getValue$()]));
@@ -9662,10 +9773,14 @@ _InstanceofExpressionEmitter.prototype.emit$N = function (outerOpPrecedence) {
 	/** @type {Type} */
 	var expectedType;
 	expectedType = this._expr.getExpectedType$();
+	if (! (expectedType.getClassDef$() != null)) {
+		debugger;
+		throw new Error("[/Users/gfx/repo/try-on-web/JSX/src/jsemitter.jsx:1167:42] assertion failure\n        assert expectedType.getClassDef() != null;\n                                          ^^\n");
+	}
 	if (expectedType.getClassDef$() instanceof InstantiatedClassDefinition && (function (v) {
 		if (! (v == null || v instanceof InstantiatedClassDefinition)) {
 			debugger;
-			throw new Error("[/Users/gfx/repo/try-on-web/JSX/src/jsemitter.jsx:1140:109] detected invalid cast, value is not an instance of the designated type or null\n        if (expectedType.getClassDef() instanceof InstantiatedClassDefinition && (expectedType.getClassDef() as InstantiatedClassDefinition).getTemplateClassName() == \"Array\") {\n                                                                                                             ^^\n");
+			throw new Error("[/Users/gfx/repo/try-on-web/JSX/src/jsemitter.jsx:1168:109] detected invalid cast, value is not an instance of the designated type or null\n        if (expectedType.getClassDef() instanceof InstantiatedClassDefinition && (expectedType.getClassDef() as InstantiatedClassDefinition).getTemplateClassName() == \"Array\") {\n                                                                                                             ^^\n");
 		}
 		return v;
 	}(expectedType.getClassDef$())).getTemplateClassName$() === "Array") {
@@ -9677,7 +9792,7 @@ _InstanceofExpressionEmitter.prototype.emit$N = function (outerOpPrecedence) {
 		if (expectedType.getClassDef$() instanceof InstantiatedClassDefinition && (function (v) {
 			if (! (v == null || v instanceof InstantiatedClassDefinition)) {
 				debugger;
-				throw new Error("[/Users/gfx/repo/try-on-web/JSX/src/jsemitter.jsx:1145:116] detected invalid cast, value is not an instance of the designated type or null\n        } else if (expectedType.getClassDef() instanceof InstantiatedClassDefinition && (expectedType.getClassDef() as InstantiatedClassDefinition).getTemplateClassName() == \"Map\") {\n                                                                                                                    ^^\n");
+				throw new Error("[/Users/gfx/repo/try-on-web/JSX/src/jsemitter.jsx:1173:116] detected invalid cast, value is not an instance of the designated type or null\n        } else if (expectedType.getClassDef() instanceof InstantiatedClassDefinition && (expectedType.getClassDef() as InstantiatedClassDefinition).getTemplateClassName() == \"Map\") {\n                                                                                                                    ^^\n");
 			}
 			return v;
 		}(expectedType.getClassDef$())).getTemplateClassName$() === "Map") {
@@ -9714,7 +9829,7 @@ _InstanceofExpressionEmitter.prototype.getInstanceofNameFromClassDef$LClassDefin
 		name = (function (v) {
 			if (! (v == null || v instanceof InstantiatedClassDefinition)) {
 				debugger;
-				throw new Error("[/Users/gfx/repo/try-on-web/JSX/src/jsemitter.jsx:1167:33] detected invalid cast, value is not an instance of the designated type or null\n            var name = (classDef as InstantiatedClassDefinition).getTemplateClassName();\n                                 ^^\n");
+				throw new Error("[/Users/gfx/repo/try-on-web/JSX/src/jsemitter.jsx:1195:33] detected invalid cast, value is not an instance of the designated type or null\n            var name = (classDef as InstantiatedClassDefinition).getTemplateClassName();\n                                 ^^\n");
 			}
 			return v;
 		}(classDef)).getTemplateClassName$();
@@ -9768,7 +9883,7 @@ _PropertyExpressionEmitter.prototype._emit$ = function () {
 	expr = (function (v) {
 		if (! (v == null || v instanceof PropertyExpression)) {
 			debugger;
-			throw new Error("[/Users/gfx/repo/try-on-web/JSX/src/jsemitter.jsx:1191:30] detected invalid cast, value is not an instance of the designated type or null\n        var expr = this._expr as PropertyExpression;\n                              ^^\n");
+			throw new Error("[/Users/gfx/repo/try-on-web/JSX/src/jsemitter.jsx:1219:30] detected invalid cast, value is not an instance of the designated type or null\n        var expr = this._expr as PropertyExpression;\n                              ^^\n");
 		}
 		return v;
 	}(this._expr));
@@ -9805,7 +9920,7 @@ _PropertyExpressionEmitter.prototype._emit$ = function () {
 		this._emitter._emit$SLToken$(this._emitter._mangleFunctionName$SALType$(identifierToken.getValue$(), (function (v) {
 			if (! (v == null || v instanceof ResolvedFunctionType)) {
 				debugger;
-				throw new Error("[/Users/gfx/repo/try-on-web/JSX/src/jsemitter.jsx:1228:104] detected invalid cast, value is not an instance of the designated type or null\n            this._emitter._emit(this._emitter._mangleFunctionName(identifierToken.getValue(), (exprType as ResolvedFunctionType).getArgumentTypes()), identifierToken);\n                                                                                                        ^^\n");
+				throw new Error("[/Users/gfx/repo/try-on-web/JSX/src/jsemitter.jsx:1256:104] detected invalid cast, value is not an instance of the designated type or null\n            this._emitter._emit(this._emitter._mangleFunctionName(identifierToken.getValue(), (exprType as ResolvedFunctionType).getArgumentTypes()), identifierToken);\n                                                                                                        ^^\n");
 			}
 			return v;
 		}(exprType)).getArgumentTypes$()), identifierToken);
@@ -9862,9 +9977,7 @@ _FunctionExpressionEmitter.prototype._emit$ = function () {
 	/** @type {!number} */
 	var i;
 	funcDef = this._expr.getFuncDef$();
-	if (! this._expr.isStatement$()) {
-		this._emitter._emit$SLToken$("(", funcDef.getToken$());
-	}
+	this._emitter._emit$SLToken$("(", funcDef.getToken$());
 	this._emitter._emit$SLToken$("function " + (funcDef.getNameToken$() != null ? funcDef.name$() : "") + "(", funcDef.getToken$());
 	args = funcDef.getArguments$();
 	for (i = 0; i < args.length; ++ i) {
@@ -9878,9 +9991,7 @@ _FunctionExpressionEmitter.prototype._emit$ = function () {
 	this._emitter._emitFunctionBody$LMemberFunctionDefinition$(funcDef);
 	this._emitter._reduceIndent$();
 	this._emitter._emit$SLToken$("}", funcDef.getToken$());
-	if (! this._expr.isStatement$()) {
-		this._emitter._emit$SLToken$(")", funcDef.getToken$());
-	}
+	this._emitter._emit$SLToken$(")", funcDef.getToken$());
 };
 
 /**
@@ -9985,7 +10096,7 @@ _AssignmentExpressionEmitter.prototype._emit$ = function () {
 	this._emitter._getExpressionEmitterFor$LExpression$(this._expr.getFirstExpr$()).emit$N((function (v) {
 		if (! (v != null)) {
 			debugger;
-			throw new Error("[/Users/gfx/repo/try-on-web/JSX/src/jsemitter.jsx:1336:127] null access\n        this._emitter._getExpressionEmitterFor(this._expr.getFirstExpr()).emit(_AssignmentExpressionEmitter._operatorPrecedence[op]);\n                                                                                                                               ^\n");
+			throw new Error("[/Users/gfx/repo/try-on-web/JSX/src/jsemitter.jsx:1362:127] null access\n        this._emitter._getExpressionEmitterFor(this._expr.getFirstExpr()).emit(_AssignmentExpressionEmitter._operatorPrecedence[op]);\n                                                                                                                               ^\n");
 		}
 		return v;
 	}(_AssignmentExpressionEmitter._operatorPrecedence[op])));
@@ -10010,7 +10121,7 @@ _AssignmentExpressionEmitter.prototype._emitDivAssignToInt$N = function (outerOp
 			this._emitter._getExpressionEmitterFor$LExpression$((function (v) {
 				if (! (v == null || v instanceof PropertyExpression)) {
 					debugger;
-					throw new Error("[/Users/gfx/repo/try-on-web/JSX/src/jsemitter.jsx:1347:66] detected invalid cast, value is not an instance of the designated type or null\n                this._emitter._getExpressionEmitterFor((firstExpr as PropertyExpression).getExpr()).emit(0);\n                                                                  ^^\n");
+					throw new Error("[/Users/gfx/repo/try-on-web/JSX/src/jsemitter.jsx:1373:66] detected invalid cast, value is not an instance of the designated type or null\n                this._emitter._getExpressionEmitterFor((firstExpr as PropertyExpression).getExpr()).emit(0);\n                                                                  ^^\n");
 				}
 				return v;
 			}(firstExpr)).getExpr$()).emit$N(0);
@@ -10018,13 +10129,13 @@ _AssignmentExpressionEmitter.prototype._emitDivAssignToInt$N = function (outerOp
 			this._emitter._emit$SLToken$(Util$encodeStringLiteral$S((function (v) {
 				if (! (v == null || v instanceof PropertyExpression)) {
 					debugger;
-					throw new Error("[/Users/gfx/repo/try-on-web/JSX/src/jsemitter.jsx:1349:72] detected invalid cast, value is not an instance of the designated type or null\n                this._emitter._emit(Util.encodeStringLiteral((firstExpr as PropertyExpression).getIdentifierToken().getValue()), (firstExpr as PropertyExpression).getIdentifierToken());\n                                                                        ^^\n");
+					throw new Error("[/Users/gfx/repo/try-on-web/JSX/src/jsemitter.jsx:1375:72] detected invalid cast, value is not an instance of the designated type or null\n                this._emitter._emit(Util.encodeStringLiteral((firstExpr as PropertyExpression).getIdentifierToken().getValue()), (firstExpr as PropertyExpression).getIdentifierToken());\n                                                                        ^^\n");
 				}
 				return v;
 			}(firstExpr)).getIdentifierToken$().getValue$()), (function (v) {
 				if (! (v == null || v instanceof PropertyExpression)) {
 					debugger;
-					throw new Error("[/Users/gfx/repo/try-on-web/JSX/src/jsemitter.jsx:1349:140] detected invalid cast, value is not an instance of the designated type or null\n                this._emitter._emit(Util.encodeStringLiteral((firstExpr as PropertyExpression).getIdentifierToken().getValue()), (firstExpr as PropertyExpression).getIdentifierToken());\n                                                                                                                                            ^^\n");
+					throw new Error("[/Users/gfx/repo/try-on-web/JSX/src/jsemitter.jsx:1375:140] detected invalid cast, value is not an instance of the designated type or null\n                this._emitter._emit(Util.encodeStringLiteral((firstExpr as PropertyExpression).getIdentifierToken().getValue()), (firstExpr as PropertyExpression).getIdentifierToken());\n                                                                                                                                            ^^\n");
 				}
 				return v;
 			}(firstExpr)).getIdentifierToken$());
@@ -10032,7 +10143,7 @@ _AssignmentExpressionEmitter.prototype._emitDivAssignToInt$N = function (outerOp
 			this._emitter._getExpressionEmitterFor$LExpression$((function (v) {
 				if (! (v == null || v instanceof ArrayExpression)) {
 					debugger;
-					throw new Error("[/Users/gfx/repo/try-on-web/JSX/src/jsemitter.jsx:1351:66] detected invalid cast, value is not an instance of the designated type or null\n                this._emitter._getExpressionEmitterFor((firstExpr as ArrayExpression).getFirstExpr()).emit(0);\n                                                                  ^^\n");
+					throw new Error("[/Users/gfx/repo/try-on-web/JSX/src/jsemitter.jsx:1377:66] detected invalid cast, value is not an instance of the designated type or null\n                this._emitter._getExpressionEmitterFor((firstExpr as ArrayExpression).getFirstExpr()).emit(0);\n                                                                  ^^\n");
 				}
 				return v;
 			}(firstExpr)).getFirstExpr$()).emit$N(0);
@@ -10040,7 +10151,7 @@ _AssignmentExpressionEmitter.prototype._emitDivAssignToInt$N = function (outerOp
 			this._emitter._getExpressionEmitterFor$LExpression$((function (v) {
 				if (! (v == null || v instanceof ArrayExpression)) {
 					debugger;
-					throw new Error("[/Users/gfx/repo/try-on-web/JSX/src/jsemitter.jsx:1353:66] detected invalid cast, value is not an instance of the designated type or null\n                this._emitter._getExpressionEmitterFor((firstExpr as ArrayExpression).getSecondExpr()).emit(0);\n                                                                  ^^\n");
+					throw new Error("[/Users/gfx/repo/try-on-web/JSX/src/jsemitter.jsx:1379:66] detected invalid cast, value is not an instance of the designated type or null\n                this._emitter._getExpressionEmitterFor((firstExpr as ArrayExpression).getSecondExpr()).emit(0);\n                                                                  ^^\n");
 				}
 				return v;
 			}(firstExpr)).getSecondExpr$()).emit$N(0);
@@ -10052,14 +10163,14 @@ _AssignmentExpressionEmitter.prototype._emitDivAssignToInt$N = function (outerOp
 		this.emitWithPrecedence$NNF$V$(outerOpPrecedence, (function (v) {
 			if (! (v != null)) {
 				debugger;
-				throw new Error("[/Users/gfx/repo/try-on-web/JSX/src/jsemitter.jsx:1359:103] null access\n            this.emitWithPrecedence(outerOpPrecedence, _AssignmentExpressionEmitter._operatorPrecedence[\"=\"], function () {\n                                                                                                       ^\n");
+				throw new Error("[/Users/gfx/repo/try-on-web/JSX/src/jsemitter.jsx:1385:103] null access\n            this.emitWithPrecedence(outerOpPrecedence, _AssignmentExpressionEmitter._operatorPrecedence[\"=\"], function () {\n                                                                                                       ^\n");
 			}
 			return v;
 		}(_AssignmentExpressionEmitter._operatorPrecedence["="])), (function () {
 			$this._emitter._getExpressionEmitterFor$LExpression$(firstExpr).emit$N((function (v) {
 				if (! (v != null)) {
 					debugger;
-					throw new Error("[/Users/gfx/repo/try-on-web/JSX/src/jsemitter.jsx:1360:119] null access\n                this._emitter._getExpressionEmitterFor(firstExpr).emit(_AssignmentExpressionEmitter._operatorPrecedence[\"=\"]);\n                                                                                                                       ^\n");
+					throw new Error("[/Users/gfx/repo/try-on-web/JSX/src/jsemitter.jsx:1386:119] null access\n                this._emitter._getExpressionEmitterFor(firstExpr).emit(_AssignmentExpressionEmitter._operatorPrecedence[\"=\"]);\n                                                                                                                       ^\n");
 				}
 				return v;
 			}(_AssignmentExpressionEmitter._operatorPrecedence["="])));
@@ -10067,7 +10178,7 @@ _AssignmentExpressionEmitter.prototype._emitDivAssignToInt$N = function (outerOp
 			$this._emitter._emitWithNullableGuard$LExpression$N(firstExpr, (function (v) {
 				if (! (v != null)) {
 					debugger;
-					throw new Error("[/Users/gfx/repo/try-on-web/JSX/src/jsemitter.jsx:1362:114] null access\n                this._emitter._emitWithNullableGuard(firstExpr, _BinaryNumberExpressionEmitter._operatorPrecedence[\"/\"]);\n                                                                                                                  ^\n");
+					throw new Error("[/Users/gfx/repo/try-on-web/JSX/src/jsemitter.jsx:1388:114] null access\n                this._emitter._emitWithNullableGuard(firstExpr, _BinaryNumberExpressionEmitter._operatorPrecedence[\"/\"]);\n                                                                                                                  ^\n");
 				}
 				return v;
 			}(_BinaryNumberExpressionEmitter._operatorPrecedence["/"])));
@@ -10075,7 +10186,7 @@ _AssignmentExpressionEmitter.prototype._emitDivAssignToInt$N = function (outerOp
 			$this._emitter._emitWithNullableGuard$LExpression$N(secondExpr, (function (v) {
 				if (! (v != null)) {
 					debugger;
-					throw new Error("[/Users/gfx/repo/try-on-web/JSX/src/jsemitter.jsx:1364:115] null access\n                this._emitter._emitWithNullableGuard(secondExpr, _BinaryNumberExpressionEmitter._operatorPrecedence[\"/\"] - 1);\n                                                                                                                   ^\n");
+					throw new Error("[/Users/gfx/repo/try-on-web/JSX/src/jsemitter.jsx:1390:115] null access\n                this._emitter._emitWithNullableGuard(secondExpr, _BinaryNumberExpressionEmitter._operatorPrecedence[\"/\"] - 1);\n                                                                                                                   ^\n");
 				}
 				return v;
 			}(_BinaryNumberExpressionEmitter._operatorPrecedence["/"])) - 1);
@@ -10091,7 +10202,7 @@ _AssignmentExpressionEmitter.prototype._getPrecedence$ = function () {
 	return (function (v) {
 		if (! (v != null)) {
 			debugger;
-			throw new Error("[/Users/gfx/repo/try-on-web/JSX/src/jsemitter.jsx:1371:63] null access\n        return _AssignmentExpressionEmitter._operatorPrecedence[this._expr.getToken().getValue()];\n                                                               ^\n");
+			throw new Error("[/Users/gfx/repo/try-on-web/JSX/src/jsemitter.jsx:1397:63] null access\n        return _AssignmentExpressionEmitter._operatorPrecedence[this._expr.getToken().getValue()];\n                                                               ^\n");
 		}
 		return v;
 	}(_AssignmentExpressionEmitter._operatorPrecedence[this._expr.getToken$().getValue$()]));
@@ -10142,7 +10253,7 @@ _EqualityExpressionEmitter.prototype._emit$ = function () {
 	this._emitter._getExpressionEmitterFor$LExpression$(this._expr.getFirstExpr$()).emit$N((function (v) {
 		if (! (v != null)) {
 			debugger;
-			throw new Error("[/Users/gfx/repo/try-on-web/JSX/src/jsemitter.jsx:1398:125] null access\n        this._emitter._getExpressionEmitterFor(this._expr.getFirstExpr()).emit(_EqualityExpressionEmitter._operatorPrecedence[op] - 1);\n                                                                                                                             ^\n");
+			throw new Error("[/Users/gfx/repo/try-on-web/JSX/src/jsemitter.jsx:1424:125] null access\n        this._emitter._getExpressionEmitterFor(this._expr.getFirstExpr()).emit(_EqualityExpressionEmitter._operatorPrecedence[op] - 1);\n                                                                                                                             ^\n");
 		}
 		return v;
 	}(_EqualityExpressionEmitter._operatorPrecedence[op])) - 1);
@@ -10150,7 +10261,7 @@ _EqualityExpressionEmitter.prototype._emit$ = function () {
 	this._emitter._getExpressionEmitterFor$LExpression$(this._expr.getSecondExpr$()).emit$N((function (v) {
 		if (! (v != null)) {
 			debugger;
-			throw new Error("[/Users/gfx/repo/try-on-web/JSX/src/jsemitter.jsx:1400:126] null access\n        this._emitter._getExpressionEmitterFor(this._expr.getSecondExpr()).emit(_EqualityExpressionEmitter._operatorPrecedence[op] - 1);\n                                                                                                                              ^\n");
+			throw new Error("[/Users/gfx/repo/try-on-web/JSX/src/jsemitter.jsx:1426:126] null access\n        this._emitter._getExpressionEmitterFor(this._expr.getSecondExpr()).emit(_EqualityExpressionEmitter._operatorPrecedence[op] - 1);\n                                                                                                                              ^\n");
 		}
 		return v;
 	}(_EqualityExpressionEmitter._operatorPrecedence[op])) - 1);
@@ -10163,7 +10274,7 @@ _EqualityExpressionEmitter.prototype._getPrecedence$ = function () {
 	return (function (v) {
 		if (! (v != null)) {
 			debugger;
-			throw new Error("[/Users/gfx/repo/try-on-web/JSX/src/jsemitter.jsx:1404:61] null access\n        return _EqualityExpressionEmitter._operatorPrecedence[this._expr.getToken().getValue()];\n                                                             ^\n");
+			throw new Error("[/Users/gfx/repo/try-on-web/JSX/src/jsemitter.jsx:1430:61] null access\n        return _EqualityExpressionEmitter._operatorPrecedence[this._expr.getToken().getValue()];\n                                                             ^\n");
 		}
 		return v;
 	}(_EqualityExpressionEmitter._operatorPrecedence[this._expr.getToken$().getValue$()]));
@@ -10266,7 +10377,7 @@ _LogicalExpressionEmitter.prototype._emit$ = function () {
 	this._emitter._getExpressionEmitterFor$LExpression$(this._expr.getFirstExpr$()).emit$N((function (v) {
 		if (! (v != null)) {
 			debugger;
-			throw new Error("[/Users/gfx/repo/try-on-web/JSX/src/jsemitter.jsx:1465:124] null access\n        this._emitter._getExpressionEmitterFor(this._expr.getFirstExpr()).emit(_LogicalExpressionEmitter._operatorPrecedence[op]);\n                                                                                                                            ^\n");
+			throw new Error("[/Users/gfx/repo/try-on-web/JSX/src/jsemitter.jsx:1491:124] null access\n        this._emitter._getExpressionEmitterFor(this._expr.getFirstExpr()).emit(_LogicalExpressionEmitter._operatorPrecedence[op]);\n                                                                                                                            ^\n");
 		}
 		return v;
 	}(_LogicalExpressionEmitter._operatorPrecedence[op])));
@@ -10274,7 +10385,7 @@ _LogicalExpressionEmitter.prototype._emit$ = function () {
 	this._emitter._getExpressionEmitterFor$LExpression$(this._expr.getSecondExpr$()).emit$N((function (v) {
 		if (! (v != null)) {
 			debugger;
-			throw new Error("[/Users/gfx/repo/try-on-web/JSX/src/jsemitter.jsx:1467:125] null access\n        this._emitter._getExpressionEmitterFor(this._expr.getSecondExpr()).emit(_LogicalExpressionEmitter._operatorPrecedence[op] - 1);\n                                                                                                                             ^\n");
+			throw new Error("[/Users/gfx/repo/try-on-web/JSX/src/jsemitter.jsx:1493:125] null access\n        this._emitter._getExpressionEmitterFor(this._expr.getSecondExpr()).emit(_LogicalExpressionEmitter._operatorPrecedence[op] - 1);\n                                                                                                                             ^\n");
 		}
 		return v;
 	}(_LogicalExpressionEmitter._operatorPrecedence[op])) - 1);
@@ -10287,7 +10398,7 @@ _LogicalExpressionEmitter.prototype._getPrecedence$ = function () {
 	return (function (v) {
 		if (! (v != null)) {
 			debugger;
-			throw new Error("[/Users/gfx/repo/try-on-web/JSX/src/jsemitter.jsx:1471:60] null access\n        return _LogicalExpressionEmitter._operatorPrecedence[this._expr.getToken().getValue()];\n                                                            ^\n");
+			throw new Error("[/Users/gfx/repo/try-on-web/JSX/src/jsemitter.jsx:1497:60] null access\n        return _LogicalExpressionEmitter._operatorPrecedence[this._expr.getToken().getValue()];\n                                                            ^\n");
 		}
 		return v;
 	}(_LogicalExpressionEmitter._operatorPrecedence[this._expr.getToken$().getValue$()]));
@@ -10332,7 +10443,7 @@ _ShiftExpressionEmitter.prototype._emit$ = function () {
 	this._emitter._emitWithNullableGuard$LExpression$N(this._expr.getFirstExpr$(), (function (v) {
 		if (! (v != null)) {
 			debugger;
-			throw new Error("[/Users/gfx/repo/try-on-web/JSX/src/jsemitter.jsx:1493:115] null access\n        this._emitter._emitWithNullableGuard(this._expr.getFirstExpr(), _ShiftExpressionEmitter._operatorPrecedence[op]);\n                                                                                                                   ^\n");
+			throw new Error("[/Users/gfx/repo/try-on-web/JSX/src/jsemitter.jsx:1519:115] null access\n        this._emitter._emitWithNullableGuard(this._expr.getFirstExpr(), _ShiftExpressionEmitter._operatorPrecedence[op]);\n                                                                                                                   ^\n");
 		}
 		return v;
 	}(_ShiftExpressionEmitter._operatorPrecedence[op])));
@@ -10340,7 +10451,7 @@ _ShiftExpressionEmitter.prototype._emit$ = function () {
 	this._emitter._emitWithNullableGuard$LExpression$N(this._expr.getSecondExpr$(), (function (v) {
 		if (! (v != null)) {
 			debugger;
-			throw new Error("[/Users/gfx/repo/try-on-web/JSX/src/jsemitter.jsx:1495:116] null access\n        this._emitter._emitWithNullableGuard(this._expr.getSecondExpr(), _ShiftExpressionEmitter._operatorPrecedence[op] - 1);\n                                                                                                                    ^\n");
+			throw new Error("[/Users/gfx/repo/try-on-web/JSX/src/jsemitter.jsx:1521:116] null access\n        this._emitter._emitWithNullableGuard(this._expr.getSecondExpr(), _ShiftExpressionEmitter._operatorPrecedence[op] - 1);\n                                                                                                                    ^\n");
 		}
 		return v;
 	}(_ShiftExpressionEmitter._operatorPrecedence[op])) - 1);
@@ -10353,7 +10464,7 @@ _ShiftExpressionEmitter.prototype._getPrecedence$ = function () {
 	return (function (v) {
 		if (! (v != null)) {
 			debugger;
-			throw new Error("[/Users/gfx/repo/try-on-web/JSX/src/jsemitter.jsx:1499:58] null access\n        return _ShiftExpressionEmitter._operatorPrecedence[this._expr.getToken().getValue()];\n                                                          ^\n");
+			throw new Error("[/Users/gfx/repo/try-on-web/JSX/src/jsemitter.jsx:1525:58] null access\n        return _ShiftExpressionEmitter._operatorPrecedence[this._expr.getToken().getValue()];\n                                                          ^\n");
 		}
 		return v;
 	}(_ShiftExpressionEmitter._operatorPrecedence[this._expr.getToken$().getValue$()]));
@@ -10413,7 +10524,7 @@ _BinaryNumberExpressionEmitter.prototype._emit$ = function () {
 	this._emitter._emitWithNullableGuard$LExpression$N(this._expr.getFirstExpr$(), (function (v) {
 		if (! (v != null)) {
 			debugger;
-			throw new Error("[/Users/gfx/repo/try-on-web/JSX/src/jsemitter.jsx:1535:122] null access\n        this._emitter._emitWithNullableGuard(this._expr.getFirstExpr(), _BinaryNumberExpressionEmitter._operatorPrecedence[op]);\n                                                                                                                          ^\n");
+			throw new Error("[/Users/gfx/repo/try-on-web/JSX/src/jsemitter.jsx:1561:122] null access\n        this._emitter._emitWithNullableGuard(this._expr.getFirstExpr(), _BinaryNumberExpressionEmitter._operatorPrecedence[op]);\n                                                                                                                          ^\n");
 		}
 		return v;
 	}(_BinaryNumberExpressionEmitter._operatorPrecedence[op])));
@@ -10421,7 +10532,7 @@ _BinaryNumberExpressionEmitter.prototype._emit$ = function () {
 	this._emitter._emitWithNullableGuard$LExpression$N(this._expr.getSecondExpr$(), (function (v) {
 		if (! (v != null)) {
 			debugger;
-			throw new Error("[/Users/gfx/repo/try-on-web/JSX/src/jsemitter.jsx:1537:123] null access\n        this._emitter._emitWithNullableGuard(this._expr.getSecondExpr(), _BinaryNumberExpressionEmitter._operatorPrecedence[op] - 1);\n                                                                                                                           ^\n");
+			throw new Error("[/Users/gfx/repo/try-on-web/JSX/src/jsemitter.jsx:1563:123] null access\n        this._emitter._emitWithNullableGuard(this._expr.getSecondExpr(), _BinaryNumberExpressionEmitter._operatorPrecedence[op] - 1);\n                                                                                                                           ^\n");
 		}
 		return v;
 	}(_BinaryNumberExpressionEmitter._operatorPrecedence[op])) - 1);
@@ -10450,7 +10561,7 @@ _BinaryNumberExpressionEmitter.prototype._getPrecedence$ = function () {
 	return (function (v) {
 		if (! (v != null)) {
 			debugger;
-			throw new Error("[/Users/gfx/repo/try-on-web/JSX/src/jsemitter.jsx:1552:65] null access\n        return _BinaryNumberExpressionEmitter._operatorPrecedence[this._expr.getToken().getValue()];\n                                                                 ^\n");
+			throw new Error("[/Users/gfx/repo/try-on-web/JSX/src/jsemitter.jsx:1578:65] null access\n        return _BinaryNumberExpressionEmitter._operatorPrecedence[this._expr.getToken().getValue()];\n                                                                 ^\n");
 		}
 		return v;
 	}(_BinaryNumberExpressionEmitter._operatorPrecedence[this._expr.getToken$().getValue$()]));
@@ -10579,7 +10690,7 @@ _ConditionalExpressionEmitter.prototype._getPrecedence$ = function () {
 	return (this._expr.getIfTrueExpr$() != null ? _ConditionalExpressionEmitter._operatorPrecedence : (function (v) {
 		if (! (v != null)) {
 			debugger;
-			throw new Error("[/Users/gfx/repo/try-on-web/JSX/src/jsemitter.jsx:1630:149] null access\n        return this._expr.getIfTrueExpr() != null ? _ConditionalExpressionEmitter._operatorPrecedence : _LogicalExpressionEmitter._operatorPrecedence[\"||\"] as number;\n                                                                                                                                                     ^\n");
+			throw new Error("[/Users/gfx/repo/try-on-web/JSX/src/jsemitter.jsx:1656:149] null access\n        return this._expr.getIfTrueExpr() != null ? _ConditionalExpressionEmitter._operatorPrecedence : _LogicalExpressionEmitter._operatorPrecedence[\"||\"] as number;\n                                                                                                                                                     ^\n");
 		}
 		return v;
 	}(_LogicalExpressionEmitter._operatorPrecedence["||"])));
@@ -10628,7 +10739,7 @@ _CallExpressionEmitter.prototype._emit$ = function () {
 	this._emitter._emitCallArguments$LToken$SALExpression$ALType$(this._expr.getToken$(), "(", this._expr.getArguments$(), (function (v) {
 		if (! (v == null || v instanceof ResolvedFunctionType)) {
 			debugger;
-			throw new Error("[/Users/gfx/repo/try-on-web/JSX/src/jsemitter.jsx:1656:148] detected invalid cast, value is not an instance of the designated type or null\n        this._emitter._emitCallArguments(this._expr.getToken(), \"(\", this._expr.getArguments(), (this._expr.getExpr().getType().resolveIfNullable() as ResolvedFunctionType).getArgumentTypes());\n                                                                                                                                                    ^^\n");
+			throw new Error("[/Users/gfx/repo/try-on-web/JSX/src/jsemitter.jsx:1682:148] detected invalid cast, value is not an instance of the designated type or null\n        this._emitter._emitCallArguments(this._expr.getToken(), \"(\", this._expr.getArguments(), (this._expr.getExpr().getType().resolveIfNullable() as ResolvedFunctionType).getArgumentTypes());\n                                                                                                                                                    ^^\n");
 		}
 		return v;
 	}(this._expr.getExpr$().getType$().resolveIfNullable$())).getArgumentTypes$());
@@ -10664,7 +10775,7 @@ _CallExpressionEmitter.prototype._emitSpecial$ = function () {
 	if (this._emitIfJsInvoke$LPropertyExpression$((function (v) {
 		if (! (v == null || v instanceof PropertyExpression)) {
 			debugger;
-			throw new Error("[/Users/gfx/repo/try-on-web/JSX/src/jsemitter.jsx:1674:44] detected invalid cast, value is not an instance of the designated type or null\n        if (this._emitIfJsInvoke(calleeExpr as PropertyExpression))\n                                            ^^\n");
+			throw new Error("[/Users/gfx/repo/try-on-web/JSX/src/jsemitter.jsx:1700:44] detected invalid cast, value is not an instance of the designated type or null\n        if (this._emitIfJsInvoke(calleeExpr as PropertyExpression))\n                                            ^^\n");
 		}
 		return v;
 	}(calleeExpr)))) {
@@ -10673,7 +10784,7 @@ _CallExpressionEmitter.prototype._emitSpecial$ = function () {
 	if (this._emitIfJsEval$LPropertyExpression$((function (v) {
 		if (! (v == null || v instanceof PropertyExpression)) {
 			debugger;
-			throw new Error("[/Users/gfx/repo/try-on-web/JSX/src/jsemitter.jsx:1676:42] detected invalid cast, value is not an instance of the designated type or null\n        if (this._emitIfJsEval(calleeExpr as PropertyExpression))\n                                          ^^\n");
+			throw new Error("[/Users/gfx/repo/try-on-web/JSX/src/jsemitter.jsx:1702:42] detected invalid cast, value is not an instance of the designated type or null\n        if (this._emitIfJsEval(calleeExpr as PropertyExpression))\n                                          ^^\n");
 		}
 		return v;
 	}(calleeExpr)))) {
@@ -10682,7 +10793,7 @@ _CallExpressionEmitter.prototype._emitSpecial$ = function () {
 		if (this._emitCallsToMap$LPropertyExpression$((function (v) {
 			if (! (v == null || v instanceof PropertyExpression)) {
 				debugger;
-				throw new Error("[/Users/gfx/repo/try-on-web/JSX/src/jsemitter.jsx:1678:49] detected invalid cast, value is not an instance of the designated type or null\n        else if (this._emitCallsToMap(calleeExpr as PropertyExpression))\n                                                 ^^\n");
+				throw new Error("[/Users/gfx/repo/try-on-web/JSX/src/jsemitter.jsx:1704:49] detected invalid cast, value is not an instance of the designated type or null\n        else if (this._emitCallsToMap(calleeExpr as PropertyExpression))\n                                                 ^^\n");
 			}
 			return v;
 		}(calleeExpr)))) {
@@ -10691,7 +10802,7 @@ _CallExpressionEmitter.prototype._emitSpecial$ = function () {
 			if (this._emitIfMathAbs$LPropertyExpression$((function (v) {
 				if (! (v == null || v instanceof PropertyExpression)) {
 					debugger;
-					throw new Error("[/Users/gfx/repo/try-on-web/JSX/src/jsemitter.jsx:1680:48] detected invalid cast, value is not an instance of the designated type or null\n        else if (this._emitIfMathAbs(calleeExpr as PropertyExpression))\n                                                ^^\n");
+					throw new Error("[/Users/gfx/repo/try-on-web/JSX/src/jsemitter.jsx:1706:48] detected invalid cast, value is not an instance of the designated type or null\n        else if (this._emitIfMathAbs(calleeExpr as PropertyExpression))\n                                                ^^\n");
 				}
 				return v;
 			}(calleeExpr)))) {
@@ -10756,7 +10867,7 @@ _CallExpressionEmitter.prototype._emitIfJsInvoke$LPropertyExpression$ = function
 		this._emitter._emitCallArguments$LToken$SALExpression$ALType$(this._expr.getToken$(), "(", (function (v) {
 			if (! (v == null || v instanceof ArrayLiteralExpression)) {
 				debugger;
-				throw new Error("[/Users/gfx/repo/try-on-web/JSX/src/jsemitter.jsx:1722:82] detected invalid cast, value is not an instance of the designated type or null\n            this._emitter._emitCallArguments(this._expr.getToken(), \"(\", (args[2] as ArrayLiteralExpression).getExprs(), null);\n                                                                                  ^^\n");
+				throw new Error("[/Users/gfx/repo/try-on-web/JSX/src/jsemitter.jsx:1748:82] detected invalid cast, value is not an instance of the designated type or null\n            this._emitter._emitCallArguments(this._expr.getToken(), \"(\", (args[2] as ArrayLiteralExpression).getExprs(), null);\n                                                                                  ^^\n");
 			}
 			return v;
 		}(args[2])).getExprs$(), null);
@@ -10789,7 +10900,7 @@ _CallExpressionEmitter.prototype._emitCallsToMap$LPropertyExpression$ = function
 	if ((function (v) {
 		if (! (v == null || v instanceof InstantiatedClassDefinition)) {
 			debugger;
-			throw new Error("[/Users/gfx/repo/try-on-web/JSX/src/jsemitter.jsx:1742:22] detected invalid cast, value is not an instance of the designated type or null\n        if ((classDef as InstantiatedClassDefinition).getTemplateClassName() != \"Map\")\n                      ^^\n");
+			throw new Error("[/Users/gfx/repo/try-on-web/JSX/src/jsemitter.jsx:1768:22] detected invalid cast, value is not an instance of the designated type or null\n        if ((classDef as InstantiatedClassDefinition).getTemplateClassName() != \"Map\")\n                      ^^\n");
 		}
 		return v;
 	}(classDef)).getTemplateClassName$() !== "Map") {
@@ -10834,7 +10945,7 @@ _CallExpressionEmitter.prototype._emitIfMathAbs$LPropertyExpression$ = function 
 		this._emitter._getExpressionEmitterFor$LExpression$(argExpr).emit$N((function (v) {
 			if (! (v != null)) {
 				debugger;
-				throw new Error("[/Users/gfx/repo/try-on-web/JSX/src/jsemitter.jsx:1780:113] null access\n            this._emitter._getExpressionEmitterFor(argExpr).emit(_AssignmentExpressionEmitter._operatorPrecedence[\"=\"]);\n                                                                                                                 ^\n");
+				throw new Error("[/Users/gfx/repo/try-on-web/JSX/src/jsemitter.jsx:1806:113] null access\n            this._emitter._getExpressionEmitterFor(argExpr).emit(_AssignmentExpressionEmitter._operatorPrecedence[\"=\"]);\n                                                                                                                 ^\n");
 			}
 			return v;
 		}(_AssignmentExpressionEmitter._operatorPrecedence["="])));
@@ -10874,19 +10985,19 @@ _CallExpressionEmitter.mathAbsUsesTemporary$LMemberFunctionDefinition$ = functio
 			if (expr instanceof CallExpression && (calleeExpr = (function (v) {
 				if (! (v == null || v instanceof CallExpression)) {
 					debugger;
-					throw new Error("[/Users/gfx/repo/try-on-web/JSX/src/jsemitter.jsx:1801:43] detected invalid cast, value is not an instance of the designated type or null\n                    && (calleeExpr = (expr as CallExpression).getExpr()) instanceof PropertyExpression\n                                           ^^\n");
+					throw new Error("[/Users/gfx/repo/try-on-web/JSX/src/jsemitter.jsx:1827:43] detected invalid cast, value is not an instance of the designated type or null\n                    && (calleeExpr = (expr as CallExpression).getExpr()) instanceof PropertyExpression\n                                           ^^\n");
 				}
 				return v;
 			}(expr)).getExpr$()) instanceof PropertyExpression && _CallExpressionEmitter$_calleeIsMathAbs$LPropertyExpression$((function (v) {
 				if (! (v == null || v instanceof PropertyExpression)) {
 					debugger;
-					throw new Error("[/Users/gfx/repo/try-on-web/JSX/src/jsemitter.jsx:1802:74] detected invalid cast, value is not an instance of the designated type or null\n                    && _CallExpressionEmitter._calleeIsMathAbs(calleeExpr as PropertyExpression)\n                                                                          ^^\n");
+					throw new Error("[/Users/gfx/repo/try-on-web/JSX/src/jsemitter.jsx:1828:74] detected invalid cast, value is not an instance of the designated type or null\n                    && _CallExpressionEmitter._calleeIsMathAbs(calleeExpr as PropertyExpression)\n                                                                          ^^\n");
 				}
 				return v;
 			}(calleeExpr))) && ! ((function (v) {
 				if (! (v == null || v instanceof CallExpression)) {
 					debugger;
-					throw new Error("[/Users/gfx/repo/try-on-web/JSX/src/jsemitter.jsx:1803:32] detected invalid cast, value is not an instance of the designated type or null\n                    && ! ((expr as CallExpression).getArguments()[0] instanceof LeafExpression))\n                                ^^\n");
+					throw new Error("[/Users/gfx/repo/try-on-web/JSX/src/jsemitter.jsx:1829:32] detected invalid cast, value is not an instance of the designated type or null\n                    && ! ((expr as CallExpression).getArguments()[0] instanceof LeafExpression))\n                                ^^\n");
 				}
 				return v;
 			}(expr)).getArguments$()[0] instanceof LeafExpression)) {
@@ -10936,7 +11047,7 @@ _SuperExpressionEmitter.prototype._emit$ = function () {
 	funcType = (function (v) {
 		if (! (v == null || v instanceof ResolvedFunctionType)) {
 			debugger;
-			throw new Error("[/Users/gfx/repo/try-on-web/JSX/src/jsemitter.jsx:1825:52] detected invalid cast, value is not an instance of the designated type or null\n        var funcType = this._expr.getFunctionType() as ResolvedFunctionType;\n                                                    ^^\n");
+			throw new Error("[/Users/gfx/repo/try-on-web/JSX/src/jsemitter.jsx:1851:52] detected invalid cast, value is not an instance of the designated type or null\n        var funcType = this._expr.getFunctionType() as ResolvedFunctionType;\n                                                    ^^\n");
 		}
 		return v;
 	}(this._expr.getFunctionType$()));
@@ -11007,11 +11118,11 @@ _NewExpressionEmitter.prototype.emit$N = function (outerOpPrecedence) {
 		return (stash ? (function (v) {
 			if (! (v == null || v instanceof _UnclassifyOptimizationCommand$CStash)) {
 				debugger;
-				throw new Error("[/Users/gfx/repo/try-on-web/JSX/src/jsemitter.jsx:1856:34] detected invalid cast, value is not an instance of the designated type or null\n            return stash ? (stash as _UnclassifyOptimizationCommand.Stash).inliner : null;\n                                  ^^\n");
+				throw new Error("[/Users/gfx/repo/try-on-web/JSX/src/jsemitter.jsx:1882:34] detected invalid cast, value is not an instance of the designated type or null\n            return stash ? (stash as _UnclassifyOptimizationCommand.Stash).inliner : null;\n                                  ^^\n");
 			}
 			return v;
 		}(stash)).inliner : null);
-	};
+	}
 	classDef = this._expr.getType$().getClassDef$();
 	ctor = this._expr.getConstructor$();
 	argTypes = ctor.getArgumentTypes$();
@@ -11026,7 +11137,7 @@ _NewExpressionEmitter.prototype.emit$N = function (outerOpPrecedence) {
 		if (classDef instanceof InstantiatedClassDefinition && (function (v) {
 			if (! (v == null || v instanceof InstantiatedClassDefinition)) {
 				debugger;
-				throw new Error("[/Users/gfx/repo/try-on-web/JSX/src/jsemitter.jsx:1870:25] detected invalid cast, value is not an instance of the designated type or null\n            && (classDef as InstantiatedClassDefinition).getTemplateClassName() == \"Array\"\n                         ^^\n");
+				throw new Error("[/Users/gfx/repo/try-on-web/JSX/src/jsemitter.jsx:1896:25] detected invalid cast, value is not an instance of the designated type or null\n            && (classDef as InstantiatedClassDefinition).getTemplateClassName() == \"Array\"\n                         ^^\n");
 			}
 			return v;
 		}(classDef)).getTemplateClassName$() === "Array" && argTypes.length === 0) {
@@ -11035,7 +11146,7 @@ _NewExpressionEmitter.prototype.emit$N = function (outerOpPrecedence) {
 			if (classDef instanceof InstantiatedClassDefinition && (function (v) {
 				if (! (v == null || v instanceof InstantiatedClassDefinition)) {
 					debugger;
-					throw new Error("[/Users/gfx/repo/try-on-web/JSX/src/jsemitter.jsx:1875:25] detected invalid cast, value is not an instance of the designated type or null\n            && (classDef as InstantiatedClassDefinition).getTemplateClassName() == \"Map\") {\n                         ^^\n");
+					throw new Error("[/Users/gfx/repo/try-on-web/JSX/src/jsemitter.jsx:1901:25] detected invalid cast, value is not an instance of the designated type or null\n            && (classDef as InstantiatedClassDefinition).getTemplateClassName() == \"Map\") {\n                         ^^\n");
 				}
 				return v;
 			}(classDef)).getTemplateClassName$() === "Map") {
@@ -11066,7 +11177,7 @@ _NewExpressionEmitter.prototype._emitAsObjectLiteral$LClassDefinition$ALExpressi
 			$this._emitter._getExpressionEmitterFor$LExpression$(propertyExprs[propertyIndex++]).emit$N((function (v) {
 				if (! (v != null)) {
 					debugger;
-					throw new Error("[/Users/gfx/repo/try-on-web/JSX/src/jsemitter.jsx:1895:140] null access\n                this._emitter._getExpressionEmitterFor(propertyExprs[propertyIndex++]).emit(_AssignmentExpressionEmitter._operatorPrecedence[\"=\"]);\n                                                                                                                                            ^\n");
+					throw new Error("[/Users/gfx/repo/try-on-web/JSX/src/jsemitter.jsx:1921:140] null access\n                this._emitter._getExpressionEmitterFor(propertyExprs[propertyIndex++]).emit(_AssignmentExpressionEmitter._operatorPrecedence[\"=\"]);\n                                                                                                                                            ^\n");
 				}
 				return v;
 			}(_AssignmentExpressionEmitter._operatorPrecedence["="])));
@@ -12136,10 +12247,10 @@ Util.analyzeArgs$LAnalysisContext$ALExpression$LExpression$AALType$ = function (
 		if (args[i] instanceof FunctionExpression && ! (function (v) {
 			if (! (v == null || v instanceof FunctionExpression)) {
 				debugger;
-				throw new Error("[/Users/gfx/repo/try-on-web/JSX/src/util.jsx:96:68] detected invalid cast, value is not an instance of the designated type or null\n            if (args[i] instanceof FunctionExpression && ! (args[i] as FunctionExpression).typesAreIdentified()) {\n                                                                    ^^\n");
+				throw new Error("[/Users/gfx/repo/try-on-web/JSX/src/util.jsx:96:68] detected invalid cast, value is not an instance of the designated type or null\n            if (args[i] instanceof FunctionExpression && ! (args[i] as FunctionExpression).argumentTypesAreIdentified()) {\n                                                                    ^^\n");
 			}
 			return v;
-		}(args[i])).typesAreIdentified$()) {
+		}(args[i])).argumentTypesAreIdentified$()) {
 			funcDef = (function (v) {
 				if (! (v == null || v instanceof FunctionExpression)) {
 					debugger;
@@ -14497,7 +14608,7 @@ JavaScriptEmitter.prototype.setOutputFile$US = function (name) {
 	this._outputFile = Util$resolvePath$S((function (v) {
 		if (! (v != null)) {
 			debugger;
-			throw new Error("[/Users/gfx/repo/try-on-web/JSX/src/jsemitter.jsx:2005:44] null access\n        this._outputFile = Util.resolvePath(name);\n                                            ^^^^\n");
+			throw new Error("[/Users/gfx/repo/try-on-web/JSX/src/jsemitter.jsx:2031:44] null access\n        this._outputFile = Util.resolvePath(name);\n                                            ^^^^\n");
 		}
 		return v;
 	}(name)));
@@ -14505,7 +14616,7 @@ JavaScriptEmitter.prototype.setOutputFile$US = function (name) {
 		this._sourceMapper = new SourceMapper$SS(this._platform.getRoot$(), (function (v) {
 			if (! (v != null)) {
 				debugger;
-				throw new Error("[/Users/gfx/repo/try-on-web/JSX/src/jsemitter.jsx:2008:76] null access\n            this._sourceMapper = new SourceMapper(this._platform.getRoot(), name);\n                                                                            ^^^^\n");
+				throw new Error("[/Users/gfx/repo/try-on-web/JSX/src/jsemitter.jsx:2034:76] null access\n            this._sourceMapper = new SourceMapper(this._platform.getRoot(), name);\n                                                                            ^^^^\n");
 			}
 			return v;
 		}(name)));
@@ -14597,7 +14708,7 @@ JavaScriptEmitter.prototype.emit$ALClassDefinition$ = function (classDefs) {
 	stash = (function (v) {
 		if (! (v == null || v instanceof _NoDebugCommand$CStash)) {
 			debugger;
-			throw new Error("[/Users/gfx/repo/try-on-web/JSX/src/jsemitter.jsx:2054:74] detected invalid cast, value is not an instance of the designated type or null\n        var stash = (this.getOptimizerStash()[_NoDebugCommand.IDENTIFIER] as _NoDebugCommand.Stash);\n                                                                          ^^\n");
+			throw new Error("[/Users/gfx/repo/try-on-web/JSX/src/jsemitter.jsx:2080:74] detected invalid cast, value is not an instance of the designated type or null\n        var stash = (this.getOptimizerStash()[_NoDebugCommand.IDENTIFIER] as _NoDebugCommand.Stash);\n                                                                          ^^\n");
 		}
 		return v;
 	}(this.getOptimizerStash$()[_NoDebugCommand.IDENTIFIER]));
@@ -14634,7 +14745,7 @@ JavaScriptEmitter.prototype.getStash$LStashable$ = function (stashable) {
 	return (function (v) {
 		if (! (v == null || v instanceof _JSEmitterStash)) {
 			debugger;
-			throw new Error("[/Users/gfx/repo/try-on-web/JSX/src/jsemitter.jsx:2079:34] detected invalid cast, value is not an instance of the designated type or null\n        return stash[\"jsemitter\"] as _JSEmitterStash;\n                                  ^^\n");
+			throw new Error("[/Users/gfx/repo/try-on-web/JSX/src/jsemitter.jsx:2105:34] detected invalid cast, value is not an instance of the designated type or null\n        return stash[\"jsemitter\"] as _JSEmitterStash;\n                                  ^^\n");
 		}
 		return v;
 	}(stash.jsemitter));
@@ -14672,13 +14783,13 @@ JavaScriptEmitter.prototype._setupBooleanizeFlags$LMemberFunctionDefinition$ = f
 				if (exprReturnsBoolean((function (v) {
 					if (! (v == null || v instanceof LogicalExpression)) {
 						debugger;
-						throw new Error("[/Users/gfx/repo/try-on-web/JSX/src/jsemitter.jsx:2101:49] detected invalid cast, value is not an instance of the designated type or null\n                    if (exprReturnsBoolean((expr as LogicalExpression).getFirstExpr()) && exprReturnsBoolean((expr as LogicalExpression).getSecondExpr())) {\n                                                 ^^\n");
+						throw new Error("[/Users/gfx/repo/try-on-web/JSX/src/jsemitter.jsx:2127:49] detected invalid cast, value is not an instance of the designated type or null\n                    if (exprReturnsBoolean((expr as LogicalExpression).getFirstExpr()) && exprReturnsBoolean((expr as LogicalExpression).getSecondExpr())) {\n                                                 ^^\n");
 					}
 					return v;
 				}(expr)).getFirstExpr$()) && exprReturnsBoolean((function (v) {
 					if (! (v == null || v instanceof LogicalExpression)) {
 						debugger;
-						throw new Error("[/Users/gfx/repo/try-on-web/JSX/src/jsemitter.jsx:2101:115] detected invalid cast, value is not an instance of the designated type or null\n                    if (exprReturnsBoolean((expr as LogicalExpression).getFirstExpr()) && exprReturnsBoolean((expr as LogicalExpression).getSecondExpr())) {\n                                                                                                                   ^^\n");
+						throw new Error("[/Users/gfx/repo/try-on-web/JSX/src/jsemitter.jsx:2127:115] detected invalid cast, value is not an instance of the designated type or null\n                    if (exprReturnsBoolean((expr as LogicalExpression).getFirstExpr()) && exprReturnsBoolean((expr as LogicalExpression).getSecondExpr())) {\n                                                                                                                   ^^\n");
 					}
 					return v;
 				}(expr)).getSecondExpr$())) {
@@ -14696,7 +14807,7 @@ JavaScriptEmitter.prototype._setupBooleanizeFlags$LMemberFunctionDefinition$ = f
 							if (parentExpr[0] instanceof ConditionalExpression && (function (v) {
 								if (! (v == null || v instanceof ConditionalExpression)) {
 									debugger;
-									throw new Error("[/Users/gfx/repo/try-on-web/JSX/src/jsemitter.jsx:2115:96] detected invalid cast, value is not an instance of the designated type or null\n                    } else if (parentExpr[0] instanceof ConditionalExpression && (parentExpr[0] as ConditionalExpression).getCondExpr() == expr) {\n                                                                                                ^^\n");
+									throw new Error("[/Users/gfx/repo/try-on-web/JSX/src/jsemitter.jsx:2141:96] detected invalid cast, value is not an instance of the designated type or null\n                    } else if (parentExpr[0] instanceof ConditionalExpression && (parentExpr[0] as ConditionalExpression).getCondExpr() == expr) {\n                                                                                                ^^\n");
 								}
 								return v;
 							}(parentExpr[0])).getCondExpr$() == expr) {
@@ -14748,7 +14859,7 @@ JavaScriptEmitter.prototype._emitClassDefinition$LClassDefinition$ = function (c
 				if (! (member.name$() === "constructor" && (member.flags$() & ClassDefinition.IS_STATIC) === 0) && (function (v) {
 					if (! (v == null || v instanceof MemberFunctionDefinition)) {
 						debugger;
-						throw new Error("[/Users/gfx/repo/try-on-web/JSX/src/jsemitter.jsx:2149:123] detected invalid cast, value is not an instance of the designated type or null\n                    if (! (member.name() == \"constructor\" && (member.flags() & ClassDefinition.IS_STATIC) == 0) && (member as MemberFunctionDefinition).getStatements() != null) {\n                                                                                                                           ^^\n");
+						throw new Error("[/Users/gfx/repo/try-on-web/JSX/src/jsemitter.jsx:2175:123] detected invalid cast, value is not an instance of the designated type or null\n                    if (! (member.name() == \"constructor\" && (member.flags() & ClassDefinition.IS_STATIC) == 0) && (member as MemberFunctionDefinition).getStatements() != null) {\n                                                                                                                           ^^\n");
 					}
 					return v;
 				}(member)).getStatements$() != null) {
@@ -14757,7 +14868,7 @@ JavaScriptEmitter.prototype._emitClassDefinition$LClassDefinition$ = function (c
 						this._emitFunction$LMemberFunctionDefinition$((function (v) {
 							if (! (v == null || v instanceof MemberFunctionDefinition)) {
 								debugger;
-								throw new Error("[/Users/gfx/repo/try-on-web/JSX/src/jsemitter.jsx:2152:54] detected invalid cast, value is not an instance of the designated type or null\n                            this._emitFunction(member as MemberFunctionDefinition);\n                                                      ^^\n");
+								throw new Error("[/Users/gfx/repo/try-on-web/JSX/src/jsemitter.jsx:2178:54] detected invalid cast, value is not an instance of the designated type or null\n                            this._emitFunction(member as MemberFunctionDefinition);\n                                                      ^^\n");
 							}
 							return v;
 						}(member)));
@@ -14794,7 +14905,7 @@ JavaScriptEmitter.prototype._emitStaticInitializationCode$LClassDefinition$ = fu
 			this._emitStaticMemberVariable$SLMemberVariableDefinition$(classDef.getOutputClassName$(), (function (v) {
 				if (! (v == null || v instanceof MemberVariableDefinition)) {
 					debugger;
-					throw new Error("[/Users/gfx/repo/try-on-web/JSX/src/jsemitter.jsx:2179:85] detected invalid cast, value is not an instance of the designated type or null\n                this._emitStaticMemberVariable(classDef.getOutputClassName(), member as MemberVariableDefinition);\n                                                                                     ^^\n");
+					throw new Error("[/Users/gfx/repo/try-on-web/JSX/src/jsemitter.jsx:2205:85] detected invalid cast, value is not an instance of the designated type or null\n                this._emitStaticMemberVariable(classDef.getOutputClassName(), member as MemberVariableDefinition);\n                                                                                     ^^\n");
 				}
 				return v;
 			}(member)));
@@ -14862,7 +14973,7 @@ JavaScriptEmitter.prototype._emitClassMap$ALClassDefinition$ = function (classDe
 		escapedFilename = JSON.stringify(this._platform.encodeFilename$S((function (v) {
 			if (! (v != null)) {
 				debugger;
-				throw new Error("[/Users/gfx/repo/try-on-web/JSX/src/jsemitter.jsx:2222:79] null access\n            var escapedFilename = JSON.stringify(this._platform.encodeFilename(filename));\n                                                                               ^^^^^^^^\n");
+				throw new Error("[/Users/gfx/repo/try-on-web/JSX/src/jsemitter.jsx:2248:79] null access\n            var escapedFilename = JSON.stringify(this._platform.encodeFilename(filename));\n                                                                               ^^^^^^^^\n");
 			}
 			return v;
 		}(filename))));
@@ -14873,13 +14984,13 @@ JavaScriptEmitter.prototype._emitClassMap$ALClassDefinition$ = function (classDe
 			this._emit$SLToken$((function (v) {
 				if (! (v != null)) {
 					debugger;
-					throw new Error("[/Users/gfx/repo/try-on-web/JSX/src/jsemitter.jsx:2227:34] null access\n                this._emit(list[i][0] + \": \" + list[i][1], null);\n                                  ^\n");
+					throw new Error("[/Users/gfx/repo/try-on-web/JSX/src/jsemitter.jsx:2253:34] null access\n                this._emit(list[i][0] + \": \" + list[i][1], null);\n                                  ^\n");
 				}
 				return v;
 			}(list[i][0])) + ": " + (function (v) {
 				if (! (v != null)) {
 					debugger;
-					throw new Error("[/Users/gfx/repo/try-on-web/JSX/src/jsemitter.jsx:2227:54] null access\n                this._emit(list[i][0] + \": \" + list[i][1], null);\n                                                      ^\n");
+					throw new Error("[/Users/gfx/repo/try-on-web/JSX/src/jsemitter.jsx:2253:54] null access\n                this._emit(list[i][0] + \": \" + list[i][1], null);\n                                                      ^\n");
 				}
 				return v;
 			}(list[i][1])), null);
@@ -14916,13 +15027,13 @@ JavaScriptEmitter.prototype.getOutput$SUSUS = function (sourceFile, entryPoint, 
 		output = this._platform.addLauncher$LEmitter$XSSS(this, this._platform.encodeFilename$S(sourceFile), output, (function (v) {
 			if (! (v != null)) {
 				debugger;
-				throw new Error("[/Users/gfx/repo/try-on-web/JSX/src/jsemitter.jsx:2249:105] null access\n            output = this._platform.addLauncher(this, this._platform.encodeFilename(sourceFile), output, entryPoint, executableFor);\n                                                                                                         ^^^^^^^^^^\n");
+				throw new Error("[/Users/gfx/repo/try-on-web/JSX/src/jsemitter.jsx:2275:105] null access\n            output = this._platform.addLauncher(this, this._platform.encodeFilename(sourceFile), output, entryPoint, executableFor);\n                                                                                                         ^^^^^^^^^^\n");
 			}
 			return v;
 		}(entryPoint)), (function (v) {
 			if (! (v != null)) {
 				debugger;
-				throw new Error("[/Users/gfx/repo/try-on-web/JSX/src/jsemitter.jsx:2249:117] null access\n            output = this._platform.addLauncher(this, this._platform.encodeFilename(sourceFile), output, entryPoint, executableFor);\n                                                                                                                     ^^^^^^^^^^^^^\n");
+				throw new Error("[/Users/gfx/repo/try-on-web/JSX/src/jsemitter.jsx:2275:117] null access\n            output = this._platform.addLauncher(this, this._platform.encodeFilename(sourceFile), output, entryPoint, executableFor);\n                                                                                                                     ^^^^^^^^^^^^^\n");
 			}
 			return v;
 		}(executableFor)));
@@ -15264,7 +15375,7 @@ JavaScriptEmitter.prototype._getStatementEmitterFor$LStatement$ = function (stat
 		return new _ConstructorInvocationStatementEmitter$LJavaScriptEmitter$LConstructorInvocationStatement$(this, (function (v) {
 			if (! (v == null || v instanceof ConstructorInvocationStatement)) {
 				debugger;
-				throw new Error("[/Users/gfx/repo/try-on-web/JSX/src/jsemitter.jsx:2506:78] detected invalid cast, value is not an instance of the designated type or null\n            return new _ConstructorInvocationStatementEmitter(this, statement as ConstructorInvocationStatement);\n                                                                              ^^\n");
+				throw new Error("[/Users/gfx/repo/try-on-web/JSX/src/jsemitter.jsx:2532:78] detected invalid cast, value is not an instance of the designated type or null\n            return new _ConstructorInvocationStatementEmitter(this, statement as ConstructorInvocationStatement);\n                                                                              ^^\n");
 			}
 			return v;
 		}(statement)));
@@ -15273,172 +15384,182 @@ JavaScriptEmitter.prototype._getStatementEmitterFor$LStatement$ = function (stat
 			return new _ExpressionStatementEmitter$LJavaScriptEmitter$LExpressionStatement$(this, (function (v) {
 				if (! (v == null || v instanceof ExpressionStatement)) {
 					debugger;
-					throw new Error("[/Users/gfx/repo/try-on-web/JSX/src/jsemitter.jsx:2508:67] detected invalid cast, value is not an instance of the designated type or null\n            return new _ExpressionStatementEmitter(this, statement as ExpressionStatement);\n                                                                   ^^\n");
+					throw new Error("[/Users/gfx/repo/try-on-web/JSX/src/jsemitter.jsx:2534:67] detected invalid cast, value is not an instance of the designated type or null\n            return new _ExpressionStatementEmitter(this, statement as ExpressionStatement);\n                                                                   ^^\n");
 				}
 				return v;
 			}(statement)));
 		} else {
-			if (statement instanceof ReturnStatement) {
-				return new _ReturnStatementEmitter$LJavaScriptEmitter$LReturnStatement$(this, (function (v) {
-					if (! (v == null || v instanceof ReturnStatement)) {
+			if (statement instanceof FunctionStatement) {
+				return new _FunctionStatementEmitter$LJavaScriptEmitter$LFunctionStatement$(this, (function (v) {
+					if (! (v == null || v instanceof FunctionStatement)) {
 						debugger;
-						throw new Error("[/Users/gfx/repo/try-on-web/JSX/src/jsemitter.jsx:2510:63] detected invalid cast, value is not an instance of the designated type or null\n            return new _ReturnStatementEmitter(this, statement as ReturnStatement);\n                                                               ^^\n");
+						throw new Error("[/Users/gfx/repo/try-on-web/JSX/src/jsemitter.jsx:2536:65] detected invalid cast, value is not an instance of the designated type or null\n            return new _FunctionStatementEmitter(this, statement as FunctionStatement);\n                                                                 ^^\n");
 					}
 					return v;
 				}(statement)));
 			} else {
-				if (statement instanceof DeleteStatement) {
-					return new _DeleteStatementEmitter$LJavaScriptEmitter$LDeleteStatement$(this, (function (v) {
-						if (! (v == null || v instanceof DeleteStatement)) {
+				if (statement instanceof ReturnStatement) {
+					return new _ReturnStatementEmitter$LJavaScriptEmitter$LReturnStatement$(this, (function (v) {
+						if (! (v == null || v instanceof ReturnStatement)) {
 							debugger;
-							throw new Error("[/Users/gfx/repo/try-on-web/JSX/src/jsemitter.jsx:2512:63] detected invalid cast, value is not an instance of the designated type or null\n            return new _DeleteStatementEmitter(this, statement as DeleteStatement);\n                                                               ^^\n");
+							throw new Error("[/Users/gfx/repo/try-on-web/JSX/src/jsemitter.jsx:2538:63] detected invalid cast, value is not an instance of the designated type or null\n            return new _ReturnStatementEmitter(this, statement as ReturnStatement);\n                                                               ^^\n");
 						}
 						return v;
 					}(statement)));
 				} else {
-					if (statement instanceof BreakStatement) {
-						return new _BreakStatementEmitter$LJavaScriptEmitter$LBreakStatement$(this, (function (v) {
-							if (! (v == null || v instanceof BreakStatement)) {
+					if (statement instanceof DeleteStatement) {
+						return new _DeleteStatementEmitter$LJavaScriptEmitter$LDeleteStatement$(this, (function (v) {
+							if (! (v == null || v instanceof DeleteStatement)) {
 								debugger;
-								throw new Error("[/Users/gfx/repo/try-on-web/JSX/src/jsemitter.jsx:2514:62] detected invalid cast, value is not an instance of the designated type or null\n            return new _BreakStatementEmitter(this, statement as BreakStatement);\n                                                              ^^\n");
+								throw new Error("[/Users/gfx/repo/try-on-web/JSX/src/jsemitter.jsx:2540:63] detected invalid cast, value is not an instance of the designated type or null\n            return new _DeleteStatementEmitter(this, statement as DeleteStatement);\n                                                               ^^\n");
 							}
 							return v;
 						}(statement)));
 					} else {
-						if (statement instanceof ContinueStatement) {
-							return new _ContinueStatementEmitter$LJavaScriptEmitter$LContinueStatement$(this, (function (v) {
-								if (! (v == null || v instanceof ContinueStatement)) {
+						if (statement instanceof BreakStatement) {
+							return new _BreakStatementEmitter$LJavaScriptEmitter$LBreakStatement$(this, (function (v) {
+								if (! (v == null || v instanceof BreakStatement)) {
 									debugger;
-									throw new Error("[/Users/gfx/repo/try-on-web/JSX/src/jsemitter.jsx:2516:65] detected invalid cast, value is not an instance of the designated type or null\n            return new _ContinueStatementEmitter(this, statement as ContinueStatement);\n                                                                 ^^\n");
+									throw new Error("[/Users/gfx/repo/try-on-web/JSX/src/jsemitter.jsx:2542:62] detected invalid cast, value is not an instance of the designated type or null\n            return new _BreakStatementEmitter(this, statement as BreakStatement);\n                                                              ^^\n");
 								}
 								return v;
 							}(statement)));
 						} else {
-							if (statement instanceof DoWhileStatement) {
-								return new _DoWhileStatementEmitter$LJavaScriptEmitter$LDoWhileStatement$(this, (function (v) {
-									if (! (v == null || v instanceof DoWhileStatement)) {
+							if (statement instanceof ContinueStatement) {
+								return new _ContinueStatementEmitter$LJavaScriptEmitter$LContinueStatement$(this, (function (v) {
+									if (! (v == null || v instanceof ContinueStatement)) {
 										debugger;
-										throw new Error("[/Users/gfx/repo/try-on-web/JSX/src/jsemitter.jsx:2518:64] detected invalid cast, value is not an instance of the designated type or null\n            return new _DoWhileStatementEmitter(this, statement as DoWhileStatement);\n                                                                ^^\n");
+										throw new Error("[/Users/gfx/repo/try-on-web/JSX/src/jsemitter.jsx:2544:65] detected invalid cast, value is not an instance of the designated type or null\n            return new _ContinueStatementEmitter(this, statement as ContinueStatement);\n                                                                 ^^\n");
 									}
 									return v;
 								}(statement)));
 							} else {
-								if (statement instanceof ForInStatement) {
-									return new _ForInStatementEmitter$LJavaScriptEmitter$LForInStatement$(this, (function (v) {
-										if (! (v == null || v instanceof ForInStatement)) {
+								if (statement instanceof DoWhileStatement) {
+									return new _DoWhileStatementEmitter$LJavaScriptEmitter$LDoWhileStatement$(this, (function (v) {
+										if (! (v == null || v instanceof DoWhileStatement)) {
 											debugger;
-											throw new Error("[/Users/gfx/repo/try-on-web/JSX/src/jsemitter.jsx:2520:62] detected invalid cast, value is not an instance of the designated type or null\n            return new _ForInStatementEmitter(this, statement as ForInStatement);\n                                                              ^^\n");
+											throw new Error("[/Users/gfx/repo/try-on-web/JSX/src/jsemitter.jsx:2546:64] detected invalid cast, value is not an instance of the designated type or null\n            return new _DoWhileStatementEmitter(this, statement as DoWhileStatement);\n                                                                ^^\n");
 										}
 										return v;
 									}(statement)));
 								} else {
-									if (statement instanceof ForStatement) {
-										return new _ForStatementEmitter$LJavaScriptEmitter$LForStatement$(this, (function (v) {
-											if (! (v == null || v instanceof ForStatement)) {
+									if (statement instanceof ForInStatement) {
+										return new _ForInStatementEmitter$LJavaScriptEmitter$LForInStatement$(this, (function (v) {
+											if (! (v == null || v instanceof ForInStatement)) {
 												debugger;
-												throw new Error("[/Users/gfx/repo/try-on-web/JSX/src/jsemitter.jsx:2522:60] detected invalid cast, value is not an instance of the designated type or null\n            return new _ForStatementEmitter(this, statement as ForStatement);\n                                                            ^^\n");
+												throw new Error("[/Users/gfx/repo/try-on-web/JSX/src/jsemitter.jsx:2548:62] detected invalid cast, value is not an instance of the designated type or null\n            return new _ForInStatementEmitter(this, statement as ForInStatement);\n                                                              ^^\n");
 											}
 											return v;
 										}(statement)));
 									} else {
-										if (statement instanceof IfStatement) {
-											return new _IfStatementEmitter$LJavaScriptEmitter$LIfStatement$(this, (function (v) {
-												if (! (v == null || v instanceof IfStatement)) {
+										if (statement instanceof ForStatement) {
+											return new _ForStatementEmitter$LJavaScriptEmitter$LForStatement$(this, (function (v) {
+												if (! (v == null || v instanceof ForStatement)) {
 													debugger;
-													throw new Error("[/Users/gfx/repo/try-on-web/JSX/src/jsemitter.jsx:2524:59] detected invalid cast, value is not an instance of the designated type or null\n            return new _IfStatementEmitter(this, statement as IfStatement);\n                                                           ^^\n");
+													throw new Error("[/Users/gfx/repo/try-on-web/JSX/src/jsemitter.jsx:2550:60] detected invalid cast, value is not an instance of the designated type or null\n            return new _ForStatementEmitter(this, statement as ForStatement);\n                                                            ^^\n");
 												}
 												return v;
 											}(statement)));
 										} else {
-											if (statement instanceof SwitchStatement) {
-												return new _SwitchStatementEmitter$LJavaScriptEmitter$LSwitchStatement$(this, (function (v) {
-													if (! (v == null || v instanceof SwitchStatement)) {
+											if (statement instanceof IfStatement) {
+												return new _IfStatementEmitter$LJavaScriptEmitter$LIfStatement$(this, (function (v) {
+													if (! (v == null || v instanceof IfStatement)) {
 														debugger;
-														throw new Error("[/Users/gfx/repo/try-on-web/JSX/src/jsemitter.jsx:2526:63] detected invalid cast, value is not an instance of the designated type or null\n            return new _SwitchStatementEmitter(this, statement as SwitchStatement);\n                                                               ^^\n");
+														throw new Error("[/Users/gfx/repo/try-on-web/JSX/src/jsemitter.jsx:2552:59] detected invalid cast, value is not an instance of the designated type or null\n            return new _IfStatementEmitter(this, statement as IfStatement);\n                                                           ^^\n");
 													}
 													return v;
 												}(statement)));
 											} else {
-												if (statement instanceof CaseStatement) {
-													return new _CaseStatementEmitter$LJavaScriptEmitter$LCaseStatement$(this, (function (v) {
-														if (! (v == null || v instanceof CaseStatement)) {
+												if (statement instanceof SwitchStatement) {
+													return new _SwitchStatementEmitter$LJavaScriptEmitter$LSwitchStatement$(this, (function (v) {
+														if (! (v == null || v instanceof SwitchStatement)) {
 															debugger;
-															throw new Error("[/Users/gfx/repo/try-on-web/JSX/src/jsemitter.jsx:2528:61] detected invalid cast, value is not an instance of the designated type or null\n            return new _CaseStatementEmitter(this, statement as CaseStatement);\n                                                             ^^\n");
+															throw new Error("[/Users/gfx/repo/try-on-web/JSX/src/jsemitter.jsx:2554:63] detected invalid cast, value is not an instance of the designated type or null\n            return new _SwitchStatementEmitter(this, statement as SwitchStatement);\n                                                               ^^\n");
 														}
 														return v;
 													}(statement)));
 												} else {
-													if (statement instanceof DefaultStatement) {
-														return new _DefaultStatementEmitter$LJavaScriptEmitter$LDefaultStatement$(this, (function (v) {
-															if (! (v == null || v instanceof DefaultStatement)) {
+													if (statement instanceof CaseStatement) {
+														return new _CaseStatementEmitter$LJavaScriptEmitter$LCaseStatement$(this, (function (v) {
+															if (! (v == null || v instanceof CaseStatement)) {
 																debugger;
-																throw new Error("[/Users/gfx/repo/try-on-web/JSX/src/jsemitter.jsx:2530:64] detected invalid cast, value is not an instance of the designated type or null\n            return new _DefaultStatementEmitter(this, statement as DefaultStatement);\n                                                                ^^\n");
+																throw new Error("[/Users/gfx/repo/try-on-web/JSX/src/jsemitter.jsx:2556:61] detected invalid cast, value is not an instance of the designated type or null\n            return new _CaseStatementEmitter(this, statement as CaseStatement);\n                                                             ^^\n");
 															}
 															return v;
 														}(statement)));
 													} else {
-														if (statement instanceof WhileStatement) {
-															return new _WhileStatementEmitter$LJavaScriptEmitter$LWhileStatement$(this, (function (v) {
-																if (! (v == null || v instanceof WhileStatement)) {
+														if (statement instanceof DefaultStatement) {
+															return new _DefaultStatementEmitter$LJavaScriptEmitter$LDefaultStatement$(this, (function (v) {
+																if (! (v == null || v instanceof DefaultStatement)) {
 																	debugger;
-																	throw new Error("[/Users/gfx/repo/try-on-web/JSX/src/jsemitter.jsx:2532:62] detected invalid cast, value is not an instance of the designated type or null\n            return new _WhileStatementEmitter(this, statement as WhileStatement);\n                                                              ^^\n");
+																	throw new Error("[/Users/gfx/repo/try-on-web/JSX/src/jsemitter.jsx:2558:64] detected invalid cast, value is not an instance of the designated type or null\n            return new _DefaultStatementEmitter(this, statement as DefaultStatement);\n                                                                ^^\n");
 																}
 																return v;
 															}(statement)));
 														} else {
-															if (statement instanceof TryStatement) {
-																return new _TryStatementEmitter$LJavaScriptEmitter$LTryStatement$(this, (function (v) {
-																	if (! (v == null || v instanceof TryStatement)) {
+															if (statement instanceof WhileStatement) {
+																return new _WhileStatementEmitter$LJavaScriptEmitter$LWhileStatement$(this, (function (v) {
+																	if (! (v == null || v instanceof WhileStatement)) {
 																		debugger;
-																		throw new Error("[/Users/gfx/repo/try-on-web/JSX/src/jsemitter.jsx:2534:60] detected invalid cast, value is not an instance of the designated type or null\n            return new _TryStatementEmitter(this, statement as TryStatement);\n                                                            ^^\n");
+																		throw new Error("[/Users/gfx/repo/try-on-web/JSX/src/jsemitter.jsx:2560:62] detected invalid cast, value is not an instance of the designated type or null\n            return new _WhileStatementEmitter(this, statement as WhileStatement);\n                                                              ^^\n");
 																	}
 																	return v;
 																}(statement)));
 															} else {
-																if (statement instanceof CatchStatement) {
-																	return new _CatchStatementEmitter$LJavaScriptEmitter$LCatchStatement$(this, (function (v) {
-																		if (! (v == null || v instanceof CatchStatement)) {
+																if (statement instanceof TryStatement) {
+																	return new _TryStatementEmitter$LJavaScriptEmitter$LTryStatement$(this, (function (v) {
+																		if (! (v == null || v instanceof TryStatement)) {
 																			debugger;
-																			throw new Error("[/Users/gfx/repo/try-on-web/JSX/src/jsemitter.jsx:2536:62] detected invalid cast, value is not an instance of the designated type or null\n            return new _CatchStatementEmitter(this, statement as CatchStatement);\n                                                              ^^\n");
+																			throw new Error("[/Users/gfx/repo/try-on-web/JSX/src/jsemitter.jsx:2562:60] detected invalid cast, value is not an instance of the designated type or null\n            return new _TryStatementEmitter(this, statement as TryStatement);\n                                                            ^^\n");
 																		}
 																		return v;
 																	}(statement)));
 																} else {
-																	if (statement instanceof ThrowStatement) {
-																		return new _ThrowStatementEmitter$LJavaScriptEmitter$LThrowStatement$(this, (function (v) {
-																			if (! (v == null || v instanceof ThrowStatement)) {
+																	if (statement instanceof CatchStatement) {
+																		return new _CatchStatementEmitter$LJavaScriptEmitter$LCatchStatement$(this, (function (v) {
+																			if (! (v == null || v instanceof CatchStatement)) {
 																				debugger;
-																				throw new Error("[/Users/gfx/repo/try-on-web/JSX/src/jsemitter.jsx:2538:62] detected invalid cast, value is not an instance of the designated type or null\n            return new _ThrowStatementEmitter(this, statement as ThrowStatement);\n                                                              ^^\n");
+																				throw new Error("[/Users/gfx/repo/try-on-web/JSX/src/jsemitter.jsx:2564:62] detected invalid cast, value is not an instance of the designated type or null\n            return new _CatchStatementEmitter(this, statement as CatchStatement);\n                                                              ^^\n");
 																			}
 																			return v;
 																		}(statement)));
 																	} else {
-																		if (statement instanceof AssertStatement) {
-																			return new _AssertStatementEmitter$LJavaScriptEmitter$LAssertStatement$(this, (function (v) {
-																				if (! (v == null || v instanceof AssertStatement)) {
+																		if (statement instanceof ThrowStatement) {
+																			return new _ThrowStatementEmitter$LJavaScriptEmitter$LThrowStatement$(this, (function (v) {
+																				if (! (v == null || v instanceof ThrowStatement)) {
 																					debugger;
-																					throw new Error("[/Users/gfx/repo/try-on-web/JSX/src/jsemitter.jsx:2540:63] detected invalid cast, value is not an instance of the designated type or null\n            return new _AssertStatementEmitter(this, statement as AssertStatement);\n                                                               ^^\n");
+																					throw new Error("[/Users/gfx/repo/try-on-web/JSX/src/jsemitter.jsx:2566:62] detected invalid cast, value is not an instance of the designated type or null\n            return new _ThrowStatementEmitter(this, statement as ThrowStatement);\n                                                              ^^\n");
 																				}
 																				return v;
 																			}(statement)));
 																		} else {
-																			if (statement instanceof LogStatement) {
-																				return new _LogStatementEmitter$LJavaScriptEmitter$LLogStatement$(this, (function (v) {
-																					if (! (v == null || v instanceof LogStatement)) {
+																			if (statement instanceof AssertStatement) {
+																				return new _AssertStatementEmitter$LJavaScriptEmitter$LAssertStatement$(this, (function (v) {
+																					if (! (v == null || v instanceof AssertStatement)) {
 																						debugger;
-																						throw new Error("[/Users/gfx/repo/try-on-web/JSX/src/jsemitter.jsx:2542:60] detected invalid cast, value is not an instance of the designated type or null\n            return new _LogStatementEmitter(this, statement as LogStatement);\n                                                            ^^\n");
+																						throw new Error("[/Users/gfx/repo/try-on-web/JSX/src/jsemitter.jsx:2568:63] detected invalid cast, value is not an instance of the designated type or null\n            return new _AssertStatementEmitter(this, statement as AssertStatement);\n                                                               ^^\n");
 																					}
 																					return v;
 																				}(statement)));
 																			} else {
-																				if (statement instanceof DebuggerStatement) {
-																					return new _DebuggerStatementEmitter$LJavaScriptEmitter$LDebuggerStatement$(this, (function (v) {
-																						if (! (v == null || v instanceof DebuggerStatement)) {
+																				if (statement instanceof LogStatement) {
+																					return new _LogStatementEmitter$LJavaScriptEmitter$LLogStatement$(this, (function (v) {
+																						if (! (v == null || v instanceof LogStatement)) {
 																							debugger;
-																							throw new Error("[/Users/gfx/repo/try-on-web/JSX/src/jsemitter.jsx:2544:65] detected invalid cast, value is not an instance of the designated type or null\n            return new _DebuggerStatementEmitter(this, statement as DebuggerStatement);\n                                                                 ^^\n");
+																							throw new Error("[/Users/gfx/repo/try-on-web/JSX/src/jsemitter.jsx:2570:60] detected invalid cast, value is not an instance of the designated type or null\n            return new _LogStatementEmitter(this, statement as LogStatement);\n                                                            ^^\n");
 																						}
 																						return v;
 																					}(statement)));
+																				} else {
+																					if (statement instanceof DebuggerStatement) {
+																						return new _DebuggerStatementEmitter$LJavaScriptEmitter$LDebuggerStatement$(this, (function (v) {
+																							if (! (v == null || v instanceof DebuggerStatement)) {
+																								debugger;
+																								throw new Error("[/Users/gfx/repo/try-on-web/JSX/src/jsemitter.jsx:2572:65] detected invalid cast, value is not an instance of the designated type or null\n            return new _DebuggerStatementEmitter(this, statement as DebuggerStatement);\n                                                                 ^^\n");
+																							}
+																							return v;
+																						}(statement)));
+																					}
 																				}
 																			}
 																		}
@@ -15471,7 +15592,7 @@ JavaScriptEmitter.prototype._getExpressionEmitterFor$LExpression$ = function (ex
 		return new _LocalExpressionEmitter$LJavaScriptEmitter$LLocalExpression$(this, (function (v) {
 			if (! (v == null || v instanceof LocalExpression)) {
 				debugger;
-				throw new Error("[/Users/gfx/repo/try-on-web/JSX/src/jsemitter.jsx:2550:58] detected invalid cast, value is not an instance of the designated type or null\n            return new _LocalExpressionEmitter(this, expr as LocalExpression);\n                                                          ^^\n");
+				throw new Error("[/Users/gfx/repo/try-on-web/JSX/src/jsemitter.jsx:2578:58] detected invalid cast, value is not an instance of the designated type or null\n            return new _LocalExpressionEmitter(this, expr as LocalExpression);\n                                                          ^^\n");
 			}
 			return v;
 		}(expr)));
@@ -15480,7 +15601,7 @@ JavaScriptEmitter.prototype._getExpressionEmitterFor$LExpression$ = function (ex
 			return new _ClassExpressionEmitter$LJavaScriptEmitter$LClassExpression$(this, (function (v) {
 				if (! (v == null || v instanceof ClassExpression)) {
 					debugger;
-					throw new Error("[/Users/gfx/repo/try-on-web/JSX/src/jsemitter.jsx:2552:58] detected invalid cast, value is not an instance of the designated type or null\n            return new _ClassExpressionEmitter(this, expr as ClassExpression);\n                                                          ^^\n");
+					throw new Error("[/Users/gfx/repo/try-on-web/JSX/src/jsemitter.jsx:2580:58] detected invalid cast, value is not an instance of the designated type or null\n            return new _ClassExpressionEmitter(this, expr as ClassExpression);\n                                                          ^^\n");
 				}
 				return v;
 			}(expr)));
@@ -15489,7 +15610,7 @@ JavaScriptEmitter.prototype._getExpressionEmitterFor$LExpression$ = function (ex
 				return new _NullExpressionEmitter$LJavaScriptEmitter$LNullExpression$(this, (function (v) {
 					if (! (v == null || v instanceof NullExpression)) {
 						debugger;
-						throw new Error("[/Users/gfx/repo/try-on-web/JSX/src/jsemitter.jsx:2554:57] detected invalid cast, value is not an instance of the designated type or null\n            return new _NullExpressionEmitter(this, expr as NullExpression);\n                                                         ^^\n");
+						throw new Error("[/Users/gfx/repo/try-on-web/JSX/src/jsemitter.jsx:2582:57] detected invalid cast, value is not an instance of the designated type or null\n            return new _NullExpressionEmitter(this, expr as NullExpression);\n                                                         ^^\n");
 					}
 					return v;
 				}(expr)));
@@ -15498,7 +15619,7 @@ JavaScriptEmitter.prototype._getExpressionEmitterFor$LExpression$ = function (ex
 					return new _BooleanLiteralExpressionEmitter$LJavaScriptEmitter$LBooleanLiteralExpression$(this, (function (v) {
 						if (! (v == null || v instanceof BooleanLiteralExpression)) {
 							debugger;
-							throw new Error("[/Users/gfx/repo/try-on-web/JSX/src/jsemitter.jsx:2556:67] detected invalid cast, value is not an instance of the designated type or null\n            return new _BooleanLiteralExpressionEmitter(this, expr as BooleanLiteralExpression);\n                                                                   ^^\n");
+							throw new Error("[/Users/gfx/repo/try-on-web/JSX/src/jsemitter.jsx:2584:67] detected invalid cast, value is not an instance of the designated type or null\n            return new _BooleanLiteralExpressionEmitter(this, expr as BooleanLiteralExpression);\n                                                                   ^^\n");
 						}
 						return v;
 					}(expr)));
@@ -15507,7 +15628,7 @@ JavaScriptEmitter.prototype._getExpressionEmitterFor$LExpression$ = function (ex
 						return new _IntegerLiteralExpressionEmitter$LJavaScriptEmitter$LIntegerLiteralExpression$(this, (function (v) {
 							if (! (v == null || v instanceof IntegerLiteralExpression)) {
 								debugger;
-								throw new Error("[/Users/gfx/repo/try-on-web/JSX/src/jsemitter.jsx:2558:67] detected invalid cast, value is not an instance of the designated type or null\n            return new _IntegerLiteralExpressionEmitter(this, expr as IntegerLiteralExpression);\n                                                                   ^^\n");
+								throw new Error("[/Users/gfx/repo/try-on-web/JSX/src/jsemitter.jsx:2586:67] detected invalid cast, value is not an instance of the designated type or null\n            return new _IntegerLiteralExpressionEmitter(this, expr as IntegerLiteralExpression);\n                                                                   ^^\n");
 							}
 							return v;
 						}(expr)));
@@ -15516,7 +15637,7 @@ JavaScriptEmitter.prototype._getExpressionEmitterFor$LExpression$ = function (ex
 							return new _NumberLiteralExpressionEmitter$LJavaScriptEmitter$LNumberLiteralExpression$(this, (function (v) {
 								if (! (v == null || v instanceof NumberLiteralExpression)) {
 									debugger;
-									throw new Error("[/Users/gfx/repo/try-on-web/JSX/src/jsemitter.jsx:2560:66] detected invalid cast, value is not an instance of the designated type or null\n            return new _NumberLiteralExpressionEmitter(this, expr as NumberLiteralExpression);\n                                                                  ^^\n");
+									throw new Error("[/Users/gfx/repo/try-on-web/JSX/src/jsemitter.jsx:2588:66] detected invalid cast, value is not an instance of the designated type or null\n            return new _NumberLiteralExpressionEmitter(this, expr as NumberLiteralExpression);\n                                                                  ^^\n");
 								}
 								return v;
 							}(expr)));
@@ -15525,7 +15646,7 @@ JavaScriptEmitter.prototype._getExpressionEmitterFor$LExpression$ = function (ex
 								return new _StringLiteralExpressionEmitter$LJavaScriptEmitter$LStringLiteralExpression$(this, (function (v) {
 									if (! (v == null || v instanceof StringLiteralExpression)) {
 										debugger;
-										throw new Error("[/Users/gfx/repo/try-on-web/JSX/src/jsemitter.jsx:2562:66] detected invalid cast, value is not an instance of the designated type or null\n            return new _StringLiteralExpressionEmitter(this, expr as StringLiteralExpression);\n                                                                  ^^\n");
+										throw new Error("[/Users/gfx/repo/try-on-web/JSX/src/jsemitter.jsx:2590:66] detected invalid cast, value is not an instance of the designated type or null\n            return new _StringLiteralExpressionEmitter(this, expr as StringLiteralExpression);\n                                                                  ^^\n");
 									}
 									return v;
 								}(expr)));
@@ -15534,7 +15655,7 @@ JavaScriptEmitter.prototype._getExpressionEmitterFor$LExpression$ = function (ex
 									return new _RegExpLiteralExpressionEmitter$LJavaScriptEmitter$LRegExpLiteralExpression$(this, (function (v) {
 										if (! (v == null || v instanceof RegExpLiteralExpression)) {
 											debugger;
-											throw new Error("[/Users/gfx/repo/try-on-web/JSX/src/jsemitter.jsx:2564:66] detected invalid cast, value is not an instance of the designated type or null\n            return new _RegExpLiteralExpressionEmitter(this, expr as RegExpLiteralExpression);\n                                                                  ^^\n");
+											throw new Error("[/Users/gfx/repo/try-on-web/JSX/src/jsemitter.jsx:2592:66] detected invalid cast, value is not an instance of the designated type or null\n            return new _RegExpLiteralExpressionEmitter(this, expr as RegExpLiteralExpression);\n                                                                  ^^\n");
 										}
 										return v;
 									}(expr)));
@@ -15543,7 +15664,7 @@ JavaScriptEmitter.prototype._getExpressionEmitterFor$LExpression$ = function (ex
 										return new _ArrayLiteralExpressionEmitter$LJavaScriptEmitter$LArrayLiteralExpression$(this, (function (v) {
 											if (! (v == null || v instanceof ArrayLiteralExpression)) {
 												debugger;
-												throw new Error("[/Users/gfx/repo/try-on-web/JSX/src/jsemitter.jsx:2566:65] detected invalid cast, value is not an instance of the designated type or null\n            return new _ArrayLiteralExpressionEmitter(this, expr as ArrayLiteralExpression);\n                                                                 ^^\n");
+												throw new Error("[/Users/gfx/repo/try-on-web/JSX/src/jsemitter.jsx:2594:65] detected invalid cast, value is not an instance of the designated type or null\n            return new _ArrayLiteralExpressionEmitter(this, expr as ArrayLiteralExpression);\n                                                                 ^^\n");
 											}
 											return v;
 										}(expr)));
@@ -15552,7 +15673,7 @@ JavaScriptEmitter.prototype._getExpressionEmitterFor$LExpression$ = function (ex
 											return new _MapLiteralExpressionEmitter$LJavaScriptEmitter$LMapLiteralExpression$(this, (function (v) {
 												if (! (v == null || v instanceof MapLiteralExpression)) {
 													debugger;
-													throw new Error("[/Users/gfx/repo/try-on-web/JSX/src/jsemitter.jsx:2568:63] detected invalid cast, value is not an instance of the designated type or null\n            return new _MapLiteralExpressionEmitter(this, expr as MapLiteralExpression);\n                                                               ^^\n");
+													throw new Error("[/Users/gfx/repo/try-on-web/JSX/src/jsemitter.jsx:2596:63] detected invalid cast, value is not an instance of the designated type or null\n            return new _MapLiteralExpressionEmitter(this, expr as MapLiteralExpression);\n                                                               ^^\n");
 												}
 												return v;
 											}(expr)));
@@ -15561,7 +15682,7 @@ JavaScriptEmitter.prototype._getExpressionEmitterFor$LExpression$ = function (ex
 												return new _ThisExpressionEmitter$LJavaScriptEmitter$LThisExpression$(this, (function (v) {
 													if (! (v == null || v instanceof ThisExpression)) {
 														debugger;
-														throw new Error("[/Users/gfx/repo/try-on-web/JSX/src/jsemitter.jsx:2570:57] detected invalid cast, value is not an instance of the designated type or null\n            return new _ThisExpressionEmitter(this, expr as ThisExpression);\n                                                         ^^\n");
+														throw new Error("[/Users/gfx/repo/try-on-web/JSX/src/jsemitter.jsx:2598:57] detected invalid cast, value is not an instance of the designated type or null\n            return new _ThisExpressionEmitter(this, expr as ThisExpression);\n                                                         ^^\n");
 													}
 													return v;
 												}(expr)));
@@ -15570,7 +15691,7 @@ JavaScriptEmitter.prototype._getExpressionEmitterFor$LExpression$ = function (ex
 													return new _UnaryExpressionEmitter$LJavaScriptEmitter$LUnaryExpression$(this, (function (v) {
 														if (! (v == null || v instanceof BitwiseNotExpression)) {
 															debugger;
-															throw new Error("[/Users/gfx/repo/try-on-web/JSX/src/jsemitter.jsx:2572:58] detected invalid cast, value is not an instance of the designated type or null\n            return new _UnaryExpressionEmitter(this, expr as BitwiseNotExpression);\n                                                          ^^\n");
+															throw new Error("[/Users/gfx/repo/try-on-web/JSX/src/jsemitter.jsx:2600:58] detected invalid cast, value is not an instance of the designated type or null\n            return new _UnaryExpressionEmitter(this, expr as BitwiseNotExpression);\n                                                          ^^\n");
 														}
 														return v;
 													}(expr)));
@@ -15579,7 +15700,7 @@ JavaScriptEmitter.prototype._getExpressionEmitterFor$LExpression$ = function (ex
 														return new _InstanceofExpressionEmitter$LJavaScriptEmitter$LInstanceofExpression$(this, (function (v) {
 															if (! (v == null || v instanceof InstanceofExpression)) {
 																debugger;
-																throw new Error("[/Users/gfx/repo/try-on-web/JSX/src/jsemitter.jsx:2574:63] detected invalid cast, value is not an instance of the designated type or null\n            return new _InstanceofExpressionEmitter(this, expr as InstanceofExpression);\n                                                               ^^\n");
+																throw new Error("[/Users/gfx/repo/try-on-web/JSX/src/jsemitter.jsx:2602:63] detected invalid cast, value is not an instance of the designated type or null\n            return new _InstanceofExpressionEmitter(this, expr as InstanceofExpression);\n                                                               ^^\n");
 															}
 															return v;
 														}(expr)));
@@ -15588,7 +15709,7 @@ JavaScriptEmitter.prototype._getExpressionEmitterFor$LExpression$ = function (ex
 															return new _AsExpressionEmitter$LJavaScriptEmitter$LAsExpression$(this, (function (v) {
 																if (! (v == null || v instanceof AsExpression)) {
 																	debugger;
-																	throw new Error("[/Users/gfx/repo/try-on-web/JSX/src/jsemitter.jsx:2576:55] detected invalid cast, value is not an instance of the designated type or null\n            return new _AsExpressionEmitter(this, expr as AsExpression);\n                                                       ^^\n");
+																	throw new Error("[/Users/gfx/repo/try-on-web/JSX/src/jsemitter.jsx:2604:55] detected invalid cast, value is not an instance of the designated type or null\n            return new _AsExpressionEmitter(this, expr as AsExpression);\n                                                       ^^\n");
 																}
 																return v;
 															}(expr)));
@@ -15597,7 +15718,7 @@ JavaScriptEmitter.prototype._getExpressionEmitterFor$LExpression$ = function (ex
 																return new _AsNoConvertExpressionEmitter$LJavaScriptEmitter$LAsNoConvertExpression$(this, (function (v) {
 																	if (! (v == null || v instanceof AsNoConvertExpression)) {
 																		debugger;
-																		throw new Error("[/Users/gfx/repo/try-on-web/JSX/src/jsemitter.jsx:2578:64] detected invalid cast, value is not an instance of the designated type or null\n            return new _AsNoConvertExpressionEmitter(this, expr as AsNoConvertExpression);\n                                                                ^^\n");
+																		throw new Error("[/Users/gfx/repo/try-on-web/JSX/src/jsemitter.jsx:2606:64] detected invalid cast, value is not an instance of the designated type or null\n            return new _AsNoConvertExpressionEmitter(this, expr as AsNoConvertExpression);\n                                                                ^^\n");
 																	}
 																	return v;
 																}(expr)));
@@ -15606,7 +15727,7 @@ JavaScriptEmitter.prototype._getExpressionEmitterFor$LExpression$ = function (ex
 																	return new _UnaryExpressionEmitter$LJavaScriptEmitter$LUnaryExpression$(this, (function (v) {
 																		if (! (v == null || v instanceof LogicalNotExpression)) {
 																			debugger;
-																			throw new Error("[/Users/gfx/repo/try-on-web/JSX/src/jsemitter.jsx:2580:58] detected invalid cast, value is not an instance of the designated type or null\n            return new _UnaryExpressionEmitter(this, expr as LogicalNotExpression);\n                                                          ^^\n");
+																			throw new Error("[/Users/gfx/repo/try-on-web/JSX/src/jsemitter.jsx:2608:58] detected invalid cast, value is not an instance of the designated type or null\n            return new _UnaryExpressionEmitter(this, expr as LogicalNotExpression);\n                                                          ^^\n");
 																		}
 																		return v;
 																	}(expr)));
@@ -15615,7 +15736,7 @@ JavaScriptEmitter.prototype._getExpressionEmitterFor$LExpression$ = function (ex
 																		return new _UnaryExpressionEmitter$LJavaScriptEmitter$LUnaryExpression$(this, (function (v) {
 																			if (! (v == null || v instanceof TypeofExpression)) {
 																				debugger;
-																				throw new Error("[/Users/gfx/repo/try-on-web/JSX/src/jsemitter.jsx:2582:58] detected invalid cast, value is not an instance of the designated type or null\n            return new _UnaryExpressionEmitter(this, expr as TypeofExpression);\n                                                          ^^\n");
+																				throw new Error("[/Users/gfx/repo/try-on-web/JSX/src/jsemitter.jsx:2610:58] detected invalid cast, value is not an instance of the designated type or null\n            return new _UnaryExpressionEmitter(this, expr as TypeofExpression);\n                                                          ^^\n");
 																			}
 																			return v;
 																		}(expr)));
@@ -15624,7 +15745,7 @@ JavaScriptEmitter.prototype._getExpressionEmitterFor$LExpression$ = function (ex
 																			return new _PostfixExpressionEmitter$LJavaScriptEmitter$LUnaryExpression$(this, (function (v) {
 																				if (! (v == null || v instanceof PostIncrementExpression)) {
 																					debugger;
-																					throw new Error("[/Users/gfx/repo/try-on-web/JSX/src/jsemitter.jsx:2584:60] detected invalid cast, value is not an instance of the designated type or null\n            return new _PostfixExpressionEmitter(this, expr as PostIncrementExpression);\n                                                            ^^\n");
+																					throw new Error("[/Users/gfx/repo/try-on-web/JSX/src/jsemitter.jsx:2612:60] detected invalid cast, value is not an instance of the designated type or null\n            return new _PostfixExpressionEmitter(this, expr as PostIncrementExpression);\n                                                            ^^\n");
 																				}
 																				return v;
 																			}(expr)));
@@ -15633,7 +15754,7 @@ JavaScriptEmitter.prototype._getExpressionEmitterFor$LExpression$ = function (ex
 																				return new _UnaryExpressionEmitter$LJavaScriptEmitter$LUnaryExpression$(this, (function (v) {
 																					if (! (v == null || v instanceof PreIncrementExpression)) {
 																						debugger;
-																						throw new Error("[/Users/gfx/repo/try-on-web/JSX/src/jsemitter.jsx:2586:58] detected invalid cast, value is not an instance of the designated type or null\n            return new _UnaryExpressionEmitter(this, expr as PreIncrementExpression);\n                                                          ^^\n");
+																						throw new Error("[/Users/gfx/repo/try-on-web/JSX/src/jsemitter.jsx:2614:58] detected invalid cast, value is not an instance of the designated type or null\n            return new _UnaryExpressionEmitter(this, expr as PreIncrementExpression);\n                                                          ^^\n");
 																					}
 																					return v;
 																				}(expr)));
@@ -15642,7 +15763,7 @@ JavaScriptEmitter.prototype._getExpressionEmitterFor$LExpression$ = function (ex
 																					return new _PropertyExpressionEmitter$LJavaScriptEmitter$LPropertyExpression$(this, (function (v) {
 																						if (! (v == null || v instanceof PropertyExpression)) {
 																							debugger;
-																							throw new Error("[/Users/gfx/repo/try-on-web/JSX/src/jsemitter.jsx:2588:61] detected invalid cast, value is not an instance of the designated type or null\n            return new _PropertyExpressionEmitter(this, expr as PropertyExpression);\n                                                             ^^\n");
+																							throw new Error("[/Users/gfx/repo/try-on-web/JSX/src/jsemitter.jsx:2616:61] detected invalid cast, value is not an instance of the designated type or null\n            return new _PropertyExpressionEmitter(this, expr as PropertyExpression);\n                                                             ^^\n");
 																						}
 																						return v;
 																					}(expr)));
@@ -15651,7 +15772,7 @@ JavaScriptEmitter.prototype._getExpressionEmitterFor$LExpression$ = function (ex
 																						return new _UnaryExpressionEmitter$LJavaScriptEmitter$LUnaryExpression$(this, (function (v) {
 																							if (! (v == null || v instanceof SignExpression)) {
 																								debugger;
-																								throw new Error("[/Users/gfx/repo/try-on-web/JSX/src/jsemitter.jsx:2590:58] detected invalid cast, value is not an instance of the designated type or null\n            return new _UnaryExpressionEmitter(this, expr as SignExpression);\n                                                          ^^\n");
+																								throw new Error("[/Users/gfx/repo/try-on-web/JSX/src/jsemitter.jsx:2618:58] detected invalid cast, value is not an instance of the designated type or null\n            return new _UnaryExpressionEmitter(this, expr as SignExpression);\n                                                          ^^\n");
 																							}
 																							return v;
 																						}(expr)));
@@ -15660,7 +15781,7 @@ JavaScriptEmitter.prototype._getExpressionEmitterFor$LExpression$ = function (ex
 																							return new _AdditiveExpressionEmitter$LJavaScriptEmitter$LAdditiveExpression$(this, (function (v) {
 																								if (! (v == null || v instanceof AdditiveExpression)) {
 																									debugger;
-																									throw new Error("[/Users/gfx/repo/try-on-web/JSX/src/jsemitter.jsx:2592:61] detected invalid cast, value is not an instance of the designated type or null\n            return new _AdditiveExpressionEmitter(this, expr as AdditiveExpression);\n                                                             ^^\n");
+																									throw new Error("[/Users/gfx/repo/try-on-web/JSX/src/jsemitter.jsx:2620:61] detected invalid cast, value is not an instance of the designated type or null\n            return new _AdditiveExpressionEmitter(this, expr as AdditiveExpression);\n                                                             ^^\n");
 																								}
 																								return v;
 																							}(expr)));
@@ -15669,7 +15790,7 @@ JavaScriptEmitter.prototype._getExpressionEmitterFor$LExpression$ = function (ex
 																								return new _ArrayExpressionEmitter$LJavaScriptEmitter$LArrayExpression$(this, (function (v) {
 																									if (! (v == null || v instanceof ArrayExpression)) {
 																										debugger;
-																										throw new Error("[/Users/gfx/repo/try-on-web/JSX/src/jsemitter.jsx:2594:58] detected invalid cast, value is not an instance of the designated type or null\n            return new _ArrayExpressionEmitter(this, expr as ArrayExpression);\n                                                          ^^\n");
+																										throw new Error("[/Users/gfx/repo/try-on-web/JSX/src/jsemitter.jsx:2622:58] detected invalid cast, value is not an instance of the designated type or null\n            return new _ArrayExpressionEmitter(this, expr as ArrayExpression);\n                                                          ^^\n");
 																									}
 																									return v;
 																								}(expr)));
@@ -15678,7 +15799,7 @@ JavaScriptEmitter.prototype._getExpressionEmitterFor$LExpression$ = function (ex
 																									return new _AssignmentExpressionEmitter$LJavaScriptEmitter$LAssignmentExpression$(this, (function (v) {
 																										if (! (v == null || v instanceof AssignmentExpression)) {
 																											debugger;
-																											throw new Error("[/Users/gfx/repo/try-on-web/JSX/src/jsemitter.jsx:2596:63] detected invalid cast, value is not an instance of the designated type or null\n            return new _AssignmentExpressionEmitter(this, expr as AssignmentExpression);\n                                                               ^^\n");
+																											throw new Error("[/Users/gfx/repo/try-on-web/JSX/src/jsemitter.jsx:2624:63] detected invalid cast, value is not an instance of the designated type or null\n            return new _AssignmentExpressionEmitter(this, expr as AssignmentExpression);\n                                                               ^^\n");
 																										}
 																										return v;
 																									}(expr)));
@@ -15687,7 +15808,7 @@ JavaScriptEmitter.prototype._getExpressionEmitterFor$LExpression$ = function (ex
 																										return new _BinaryNumberExpressionEmitter$LJavaScriptEmitter$LBinaryNumberExpression$(this, (function (v) {
 																											if (! (v == null || v instanceof BinaryNumberExpression)) {
 																												debugger;
-																												throw new Error("[/Users/gfx/repo/try-on-web/JSX/src/jsemitter.jsx:2598:65] detected invalid cast, value is not an instance of the designated type or null\n            return new _BinaryNumberExpressionEmitter(this, expr as BinaryNumberExpression);\n                                                                 ^^\n");
+																												throw new Error("[/Users/gfx/repo/try-on-web/JSX/src/jsemitter.jsx:2626:65] detected invalid cast, value is not an instance of the designated type or null\n            return new _BinaryNumberExpressionEmitter(this, expr as BinaryNumberExpression);\n                                                                 ^^\n");
 																											}
 																											return v;
 																										}(expr)));
@@ -15696,7 +15817,7 @@ JavaScriptEmitter.prototype._getExpressionEmitterFor$LExpression$ = function (ex
 																											return new _EqualityExpressionEmitter$LJavaScriptEmitter$LEqualityExpression$(this, (function (v) {
 																												if (! (v == null || v instanceof EqualityExpression)) {
 																													debugger;
-																													throw new Error("[/Users/gfx/repo/try-on-web/JSX/src/jsemitter.jsx:2600:61] detected invalid cast, value is not an instance of the designated type or null\n            return new _EqualityExpressionEmitter(this, expr as EqualityExpression);\n                                                             ^^\n");
+																													throw new Error("[/Users/gfx/repo/try-on-web/JSX/src/jsemitter.jsx:2628:61] detected invalid cast, value is not an instance of the designated type or null\n            return new _EqualityExpressionEmitter(this, expr as EqualityExpression);\n                                                             ^^\n");
 																												}
 																												return v;
 																											}(expr)));
@@ -15705,7 +15826,7 @@ JavaScriptEmitter.prototype._getExpressionEmitterFor$LExpression$ = function (ex
 																												return new _InExpressionEmitter$LJavaScriptEmitter$LInExpression$(this, (function (v) {
 																													if (! (v == null || v instanceof InExpression)) {
 																														debugger;
-																														throw new Error("[/Users/gfx/repo/try-on-web/JSX/src/jsemitter.jsx:2602:55] detected invalid cast, value is not an instance of the designated type or null\n            return new _InExpressionEmitter(this, expr as InExpression);\n                                                       ^^\n");
+																														throw new Error("[/Users/gfx/repo/try-on-web/JSX/src/jsemitter.jsx:2630:55] detected invalid cast, value is not an instance of the designated type or null\n            return new _InExpressionEmitter(this, expr as InExpression);\n                                                       ^^\n");
 																													}
 																													return v;
 																												}(expr)));
@@ -15714,7 +15835,7 @@ JavaScriptEmitter.prototype._getExpressionEmitterFor$LExpression$ = function (ex
 																													return new _LogicalExpressionEmitter$LJavaScriptEmitter$LLogicalExpression$(this, (function (v) {
 																														if (! (v == null || v instanceof LogicalExpression)) {
 																															debugger;
-																															throw new Error("[/Users/gfx/repo/try-on-web/JSX/src/jsemitter.jsx:2604:60] detected invalid cast, value is not an instance of the designated type or null\n            return new _LogicalExpressionEmitter(this, expr as LogicalExpression);\n                                                            ^^\n");
+																															throw new Error("[/Users/gfx/repo/try-on-web/JSX/src/jsemitter.jsx:2632:60] detected invalid cast, value is not an instance of the designated type or null\n            return new _LogicalExpressionEmitter(this, expr as LogicalExpression);\n                                                            ^^\n");
 																														}
 																														return v;
 																													}(expr)));
@@ -15723,7 +15844,7 @@ JavaScriptEmitter.prototype._getExpressionEmitterFor$LExpression$ = function (ex
 																														return new _ShiftExpressionEmitter$LJavaScriptEmitter$LShiftExpression$(this, (function (v) {
 																															if (! (v == null || v instanceof ShiftExpression)) {
 																																debugger;
-																																throw new Error("[/Users/gfx/repo/try-on-web/JSX/src/jsemitter.jsx:2606:58] detected invalid cast, value is not an instance of the designated type or null\n            return new _ShiftExpressionEmitter(this, expr as ShiftExpression);\n                                                          ^^\n");
+																																throw new Error("[/Users/gfx/repo/try-on-web/JSX/src/jsemitter.jsx:2634:58] detected invalid cast, value is not an instance of the designated type or null\n            return new _ShiftExpressionEmitter(this, expr as ShiftExpression);\n                                                          ^^\n");
 																															}
 																															return v;
 																														}(expr)));
@@ -15732,7 +15853,7 @@ JavaScriptEmitter.prototype._getExpressionEmitterFor$LExpression$ = function (ex
 																															return new _ConditionalExpressionEmitter$LJavaScriptEmitter$LConditionalExpression$(this, (function (v) {
 																																if (! (v == null || v instanceof ConditionalExpression)) {
 																																	debugger;
-																																	throw new Error("[/Users/gfx/repo/try-on-web/JSX/src/jsemitter.jsx:2608:64] detected invalid cast, value is not an instance of the designated type or null\n            return new _ConditionalExpressionEmitter(this, expr as ConditionalExpression);\n                                                                ^^\n");
+																																	throw new Error("[/Users/gfx/repo/try-on-web/JSX/src/jsemitter.jsx:2636:64] detected invalid cast, value is not an instance of the designated type or null\n            return new _ConditionalExpressionEmitter(this, expr as ConditionalExpression);\n                                                                ^^\n");
 																																}
 																																return v;
 																															}(expr)));
@@ -15741,7 +15862,7 @@ JavaScriptEmitter.prototype._getExpressionEmitterFor$LExpression$ = function (ex
 																																return new _CallExpressionEmitter$LJavaScriptEmitter$LCallExpression$(this, (function (v) {
 																																	if (! (v == null || v instanceof CallExpression)) {
 																																		debugger;
-																																		throw new Error("[/Users/gfx/repo/try-on-web/JSX/src/jsemitter.jsx:2610:57] detected invalid cast, value is not an instance of the designated type or null\n            return new _CallExpressionEmitter(this, expr as CallExpression);\n                                                         ^^\n");
+																																		throw new Error("[/Users/gfx/repo/try-on-web/JSX/src/jsemitter.jsx:2638:57] detected invalid cast, value is not an instance of the designated type or null\n            return new _CallExpressionEmitter(this, expr as CallExpression);\n                                                         ^^\n");
 																																	}
 																																	return v;
 																																}(expr)));
@@ -15750,7 +15871,7 @@ JavaScriptEmitter.prototype._getExpressionEmitterFor$LExpression$ = function (ex
 																																	return new _SuperExpressionEmitter$LJavaScriptEmitter$LSuperExpression$(this, (function (v) {
 																																		if (! (v == null || v instanceof SuperExpression)) {
 																																			debugger;
-																																			throw new Error("[/Users/gfx/repo/try-on-web/JSX/src/jsemitter.jsx:2612:58] detected invalid cast, value is not an instance of the designated type or null\n            return new _SuperExpressionEmitter(this, expr as SuperExpression);\n                                                          ^^\n");
+																																			throw new Error("[/Users/gfx/repo/try-on-web/JSX/src/jsemitter.jsx:2640:58] detected invalid cast, value is not an instance of the designated type or null\n            return new _SuperExpressionEmitter(this, expr as SuperExpression);\n                                                          ^^\n");
 																																		}
 																																		return v;
 																																	}(expr)));
@@ -15759,7 +15880,7 @@ JavaScriptEmitter.prototype._getExpressionEmitterFor$LExpression$ = function (ex
 																																		return new _NewExpressionEmitter$LJavaScriptEmitter$LNewExpression$(this, (function (v) {
 																																			if (! (v == null || v instanceof NewExpression)) {
 																																				debugger;
-																																				throw new Error("[/Users/gfx/repo/try-on-web/JSX/src/jsemitter.jsx:2614:56] detected invalid cast, value is not an instance of the designated type or null\n            return new _NewExpressionEmitter(this, expr as NewExpression);\n                                                        ^^\n");
+																																				throw new Error("[/Users/gfx/repo/try-on-web/JSX/src/jsemitter.jsx:2642:56] detected invalid cast, value is not an instance of the designated type or null\n            return new _NewExpressionEmitter(this, expr as NewExpression);\n                                                        ^^\n");
 																																			}
 																																			return v;
 																																		}(expr)));
@@ -15768,7 +15889,7 @@ JavaScriptEmitter.prototype._getExpressionEmitterFor$LExpression$ = function (ex
 																																			return new _FunctionExpressionEmitter$LJavaScriptEmitter$LFunctionExpression$(this, (function (v) {
 																																				if (! (v == null || v instanceof FunctionExpression)) {
 																																					debugger;
-																																					throw new Error("[/Users/gfx/repo/try-on-web/JSX/src/jsemitter.jsx:2616:61] detected invalid cast, value is not an instance of the designated type or null\n            return new _FunctionExpressionEmitter(this, expr as FunctionExpression);\n                                                             ^^\n");
+																																					throw new Error("[/Users/gfx/repo/try-on-web/JSX/src/jsemitter.jsx:2644:61] detected invalid cast, value is not an instance of the designated type or null\n            return new _FunctionExpressionEmitter(this, expr as FunctionExpression);\n                                                             ^^\n");
 																																				}
 																																				return v;
 																																			}(expr)));
@@ -15777,7 +15898,7 @@ JavaScriptEmitter.prototype._getExpressionEmitterFor$LExpression$ = function (ex
 																																				return new _CommaExpressionEmitter$LJavaScriptEmitter$LCommaExpression$(this, (function (v) {
 																																					if (! (v == null || v instanceof CommaExpression)) {
 																																						debugger;
-																																						throw new Error("[/Users/gfx/repo/try-on-web/JSX/src/jsemitter.jsx:2618:58] detected invalid cast, value is not an instance of the designated type or null\n            return new _CommaExpressionEmitter(this, expr as CommaExpression);\n                                                          ^^\n");
+																																						throw new Error("[/Users/gfx/repo/try-on-web/JSX/src/jsemitter.jsx:2646:58] detected invalid cast, value is not an instance of the designated type or null\n            return new _CommaExpressionEmitter(this, expr as CommaExpression);\n                                                          ^^\n");
 																																					}
 																																					return v;
 																																				}(expr)));
@@ -15830,7 +15951,7 @@ JavaScriptEmitter.prototype._mangleConstructorName$LClassDefinition$ALType$ = fu
 			if ((function (v) {
 				if (! (v == null || v instanceof InstantiatedClassDefinition)) {
 					debugger;
-					throw new Error("[/Users/gfx/repo/try-on-web/JSX/src/jsemitter.jsx:2625:30] detected invalid cast, value is not an instance of the designated type or null\n                if ((classDef as InstantiatedClassDefinition).getTemplateClassName() == \"Map\") {\n                              ^^\n");
+					throw new Error("[/Users/gfx/repo/try-on-web/JSX/src/jsemitter.jsx:2653:30] detected invalid cast, value is not an instance of the designated type or null\n                if ((classDef as InstantiatedClassDefinition).getTemplateClassName() == \"Map\") {\n                              ^^\n");
 				}
 				return v;
 			}(classDef)).getTemplateClassName$() === "Map") {
@@ -15839,7 +15960,7 @@ JavaScriptEmitter.prototype._mangleConstructorName$LClassDefinition$ALType$ = fu
 				return (function (v) {
 					if (! (v == null || v instanceof InstantiatedClassDefinition)) {
 						debugger;
-						throw new Error("[/Users/gfx/repo/try-on-web/JSX/src/jsemitter.jsx:2628:37] detected invalid cast, value is not an instance of the designated type or null\n                    return (classDef as InstantiatedClassDefinition).getTemplateClassName();\n                                     ^^\n");
+						throw new Error("[/Users/gfx/repo/try-on-web/JSX/src/jsemitter.jsx:2656:37] detected invalid cast, value is not an instance of the designated type or null\n                    return (classDef as InstantiatedClassDefinition).getTemplateClassName();\n                                     ^^\n");
 					}
 					return v;
 				}(classDef)).getTemplateClassName$();
@@ -15893,14 +16014,14 @@ JavaScriptEmitter.prototype._mangleTypeName$LType$ = function (type) {
 								typeArgs = (function (v) {
 									if (! (v == null || v instanceof InstantiatedClassDefinition)) {
 										debugger;
-										throw new Error("[/Users/gfx/repo/try-on-web/JSX/src/jsemitter.jsx:2658:41] detected invalid cast, value is not an instance of the designated type or null\n                var typeArgs = (classDef as InstantiatedClassDefinition).getTypeArguments();\n                                         ^^\n");
+										throw new Error("[/Users/gfx/repo/try-on-web/JSX/src/jsemitter.jsx:2686:41] detected invalid cast, value is not an instance of the designated type or null\n                var typeArgs = (classDef as InstantiatedClassDefinition).getTypeArguments();\n                                         ^^\n");
 									}
 									return v;
 								}(classDef)).getTypeArguments$();
 								switch ((function (v) {
 									if (! (v == null || v instanceof InstantiatedClassDefinition)) {
 										debugger;
-										throw new Error("[/Users/gfx/repo/try-on-web/JSX/src/jsemitter.jsx:2659:34] detected invalid cast, value is not an instance of the designated type or null\n                switch ((classDef as InstantiatedClassDefinition).getTemplateClassName()) {\n                                  ^^\n");
+										throw new Error("[/Users/gfx/repo/try-on-web/JSX/src/jsemitter.jsx:2687:34] detected invalid cast, value is not an instance of the designated type or null\n                switch ((classDef as InstantiatedClassDefinition).getTemplateClassName()) {\n                                  ^^\n");
 									}
 									return v;
 								}(classDef)).getTemplateClassName$()) {
@@ -15917,13 +16038,13 @@ JavaScriptEmitter.prototype._mangleTypeName$LType$ = function (type) {
 								return "F" + this._mangleFunctionArguments$ALType$((function (v) {
 									if (! (v == null || v instanceof StaticFunctionType)) {
 										debugger;
-										throw new Error("[/Users/gfx/repo/try-on-web/JSX/src/jsemitter.jsx:2670:61] detected invalid cast, value is not an instance of the designated type or null\n            return \"F\" + this._mangleFunctionArguments((type as StaticFunctionType).getArgumentTypes()) + this._mangleTypeName((type as StaticFunctionType).getReturnType()) + \"$\";\n                                                             ^^\n");
+										throw new Error("[/Users/gfx/repo/try-on-web/JSX/src/jsemitter.jsx:2698:61] detected invalid cast, value is not an instance of the designated type or null\n            return \"F\" + this._mangleFunctionArguments((type as StaticFunctionType).getArgumentTypes()) + this._mangleTypeName((type as StaticFunctionType).getReturnType()) + \"$\";\n                                                             ^^\n");
 									}
 									return v;
 								}(type)).getArgumentTypes$()) + this._mangleTypeName$LType$((function (v) {
 									if (! (v == null || v instanceof StaticFunctionType)) {
 										debugger;
-										throw new Error("[/Users/gfx/repo/try-on-web/JSX/src/jsemitter.jsx:2670:133] detected invalid cast, value is not an instance of the designated type or null\n            return \"F\" + this._mangleFunctionArguments((type as StaticFunctionType).getArgumentTypes()) + this._mangleTypeName((type as StaticFunctionType).getReturnType()) + \"$\";\n                                                                                                                                     ^^\n");
+										throw new Error("[/Users/gfx/repo/try-on-web/JSX/src/jsemitter.jsx:2698:133] detected invalid cast, value is not an instance of the designated type or null\n            return \"F\" + this._mangleFunctionArguments((type as StaticFunctionType).getArgumentTypes()) + this._mangleTypeName((type as StaticFunctionType).getReturnType()) + \"$\";\n                                                                                                                                     ^^\n");
 									}
 									return v;
 								}(type)).getReturnType$()) + "$";
@@ -15932,19 +16053,19 @@ JavaScriptEmitter.prototype._mangleTypeName$LType$ = function (type) {
 									return "M" + this._mangleTypeName$LType$((function (v) {
 										if (! (v == null || v instanceof MemberFunctionType)) {
 											debugger;
-											throw new Error("[/Users/gfx/repo/try-on-web/JSX/src/jsemitter.jsx:2672:52] detected invalid cast, value is not an instance of the designated type or null\n            return \"M\" + this._mangleTypeName((type as MemberFunctionType).getObjectType()) + this._mangleFunctionArguments((type as MemberFunctionType).getArgumentTypes()) + this._mangleTypeName((type as MemberFunctionType).getReturnType()) + \"$\";\n                                                    ^^\n");
+											throw new Error("[/Users/gfx/repo/try-on-web/JSX/src/jsemitter.jsx:2700:52] detected invalid cast, value is not an instance of the designated type or null\n            return \"M\" + this._mangleTypeName((type as MemberFunctionType).getObjectType()) + this._mangleFunctionArguments((type as MemberFunctionType).getArgumentTypes()) + this._mangleTypeName((type as MemberFunctionType).getReturnType()) + \"$\";\n                                                    ^^\n");
 										}
 										return v;
 									}(type)).getObjectType$()) + this._mangleFunctionArguments$ALType$((function (v) {
 										if (! (v == null || v instanceof MemberFunctionType)) {
 											debugger;
-											throw new Error("[/Users/gfx/repo/try-on-web/JSX/src/jsemitter.jsx:2672:130] detected invalid cast, value is not an instance of the designated type or null\n            return \"M\" + this._mangleTypeName((type as MemberFunctionType).getObjectType()) + this._mangleFunctionArguments((type as MemberFunctionType).getArgumentTypes()) + this._mangleTypeName((type as MemberFunctionType).getReturnType()) + \"$\";\n                                                                                                                                  ^^\n");
+											throw new Error("[/Users/gfx/repo/try-on-web/JSX/src/jsemitter.jsx:2700:130] detected invalid cast, value is not an instance of the designated type or null\n            return \"M\" + this._mangleTypeName((type as MemberFunctionType).getObjectType()) + this._mangleFunctionArguments((type as MemberFunctionType).getArgumentTypes()) + this._mangleTypeName((type as MemberFunctionType).getReturnType()) + \"$\";\n                                                                                                                                  ^^\n");
 										}
 										return v;
 									}(type)).getArgumentTypes$()) + this._mangleTypeName$LType$((function (v) {
 										if (! (v == null || v instanceof MemberFunctionType)) {
 											debugger;
-											throw new Error("[/Users/gfx/repo/try-on-web/JSX/src/jsemitter.jsx:2672:202] detected invalid cast, value is not an instance of the designated type or null\n            return \"M\" + this._mangleTypeName((type as MemberFunctionType).getObjectType()) + this._mangleFunctionArguments((type as MemberFunctionType).getArgumentTypes()) + this._mangleTypeName((type as MemberFunctionType).getReturnType()) + \"$\";\n                                                                                                                                                                                                          ^^\n");
+											throw new Error("[/Users/gfx/repo/try-on-web/JSX/src/jsemitter.jsx:2700:202] detected invalid cast, value is not an instance of the designated type or null\n            return \"M\" + this._mangleTypeName((type as MemberFunctionType).getObjectType()) + this._mangleFunctionArguments((type as MemberFunctionType).getArgumentTypes()) + this._mangleTypeName((type as MemberFunctionType).getReturnType()) + \"$\";\n                                                                                                                                                                                                          ^^\n");
 										}
 										return v;
 									}(type)).getReturnType$()) + "$";
@@ -15953,7 +16074,7 @@ JavaScriptEmitter.prototype._mangleTypeName$LType$ = function (type) {
 										return "U" + this._mangleTypeName$LType$((function (v) {
 											if (! (v == null || v instanceof NullableType)) {
 												debugger;
-												throw new Error("[/Users/gfx/repo/try-on-web/JSX/src/jsemitter.jsx:2674:52] detected invalid cast, value is not an instance of the designated type or null\n            return \"U\" + this._mangleTypeName((type as NullableType).getBaseType());\n                                                    ^^\n");
+												throw new Error("[/Users/gfx/repo/try-on-web/JSX/src/jsemitter.jsx:2702:52] detected invalid cast, value is not an instance of the designated type or null\n            return \"U\" + this._mangleTypeName((type as NullableType).getBaseType());\n                                                    ^^\n");
 											}
 											return v;
 										}(type)).getBaseType$());
@@ -16021,7 +16142,7 @@ JavaScriptEmitter.prototype._findFunctions$LClassDefinition$SB = function (class
 			functions.push((function (v) {
 				if (! (v == null || v instanceof MemberFunctionDefinition)) {
 					debugger;
-					throw new Error("[/Users/gfx/repo/try-on-web/JSX/src/jsemitter.jsx:2699:38] detected invalid cast, value is not an instance of the designated type or null\n                functions.push(member as MemberFunctionDefinition);\n                                      ^^\n");
+					throw new Error("[/Users/gfx/repo/try-on-web/JSX/src/jsemitter.jsx:2727:38] detected invalid cast, value is not an instance of the designated type or null\n                functions.push(member as MemberFunctionDefinition);\n                                      ^^\n");
 				}
 				return v;
 			}(member)));
@@ -16059,7 +16180,7 @@ JavaScriptEmitter.prototype._emitCallArguments$LToken$SALExpression$ALType$ = fu
 				argType = (function (v) {
 					if (! (v == null || v instanceof VariableLengthArgumentType)) {
 						debugger;
-						throw new Error("[/Users/gfx/repo/try-on-web/JSX/src/jsemitter.jsx:2718:39] detected invalid cast, value is not an instance of the designated type or null\n                    argType = (argType as VariableLengthArgumentType).getBaseType();\n                                       ^^\n");
+						throw new Error("[/Users/gfx/repo/try-on-web/JSX/src/jsemitter.jsx:2746:39] detected invalid cast, value is not an instance of the designated type or null\n                    argType = (argType as VariableLengthArgumentType).getBaseType();\n                                       ^^\n");
 					}
 					return v;
 				}(argType)).getBaseType$();
@@ -16137,7 +16258,7 @@ JavaScriptEmitter.prototype._emitRHSOfAssignment$LExpression$LType$ = function (
 			this._getExpressionEmitterFor$LExpression$(expr).emit$N((function (v) {
 				if (! (v != null)) {
 					debugger;
-					throw new Error("[/Users/gfx/repo/try-on-web/JSX/src/jsemitter.jsx:2771:107] null access\n                this._getExpressionEmitterFor(expr).emit(_BinaryNumberExpressionEmitter._operatorPrecedence[\"|\"]);\n                                                                                                           ^\n");
+					throw new Error("[/Users/gfx/repo/try-on-web/JSX/src/jsemitter.jsx:2799:107] null access\n                this._getExpressionEmitterFor(expr).emit(_BinaryNumberExpressionEmitter._operatorPrecedence[\"|\"]);\n                                                                                                           ^\n");
 				}
 				return v;
 			}(_BinaryNumberExpressionEmitter._operatorPrecedence["|"])));
@@ -16150,7 +16271,7 @@ JavaScriptEmitter.prototype._emitRHSOfAssignment$LExpression$LType$ = function (
 		this._emitWithNullableGuard$LExpression$N(expr, (function (v) {
 			if (! (v != null)) {
 				debugger;
-				throw new Error("[/Users/gfx/repo/try-on-web/JSX/src/jsemitter.jsx:2778:96] null access\n            this._emitWithNullableGuard(expr, _BinaryNumberExpressionEmitter._operatorPrecedence[\"|\"]);\n                                                                                                ^\n");
+				throw new Error("[/Users/gfx/repo/try-on-web/JSX/src/jsemitter.jsx:2806:96] null access\n            this._emitWithNullableGuard(expr, _BinaryNumberExpressionEmitter._operatorPrecedence[\"|\"]);\n                                                                                                ^\n");
 			}
 			return v;
 		}(_BinaryNumberExpressionEmitter._operatorPrecedence["|"])));
@@ -16160,13 +16281,13 @@ JavaScriptEmitter.prototype._emitRHSOfAssignment$LExpression$LType$ = function (
 	if (lhsType instanceof NullableType && (function (v) {
 		if (! (v == null || v instanceof NullableType)) {
 			debugger;
-			throw new Error("[/Users/gfx/repo/try-on-web/JSX/src/jsemitter.jsx:2782:57] detected invalid cast, value is not an instance of the designated type or null\n        if ((lhsType instanceof NullableType && (lhsType as NullableType).getBaseType().equals(Type.integerType))\n                                                         ^^\n");
+			throw new Error("[/Users/gfx/repo/try-on-web/JSX/src/jsemitter.jsx:2810:57] detected invalid cast, value is not an instance of the designated type or null\n        if ((lhsType instanceof NullableType && (lhsType as NullableType).getBaseType().equals(Type.integerType))\n                                                         ^^\n");
 		}
 		return v;
 	}(lhsType)).getBaseType$().equals$LType$(Type.integerType) && (exprType instanceof NullableType && (function (v) {
 		if (! (v == null || v instanceof NullableType)) {
 			debugger;
-			throw new Error("[/Users/gfx/repo/try-on-web/JSX/src/jsemitter.jsx:2783:62] detected invalid cast, value is not an instance of the designated type or null\n            && (exprType instanceof NullableType && (exprType as NullableType).getBaseType().equals(Type.numberType))) {\n                                                              ^^\n");
+			throw new Error("[/Users/gfx/repo/try-on-web/JSX/src/jsemitter.jsx:2811:62] detected invalid cast, value is not an instance of the designated type or null\n            && (exprType instanceof NullableType && (exprType as NullableType).getBaseType().equals(Type.numberType))) {\n                                                              ^^\n");
 		}
 		return v;
 	}(exprType)).getBaseType$().equals$LType$(Type.numberType))) {
@@ -16179,7 +16300,7 @@ JavaScriptEmitter.prototype._emitRHSOfAssignment$LExpression$LType$ = function (
 		this._getExpressionEmitterFor$LExpression$(expr).emit$N((function (v) {
 			if (! (v != null)) {
 				debugger;
-				throw new Error("[/Users/gfx/repo/try-on-web/JSX/src/jsemitter.jsx:2792:101] null access\n            this._getExpressionEmitterFor(expr).emit(_AssignmentExpressionEmitter._operatorPrecedence[\"=\"]);\n                                                                                                     ^\n");
+				throw new Error("[/Users/gfx/repo/try-on-web/JSX/src/jsemitter.jsx:2820:101] null access\n            this._getExpressionEmitterFor(expr).emit(_AssignmentExpressionEmitter._operatorPrecedence[\"=\"]);\n                                                                                                     ^\n");
 			}
 			return v;
 		}(_AssignmentExpressionEmitter._operatorPrecedence["="])));
@@ -16187,7 +16308,7 @@ JavaScriptEmitter.prototype._emitRHSOfAssignment$LExpression$LType$ = function (
 		this._emitWithNullableGuard$LExpression$N(expr, (function (v) {
 			if (! (v != null)) {
 				debugger;
-				throw new Error("[/Users/gfx/repo/try-on-web/JSX/src/jsemitter.jsx:2794:94] null access\n            this._emitWithNullableGuard(expr, _AssignmentExpressionEmitter._operatorPrecedence[\"=\"]);\n                                                                                              ^\n");
+				throw new Error("[/Users/gfx/repo/try-on-web/JSX/src/jsemitter.jsx:2822:94] null access\n            this._emitWithNullableGuard(expr, _AssignmentExpressionEmitter._operatorPrecedence[\"=\"]);\n                                                                                              ^\n");
 			}
 			return v;
 		}(_AssignmentExpressionEmitter._operatorPrecedence["="])));
@@ -16620,7 +16741,7 @@ Import.prototype.assertExistenceOfNamedClasses$ALCompileError$ = function (error
 			}
 		}
 		return num;
-	};
+	}
 	for (i = 0; i < this._classNames.length; ++ i) {
 		switch (countNumberOfClassesByName(this._classNames[i].getValue$())) {
 		case 0:
@@ -17090,15 +17211,15 @@ function Scope() {
  * @constructor
  * @param {Scope} prev
  * @param {Array.<undefined|LocalVariable>} locals
- * @param {LocalVariable} funcName
+ * @param {LocalVariable} funcLocal
  * @param {Array.<undefined|ArgumentDeclaration>} args
  * @param {Array.<undefined|Statement>} statements
  * @param {Array.<undefined|MemberFunctionDefinition>} closures
  */
-function Scope$LScope$ALLocalVariable$LLocalVariable$ALArgumentDeclaration$ALStatement$ALMemberFunctionDefinition$(prev, locals, funcName, args, statements, closures) {
+function Scope$LScope$ALLocalVariable$LLocalVariable$ALArgumentDeclaration$ALStatement$ALMemberFunctionDefinition$(prev, locals, funcLocal, args, statements, closures) {
 	this.prev = prev;
 	this.locals = locals;
-	this.funcName = funcName;
+	this.funcLocal = funcLocal;
 	this.arguments = args;
 	this.statements = statements;
 	this.closures = closures;
@@ -17143,7 +17264,7 @@ function Parser$LToken$SLCompletionRequest$(sourceToken, filename, completionReq
 	this._templateInners = null;
 	this._templateInstantiationRequests = null;
 	this._prevScope = null;
-	this._funcName = null;
+	this._funcLocal = null;
 	this._arguments = null;
 	this._classFlags = 0;
 	this._typeArgs = null;
@@ -17453,13 +17574,13 @@ Parser.prototype._popClassState$ = function () {
 };
 
 /**
- * @param {LocalVariable} funcName
+ * @param {LocalVariable} funcLocal
  * @param {Array.<undefined|ArgumentDeclaration>} args
  */
-Parser.prototype._pushScope$LLocalVariable$ALArgumentDeclaration$ = function (funcName, args) {
-	this._prevScope = new Scope$LScope$ALLocalVariable$LLocalVariable$ALArgumentDeclaration$ALStatement$ALMemberFunctionDefinition$(this._prevScope, this._locals, this._funcName, this._arguments, this._statements, this._closures);
+Parser.prototype._pushScope$LLocalVariable$ALArgumentDeclaration$ = function (funcLocal, args) {
+	this._prevScope = new Scope$LScope$ALLocalVariable$LLocalVariable$ALArgumentDeclaration$ALStatement$ALMemberFunctionDefinition$(this._prevScope, this._locals, this._funcLocal, this._arguments, this._statements, this._closures);
 	this._locals = [];
-	this._funcName = funcName;
+	this._funcLocal = funcLocal;
 	this._arguments = args;
 	this._statements = [];
 	this._closures = [];
@@ -17469,7 +17590,7 @@ Parser.prototype._pushScope$LLocalVariable$ALArgumentDeclaration$ = function (fu
  */
 Parser.prototype._popScope$ = function () {
 	this._locals = this._prevScope.locals;
-	this._funcName = this._prevScope.funcName;
+	this._funcLocal = this._prevScope.funcLocal;
 	this._arguments = this._prevScope.arguments;
 	this._statements = this._prevScope.statements;
 	this._closures = this._prevScope.closures;
@@ -17497,14 +17618,14 @@ Parser.prototype._registerLocal$LToken$LType$ = function (identifierToken, type)
 			return true;
 		}
 		return false;
-	};
+	}
 	if (this._arguments == null) {
 		this._newError$S(Util$format$SAS("cannot declare variable %1 outside of a function", [ identifierToken.getValue$() ]));
 		return null;
 	}
-	if (this._funcName != null) {
-		if (isEqualTo(this._funcName)) {
-			return this._funcName;
+	if (this._funcLocal != null) {
+		if (isEqualTo(this._funcLocal)) {
+			return this._funcLocal;
 		}
 	}
 	for (i = 0; i < this._arguments.length; ++ i) {
@@ -18669,7 +18790,7 @@ Parser.prototype._functionDefinition$LToken$NLDocComment$ = function (token, fla
 		}
 		function createDefinition(locals, statements, closures, lastToken) {
 			return (typeArgs.length !== 0 ? new TemplateFunctionDefinition$LToken$LToken$NALToken$LType$ALArgumentDeclaration$ALLocalVariable$ALStatement$ALMemberFunctionDefinition$LToken$LDocComment$(token, name, flags, typeArgs, returnType, args, locals, statements, closures, lastToken, docComment) : new MemberFunctionDefinition$LToken$LToken$NLType$ALArgumentDeclaration$ALLocalVariable$ALStatement$ALMemberFunctionDefinition$LToken$LDocComment$(token, name, flags, returnType, args, locals, statements, closures, lastToken, docComment));
-		};
+		}
 		if ((this._classFlags & (ClassDefinition.IS_INTERFACE | ClassDefinition.IS_DELETE)) !== 0) {
 			if (this._expect$S(";") == null) {
 				return null;
@@ -18690,7 +18811,7 @@ Parser.prototype._functionDefinition$LToken$NLDocComment$ = function (token, fla
 				}
 			}
 		}
-		this._funcName = null;
+		this._funcLocal = null;
 		this._arguments = args;
 		this._locals = [];
 		this._statements = [];
@@ -19335,13 +19456,54 @@ Parser.prototype._variableStatement$ = function () {
  * @return {!boolean}
  */
 Parser.prototype._functionStatement$LToken$ = function (token) {
-	/** @type {Expression} */
-	var funcExpr;
-	funcExpr = this._functionExpr$LToken$B(token, true);
-	if (funcExpr == null) {
+	var $this = this;
+	/** @type {Token} */
+	var name;
+	/** @type {Array.<undefined|ArgumentDeclaration>} */
+	var args;
+	/** @type {Type} */
+	var returnType;
+	/** @type {LocalVariable} */
+	var funcLocal;
+	/** @type {Token} */
+	var lastToken;
+	/** @type {MemberFunctionDefinition} */
+	var funcDef;
+	name = this._expectIdentifierOpt$();
+	if (name == null) {
 		return false;
 	}
-	this._statements.push(new ExpressionStatement$LExpression$(funcExpr));
+	if (this._expect$S("(") == null) {
+		return false;
+	}
+	args = this._functionArgumentsExpr$BB(false, true);
+	if (args == null) {
+		return false;
+	}
+	if (this._expect$S(":") == null) {
+		return false;
+	}
+	returnType = this._typeDeclaration$B(true);
+	if (returnType == null) {
+		return false;
+	}
+	if (this._expect$S("{") == null) {
+		return false;
+	}
+	funcLocal = this._registerLocal$LToken$LType$(name, new StaticFunctionType$LToken$LType$ALType$B(token, returnType, args.map((function (arg) {
+		return arg.getType$();
+	})), false));
+	this._pushScope$LLocalVariable$ALArgumentDeclaration$(funcLocal, args);
+	lastToken = this._block$();
+	if (lastToken == null) {
+		this._popScope$();
+		return false;
+	}
+	funcDef = new MemberFunctionDefinition$LToken$LToken$NLType$ALArgumentDeclaration$ALLocalVariable$ALStatement$ALMemberFunctionDefinition$LToken$LDocComment$(token, name, ClassDefinition.IS_STATIC, returnType, args, this._locals, this._statements, this._closures, lastToken, null);
+	this._popScope$();
+	this._closures.push(funcDef);
+	funcDef.setFuncLocal$LLocalVariable$(funcLocal);
+	this._statements.push(new FunctionStatement$LToken$LMemberFunctionDefinition$(token, funcDef));
 	return true;
 };
 
@@ -20316,7 +20478,7 @@ Parser.prototype._lhsExpr$ = function () {
 			}
 			break;
 		case "function":
-			expr = this._functionExpr$LToken$B(token, false);
+			expr = this._functionExpr$LToken$(token);
 			break;
 		case "new":
 			expr = this._newExpr$LToken$(token);
@@ -20470,7 +20632,7 @@ Parser.prototype._lambdaExpr$LToken$ = function (token) {
 		return null;
 	}
 	this._closures.push(funcDef);
-	return new FunctionExpression$LToken$LLocalVariable$LMemberFunctionDefinition$B(token, null, funcDef, false);
+	return new FunctionExpression$LToken$LMemberFunctionDefinition$(token, funcDef);
 };
 
 /**
@@ -20508,17 +20670,14 @@ Parser.prototype._lambdaBody$LToken$ALArgumentDeclaration$LType$ = function (tok
 
 /**
  * @param {Token} token
- * @param {!boolean} isStatement
  * @return {Expression}
  */
-Parser.prototype._functionExpr$LToken$B = function (token, isStatement) {
+Parser.prototype._functionExpr$LToken$ = function (token) {
 	var $this = this;
 	/** @type {Token} */
 	var name;
 	/** @type {Array.<undefined|ArgumentDeclaration>} */
 	var args;
-	/** @type {!boolean} */
-	var parseReturnType;
 	/** @type {Type} */
 	var returnType;
 	/** @type {Type} */
@@ -20526,34 +20685,20 @@ Parser.prototype._functionExpr$LToken$B = function (token, isStatement) {
 	/** @type {Array.<undefined|Type>} */
 	var argTypes;
 	/** @type {LocalVariable} */
-	var funcName;
+	var funcLocal;
 	/** @type {Token} */
 	var lastToken;
 	/** @type {MemberFunctionDefinition} */
 	var funcDef;
 	name = this._expectIdentifierOpt$();
-	if (isStatement && name == null) {
-		return null;
-	}
 	if (this._expect$S("(") == null) {
 		return null;
 	}
-	args = this._functionArgumentsExpr$BB(false, isStatement);
+	args = this._functionArgumentsExpr$BB(false, false);
 	if (args == null) {
 		return null;
 	}
-	parseReturnType = false;
-	if (isStatement) {
-		if (this._expect$S(":") == null) {
-			return null;
-		}
-		parseReturnType = true;
-	} else {
-		if (this._expectOpt$S(":") != null) {
-			parseReturnType = true;
-		}
-	}
-	if (parseReturnType) {
+	if (this._expectOpt$S(":") != null) {
 		returnType = this._typeDeclaration$B(true);
 		if (returnType == null) {
 			return null;
@@ -20571,15 +20716,11 @@ Parser.prototype._functionExpr$LToken$B = function (token, isStatement) {
 		}));
 		type = new StaticFunctionType$LToken$LType$ALType$B(token, returnType, argTypes, false);
 	}
-	funcName = null;
+	funcLocal = null;
 	if (name != null) {
-		if (isStatement) {
-			funcName = this._registerLocal$LToken$LType$(name, type);
-		} else {
-			funcName = new LocalVariable$LToken$LType$(name, type);
-		}
+		funcLocal = new LocalVariable$LToken$LType$(name, type);
 	}
-	this._pushScope$LLocalVariable$ALArgumentDeclaration$(funcName, args);
+	this._pushScope$LLocalVariable$ALArgumentDeclaration$(funcLocal, args);
 	lastToken = this._block$();
 	if (lastToken == null) {
 		this._popScope$();
@@ -20588,7 +20729,8 @@ Parser.prototype._functionExpr$LToken$B = function (token, isStatement) {
 	funcDef = new MemberFunctionDefinition$LToken$LToken$NLType$ALArgumentDeclaration$ALLocalVariable$ALStatement$ALMemberFunctionDefinition$LToken$LDocComment$(token, name, ClassDefinition.IS_STATIC, returnType, args, this._locals, this._statements, this._closures, lastToken, null);
 	this._popScope$();
 	this._closures.push(funcDef);
-	return new FunctionExpression$LToken$LLocalVariable$LMemberFunctionDefinition$B(token, funcName, funcDef, isStatement);
+	funcDef.setFuncLocal$LLocalVariable$(funcLocal);
+	return new FunctionExpression$LToken$LMemberFunctionDefinition$(token, funcDef);
 };
 
 /**
@@ -20599,11 +20741,11 @@ Parser.prototype._forEachScope$F$LLocalVariable$ALLocalVariable$ALArgumentDeclar
 	/** @type {Scope} */
 	var scope;
 	if (this._locals != null) {
-		if (! cb(this._funcName, this._locals, this._arguments)) {
+		if (! cb(this._funcLocal, this._locals, this._arguments)) {
 			return false;
 		}
 		for (scope = this._prevScope; scope != null; scope = scope.prev) {
-			if (scope.locals && ! cb(scope.funcName, scope.locals, scope.arguments)) {
+			if (scope.locals && ! cb(scope.funcLocal, scope.locals, scope.arguments)) {
 				return false;
 			}
 		}
@@ -20620,11 +20762,11 @@ Parser.prototype._findLocal$S = function (name) {
 	/** @type {LocalVariable} */
 	var found;
 	found = null;
-	this._forEachScope$F$LLocalVariable$ALLocalVariable$ALArgumentDeclaration$B$((function (funcName, locals, args) {
+	this._forEachScope$F$LLocalVariable$ALLocalVariable$ALArgumentDeclaration$B$((function (funcLocal, locals, args) {
 		/** @type {!number} */
 		var i;
-		if (funcName != null && funcName.getName$().getValue$() === name) {
-			found = funcName;
+		if (funcLocal != null && funcLocal.getName$().getValue$() === name) {
+			found = funcLocal;
 			return false;
 		}
 		for (i = 0; i < locals.length; ++ i) {
@@ -20815,10 +20957,10 @@ Parser.prototype._hashLiteral$LToken$ = function (token) {
 
 /**
  * @param {!boolean} allowVarArgs
- * @param {!boolean} isStatement
+ * @param {!boolean} requireTypeDeclaration
  * @return {Array.<undefined|ArgumentDeclaration>}
  */
-Parser.prototype._functionArgumentsExpr$BB = function (allowVarArgs, isStatement) {
+Parser.prototype._functionArgumentsExpr$BB = function (allowVarArgs, requireTypeDeclaration) {
 	/** @type {Array.<undefined|ArgumentDeclaration>} */
 	var args;
 	/** @type {Token} */
@@ -20841,7 +20983,7 @@ Parser.prototype._functionArgumentsExpr$BB = function (allowVarArgs, isStatement
 				return null;
 			}
 			argType = null;
-			if (isStatement) {
+			if (requireTypeDeclaration) {
 				if (this._expect$S(":") == null) {
 					this._newError$S("type declarations are mandatory for non-expression function definition");
 					return null;
@@ -21440,7 +21582,7 @@ ClassDefinition.prototype._resetMembersClassDef$ = function () {
 			function setClassDef(funcDef) {
 				funcDef.setClassDef$LClassDefinition$($this);
 				return funcDef.forEachClosure$F$LMemberFunctionDefinition$B$(setClassDef);
-			};
+			}
 			(function (v) {
 				if (! (v == null || v instanceof MemberFunctionDefinition)) {
 					debugger;
@@ -21571,7 +21713,7 @@ ClassDefinition.prototype.getMemberTypeByName$ALCompileError$LToken$SBALType$N =
 				pushMatchingMember(classDef._implementTypes[i].getClassDef$());
 			}
 		}
-	};
+	}
 	pushMatchingMember(this);
 	switch (types.length) {
 	case 0:
@@ -22797,6 +22939,7 @@ function MemberFunctionDefinition$LToken$LToken$NLType$ALArgumentDeclaration$ALL
 	this._closures = closures;
 	this._lastTokenOfBody = lastTokenOfBody;
 	this._parent = null;
+	this._funcLocal = null;
 	this._classDef = null;
 	if (this._closures != null) {
 		for (i = 0; i < this._closures.length; ++ i) {
@@ -22895,7 +23038,7 @@ MemberFunctionDefinition.prototype._instantiateCore$LInstantiationContext$F$LTok
 				caughtVariables.push((function (v) {
 					if (! (v == null || v instanceof CatchStatement)) {
 						debugger;
-						throw new Error("[/Users/gfx/repo/try-on-web/JSX/src/classdef.jsx:1228:52] detected invalid cast, value is not an instance of the designated type or null\n                    caughtVariables.push((statement as CatchStatement).getLocal().instantiateAndPush(instantiationContext));\n                                                    ^^\n");
+						throw new Error("[/Users/gfx/repo/try-on-web/JSX/src/classdef.jsx:1230:52] detected invalid cast, value is not an instance of the designated type or null\n                    caughtVariables.push((statement as CatchStatement).getLocal().instantiateAndPush(instantiationContext));\n                                                    ^^\n");
 					}
 					return v;
 				}(statement)).getLocal$().instantiateAndPush$LInstantiationContext$(instantiationContext));
@@ -22908,7 +23051,7 @@ MemberFunctionDefinition.prototype._instantiateCore$LInstantiationContext$F$LTok
 				statements[i] = (function (v) {
 					if (! (v == null || v instanceof ConstructorInvocationStatement)) {
 						debugger;
-						throw new Error("[/Users/gfx/repo/try-on-web/JSX/src/classdef.jsx:1237:57] detected invalid cast, value is not an instance of the designated type or null\n                    statements[i] = (this._statements[i] as ConstructorInvocationStatement).instantiate(instantiationContext);\n                                                         ^^\n");
+						throw new Error("[/Users/gfx/repo/try-on-web/JSX/src/classdef.jsx:1239:57] detected invalid cast, value is not an instance of the designated type or null\n                    statements[i] = (this._statements[i] as ConstructorInvocationStatement).instantiate(instantiationContext);\n                                                         ^^\n");
 					}
 					return v;
 				}(this._statements[i])).instantiate$LInstantiationContext$(instantiationContext);
@@ -22924,7 +23067,7 @@ MemberFunctionDefinition.prototype._instantiateCore$LInstantiationContext$F$LTok
 				(function (v) {
 					if (! (v == null || v instanceof CatchStatement)) {
 						debugger;
-						throw new Error("[/Users/gfx/repo/try-on-web/JSX/src/classdef.jsx:1246:31] detected invalid cast, value is not an instance of the designated type or null\n                    (statement as CatchStatement).setLocal(caughtVariables.shift());\n                               ^^\n");
+						throw new Error("[/Users/gfx/repo/try-on-web/JSX/src/classdef.jsx:1248:31] detected invalid cast, value is not an instance of the designated type or null\n                    (statement as CatchStatement).setLocal(caughtVariables.shift());\n                               ^^\n");
 					}
 					return v;
 				}(statement)).setLocal$LCaughtVariable$(caughtVariables.shift());
@@ -22952,7 +23095,7 @@ MemberFunctionDefinition.prototype._instantiateCore$LInstantiationContext$F$LTok
 				(function (v) {
 					if (! (v == null || v instanceof CatchStatement)) {
 						debugger;
-						throw new Error("[/Users/gfx/repo/try-on-web/JSX/src/classdef.jsx:1268:31] detected invalid cast, value is not an instance of the designated type or null\n                    (statement as CatchStatement).getLocal().popInstantiated();\n                               ^^\n");
+						throw new Error("[/Users/gfx/repo/try-on-web/JSX/src/classdef.jsx:1270:31] detected invalid cast, value is not an instance of the designated type or null\n                    (statement as CatchStatement).getLocal().popInstantiated();\n                               ^^\n");
 					}
 					return v;
 				}(statement)).getLocal$().popInstantiated$();
@@ -22960,9 +23103,33 @@ MemberFunctionDefinition.prototype._instantiateCore$LInstantiationContext$F$LTok
 			return statement.forEachStatement$F$LStatement$B$(onStatement);
 		}), this._statements);
 		Util$forEachStatement$F$LStatement$B$ALStatement$((function onStatement(statement) {
-			/** @type {*} */
-			var onExpr;
-			function onExpr(expr) {
+			/** @type {!number} */
+			var i;
+			if (statement instanceof FunctionStatement) {
+				for (i = 0; i < $this._closures.length; ++ i) {
+					if ($this._closures[i] == (function (v) {
+						if (! (v == null || v instanceof FunctionStatement)) {
+							debugger;
+							throw new Error("[/Users/gfx/repo/try-on-web/JSX/src/classdef.jsx:1278:60] detected invalid cast, value is not an instance of the designated type or null\n                        if (this._closures[i] == (statement as FunctionStatement).getFuncDef())\n                                                            ^^\n");
+						}
+						return v;
+					}(statement)).getFuncDef$()) {
+						break;
+					}
+				}
+				if (i === $this._closures.length) {
+					throw new Error("logic flaw, cannot find the closure");
+				}
+				(function (v) {
+					if (! (v == null || v instanceof FunctionStatement)) {
+						debugger;
+						throw new Error("[/Users/gfx/repo/try-on-web/JSX/src/classdef.jsx:1283:31] detected invalid cast, value is not an instance of the designated type or null\n                    (statement as FunctionStatement).setFuncDef(closures[i]);\n                               ^^\n");
+					}
+					return v;
+				}(statement)).setFuncDef$LMemberFunctionDefinition$(closures[i]);
+				return true;
+			}
+			statement.forEachExpression$F$LExpression$B$((function onExpr(expr) {
 				/** @type {!number} */
 				var i;
 				if (expr instanceof FunctionExpression) {
@@ -22970,7 +23137,7 @@ MemberFunctionDefinition.prototype._instantiateCore$LInstantiationContext$F$LTok
 						if ($this._closures[i] == (function (v) {
 							if (! (v == null || v instanceof FunctionExpression)) {
 								debugger;
-								throw new Error("[/Users/gfx/repo/try-on-web/JSX/src/classdef.jsx:1277:59] detected invalid cast, value is not an instance of the designated type or null\n                            if (this._closures[i] == (expr as FunctionExpression).getFuncDef())\n                                                           ^^\n");
+								throw new Error("[/Users/gfx/repo/try-on-web/JSX/src/classdef.jsx:1289:59] detected invalid cast, value is not an instance of the designated type or null\n                            if (this._closures[i] == (expr as FunctionExpression).getFuncDef())\n                                                           ^^\n");
 							}
 							return v;
 						}(expr)).getFuncDef$()) {
@@ -22983,14 +23150,13 @@ MemberFunctionDefinition.prototype._instantiateCore$LInstantiationContext$F$LTok
 					(function (v) {
 						if (! (v == null || v instanceof FunctionExpression)) {
 							debugger;
-							throw new Error("[/Users/gfx/repo/try-on-web/JSX/src/classdef.jsx:1282:30] detected invalid cast, value is not an instance of the designated type or null\n                        (expr as FunctionExpression).setFuncDef(closures[i]);\n                              ^^\n");
+							throw new Error("[/Users/gfx/repo/try-on-web/JSX/src/classdef.jsx:1294:30] detected invalid cast, value is not an instance of the designated type or null\n                        (expr as FunctionExpression).setFuncDef(closures[i]);\n                              ^^\n");
 						}
 						return v;
 					}(expr)).setFuncDef$LMemberFunctionDefinition$(closures[i]);
 				}
 				return expr.forEachExpression$F$LExpression$B$(onExpr);
-			};
-			statement.forEachExpression$F$LExpression$B$(onExpr);
+			}));
 			return statement.forEachStatement$F$LStatement$B$(onStatement);
 		}), statements);
 	} else {
@@ -23054,7 +23220,11 @@ MemberFunctionDefinition.prototype.analyze$LAnalysisContext$ = function (outerCo
 		context.setBlockStack$ALBlockContext$(outerContext.blockStack);
 		context.blockStack.push(new BlockContext$LLocalVariableStatuses$LBlock$(new LocalVariableStatuses$LMemberFunctionDefinition$LLocalVariableStatuses$(this, outerContext.getTopBlock$().localVariableStatuses), this));
 		if (! this.isAnonymous$()) {
-			context.getTopBlock$().localVariableStatuses._statuses[this.name$()] = LocalVariableStatuses.ISSET;
+			if (this._returnType != null) {
+				context.getTopBlock$().localVariableStatuses._statuses[this.name$()] = LocalVariableStatuses.ISSET;
+			} else {
+				context.getTopBlock$().localVariableStatuses._statuses[this.name$()] = LocalVariableStatuses.UNTYPED_RECURSIVE_FUNCTION;
+			}
 		}
 	}
 	try {
@@ -23063,14 +23233,20 @@ MemberFunctionDefinition.prototype.analyze$LAnalysisContext$ = function (outerCo
 				break;
 			}
 		}
+		if (this._returnType == null) {
+			this._returnType = Type.voidType;
+		}
 		if (! this._returnType.equals$LType$(Type.voidType) && context.getTopBlock$().localVariableStatuses != null) {
 			context.errors.push(new CompileError$LToken$S(this._lastTokenOfBody, "missing return statement"));
 		}
-		if (this.getNameToken$() != null && this.name$() === "constructor") {
+		if (this._parent == null && this.getNameToken$() != null && this.name$() === "constructor") {
 			this._fixupConstructor$LAnalysisContext$(context);
 		}
 	} finally {
 		context.blockStack.pop();
+	}
+	if (this._funcLocal != null) {
+		this._funcLocal.setTypeForced$LType$(this.getType$());
 	}
 };
 
@@ -23109,7 +23285,7 @@ MemberFunctionDefinition.prototype._fixupConstructor$LAnalysisContext$ = functio
 	if (stmtIndex < this._statements.length && this._statements[stmtIndex] instanceof ConstructorInvocationStatement && (function (v) {
 		if (! (v == null || v instanceof ConstructorInvocationStatement)) {
 			debugger;
-			throw new Error("[/Users/gfx/repo/try-on-web/JSX/src/classdef.jsx:1379:44] detected invalid cast, value is not an instance of the designated type or null\n            && (this._statements[stmtIndex] as ConstructorInvocationStatement).getConstructingClassDef() == this._classDef) {\n                                            ^^\n");
+			throw new Error("[/Users/gfx/repo/try-on-web/JSX/src/classdef.jsx:1402:44] detected invalid cast, value is not an instance of the designated type or null\n            && (this._statements[stmtIndex] as ConstructorInvocationStatement).getConstructingClassDef() == this._classDef) {\n                                            ^^\n");
 		}
 		return v;
 	}(this._statements[stmtIndex])).getConstructingClassDef$() == this._classDef) {
@@ -23122,7 +23298,7 @@ MemberFunctionDefinition.prototype._fixupConstructor$LAnalysisContext$ = functio
 				if (stmtIndex < this._statements.length && this._statements[stmtIndex] instanceof ConstructorInvocationStatement && baseClassType.getClassDef$() == (function (v) {
 					if (! (v == null || v instanceof ConstructorInvocationStatement)) {
 						debugger;
-						throw new Error("[/Users/gfx/repo/try-on-web/JSX/src/classdef.jsx:1389:87] detected invalid cast, value is not an instance of the designated type or null\n                        && baseClassType.getClassDef() == (this._statements[stmtIndex] as ConstructorInvocationStatement).getConstructingClassDef()) {\n                                                                                       ^^\n");
+						throw new Error("[/Users/gfx/repo/try-on-web/JSX/src/classdef.jsx:1412:87] detected invalid cast, value is not an instance of the designated type or null\n                        && baseClassType.getClassDef() == (this._statements[stmtIndex] as ConstructorInvocationStatement).getConstructingClassDef()) {\n                                                                                       ^^\n");
 					}
 					return v;
 				}(this._statements[stmtIndex])).getConstructingClassDef$()) {
@@ -23185,20 +23361,20 @@ MemberFunctionDefinition.prototype._fixupConstructor$LAnalysisContext$ = functio
 			if (expr instanceof AssignmentExpression && expr.getToken$().getValue$() === "=" && (lhsExpr = (function (v) {
 				if (! (v == null || v instanceof AssignmentExpression)) {
 					debugger;
-					throw new Error("[/Users/gfx/repo/try-on-web/JSX/src/classdef.jsx:1450:40] detected invalid cast, value is not an instance of the designated type or null\n                    && (lhsExpr = (expr as AssignmentExpression).getFirstExpr()) instanceof PropertyExpression\n                                        ^^\n");
+					throw new Error("[/Users/gfx/repo/try-on-web/JSX/src/classdef.jsx:1473:40] detected invalid cast, value is not an instance of the designated type or null\n                    && (lhsExpr = (expr as AssignmentExpression).getFirstExpr()) instanceof PropertyExpression\n                                        ^^\n");
 				}
 				return v;
 			}(expr)).getFirstExpr$()) instanceof PropertyExpression && (function (v) {
 				if (! (v == null || v instanceof PropertyExpression)) {
 					debugger;
-					throw new Error("[/Users/gfx/repo/try-on-web/JSX/src/classdef.jsx:1451:32] detected invalid cast, value is not an instance of the designated type or null\n                    && (lhsExpr as PropertyExpression).getExpr() instanceof ThisExpression) {\n                                ^^\n");
+					throw new Error("[/Users/gfx/repo/try-on-web/JSX/src/classdef.jsx:1474:32] detected invalid cast, value is not an instance of the designated type or null\n                    && (lhsExpr as PropertyExpression).getExpr() instanceof ThisExpression) {\n                                ^^\n");
 				}
 				return v;
 			}(lhsExpr)).getExpr$() instanceof ThisExpression) {
 				initProperties[(function (v) {
 					if (! (v == null || v instanceof PropertyExpression)) {
 						debugger;
-						throw new Error("[/Users/gfx/repo/try-on-web/JSX/src/classdef.jsx:1452:48] detected invalid cast, value is not an instance of the designated type or null\n                        initProperties[(lhsExpr as PropertyExpression).getIdentifierToken().getValue()] = false;\n                                                ^^\n");
+						throw new Error("[/Users/gfx/repo/try-on-web/JSX/src/classdef.jsx:1475:48] detected invalid cast, value is not an instance of the designated type or null\n                        initProperties[(lhsExpr as PropertyExpression).getIdentifierToken().getValue()] = false;\n                                                ^^\n");
 					}
 					return v;
 				}(lhsExpr)).getIdentifierToken$().getValue$()] = false;
@@ -23209,7 +23385,7 @@ MemberFunctionDefinition.prototype._fixupConstructor$LAnalysisContext$ = functio
 				}
 			}
 			return expr.forEachExpression$F$LExpression$B$(onExpr);
-		};
+		}
 		canContinue = this._statements[i].forEachExpression$F$LExpression$B$(onExpr);
 		if (! canContinue) {
 			break;
@@ -23237,6 +23413,13 @@ MemberFunctionDefinition.prototype.getReturnType$ = function () {
 };
 
 /**
+ * @param {Type} type
+ */
+MemberFunctionDefinition.prototype.setReturnType$LType$ = function (type) {
+	this._returnType = type;
+};
+
+/**
  * @return {Array.<undefined|ArgumentDeclaration>}
  */
 MemberFunctionDefinition.prototype.getArguments$ = function () {
@@ -23256,6 +23439,20 @@ MemberFunctionDefinition.prototype.getArgumentTypes$ = function () {
 		argTypes[i] = this._args[i].getType$();
 	}
 	return argTypes;
+};
+
+/**
+ * @return {LocalVariable}
+ */
+MemberFunctionDefinition.prototype.getFuncLocal$ = function () {
+	return this._funcLocal;
+};
+
+/**
+ * @param {LocalVariable} funcLocal
+ */
+MemberFunctionDefinition.prototype.setFuncLocal$LLocalVariable$ = function (funcLocal) {
+	this._funcLocal = funcLocal;
 };
 
 /**
@@ -23315,14 +23512,14 @@ MemberFunctionDefinition.prototype.getLocal$LAnalysisContext$S = function (conte
 			for (j = 0; j < (function (v) {
 				if (! (v == null || v instanceof MemberFunctionDefinition)) {
 					debugger;
-					throw new Error("[/Users/gfx/repo/try-on-web/JSX/src/classdef.jsx:1525:43] detected invalid cast, value is not an instance of the designated type or null\n                for (var j = 0; j < (block as MemberFunctionDefinition)._locals.length; ++j) {\n                                           ^^\n");
+					throw new Error("[/Users/gfx/repo/try-on-web/JSX/src/classdef.jsx:1560:43] detected invalid cast, value is not an instance of the designated type or null\n                for (var j = 0; j < (block as MemberFunctionDefinition)._locals.length; ++j) {\n                                           ^^\n");
 				}
 				return v;
 			}(block))._locals.length; ++ j) {
 				local = (function (v) {
 					if (! (v == null || v instanceof MemberFunctionDefinition)) {
 						debugger;
-						throw new Error("[/Users/gfx/repo/try-on-web/JSX/src/classdef.jsx:1526:39] detected invalid cast, value is not an instance of the designated type or null\n                    var local = (block as MemberFunctionDefinition)._locals[j];\n                                       ^^\n");
+						throw new Error("[/Users/gfx/repo/try-on-web/JSX/src/classdef.jsx:1561:39] detected invalid cast, value is not an instance of the designated type or null\n                    var local = (block as MemberFunctionDefinition)._locals[j];\n                                       ^^\n");
 					}
 					return v;
 				}(block))._locals[j];
@@ -23333,14 +23530,14 @@ MemberFunctionDefinition.prototype.getLocal$LAnalysisContext$S = function (conte
 			for (j = 0; j < (function (v) {
 				if (! (v == null || v instanceof MemberFunctionDefinition)) {
 					debugger;
-					throw new Error("[/Users/gfx/repo/try-on-web/JSX/src/classdef.jsx:1530:43] detected invalid cast, value is not an instance of the designated type or null\n                for (var j = 0; j < (block as MemberFunctionDefinition)._args.length; ++j) {\n                                           ^^\n");
+					throw new Error("[/Users/gfx/repo/try-on-web/JSX/src/classdef.jsx:1565:43] detected invalid cast, value is not an instance of the designated type or null\n                for (var j = 0; j < (block as MemberFunctionDefinition)._args.length; ++j) {\n                                           ^^\n");
 				}
 				return v;
 			}(block))._args.length; ++ j) {
 				arg = (function (v) {
 					if (! (v == null || v instanceof MemberFunctionDefinition)) {
 						debugger;
-						throw new Error("[/Users/gfx/repo/try-on-web/JSX/src/classdef.jsx:1531:37] detected invalid cast, value is not an instance of the designated type or null\n                    var arg = (block as MemberFunctionDefinition)._args[j];\n                                     ^^\n");
+						throw new Error("[/Users/gfx/repo/try-on-web/JSX/src/classdef.jsx:1566:37] detected invalid cast, value is not an instance of the designated type or null\n                    var arg = (block as MemberFunctionDefinition)._args[j];\n                                     ^^\n");
 					}
 					return v;
 				}(block))._args[j];
@@ -23353,7 +23550,7 @@ MemberFunctionDefinition.prototype.getLocal$LAnalysisContext$S = function (conte
 				local = (function (v) {
 					if (! (v == null || v instanceof CatchStatement)) {
 						debugger;
-						throw new Error("[/Users/gfx/repo/try-on-web/JSX/src/classdef.jsx:1537:35] detected invalid cast, value is not an instance of the designated type or null\n                var local = (block as CatchStatement).getLocal();\n                                   ^^\n");
+						throw new Error("[/Users/gfx/repo/try-on-web/JSX/src/classdef.jsx:1572:35] detected invalid cast, value is not an instance of the designated type or null\n                var local = (block as CatchStatement).getLocal();\n                                   ^^\n");
 					}
 					return v;
 				}(block)).getLocal$();
@@ -23387,6 +23584,9 @@ MemberFunctionDefinition.prototype.deductTypeIfUnknown$LAnalysisContext$LResolve
 		}
 	}
 	if (i === this._args.length && this._returnType != null) {
+		if (this._funcLocal != null) {
+			this._funcLocal.setTypeForced$LType$(this.getType$());
+		}
 		return true;
 	}
 	if (type.getArgumentTypes$().length !== this._args.length) {
@@ -23415,6 +23615,9 @@ MemberFunctionDefinition.prototype.deductTypeIfUnknown$LAnalysisContext$LResolve
 		}
 	} else {
 		this._returnType = type.getReturnType$();
+	}
+	if (this._funcLocal != null) {
+		this._funcLocal.setTypeForced$LType$(this.getType$());
 	}
 	return true;
 };
@@ -23662,6 +23865,9 @@ LocalVariable.prototype.touchVariable$LAnalysisContext$LToken$B = function (cont
 		context.getTopBlock$().localVariableStatuses.setStatus$LLocalVariable$(this);
 	} else {
 		switch (context.getTopBlock$().localVariableStatuses.getStatus$LLocalVariable$(this)) {
+		case LocalVariableStatuses.UNTYPED_RECURSIVE_FUNCTION:
+			context.errors.push(new CompileError$LToken$S(token, "the return type of recursive function needs to be explicitly declared"));
+			return false;
 		case LocalVariableStatuses.ISSET:
 			break;
 		case LocalVariableStatuses.UNSET:
@@ -23776,7 +23982,7 @@ CaughtVariable.prototype.instantiateAndPush$LInstantiationContext$ = function (i
 	return (function (v) {
 		if (! (v == null || v instanceof CaughtVariable)) {
 			debugger;
-			throw new Error("[/Users/gfx/repo/try-on-web/JSX/src/classdef.jsx:1793:62] detected invalid cast, value is not an instance of the designated type or null\n        return super.instantiateAndPush(instantiationContext) as CaughtVariable;\n                                                              ^^\n");
+			throw new Error("[/Users/gfx/repo/try-on-web/JSX/src/classdef.jsx:1836:62] detected invalid cast, value is not an instance of the designated type or null\n        return super.instantiateAndPush(instantiationContext) as CaughtVariable;\n                                                              ^^\n");
 		}
 		return v;
 	}(LocalVariable.prototype.instantiateAndPush$LInstantiationContext$.call(this, instantiationContext)));
@@ -23827,7 +24033,7 @@ ArgumentDeclaration.prototype.instantiateAndPush$LInstantiationContext$ = functi
 	return (function (v) {
 		if (! (v == null || v instanceof ArgumentDeclaration)) {
 			debugger;
-			throw new Error("[/Users/gfx/repo/try-on-web/JSX/src/classdef.jsx:1813:62] detected invalid cast, value is not an instance of the designated type or null\n        return super.instantiateAndPush(instantiationContext) as ArgumentDeclaration;\n                                                              ^^\n");
+			throw new Error("[/Users/gfx/repo/try-on-web/JSX/src/classdef.jsx:1856:62] detected invalid cast, value is not an instance of the designated type or null\n        return super.instantiateAndPush(instantiationContext) as ArgumentDeclaration;\n                                                              ^^\n");
 		}
 		return v;
 	}(LocalVariable.prototype.instantiateAndPush$LInstantiationContext$.call(this, instantiationContext)));
@@ -23860,7 +24066,7 @@ function LocalVariableStatuses$LMemberFunctionDefinition$LLocalVariableStatuses$
 			this._statuses[k] = (base._statuses[k] == LocalVariableStatuses.UNSET ? LocalVariableStatuses.MAYBESET : (function (v) {
 				if (! (v != null)) {
 					debugger;
-					throw new Error("[/Users/gfx/repo/try-on-web/JSX/src/classdef.jsx:1832:134] null access\n                this._statuses[k] = base._statuses[k] == LocalVariableStatuses.UNSET ? LocalVariableStatuses.MAYBESET : base._statuses[k] as number;\n                                                                                                                                      ^\n");
+					throw new Error("[/Users/gfx/repo/try-on-web/JSX/src/classdef.jsx:1877:134] null access\n                this._statuses[k] = base._statuses[k] == LocalVariableStatuses.UNSET ? LocalVariableStatuses.MAYBESET : base._statuses[k] as number;\n                                                                                                                                      ^\n");
 				}
 				return v;
 			}(base._statuses[k])));
@@ -23945,7 +24151,7 @@ LocalVariableStatuses.prototype.getStatus$LLocalVariable$ = function (local) {
 	return (function (v) {
 		if (! (v != null)) {
 			debugger;
-			throw new Error("[/Users/gfx/repo/try-on-web/JSX/src/classdef.jsx:1877:29] null access\n        return this._statuses[name];\n                             ^\n");
+			throw new Error("[/Users/gfx/repo/try-on-web/JSX/src/classdef.jsx:1922:29] null access\n        return this._statuses[name];\n                             ^\n");
 		}
 		return v;
 	}(this._statuses[name]));
@@ -24093,14 +24299,14 @@ TemplateClassDefinition.prototype.instantiate$LInstantiationContext$ = function 
 	return new TemplateClassDefinition$LToken$SNALToken$LParsedObjectType$ALParsedObjectType$ALMemberDefinition$ALClassDefinition$ALTemplateClassDefinition$ALParsedObjectType$LDocComment$(this._token, this._className, this._flags, this._typeArgs, this._extendType != null ? (function (v) {
 		if (! (v == null || v instanceof ParsedObjectType)) {
 			debugger;
-			throw new Error("[/Users/gfx/repo/try-on-web/JSX/src/classdef.jsx:1959:77] detected invalid cast, value is not an instance of the designated type or null\n            this._extendType != null ? this._extendType.instantiate(context) as ParsedObjectType : null,\n                                                                             ^^\n");
+			throw new Error("[/Users/gfx/repo/try-on-web/JSX/src/classdef.jsx:2004:77] detected invalid cast, value is not an instance of the designated type or null\n            this._extendType != null ? this._extendType.instantiate(context) as ParsedObjectType : null,\n                                                                             ^^\n");
 		}
 		return v;
 	}(this._extendType.instantiate$LInstantiationContext$(context))) : null, this._implementTypes.map((function (t) {
 		return (function (v) {
 			if (! (v == null || v instanceof ParsedObjectType)) {
 				debugger;
-				throw new Error("[/Users/gfx/repo/try-on-web/JSX/src/classdef.jsx:1960:101] detected invalid cast, value is not an instance of the designated type or null\n            this._implementTypes.map.<ParsedObjectType>(function (t) { return t.instantiate(context) as ParsedObjectType; }),\n                                                                                                     ^^\n");
+				throw new Error("[/Users/gfx/repo/try-on-web/JSX/src/classdef.jsx:2005:101] detected invalid cast, value is not an instance of the designated type or null\n            this._implementTypes.map.<ParsedObjectType>(function (t) { return t.instantiate(context) as ParsedObjectType; }),\n                                                                                                     ^^\n");
 			}
 			return v;
 		}(t.instantiate$LInstantiationContext$(context)));
@@ -24169,14 +24375,14 @@ TemplateClassDefinition.prototype.instantiateTemplateClass$ALCompileError$LTempl
 	instantiatedDef = new InstantiatedClassDefinition$LTemplateClassDefinition$ALType$LParsedObjectType$ALParsedObjectType$ALMemberDefinition$ALClassDefinition$ALTemplateClassDefinition$ALParsedObjectType$(this, request.getTypeArguments$(), this._extendType != null ? (function (v) {
 		if (! (v == null || v instanceof ParsedObjectType)) {
 			debugger;
-			throw new Error("[/Users/gfx/repo/try-on-web/JSX/src/classdef.jsx:2005:90] detected invalid cast, value is not an instance of the designated type or null\n            this._extendType != null ? this._extendType.instantiate(instantiationContext) as ParsedObjectType: null,\n                                                                                          ^^\n");
+			throw new Error("[/Users/gfx/repo/try-on-web/JSX/src/classdef.jsx:2050:90] detected invalid cast, value is not an instance of the designated type or null\n            this._extendType != null ? this._extendType.instantiate(instantiationContext) as ParsedObjectType: null,\n                                                                                          ^^\n");
 		}
 		return v;
 	}(this._extendType.instantiate$LInstantiationContext$(instantiationContext))) : null, this._implementTypes.map((function (t) {
 		return (function (v) {
 			if (! (v == null || v instanceof ParsedObjectType)) {
 				debugger;
-				throw new Error("[/Users/gfx/repo/try-on-web/JSX/src/classdef.jsx:2006:114] detected invalid cast, value is not an instance of the designated type or null\n            this._implementTypes.map.<ParsedObjectType>(function (t) { return t.instantiate(instantiationContext) as ParsedObjectType; }),\n                                                                                                                  ^^\n");
+				throw new Error("[/Users/gfx/repo/try-on-web/JSX/src/classdef.jsx:2051:114] detected invalid cast, value is not an instance of the designated type or null\n            this._implementTypes.map.<ParsedObjectType>(function (t) { return t.instantiate(instantiationContext) as ParsedObjectType; }),\n                                                                                                                  ^^\n");
 			}
 			return v;
 		}(t.instantiate$LInstantiationContext$(instantiationContext)));
@@ -24479,7 +24685,7 @@ Type.calcLeastCommonAncestor$LType$LType$B = function (type1, type2, acceptVaria
 				}
 			}
 			return result;
-		};
+		}
 		candidates = uniquify(candidates);
 		switch (candidates.length) {
 		case 0:
@@ -26014,6 +26220,8 @@ Expression.prototype.instantiate$LInstantiationContext$ = function (instantiatio
 	function onExpr(expr) {
 		/** @type {Type} */
 		var srcType;
+		/** @type {InstanceofExpression} */
+		var instanceofExpr;
 		if (expr instanceof NullExpression) {
 			srcType = expr.getType$();
 			if (srcType != null) {
@@ -26112,6 +26320,17 @@ Expression.prototype.instantiate$LInstantiationContext$ = function (instantiatio
 											}
 											return v;
 										}(expr)).getLocal$().getInstantiated$());
+									} else {
+										if (expr instanceof InstanceofExpression) {
+											instanceofExpr = (function (v) {
+												if (! (v == null || v instanceof InstanceofExpression)) {
+													debugger;
+													throw new Error("[/Users/gfx/repo/try-on-web/JSX/src/expression.jsx:89:42] detected invalid cast, value is not an instance of the designated type or null\n                var instanceofExpr = expr as InstanceofExpression;\n                                          ^^\n");
+												}
+												return v;
+											}(expr));
+											instanceofExpr.setExpectedType$LType$(instanceofExpr.getExpectedType$().instantiate$LInstantiationContext$(instantiationContext));
+										}
 									}
 								}
 							}
@@ -26121,7 +26340,7 @@ Expression.prototype.instantiate$LInstantiationContext$ = function (instantiatio
 			}
 		}
 		return expr.forEachExpression$F$LExpression$B$(onExpr);
-	};
+	}
 	return onExpr(this);
 };
 
@@ -26369,19 +26588,19 @@ LocalExpression.prototype.analyze$LAnalysisContext$LExpression$ = function (cont
 	if (parentExpr instanceof AssignmentExpression && (function (v) {
 		if (! (v == null || v instanceof AssignmentExpression)) {
 			debugger;
-			throw new Error("[/Users/gfx/repo/try-on-web/JSX/src/expression.jsx:226:28] detected invalid cast, value is not an instance of the designated type or null\n             && (parentExpr as AssignmentExpression).getFirstExpr() == this\n                            ^^\n");
+			throw new Error("[/Users/gfx/repo/try-on-web/JSX/src/expression.jsx:229:28] detected invalid cast, value is not an instance of the designated type or null\n             && (parentExpr as AssignmentExpression).getFirstExpr() == this\n                            ^^\n");
 		}
 		return v;
 	}(parentExpr)).getFirstExpr$() == this && (function (v) {
 		if (! (v == null || v instanceof AssignmentExpression)) {
 			debugger;
-			throw new Error("[/Users/gfx/repo/try-on-web/JSX/src/expression.jsx:227:27] detected invalid cast, value is not an instance of the designated type or null\n            && (parentExpr as AssignmentExpression).getToken().getValue() == \"=\")\n                           ^^\n");
+			throw new Error("[/Users/gfx/repo/try-on-web/JSX/src/expression.jsx:230:27] detected invalid cast, value is not an instance of the designated type or null\n            && (parentExpr as AssignmentExpression).getToken().getValue() == \"=\")\n                           ^^\n");
 		}
 		return v;
 	}(parentExpr)).getToken$().getValue$() === "=" || parentExpr == null && context.statement instanceof ForInStatement && (function (v) {
 		if (! (v == null || v instanceof ForInStatement)) {
 			debugger;
-			throw new Error("[/Users/gfx/repo/try-on-web/JSX/src/expression.jsx:230:38] detected invalid cast, value is not an instance of the designated type or null\n                && (context.statement as ForInStatement).getLHSExpr() == this)) {\n                                      ^^\n");
+			throw new Error("[/Users/gfx/repo/try-on-web/JSX/src/expression.jsx:233:38] detected invalid cast, value is not an instance of the designated type or null\n                && (context.statement as ForInStatement).getLHSExpr() == this)) {\n                                      ^^\n");
 		}
 		return v;
 	}(context.statement)).getLHSExpr$() == this) {
@@ -26900,7 +27119,7 @@ ArrayLiteralExpression.prototype.analyze$LAnalysisContext$LExpression$ = functio
 		if (this._type instanceof ObjectType && (classDef = this._type.getClassDef$()) instanceof InstantiatedClassDefinition && (function (v) {
 			if (! (v == null || v instanceof InstantiatedClassDefinition)) {
 				debugger;
-				throw new Error("[/Users/gfx/repo/try-on-web/JSX/src/expression.jsx:537:29] detected invalid cast, value is not an instance of the designated type or null\n                && (classDef as InstantiatedClassDefinition).getTemplateClassName() == \"Array\") {\n                             ^^\n");
+				throw new Error("[/Users/gfx/repo/try-on-web/JSX/src/expression.jsx:540:29] detected invalid cast, value is not an instance of the designated type or null\n                && (classDef as InstantiatedClassDefinition).getTemplateClassName() == \"Array\") {\n                             ^^\n");
 			}
 			return v;
 		}(classDef)).getTemplateClassName$() === "Array") {
@@ -26911,7 +27130,7 @@ ArrayLiteralExpression.prototype.analyze$LAnalysisContext$LExpression$ = functio
 		expectedType = (function (v) {
 			if (! (v == null || v instanceof InstantiatedClassDefinition)) {
 				debugger;
-				throw new Error("[/Users/gfx/repo/try-on-web/JSX/src/expression.jsx:544:57] detected invalid cast, value is not an instance of the designated type or null\n            var expectedType = (this._type.getClassDef() as InstantiatedClassDefinition).getTypeArguments()[0].toNullableType();\n                                                         ^^\n");
+				throw new Error("[/Users/gfx/repo/try-on-web/JSX/src/expression.jsx:547:57] detected invalid cast, value is not an instance of the designated type or null\n            var expectedType = (this._type.getClassDef() as InstantiatedClassDefinition).getTypeArguments()[0].toNullableType();\n                                                         ^^\n");
 			}
 			return v;
 		}(this._type.getClassDef$())).getTypeArguments$()[0].toNullableType$();
@@ -27100,7 +27319,7 @@ MapLiteralExpression.prototype.analyze$LAnalysisContext$LExpression$ = function 
 			if (! (classDef instanceof InstantiatedClassDefinition && (function (v) {
 				if (! (v == null || v instanceof InstantiatedClassDefinition)) {
 					debugger;
-					throw new Error("[/Users/gfx/repo/try-on-web/JSX/src/expression.jsx:663:80] detected invalid cast, value is not an instance of the designated type or null\n            if (! (classDef instanceof InstantiatedClassDefinition && (classDef as InstantiatedClassDefinition).getTemplateClassName() == \"Map\")) {\n                                                                                ^^\n");
+					throw new Error("[/Users/gfx/repo/try-on-web/JSX/src/expression.jsx:666:80] detected invalid cast, value is not an instance of the designated type or null\n            if (! (classDef instanceof InstantiatedClassDefinition && (classDef as InstantiatedClassDefinition).getTemplateClassName() == \"Map\")) {\n                                                                                ^^\n");
 				}
 				return v;
 			}(classDef)).getTemplateClassName$() === "Map")) {
@@ -27110,7 +27329,7 @@ MapLiteralExpression.prototype.analyze$LAnalysisContext$LExpression$ = function 
 			expectedType = (function (v) {
 				if (! (v == null || v instanceof ParsedObjectType)) {
 					debugger;
-					throw new Error("[/Users/gfx/repo/try-on-web/JSX/src/expression.jsx:667:43] detected invalid cast, value is not an instance of the designated type or null\n            var expectedType = (this._type as ParsedObjectType).getTypeArguments()[0];\n                                           ^^\n");
+					throw new Error("[/Users/gfx/repo/try-on-web/JSX/src/expression.jsx:670:43] detected invalid cast, value is not an instance of the designated type or null\n            var expectedType = (this._type as ParsedObjectType).getTypeArguments()[0];\n                                           ^^\n");
 				}
 				return v;
 			}(this._type)).getTypeArguments$()[0];
@@ -27246,31 +27465,20 @@ FunctionExpression.prototype = new Expression;
 /**
  * @constructor
  * @param {Token} token
- * @param {LocalVariable} funcName
  * @param {MemberFunctionDefinition} funcDef
- * @param {!boolean} isStatement
  */
-function FunctionExpression$LToken$LLocalVariable$LMemberFunctionDefinition$B(token, funcName, funcDef, isStatement) {
+function FunctionExpression$LToken$LMemberFunctionDefinition$(token, funcDef) {
 	Expression$LToken$.call(this, token);
-	this._funcName = funcName;
 	this._funcDef = funcDef;
-	this._isStatement = isStatement;
 };
 
-FunctionExpression$LToken$LLocalVariable$LMemberFunctionDefinition$B.prototype = new FunctionExpression;
+FunctionExpression$LToken$LMemberFunctionDefinition$.prototype = new FunctionExpression;
 
 /**
  * @return {FunctionExpression}
  */
 FunctionExpression.prototype.clone$ = function () {
-	return new FunctionExpression$LToken$LLocalVariable$LMemberFunctionDefinition$B(this._token, this._funcName, this._funcDef, this._isStatement);
-};
-
-/**
- * @return {LocalVariable}
- */
-FunctionExpression.prototype.getFuncName$ = function () {
-	return this._funcName;
+	return new FunctionExpression$LToken$LMemberFunctionDefinition$(this._token, this._funcDef);
 };
 
 /**
@@ -27288,13 +27496,6 @@ FunctionExpression.prototype.setFuncDef$LMemberFunctionDefinition$ = function (f
 };
 
 /**
- * @return {!boolean}
- */
-FunctionExpression.prototype.isStatement$ = function () {
-	return this._isStatement;
-};
-
-/**
  * @return {*}
  */
 FunctionExpression.prototype.serialize$ = function () {
@@ -27307,12 +27508,9 @@ FunctionExpression.prototype.serialize$ = function () {
  * @return {!boolean}
  */
 FunctionExpression.prototype.analyze$LAnalysisContext$LExpression$ = function (context, parentExpr) {
-	if (! this.typesAreIdentified$()) {
-		context.errors.push(new CompileError$LToken$S(this._token, "argument / return types were not automatically deductable, please specify them by hand"));
+	if (! this.argumentTypesAreIdentified$()) {
+		context.errors.push(new CompileError$LToken$S(this._token, "argument types were not automatically deductable, please specify them by hand"));
 		return false;
-	}
-	if (this._isStatement) {
-		context.getTopBlock$().localVariableStatuses.setStatus$LLocalVariable$(new LocalVariable$LToken$LType$(this._funcDef.getNameToken$(), this.getType$()));
 	}
 	this._funcDef.analyze$LAnalysisContext$(context);
 	return true;
@@ -27328,7 +27526,7 @@ FunctionExpression.prototype.getType$ = function () {
 /**
  * @return {!boolean}
  */
-FunctionExpression.prototype.typesAreIdentified$ = function () {
+FunctionExpression.prototype.argumentTypesAreIdentified$ = function () {
 	/** @type {Array.<undefined|Type>} */
 	var argTypes;
 	/** @type {!number} */
@@ -27338,6 +27536,16 @@ FunctionExpression.prototype.typesAreIdentified$ = function () {
 		if (argTypes[i] == null) {
 			return false;
 		}
+	}
+	return true;
+};
+
+/**
+ * @return {!boolean}
+ */
+FunctionExpression.prototype.typesAreIdentified$ = function () {
+	if (! this.argumentTypesAreIdentified$()) {
+		return false;
 	}
 	if (this._funcDef.getReturnType$() == null) {
 		return false;
@@ -27353,15 +27561,6 @@ FunctionExpression.prototype.typesAreIdentified$ = function () {
 FunctionExpression.prototype.deductTypeIfUnknown$LAnalysisContext$LResolvedFunctionType$ = function (context, type) {
 	if (! this._funcDef.deductTypeIfUnknown$LAnalysisContext$LResolvedFunctionType$(context, type)) {
 		return false;
-	}
-	if (this._funcName != null) {
-		if (this._funcName.getType$() != null) {
-			if (! this._funcName.getType$().equals$LType$(this._funcDef.getType$())) {
-				throw new Error("unmatched type for local function: " + this._funcName.getName$().getValue$());
-			}
-		} else {
-			this._funcName.setType$LType$(this._funcDef.getType$());
-		}
 	}
 	return true;
 };
@@ -27525,6 +27724,13 @@ InstanceofExpression.prototype.getExpectedType$ = function () {
 };
 
 /**
+ * @param {Type} type
+ */
+InstanceofExpression.prototype.setExpectedType$LType$ = function (type) {
+	this._expectedType = type;
+};
+
+/**
  * @return {*}
  */
 InstanceofExpression.prototype.serialize$ = function () {
@@ -27642,13 +27848,13 @@ AsExpression.prototype.analyze$LAnalysisContext$LExpression$ = function (context
 						deducedType = (function (v) {
 							if (! (v == null || v instanceof PropertyExpression)) {
 								debugger;
-								throw new Error("[/Users/gfx/repo/try-on-web/JSX/src/expression.jsx:1005:42] detected invalid cast, value is not an instance of the designated type or null\n            var deducedType = (this._expr as PropertyExpression).deduceByArgumentTypes(context, this._token, (this._type as StaticFunctionType).getArgumentTypes(), true);\n                                          ^^\n");
+								throw new Error("[/Users/gfx/repo/try-on-web/JSX/src/expression.jsx:995:42] detected invalid cast, value is not an instance of the designated type or null\n            var deducedType = (this._expr as PropertyExpression).deduceByArgumentTypes(context, this._token, (this._type as StaticFunctionType).getArgumentTypes(), true);\n                                          ^^\n");
 							}
 							return v;
 						}(this._expr)).deduceByArgumentTypes$LAnalysisContext$LToken$ALType$B(context, this._token, (function (v) {
 							if (! (v == null || v instanceof StaticFunctionType)) {
 								debugger;
-								throw new Error("[/Users/gfx/repo/try-on-web/JSX/src/expression.jsx:1005:121] detected invalid cast, value is not an instance of the designated type or null\n            var deducedType = (this._expr as PropertyExpression).deduceByArgumentTypes(context, this._token, (this._type as StaticFunctionType).getArgumentTypes(), true);\n                                                                                                                         ^^\n");
+								throw new Error("[/Users/gfx/repo/try-on-web/JSX/src/expression.jsx:995:121] detected invalid cast, value is not an instance of the designated type or null\n            var deducedType = (this._expr as PropertyExpression).deduceByArgumentTypes(context, this._token, (this._type as StaticFunctionType).getArgumentTypes(), true);\n                                                                                                                         ^^\n");
 							}
 							return v;
 						}(this._type)).getArgumentTypes$(), true);
@@ -27657,7 +27863,7 @@ AsExpression.prototype.analyze$LAnalysisContext$LExpression$ = function (context
 							if (deducedType.getReturnType$().equals$LType$((function (v) {
 								if (! (v == null || v instanceof StaticFunctionType)) {
 									debugger;
-									throw new Error("[/Users/gfx/repo/try-on-web/JSX/src/expression.jsx:1008:67] detected invalid cast, value is not an instance of the designated type or null\n                if (deducedType.getReturnType().equals((this._type as StaticFunctionType).getReturnType())) {\n                                                                   ^^\n");
+									throw new Error("[/Users/gfx/repo/try-on-web/JSX/src/expression.jsx:998:67] detected invalid cast, value is not an instance of the designated type or null\n                if (deducedType.getReturnType().equals((this._type as StaticFunctionType).getReturnType())) {\n                                                                   ^^\n");
 								}
 								return v;
 							}(this._type)).getReturnType$())) {
@@ -28117,7 +28323,7 @@ PropertyExpression.prototype.deduceByArgumentTypes$LAnalysisContext$LToken$ALTyp
 	rhsType = (function (v) {
 		if (! (v == null || v instanceof FunctionType)) {
 			debugger;
-			throw new Error("[/Users/gfx/repo/try-on-web/JSX/src/expression.jsx:1289:34] detected invalid cast, value is not an instance of the designated type or null\n        var rhsType = (this._type as FunctionType).deduceByArgumentTypes(context, operatorToken, argTypes, isStatic);\n                                  ^^\n");
+			throw new Error("[/Users/gfx/repo/try-on-web/JSX/src/expression.jsx:1279:34] detected invalid cast, value is not an instance of the designated type or null\n        var rhsType = (this._type as FunctionType).deduceByArgumentTypes(context, operatorToken, argTypes, isStatic);\n                                  ^^\n");
 		}
 		return v;
 	}(this._type)).deduceByArgumentTypes$LAnalysisContext$LToken$ALType$B(context, operatorToken, argTypes, isStatic);
@@ -28466,12 +28672,12 @@ ArrayExpression.prototype._analyzeApplicationOnObject$LAnalysisContext$LType$ = 
 	expr1ClassDef = expr1Type.getClassDef$();
 	if (! (expr1ClassDef)) {
 		debugger;
-		throw new Error("[/Users/gfx/repo/try-on-web/JSX/src/expression.jsx:1486:15] assertion failure\n        assert expr1ClassDef;\n               ^^^^^^^^^^^^^\n");
+		throw new Error("[/Users/gfx/repo/try-on-web/JSX/src/expression.jsx:1476:15] assertion failure\n        assert expr1ClassDef;\n               ^^^^^^^^^^^^^\n");
 	}
 	funcType = (function (v) {
 		if (! (v == null || v instanceof FunctionType)) {
 			debugger;
-			throw new Error("[/Users/gfx/repo/try-on-web/JSX/src/expression.jsx:1488:171] detected invalid cast, value is not an instance of the designated type or null\n        var funcType = expr1ClassDef.getMemberTypeByName(context.errors, this._token, \"__native_index_operator__\", false, new Type[], ClassDefinition.GET_MEMBER_MODE_ALL) as FunctionType;\n                                                                                                                                                                           ^^\n");
+			throw new Error("[/Users/gfx/repo/try-on-web/JSX/src/expression.jsx:1478:171] detected invalid cast, value is not an instance of the designated type or null\n        var funcType = expr1ClassDef.getMemberTypeByName(context.errors, this._token, \"__native_index_operator__\", false, new Type[], ClassDefinition.GET_MEMBER_MODE_ALL) as FunctionType;\n                                                                                                                                                                           ^^\n");
 		}
 		return v;
 	}(expr1ClassDef.getMemberTypeByName$ALCompileError$LToken$SBALType$N(context.errors, this._token, "__native_index_operator__", false, [], ClassDefinition.GET_MEMBER_MODE_ALL)));
@@ -28592,13 +28798,13 @@ AssignmentExpression.prototype.analyze$LAnalysisContext$LExpression$ = function 
 			if ((rhsType = (function (v) {
 				if (! (v == null || v instanceof PropertyExpression)) {
 					debugger;
-					throw new Error("[/Users/gfx/repo/try-on-web/JSX/src/expression.jsx:1564:44] detected invalid cast, value is not an instance of the designated type or null\n                if ((rhsType = (this._expr2 as PropertyExpression).deduceByArgumentTypes(context, this._token, (lhsType as ResolvedFunctionType).getArgumentTypes(), lhsType instanceof StaticFunctionType)) == null)\n                                            ^^\n");
+					throw new Error("[/Users/gfx/repo/try-on-web/JSX/src/expression.jsx:1554:44] detected invalid cast, value is not an instance of the designated type or null\n                if ((rhsType = (this._expr2 as PropertyExpression).deduceByArgumentTypes(context, this._token, (lhsType as ResolvedFunctionType).getArgumentTypes(), lhsType instanceof StaticFunctionType)) == null)\n                                            ^^\n");
 				}
 				return v;
 			}(this._expr2)).deduceByArgumentTypes$LAnalysisContext$LToken$ALType$B(context, this._token, (function (v) {
 				if (! (v == null || v instanceof ResolvedFunctionType)) {
 					debugger;
-					throw new Error("[/Users/gfx/repo/try-on-web/JSX/src/expression.jsx:1564:120] detected invalid cast, value is not an instance of the designated type or null\n                if ((rhsType = (this._expr2 as PropertyExpression).deduceByArgumentTypes(context, this._token, (lhsType as ResolvedFunctionType).getArgumentTypes(), lhsType instanceof StaticFunctionType)) == null)\n                                                                                                                        ^^\n");
+					throw new Error("[/Users/gfx/repo/try-on-web/JSX/src/expression.jsx:1554:120] detected invalid cast, value is not an instance of the designated type or null\n                if ((rhsType = (this._expr2 as PropertyExpression).deduceByArgumentTypes(context, this._token, (lhsType as ResolvedFunctionType).getArgumentTypes(), lhsType instanceof StaticFunctionType)) == null)\n                                                                                                                        ^^\n");
 				}
 				return v;
 			}(lhsType)).getArgumentTypes$(), lhsType instanceof StaticFunctionType)) == null) {
@@ -28656,11 +28862,17 @@ AssignmentExpression.prototype._analyzeFunctionExpressionAssignment$LAnalysisCon
 		if (! (function (v) {
 			if (! (v == null || v instanceof FunctionExpression)) {
 				debugger;
-				throw new Error("[/Users/gfx/repo/try-on-web/JSX/src/expression.jsx:1600:31] detected invalid cast, value is not an instance of the designated type or null\n            if (! (this._expr2 as FunctionExpression).typesAreIdentified()) {\n                               ^^\n");
+				throw new Error("[/Users/gfx/repo/try-on-web/JSX/src/expression.jsx:1590:31] detected invalid cast, value is not an instance of the designated type or null\n            if (! (this._expr2 as FunctionExpression).typesAreIdentified()) {\n                               ^^\n");
 			}
 			return v;
 		}(this._expr2)).typesAreIdentified$()) {
-			context.errors.push(new CompileError$LToken$S(this._token, "either side of the operator should be fully type-qualified"));
+			context.errors.push(new CompileError$LToken$S(this._token, "either side of the operator should be fully type-qualified : " + ((function (v) {
+				if (! (v == null || v instanceof FunctionExpression)) {
+					debugger;
+					throw new Error("[/Users/gfx/repo/try-on-web/JSX/src/expression.jsx:1591:146] detected invalid cast, value is not an instance of the designated type or null\n                context.errors.push(new CompileError(this._token, \"either side of the operator should be fully type-qualified : \" + ((this._expr2 as FunctionExpression).argumentTypesAreIdentified() ? \"return type not declared\" : \"argument / return types not declared\")));\n                                                                                                                                                  ^^\n");
+				}
+				return v;
+			}(this._expr2)).argumentTypesAreIdentified$() ? "return type not declared" : "argument / return types not declared")));
 			return false;
 		}
 	} else {
@@ -28668,13 +28880,13 @@ AssignmentExpression.prototype._analyzeFunctionExpressionAssignment$LAnalysisCon
 			if (! (function (v) {
 				if (! (v == null || v instanceof FunctionExpression)) {
 					debugger;
-					throw new Error("[/Users/gfx/repo/try-on-web/JSX/src/expression.jsx:1606:31] detected invalid cast, value is not an instance of the designated type or null\n            if (! (this._expr2 as FunctionExpression).deductTypeIfUnknown(context, this._expr1.getType() as ResolvedFunctionType)) {\n                               ^^\n");
+					throw new Error("[/Users/gfx/repo/try-on-web/JSX/src/expression.jsx:1596:31] detected invalid cast, value is not an instance of the designated type or null\n            if (! (this._expr2 as FunctionExpression).deductTypeIfUnknown(context, this._expr1.getType() as ResolvedFunctionType)) {\n                               ^^\n");
 				}
 				return v;
 			}(this._expr2)).deductTypeIfUnknown$LAnalysisContext$LResolvedFunctionType$(context, (function (v) {
 				if (! (v == null || v instanceof ResolvedFunctionType)) {
 					debugger;
-					throw new Error("[/Users/gfx/repo/try-on-web/JSX/src/expression.jsx:1606:105] detected invalid cast, value is not an instance of the designated type or null\n            if (! (this._expr2 as FunctionExpression).deductTypeIfUnknown(context, this._expr1.getType() as ResolvedFunctionType)) {\n                                                                                                         ^^\n");
+					throw new Error("[/Users/gfx/repo/try-on-web/JSX/src/expression.jsx:1596:105] detected invalid cast, value is not an instance of the designated type or null\n            if (! (this._expr2 as FunctionExpression).deductTypeIfUnknown(context, this._expr1.getType() as ResolvedFunctionType)) {\n                                                                                                         ^^\n");
 				}
 				return v;
 			}(this._expr1.getType$())))) {
@@ -28836,7 +29048,7 @@ EqualityExpression.prototype.analyze$LAnalysisContext$LExpression$ = function (c
 	var expr2Type;
 	function bool(x) {
 		return (x ? 1 : 0);
-	};
+	}
 	if (! this._analyze$LAnalysisContext$(context)) {
 		return false;
 	}
@@ -28910,7 +29122,7 @@ InExpression.prototype.analyze$LAnalysisContext$LExpression$ = function (context
 	if ((expr2Type = this._expr2.getType$().resolveIfNullable$()) instanceof ObjectType && (expr2ClassDef = expr2Type.getClassDef$()) instanceof InstantiatedClassDefinition && (function (v) {
 		if (! (v == null || v instanceof InstantiatedClassDefinition)) {
 			debugger;
-			throw new Error("[/Users/gfx/repo/try-on-web/JSX/src/expression.jsx:1749:30] detected invalid cast, value is not an instance of the designated type or null\n            && (expr2ClassDef as InstantiatedClassDefinition).getTemplateClassName() == \"Map\") {\n                              ^^\n");
+			throw new Error("[/Users/gfx/repo/try-on-web/JSX/src/expression.jsx:1739:30] detected invalid cast, value is not an instance of the designated type or null\n            && (expr2ClassDef as InstantiatedClassDefinition).getTemplateClassName() == \"Map\") {\n                              ^^\n");
 		}
 		return v;
 	}(expr2ClassDef)).getTemplateClassName$() === "Map") {
@@ -29275,13 +29487,13 @@ CallExpression.prototype.analyze$LAnalysisContext$LExpression$ = function (conte
 	argTypes = Util$analyzeArgs$LAnalysisContext$ALExpression$LExpression$AALType$(context, this._args, this, (function (v) {
 		if (! (v == null || v instanceof FunctionType)) {
 			debugger;
-			throw new Error("[/Users/gfx/repo/try-on-web/JSX/src/expression.jsx:1969:22] detected invalid cast, value is not an instance of the designated type or null\n            (exprType as FunctionType).getExpectedTypes(\n                      ^^\n");
+			throw new Error("[/Users/gfx/repo/try-on-web/JSX/src/expression.jsx:1959:22] detected invalid cast, value is not an instance of the designated type or null\n            (exprType as FunctionType).getExpectedTypes(\n                      ^^\n");
 		}
 		return v;
 	}(exprType)).getExpectedTypes$NB(this._args.length, ! (this._expr instanceof PropertyExpression && ! exprType.isAssignable$() && ! ((function (v) {
 		if (! (v == null || v instanceof PropertyExpression)) {
 			debugger;
-			throw new Error("[/Users/gfx/repo/try-on-web/JSX/src/expression.jsx:1971:107] detected invalid cast, value is not an instance of the designated type or null\n                ! (this._expr instanceof PropertyExpression && ! exprType.isAssignable() && ! ((this._expr as PropertyExpression).getExpr() instanceof ClassExpression))));\n                                                                                                           ^^\n");
+			throw new Error("[/Users/gfx/repo/try-on-web/JSX/src/expression.jsx:1961:107] detected invalid cast, value is not an instance of the designated type or null\n                ! (this._expr instanceof PropertyExpression && ! exprType.isAssignable() && ! ((this._expr as PropertyExpression).getExpr() instanceof ClassExpression))));\n                                                                                                           ^^\n");
 		}
 		return v;
 	}(this._expr)).getExpr$() instanceof ClassExpression))));
@@ -29292,14 +29504,14 @@ CallExpression.prototype.analyze$LAnalysisContext$LExpression$ = function (conte
 		isCallingStatic = (function (v) {
 			if (! (v == null || v instanceof PropertyExpression)) {
 				debugger;
-				throw new Error("[/Users/gfx/repo/try-on-web/JSX/src/expression.jsx:1975:46] detected invalid cast, value is not an instance of the designated type or null\n            var isCallingStatic = (this._expr as PropertyExpression).getExpr() instanceof ClassExpression;\n                                              ^^\n");
+				throw new Error("[/Users/gfx/repo/try-on-web/JSX/src/expression.jsx:1965:46] detected invalid cast, value is not an instance of the designated type or null\n            var isCallingStatic = (this._expr as PropertyExpression).getExpr() instanceof ClassExpression;\n                                              ^^\n");
 			}
 			return v;
 		}(this._expr)).getExpr$() instanceof ClassExpression;
 		if (! isCallingStatic && (function (v) {
 			if (! (v == null || v instanceof PropertyExpression)) {
 				debugger;
-				throw new Error("[/Users/gfx/repo/try-on-web/JSX/src/expression.jsx:1976:49] detected invalid cast, value is not an instance of the designated type or null\n            if (! isCallingStatic && (this._expr as PropertyExpression).getIdentifierToken().getValue() == \"constructor\") {\n                                                 ^^\n");
+				throw new Error("[/Users/gfx/repo/try-on-web/JSX/src/expression.jsx:1966:49] detected invalid cast, value is not an instance of the designated type or null\n            if (! isCallingStatic && (this._expr as PropertyExpression).getIdentifierToken().getValue() == \"constructor\") {\n                                                 ^^\n");
 			}
 			return v;
 		}(this._expr)).getIdentifierToken$().getValue$() === "constructor") {
@@ -29309,7 +29521,7 @@ CallExpression.prototype.analyze$LAnalysisContext$LExpression$ = function (conte
 		if ((function (v) {
 			if (! (v == null || v instanceof PropertyExpression)) {
 				debugger;
-				throw new Error("[/Users/gfx/repo/try-on-web/JSX/src/expression.jsx:1980:28] detected invalid cast, value is not an instance of the designated type or null\n            if ((this._expr as PropertyExpression).deduceByArgumentTypes(context, this._token, argTypes, isCallingStatic) == null)\n                            ^^\n");
+				throw new Error("[/Users/gfx/repo/try-on-web/JSX/src/expression.jsx:1970:28] detected invalid cast, value is not an instance of the designated type or null\n            if ((this._expr as PropertyExpression).deduceByArgumentTypes(context, this._token, argTypes, isCallingStatic) == null)\n                            ^^\n");
 			}
 			return v;
 		}(this._expr)).deduceByArgumentTypes$LAnalysisContext$LToken$ALType$B(context, this._token, argTypes, isCallingStatic) == null) {
@@ -29319,7 +29531,7 @@ CallExpression.prototype.analyze$LAnalysisContext$LExpression$ = function (conte
 		if ((function (v) {
 			if (! (v == null || v instanceof FunctionType)) {
 				debugger;
-				throw new Error("[/Users/gfx/repo/try-on-web/JSX/src/expression.jsx:1983:26] detected invalid cast, value is not an instance of the designated type or null\n            if ((exprType as FunctionType).deduceByArgumentTypes(context, this._token, argTypes, true) == null)\n                          ^^\n");
+				throw new Error("[/Users/gfx/repo/try-on-web/JSX/src/expression.jsx:1973:26] detected invalid cast, value is not an instance of the designated type or null\n            if ((exprType as FunctionType).deduceByArgumentTypes(context, this._token, argTypes, true) == null)\n                          ^^\n");
 			}
 			return v;
 		}(exprType)).deduceByArgumentTypes$LAnalysisContext$LToken$ALType$B(context, this._token, argTypes, true) == null) {
@@ -29342,7 +29554,7 @@ CallExpression.prototype.getType$ = function () {
 	return (function (v) {
 		if (! (v == null || v instanceof ResolvedFunctionType)) {
 			debugger;
-			throw new Error("[/Users/gfx/repo/try-on-web/JSX/src/expression.jsx:1993:41] detected invalid cast, value is not an instance of the designated type or null\n        return (type.resolveIfNullable() as ResolvedFunctionType).getReturnType();\n                                         ^^\n");
+			throw new Error("[/Users/gfx/repo/try-on-web/JSX/src/expression.jsx:1983:41] detected invalid cast, value is not an instance of the designated type or null\n        return (type.resolveIfNullable() as ResolvedFunctionType).getReturnType();\n                                         ^^\n");
 		}
 		return v;
 	}(type.resolveIfNullable$())).getReturnType$();
@@ -29459,7 +29671,7 @@ SuperExpression.prototype.analyze$LAnalysisContext$LExpression$ = function (cont
 	if ((funcType = (function (v) {
 		if (! (v == null || v instanceof FunctionType)) {
 			debugger;
-			throw new Error("[/Users/gfx/repo/try-on-web/JSX/src/expression.jsx:2062:163] detected invalid cast, value is not an instance of the designated type or null\n        if ((funcType = classDef.getMemberTypeByName(context.errors, this._token, this._name.getValue(), false, new Type[], ClassDefinition.GET_MEMBER_MODE_SUPER) as FunctionType) == null) {\n                                                                                                                                                                   ^^\n");
+			throw new Error("[/Users/gfx/repo/try-on-web/JSX/src/expression.jsx:2052:163] detected invalid cast, value is not an instance of the designated type or null\n        if ((funcType = classDef.getMemberTypeByName(context.errors, this._token, this._name.getValue(), false, new Type[], ClassDefinition.GET_MEMBER_MODE_SUPER) as FunctionType) == null) {\n                                                                                                                                                                   ^^\n");
 		}
 		return v;
 	}(classDef.getMemberTypeByName$ALCompileError$LToken$SBALType$N(context.errors, this._token, this._name.getValue$(), false, [], ClassDefinition.GET_MEMBER_MODE_SUPER)))) == null) {
@@ -29484,7 +29696,7 @@ SuperExpression.prototype.getType$ = function () {
 	return (function (v) {
 		if (! (v == null || v instanceof ResolvedFunctionType)) {
 			debugger;
-			throw new Error("[/Users/gfx/repo/try-on-web/JSX/src/expression.jsx:2081:31] detected invalid cast, value is not an instance of the designated type or null\n        return (this._funcType as ResolvedFunctionType).getReturnType();\n                               ^^\n");
+			throw new Error("[/Users/gfx/repo/try-on-web/JSX/src/expression.jsx:2071:31] detected invalid cast, value is not an instance of the designated type or null\n        return (this._funcType as ResolvedFunctionType).getReturnType();\n                               ^^\n");
 		}
 		return v;
 	}(this._funcType)).getReturnType$();
@@ -29596,7 +29808,7 @@ NewExpression.prototype.analyze$LAnalysisContext$LExpression$ = function (contex
 	ctors = (function (v) {
 		if (! (v == null || v instanceof FunctionType)) {
 			debugger;
-			throw new Error("[/Users/gfx/repo/try-on-web/JSX/src/expression.jsx:2150:156] detected invalid cast, value is not an instance of the designated type or null\n        var ctors = classDef.getMemberTypeByName(context.errors, this._token, \"constructor\", false, new Type[], ClassDefinition.GET_MEMBER_MODE_CLASS_ONLY) as FunctionType;\n                                                                                                                                                            ^^\n");
+			throw new Error("[/Users/gfx/repo/try-on-web/JSX/src/expression.jsx:2140:156] detected invalid cast, value is not an instance of the designated type or null\n        var ctors = classDef.getMemberTypeByName(context.errors, this._token, \"constructor\", false, new Type[], ClassDefinition.GET_MEMBER_MODE_CLASS_ONLY) as FunctionType;\n                                                                                                                                                            ^^\n");
 		}
 		return v;
 	}(classDef.getMemberTypeByName$ALCompileError$LToken$SBALType$N(context.errors, this._token, "constructor", false, [], ClassDefinition.GET_MEMBER_MODE_CLASS_ONLY)));
@@ -29667,11 +29879,11 @@ function CommaExpression$LToken$LExpression$LExpression$(token, expr1, expr2) {
 	this._expr2 = null;
 	if (! (expr1 != null)) {
 		debugger;
-		throw new Error("[/Users/gfx/repo/try-on-web/JSX/src/expression.jsx:2197:21] assertion failure\n        assert expr1 != null;\n                     ^^\n");
+		throw new Error("[/Users/gfx/repo/try-on-web/JSX/src/expression.jsx:2187:21] assertion failure\n        assert expr1 != null;\n                     ^^\n");
 	}
 	if (! (expr2 != null)) {
 		debugger;
-		throw new Error("[/Users/gfx/repo/try-on-web/JSX/src/expression.jsx:2198:21] assertion failure\n        assert expr2 != null;\n                     ^^\n");
+		throw new Error("[/Users/gfx/repo/try-on-web/JSX/src/expression.jsx:2188:21] assertion failure\n        assert expr2 != null;\n                     ^^\n");
 	}
 	this._expr1 = expr1;
 	this._expr2 = expr2;
@@ -30088,6 +30300,104 @@ ExpressionStatement.prototype.serialize$ = function () {
 };
 
 /**
+ * class FunctionStatement extends Statement
+ * @constructor
+ */
+function FunctionStatement() {
+}
+
+FunctionStatement.prototype = new Statement;
+/**
+ * @constructor
+ * @param {Token} token
+ * @param {MemberFunctionDefinition} funcDef
+ */
+function FunctionStatement$LToken$LMemberFunctionDefinition$(token, funcDef) {
+	Statement$.call(this);
+	this._token = token;
+	this._funcDef = funcDef;
+};
+
+FunctionStatement$LToken$LMemberFunctionDefinition$.prototype = new FunctionStatement;
+
+/**
+ * @return {FunctionStatement}
+ */
+FunctionStatement.prototype.clone$ = function () {
+	return new FunctionStatement$LToken$LMemberFunctionDefinition$(this._token, this._funcDef);
+};
+
+/**
+ * @return {Token}
+ */
+FunctionStatement.prototype.getToken$ = function () {
+	return this._token;
+};
+
+/**
+ * @return {MemberFunctionDefinition}
+ */
+FunctionStatement.prototype.getFuncDef$ = function () {
+	return this._funcDef;
+};
+
+/**
+ * @param {MemberFunctionDefinition} funcDef
+ */
+FunctionStatement.prototype.setFuncDef$LMemberFunctionDefinition$ = function (funcDef) {
+	this._funcDef = funcDef;
+};
+
+/**
+ * @return {*}
+ */
+FunctionStatement.prototype.serialize$ = function () {
+	return [ "FunctionStatement", this._funcDef.serialize$() ];
+};
+
+/**
+ * @param {AnalysisContext} context
+ * @return {!boolean}
+ */
+FunctionStatement.prototype.doAnalyze$LAnalysisContext$ = function (context) {
+	if (! this._typesAreIdentified$()) {
+		context.errors.push(new CompileError$LToken$S(this._token, "argument / return types were not automatically deductable, please specify them by hand"));
+		return false;
+	}
+	this._funcDef.analyze$LAnalysisContext$(context);
+	context.getTopBlock$().localVariableStatuses.setStatus$LLocalVariable$(this._funcDef.getFuncLocal$());
+	return true;
+};
+
+/**
+ * @return {!boolean}
+ */
+FunctionStatement.prototype._typesAreIdentified$ = function () {
+	/** @type {Array.<undefined|Type>} */
+	var argTypes;
+	/** @type {!number} */
+	var i;
+	argTypes = this._funcDef.getArgumentTypes$();
+	for (i = 0; i < argTypes.length; ++ i) {
+		if (argTypes[i] == null) {
+			return false;
+		}
+	}
+	if (this._funcDef.getReturnType$() == null) {
+		return false;
+	}
+	return true;
+};
+
+/**
+ * @param {*} cb
+ * @return {!boolean}
+ */
+FunctionStatement.prototype.forEachExpression$F$LExpression$F$LExpression$V$B$ = function (cb) {
+	return true;
+};
+
+/**
  * class ReturnStatement extends Statement
  * @constructor
  */
@@ -30153,49 +30463,64 @@ ReturnStatement.prototype.doAnalyze$LAnalysisContext$ = function (context) {
 	/** @type {Type} */
 	var exprType;
 	returnType = context.funcDef.getReturnType$();
-	if (returnType.equals$LType$(Type.voidType)) {
+	if (returnType == null) {
 		if (this._expr != null) {
-			context.errors.push(new CompileError$LToken$S(this._token, "cannot return a value from a void function"));
-			return true;
+			if (! this._analyzeExpr$LAnalysisContext$LExpression$(context, this._expr)) {
+				return true;
+			}
+			exprType = this._expr.getType$();
+			if (exprType == null) {
+				return true;
+			}
+			context.funcDef.setReturnType$LType$(exprType);
+		} else {
+			context.funcDef.setReturnType$LType$(Type.voidType);
 		}
 	} else {
-		if (this._expr == null) {
-			context.errors.push(new CompileError$LToken$S(this._token, "cannot return void, the function is declared to return a value of type '" + returnType.toString() + "'"));
-			return true;
-		}
-		if (this._expr instanceof FunctionExpression && ! (function (v) {
-			if (! (v == null || v instanceof FunctionExpression)) {
-				debugger;
-				throw new Error("[/Users/gfx/repo/try-on-web/JSX/src/statement.jsx:293:74] detected invalid cast, value is not an instance of the designated type or null\n            if (this._expr instanceof FunctionExpression && ! (this._expr as FunctionExpression).typesAreIdentified() && returnType instanceof StaticFunctionType) {\n                                                                          ^^\n");
+		if (returnType.equals$LType$(Type.voidType)) {
+			if (this._expr != null) {
+				context.errors.push(new CompileError$LToken$S(this._token, "cannot return a value from a void function"));
+				return true;
 			}
-			return v;
-		}(this._expr)).typesAreIdentified$() && returnType instanceof StaticFunctionType) {
-			if (! (function (v) {
+		} else {
+			if (this._expr == null) {
+				context.errors.push(new CompileError$LToken$S(this._token, "cannot return void, the function is declared to return a value of type '" + returnType.toString() + "'"));
+				return true;
+			}
+			if (this._expr instanceof FunctionExpression && ! (function (v) {
 				if (! (v == null || v instanceof FunctionExpression)) {
 					debugger;
-					throw new Error("[/Users/gfx/repo/try-on-web/JSX/src/statement.jsx:294:34] detected invalid cast, value is not an instance of the designated type or null\n                if (! (this._expr as FunctionExpression).deductTypeIfUnknown(context, returnType as StaticFunctionType))\n                                  ^^\n");
+					throw new Error("[/Users/gfx/repo/try-on-web/JSX/src/statement.jsx:367:74] detected invalid cast, value is not an instance of the designated type or null\n            if (this._expr instanceof FunctionExpression && ! (this._expr as FunctionExpression).argumentTypesAreIdentified() && returnType instanceof StaticFunctionType) {\n                                                                          ^^\n");
 				}
 				return v;
-			}(this._expr)).deductTypeIfUnknown$LAnalysisContext$LResolvedFunctionType$(context, (function (v) {
-				if (! (v == null || v instanceof StaticFunctionType)) {
-					debugger;
-					throw new Error("[/Users/gfx/repo/try-on-web/JSX/src/statement.jsx:294:97] detected invalid cast, value is not an instance of the designated type or null\n                if (! (this._expr as FunctionExpression).deductTypeIfUnknown(context, returnType as StaticFunctionType))\n                                                                                                 ^^\n");
+			}(this._expr)).argumentTypesAreIdentified$() && returnType instanceof StaticFunctionType) {
+				if (! (function (v) {
+					if (! (v == null || v instanceof FunctionExpression)) {
+						debugger;
+						throw new Error("[/Users/gfx/repo/try-on-web/JSX/src/statement.jsx:368:34] detected invalid cast, value is not an instance of the designated type or null\n                if (! (this._expr as FunctionExpression).deductTypeIfUnknown(context, returnType as StaticFunctionType))\n                                  ^^\n");
+					}
+					return v;
+				}(this._expr)).deductTypeIfUnknown$LAnalysisContext$LResolvedFunctionType$(context, (function (v) {
+					if (! (v == null || v instanceof StaticFunctionType)) {
+						debugger;
+						throw new Error("[/Users/gfx/repo/try-on-web/JSX/src/statement.jsx:368:97] detected invalid cast, value is not an instance of the designated type or null\n                if (! (this._expr as FunctionExpression).deductTypeIfUnknown(context, returnType as StaticFunctionType))\n                                                                                                 ^^\n");
+					}
+					return v;
+				}(returnType)))) {
+					return false;
 				}
-				return v;
-			}(returnType)))) {
+			}
+			if (! this._analyzeExpr$LAnalysisContext$LExpression$(context, this._expr)) {
+				return true;
+			}
+			exprType = this._expr.getType$();
+			if (exprType == null) {
+				return true;
+			}
+			if (! exprType.isConvertibleTo$LType$(returnType)) {
+				context.errors.push(new CompileError$LToken$S(this._token, "cannot convert '" + exprType.toString() + "' to return type '" + returnType.toString() + "'"));
 				return false;
 			}
-		}
-		if (! this._analyzeExpr$LAnalysisContext$LExpression$(context, this._expr)) {
-			return true;
-		}
-		exprType = (this._expr != null ? this._expr.getType$() : Type.voidType);
-		if (exprType == null) {
-			return true;
-		}
-		if (! exprType.isConvertibleTo$LType$(returnType)) {
-			context.errors.push(new CompileError$LToken$S(this._token, "cannot convert '" + exprType.toString() + "' to return type '" + returnType.toString() + "'"));
-			return false;
 		}
 	}
 	context.getTopBlock$().localVariableStatuses = null;
@@ -30274,7 +30599,7 @@ DeleteStatement.prototype.doAnalyze$LAnalysisContext$ = function (context) {
 	secondExprType = (function (v) {
 		if (! (v == null || v instanceof ArrayExpression)) {
 			debugger;
-			throw new Error("[/Users/gfx/repo/try-on-web/JSX/src/statement.jsx:350:41] detected invalid cast, value is not an instance of the designated type or null\n        var secondExprType = (this._expr as ArrayExpression).getSecondExpr().getType();\n                                         ^^\n");
+			throw new Error("[/Users/gfx/repo/try-on-web/JSX/src/statement.jsx:424:41] detected invalid cast, value is not an instance of the designated type or null\n        var secondExprType = (this._expr as ArrayExpression).getSecondExpr().getType();\n                                         ^^\n");
 		}
 		return v;
 	}(this._expr)).getSecondExpr$().getType$();
@@ -30345,7 +30670,7 @@ JumpStatement.prototype.doAnalyze$LAnalysisContext$ = function (context) {
 		(function (v) {
 			if (! (v == null || v instanceof LabellableStatement)) {
 				debugger;
-				throw new Error("[/Users/gfx/repo/try-on-web/JSX/src/statement.jsx:398:31] detected invalid cast, value is not an instance of the designated type or null\n            (targetBlock.block as LabellableStatement).registerVariableStatusesOnBreak(context.getTopBlock().localVariableStatuses);\n                               ^^\n");
+				throw new Error("[/Users/gfx/repo/try-on-web/JSX/src/statement.jsx:472:31] detected invalid cast, value is not an instance of the designated type or null\n            (targetBlock.block as LabellableStatement).registerVariableStatusesOnBreak(context.getTopBlock().localVariableStatuses);\n                               ^^\n");
 			}
 			return v;
 		}(targetBlock.block)).registerVariableStatusesOnBreak$LLocalVariableStatuses$(context.getTopBlock$().localVariableStatuses);
@@ -30353,7 +30678,7 @@ JumpStatement.prototype.doAnalyze$LAnalysisContext$ = function (context) {
 		(function (v) {
 			if (! (v == null || v instanceof ContinuableStatement)) {
 				debugger;
-				throw new Error("[/Users/gfx/repo/try-on-web/JSX/src/statement.jsx:400:31] detected invalid cast, value is not an instance of the designated type or null\n            (targetBlock.block as ContinuableStatement).registerVariableStatusesOnContinue(context.getTopBlock().localVariableStatuses);\n                               ^^\n");
+				throw new Error("[/Users/gfx/repo/try-on-web/JSX/src/statement.jsx:474:31] detected invalid cast, value is not an instance of the designated type or null\n            (targetBlock.block as ContinuableStatement).registerVariableStatusesOnContinue(context.getTopBlock().localVariableStatuses);\n                               ^^\n");
 			}
 			return v;
 		}(targetBlock.block)).registerVariableStatusesOnContinue$LLocalVariableStatuses$(context.getTopBlock$().localVariableStatuses);
@@ -30382,7 +30707,7 @@ JumpStatement.prototype._determineDestination$LAnalysisContext$ = function (cont
 			statementLabel = (function (v) {
 				if (! (v == null || v instanceof LabellableStatement)) {
 					debugger;
-					throw new Error("[/Users/gfx/repo/try-on-web/JSX/src/statement.jsx:412:48] detected invalid cast, value is not an instance of the designated type or null\n                var statementLabel = (statement as LabellableStatement).getLabel();\n                                                ^^\n");
+					throw new Error("[/Users/gfx/repo/try-on-web/JSX/src/statement.jsx:486:48] detected invalid cast, value is not an instance of the designated type or null\n                var statementLabel = (statement as LabellableStatement).getLabel();\n                                                ^^\n");
 				}
 				return v;
 			}(statement)).getLabel$();
@@ -30857,7 +31182,7 @@ ForInStatement.prototype.doAnalyze$LAnalysisContext$ = function (context) {
 	if (listType instanceof ObjectType && (listClassDef = listType.getClassDef$()) instanceof InstantiatedClassDefinition && ((listTypeName = (function (v) {
 		if (! (v == null || v instanceof InstantiatedClassDefinition)) {
 			debugger;
-			throw new Error("[/Users/gfx/repo/try-on-web/JSX/src/statement.jsx:698:46] detected invalid cast, value is not an instance of the designated type or null\n            && ((listTypeName = (listClassDef as InstantiatedClassDefinition).getTemplateClassName()) == \"Array\" || listTypeName == \"Map\")) {\n                                              ^^\n");
+			throw new Error("[/Users/gfx/repo/try-on-web/JSX/src/statement.jsx:772:46] detected invalid cast, value is not an instance of the designated type or null\n            && ((listTypeName = (listClassDef as InstantiatedClassDefinition).getTemplateClassName()) == \"Array\" || listTypeName == \"Map\")) {\n                                              ^^\n");
 		}
 		return v;
 	}(listClassDef)).getTemplateClassName$()) === "Array" || listTypeName === "Map")) {
@@ -31442,7 +31767,7 @@ CaseStatement.prototype.doAnalyze$LAnalysisContext$ = function (context) {
 	expectedType = (function (v) {
 		if (! (v == null || v instanceof SwitchStatement)) {
 			debugger;
-			throw new Error("[/Users/gfx/repo/try-on-web/JSX/src/statement.jsx:1050:38] detected invalid cast, value is not an instance of the designated type or null\n        var expectedType = (statement as SwitchStatement).getExpr().getType();\n                                      ^^\n");
+			throw new Error("[/Users/gfx/repo/try-on-web/JSX/src/statement.jsx:1124:38] detected invalid cast, value is not an instance of the designated type or null\n        var expectedType = (statement as SwitchStatement).getExpr().getType();\n                                      ^^\n");
 		}
 		return v;
 	}(statement)).getExpr$().getType$();
@@ -33072,7 +33397,7 @@ DocumentGenerator.prototype._classDefToHTML$LParser$LClassDefinition$ = function
 			}
 		}
 		throw new Error("could not determine the parser to which the class belongs:" + classDef.className$());
-	};
+	}
 	parserOfClassDef = determineParserOfClassDef();
 	if (! this._pathFilter(parserOfClassDef.getPath$())) {
 		return this._escape$S(classDef.className$());
@@ -33584,6 +33909,9 @@ MemberVariableDefinition.NOT_ANALYZED = 0;
 MemberVariableDefinition.IS_ANALYZING = 1;
 MemberVariableDefinition.ANALYZE_SUCEEDED = 2;
 MemberVariableDefinition.ANALYZE_FAILED = 3;
+$__jsx_lazy_init(LocalVariableStatuses, "UNTYPED_RECURSIVE_FUNCTION", function () {
+	return - 1;
+});
 LocalVariableStatuses.UNSET = 0;
 LocalVariableStatuses.ISSET = 1;
 LocalVariableStatuses.MAYBESET = 2;
@@ -33613,10 +33941,10 @@ IntegerType._classDef = null;
 NumberType._classDef = null;
 StringType._classDef = null;
 FunctionType._classDef = null;
-Meta.VERSION_STRING = "0.9.19";
-Meta.VERSION_NUMBER = 0.009019;
-Meta.LAST_COMMIT_HASH = "d48260be68869ffeb5338fda730c5336d103de2f";
-Meta.LAST_COMMIT_DATE = "2013-03-23 15:59:15 +0900";
+Meta.VERSION_STRING = "0.9.22";
+Meta.VERSION_NUMBER = 0.009022;
+Meta.LAST_COMMIT_HASH = "37d29918a761fcc12e0b27fd1ff7e23c40bf9089";
+Meta.LAST_COMMIT_DATE = "2013-04-04 20:15:21 +0900";
 $__jsx_lazy_init(Meta, "IDENTIFIER", function () {
 	return Meta.VERSION_STRING + " (" + Meta.LAST_COMMIT_DATE + "; " + Meta.LAST_COMMIT_HASH + ")";
 });
@@ -33788,6 +34116,8 @@ var $__jsx_classMap = {
 		_ConstructorInvocationStatementEmitter$LJavaScriptEmitter$LConstructorInvocationStatement$: _ConstructorInvocationStatementEmitter$LJavaScriptEmitter$LConstructorInvocationStatement$,
 		_ExpressionStatementEmitter: _ExpressionStatementEmitter,
 		_ExpressionStatementEmitter$LJavaScriptEmitter$LExpressionStatement$: _ExpressionStatementEmitter$LJavaScriptEmitter$LExpressionStatement$,
+		_FunctionStatementEmitter: _FunctionStatementEmitter,
+		_FunctionStatementEmitter$LJavaScriptEmitter$LFunctionStatement$: _FunctionStatementEmitter$LJavaScriptEmitter$LFunctionStatement$,
 		_ReturnStatementEmitter: _ReturnStatementEmitter,
 		_ReturnStatementEmitter$LJavaScriptEmitter$LReturnStatement$: _ReturnStatementEmitter$LJavaScriptEmitter$LReturnStatement$,
 		_DeleteStatementEmitter: _DeleteStatementEmitter,
@@ -34078,7 +34408,7 @@ var $__jsx_classMap = {
 		ThisExpression: ThisExpression,
 		ThisExpression$LToken$LClassDefinition$: ThisExpression$LToken$LClassDefinition$,
 		FunctionExpression: FunctionExpression,
-		FunctionExpression$LToken$LLocalVariable$LMemberFunctionDefinition$B: FunctionExpression$LToken$LLocalVariable$LMemberFunctionDefinition$B,
+		FunctionExpression$LToken$LMemberFunctionDefinition$: FunctionExpression$LToken$LMemberFunctionDefinition$,
 		UnaryExpression: UnaryExpression,
 		UnaryExpression$LToken$LExpression$: UnaryExpression$LToken$LExpression$,
 		BitwiseNotExpression: BitwiseNotExpression,
@@ -34147,6 +34477,8 @@ var $__jsx_classMap = {
 		UnaryExpressionStatement$LExpression$: UnaryExpressionStatement$LExpression$,
 		ExpressionStatement: ExpressionStatement,
 		ExpressionStatement$LExpression$: ExpressionStatement$LExpression$,
+		FunctionStatement: FunctionStatement,
+		FunctionStatement$LToken$LMemberFunctionDefinition$: FunctionStatement$LToken$LMemberFunctionDefinition$,
 		ReturnStatement: ReturnStatement,
 		ReturnStatement$LToken$LExpression$: ReturnStatement$LToken$LExpression$,
 		DeleteStatement: DeleteStatement,

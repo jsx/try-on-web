@@ -158,6 +158,7 @@
       },
       "timers.jsx" : "source-map/timers.jsx",
       "add.jsx" : "source-map/add.jsx",
+      "module-demo.jsx.js.mapping" : "source-map/module-demo.jsx.js.mapping",
       "flying-being.jsx.js.mapping" : "source-map/flying-being.jsx.js.mapping",
       "fib.jsx" : "source-map/fib.jsx",
       "flying-being.jsx.js" : "source-map/flying-being.jsx.js",
@@ -166,6 +167,15 @@
       "index.html" : "source-map/index.html",
       "import.jsx" : "source-map/import.jsx",
       "add.jsx.js" : "source-map/add.jsx.js",
+      "module-demo.jsx.js.mapping.d" : {
+         "example" : {
+            "lib" : {
+               "foo.jsx" : "source-map/module-demo.jsx.js.mapping.d/example/lib/foo.jsx",
+               "bar.jsx" : "source-map/module-demo.jsx.js.mapping.d/example/lib/bar.jsx"
+            },
+            "module-demo.jsx" : "source-map/module-demo.jsx.js.mapping.d/example/module-demo.jsx"
+         }
+      },
       "template.jsx.js.mapping.d" : {
          "example" : {
             "template.jsx" : "source-map/template.jsx.js.mapping.d/example/template.jsx"
@@ -210,12 +220,12 @@
       "import.jsx.js" : "source-map/import.jsx.js",
       "add.jsx.js.mapping" : "source-map/add.jsx.js.mapping",
       "import.jsx.js.mapping" : "source-map/import.jsx.js.mapping",
-      "fizzbuzz.jsx.js.mapping" : "source-map/fizzbuzz.jsx.js.mapping",
       "fizzbuzz.jsx.js.mapping.d" : {
          "example" : {
             "fizzbuzz.jsx" : "source-map/fizzbuzz.jsx.js.mapping.d/example/fizzbuzz.jsx"
          }
       },
+      "fizzbuzz.jsx.js.mapping" : "source-map/fizzbuzz.jsx.js.mapping",
       "point.jsx.js.mapping.d" : {
          "example" : {
             "point.jsx" : "source-map/point.jsx.js.mapping.d/example/point.jsx"
@@ -225,12 +235,14 @@
       "fizzbuzz.jsx.js" : "source-map/fizzbuzz.jsx.js",
       "timers.jsx.js.mapping" : "source-map/timers.jsx.js.mapping",
       "point.jsx" : "source-map/point.jsx",
+      "module-demo.jsx" : "source-map/module-demo.jsx",
       "hello.jsx.js.mapping" : "source-map/hello.jsx.js.mapping",
       "flying-being.jsx.js.mapping.d" : {
          "example" : {
             "flying-being.jsx" : "source-map/flying-being.jsx.js.mapping.d/example/flying-being.jsx"
          }
       },
+      "module-demo.jsx.js" : "source-map/module-demo.jsx.js",
       "point.jsx.js.mapping" : "source-map/point.jsx.js.mapping",
       "hello.jsx.js.mapping.d" : {
          "example" : {
@@ -431,6 +443,7 @@
          "234.inner-class.jsx" : "t/run/234.inner-class.jsx",
          "066.static-member-vars.jsx" : "t/run/066.static-member-vars.jsx",
          "083.detect-undefined-call-arg.jsx" : "t/run/083.detect-undefined-call-arg.jsx",
+         "246.do-not-inline-closure-with-recursion.jsx" : "t/run/246.do-not-inline-closure-with-recursion.jsx",
          "130.math-abs.jsx" : "t/run/130.math-abs.jsx",
          "185.null-as-nullalble-primitive.jsx" : "t/run/185.null-as-nullalble-primitive.jsx",
          "177.profile-return-void.jsx" : "t/run/177.profile-return-void.jsx",
@@ -467,6 +480,7 @@
          "070.multiple-choises.jsx" : "t/run/070.multiple-choises.jsx",
          "113.function-toString.jsx" : "t/run/113.function-toString.jsx",
          "020.arrayliteral.jsx" : "t/run/020.arrayliteral.jsx",
+         "247.issue134.jsx" : "t/run/247.issue134.jsx",
          "244.allow-null-for-nullable-vargs2.jsx" : "t/run/244.allow-null-for-nullable-vargs2.jsx",
          "005.for.jsx" : "t/run/005.for.jsx",
          "221.equal-expr-assoc.jsx" : "t/run/221.equal-expr-assoc.jsx",
@@ -474,6 +488,7 @@
          "047.calls-to-super.jsx" : "t/run/047.calls-to-super.jsx",
          "073.typeof.jsx" : "t/run/073.typeof.jsx",
          "200.template-under-namespace.jsx" : "t/run/200.template-under-namespace.jsx",
+         "245.instanceof-type-param.jsx" : "t/run/245.instanceof-type-param.jsx",
          "086.as_nocheck-to-string.jsx" : "t/run/086.as_nocheck-to-string.jsx",
          "143.map-access-converted-to-dotop.jsx" : "t/run/143.map-access-converted-to-dotop.jsx",
          "135.ignore.dot-files" : {
@@ -498,13 +513,13 @@
          "141.for-with-multiple-vars.jsx" : "t/run/141.for-with-multiple-vars.jsx",
          "016.switch.jsx" : "t/run/016.switch.jsx",
          "056.instanceof.jsx" : "t/run/056.instanceof.jsx",
-         "072.override-with-args.jsx" : "t/run/072.override-with-args.jsx",
-         "060.private-class" : {
-            "imported.jsx" : "t/run/060.private-class/imported.jsx"
-         },
          "118.import-all" : {
             "1.jsx" : "t/run/118.import-all/1.jsx",
             "2.jsx" : "t/run/118.import-all/2.jsx"
+         },
+         "072.override-with-args.jsx" : "t/run/072.override-with-args.jsx",
+         "060.private-class" : {
+            "imported.jsx" : "t/run/060.private-class/imported.jsx"
          },
          "139.array-of-maybeundefined.jsx" : "t/run/139.array-of-maybeundefined.jsx",
          "168.void-statement.jsx" : "t/run/168.void-statement.jsx",
@@ -552,6 +567,7 @@
          "026.maybeundefined.jsx" : "t/run/026.maybeundefined.jsx",
          "108.caught-variable-in-closure.jsx" : "t/run/108.caught-variable-in-closure.jsx",
          "117.avoid-import-conflict-using-as.jsx" : "t/run/117.avoid-import-conflict-using-as.jsx",
+         "245.return-type-inference.jsx" : "t/run/245.return-type-inference.jsx",
          "033.many-class.jsx" : "t/run/033.many-class.jsx",
          "136.maybeundefined-as-obj.jsx" : "t/run/136.maybeundefined-as-obj.jsx",
          "127.base-prop-for-maybeundefined.jsx" : "t/run/127.base-prop-for-maybeundefined.jsx",
@@ -650,6 +666,7 @@
          "023.incompat-call.jsx" : "t/compile_error/023.incompat-call.jsx",
          "144.assign-to-nulltype.jsx" : "t/compile_error/144.assign-to-nulltype.jsx",
          "024.incompat-call-overloaded.jsx" : "t/compile_error/024.incompat-call-overloaded.jsx",
+         "165.return-type-conflict-in-untyped-func.jsx" : "t/compile_error/165.return-type-conflict-in-untyped-func.jsx",
          "147.string-div.jsx" : "t/compile_error/147.string-div.jsx",
          "108.default-ctor-cannot-call-ctor-with-args.jsx" : "t/compile_error/108.default-ctor-cannot-call-ctor-with-args.jsx",
          "029.call-non-function.jsx" : "t/compile_error/029.call-non-function.jsx",
@@ -677,7 +694,6 @@
          "104.number-in-hash.jsx" : "t/compile_error/104.number-in-hash.jsx",
          "019.add-boolean.jsx" : "t/compile_error/019.add-boolean.jsx",
          "058.import-as-conflict-with-class.jsx" : "t/compile_error/058.import-as-conflict-with-class.jsx",
-         "145.return-type-in-inner-function.jsx" : "t/compile_error/145.return-type-in-inner-function.jsx",
          "107.caught-variable-out-of-scope.jsx" : "t/compile_error/107.caught-variable-out-of-scope.jsx",
          "032.implement-twice.jsx" : "t/compile_error/032.implement-twice.jsx",
          "046.new-interface.jsx" : "t/compile_error/046.new-interface.jsx",
@@ -750,6 +766,7 @@
          "038.ctor-invocation-order.jsx" : "t/compile_error/038.ctor-invocation-order.jsx",
          "084.unreachable-after-break.jsx" : "t/compile_error/084.unreachable-after-break.jsx",
          "014.assign-class.jsx" : "t/compile_error/014.assign-class.jsx",
+         "163.untyped-recursive-function.jsx" : "t/compile_error/163.untyped-recursive-function.jsx",
          "061.import-from-notfound.jsx" : "t/compile_error/061.import-from-notfound.jsx",
          "078.uninitialized-in-if.jsx" : "t/compile_error/078.uninitialized-in-if.jsx",
          "056.import-as-conflict.jsx" : "t/compile_error/056.import-as-conflict.jsx",
@@ -811,6 +828,7 @@
          "011.arrayliteral-bad-type.jsx" : "t/compile_error/011.arrayliteral-bad-type.jsx",
          "062.import-file-not-found.jsx" : "t/compile_error/062.import-file-not-found.jsx",
          "124.assert-is-assignable.jsx" : "t/compile_error/124.assert-is-assignable.jsx",
+         "164.assign-untyped-function.jsx" : "t/compile_error/164.assign-untyped-function.jsx",
          "105.in-against-non-map.jsx" : "t/compile_error/105.in-against-non-map.jsx",
          "138.inner-function-declaration-wo-type.jsx" : "t/compile_error/138.inner-function-declaration-wo-type.jsx",
          "059.import-as-conflict-with-builtin" : {

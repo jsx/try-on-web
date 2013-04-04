@@ -607,6 +607,8 @@ class _DetermineCalleeCommand extends _FunctionOptimizeCommand {
 				if (callingFuncDef == null)
 					throw new Error("could not determine the associated parent ctor");
 				this._setCallingFuncDef(statement, callingFuncDef);
+			} else if (statement instanceof FunctionStatement) {
+				(statement as FunctionStatement).getFuncDef().forEachStatement(onStatement);
 			}
 
 			statement.forEachExpression(function onExpr(expr : Expression) : boolean {
@@ -741,6 +743,9 @@ class _StaticizeOptimizeCommand extends _OptimizeCommand {
 		funcDef.getArguments().unshift(thisArg);
 		// rewrite this
 		funcDef.forEachStatement(function onStatement(statement : Statement) : boolean {
+			if (statement instanceof FunctionStatement) {
+				(statement as FunctionStatement).getFuncDef().forEachStatement(onStatement);
+			}
 			return statement.forEachExpression(function onExpr(expr : Expression, replaceCb : function(:Expression):void) : boolean {
 				if (expr instanceof ThisExpression) {
 					replaceCb(new LocalExpression(thisArg.getName(), thisArg));
@@ -1080,6 +1085,9 @@ class _UnclassifyOptimizationCommand extends _OptimizeCommand {
 		funcDef.getArguments().unshift(thisArg);
 		// rewrite this
 		funcDef.forEachStatement(function onStatement(statement : Statement) : boolean {
+			if (statement instanceof FunctionStatement) {
+				(statement as FunctionStatement).getFuncDef().forEachStatement(onStatement);
+			}
 			return statement.forEachExpression(function onExpr(expr : Expression, replaceCb : function(:Expression):void) : boolean {
 				if (expr instanceof ThisExpression) {
 					replaceCb(new LocalExpression(thisArg.getName(), thisArg));
@@ -1465,6 +1473,9 @@ class _DeadCodeEliminationOptimizeCommand extends _FunctionOptimizeCommand {
 		var locals = funcDef.getLocals();
 		var localsUsed = new Array.<boolean>(locals.length);
 		funcDef.forEachStatement(function onStatement(statement : Statement) : boolean {
+			if (statement instanceof FunctionStatement) {
+				(statement as FunctionStatement).getFuncDef().forEachStatement(onStatement);
+			}
 			statement.forEachExpression(function onExpr(expr : Expression) : boolean {
 				if (expr instanceof AssignmentExpression
 				    && (expr as AssignmentExpression).getFirstExpr() instanceof LocalExpression
@@ -1495,6 +1506,9 @@ class _DeadCodeEliminationOptimizeCommand extends _FunctionOptimizeCommand {
 			}
 			// remove assignment to the variable
 			funcDef.forEachStatement(function onStatement(statement : Statement) : boolean {
+				if (statement instanceof FunctionStatement) {
+					(statement as FunctionStatement).getFuncDef().forEachStatement(onStatement);
+				}
 				statement.forEachExpression(function onExpr(expr : Expression, replaceCb : function(:Expression):void) : boolean {
 					if (expr instanceof AssignmentExpression
 					    && (expr as AssignmentExpression).getFirstExpr() instanceof LocalExpression
@@ -2128,7 +2142,7 @@ class _InlineOptimizeCommand extends _FunctionOptimizeCommand {
 				} else if (! this._isWorthInline(funcDef)) {
 					return false;
 				}
-				// no return in the middle, no function expression or super invocation expression
+				// no return in the middle, no function expression or super invocation expression, and no reference to the funciton itself
 				return funcDef.forEachStatement(function onStatement(statement : Statement) : boolean {
 					if (statement instanceof ExpressionStatement) {
 						// ok
@@ -2150,6 +2164,11 @@ class _InlineOptimizeCommand extends _FunctionOptimizeCommand {
 							return false;
 						if (expr instanceof SuperExpression)
 							return false;
+						if (expr instanceof LocalExpression) {
+							if (funcDef.getFuncLocal() != null && funcDef.getFuncLocal() == (expr as LocalExpression).getLocal()) {
+									return false;
+							}
+						}
 						return expr.forEachExpression(onExpr);
 					})) {
 						return false;
@@ -2732,6 +2751,9 @@ class _UnboxOptimizeCommand extends _FunctionOptimizeCommand {
 				return true;
 			}
 			// check the rest
+			if (statement instanceof FunctionStatement) {
+				(statement as FunctionStatement).getFuncDef().forEachStatement(onStatement);
+			}
 			if (! statement.forEachExpression(onExpr)) {
 				return false;
 			}

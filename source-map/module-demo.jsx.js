@@ -108,31 +108,72 @@ _Main$.prototype = new _Main;
  * @param {Array.<undefined|!string>} args
  */
 _Main.main$AS = function (args) {
-	/** @type {!number} */
-	var i;
-	for (i = 1; i <= 100; ++ i) {
-		if (i % 15 === 0) {
-			console.log("FizzBuzz");
-		} else {
-			if (i % 3 === 0) {
-				console.log("Fizz");
-			} else {
-				if (i % 5 === 0) {
-					console.log("Buzz");
-				} else {
-					console.log(i);
-				}
-			}
-		}
-	}
+	console.log(MyClass$getName$());
+	console.log(MyClass$0$getName$());
 };
 
 var _Main$main$AS = _Main.main$AS;
 
+/**
+ * class MyClass extends Object
+ * @constructor
+ */
+function MyClass() {
+}
+
+/**
+ * @constructor
+ */
+function MyClass$() {
+};
+
+MyClass$.prototype = new MyClass;
+
+/**
+ * @return {!string}
+ */
+MyClass.getName$ = function () {
+	return "MyClass@foo.jsx";
+};
+
+var MyClass$getName$ = MyClass.getName$;
+
+/**
+ * class MyClass$0 extends Object
+ * @constructor
+ */
+function MyClass$0() {
+}
+
+/**
+ * @constructor
+ */
+function MyClass$0$() {
+};
+
+MyClass$0$.prototype = new MyClass$0;
+
+/**
+ * @return {!string}
+ */
+MyClass$0.getName$ = function () {
+	return "MyClass@bar.jsx";
+};
+
+var MyClass$0$getName$ = MyClass$0.getName$;
+
 var $__jsx_classMap = {
-	"system:example/fizzbuzz.jsx": {
+	"system:example/module-demo.jsx": {
 		_Main: _Main,
 		_Main$: _Main$
+	},
+	"system:example/lib/foo.jsx": {
+		MyClass: MyClass,
+		MyClass$: MyClass$
+	},
+	"system:example/lib/bar.jsx": {
+		MyClass: MyClass$0,
+		MyClass$: MyClass$0$
 	}
 };
 
@@ -203,7 +244,7 @@ JSX.runTests = function (sourceFile, tests) {
 function $__jsx_onload (event) {
 	window.removeEventListener("load", $__jsx_onload);
 	document.removeEventListener("DOMContentLoaded", $__jsx_onload);
-	JSX.runMain("system:example/fizzbuzz.jsx", [])
+	JSX.runMain("system:example/module-demo.jsx", [])
 }
 
 window.addEventListener("load", $__jsx_onload);
@@ -211,4 +252,4 @@ document.addEventListener("DOMContentLoaded", $__jsx_onload);
 
 })(JSX);
 
-//@ sourceMappingURL=fizzbuzz.jsx.js.mapping
+//@ sourceMappingURL=module-demo.jsx.js.mapping

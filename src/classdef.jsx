@@ -1152,6 +1152,7 @@ class MemberFunctionDefinition extends MemberDefinition implements Block {
 	var _closures : MemberFunctionDefinition[];
 	var _lastTokenOfBody : Token;
 	var _parent : MemberFunctionDefinition;
+	var _funcLocal : LocalVariable;
 
 	function constructor (token : Token, name : Token, flags : number, returnType : Type, args : ArgumentDeclaration[], locals : LocalVariable[], statements : Statement[], closures : MemberFunctionDefinition[], lastTokenOfBody : Token, docComment : DocComment) {
 		super(token, name, flags, docComment);
@@ -1162,6 +1163,7 @@ class MemberFunctionDefinition extends MemberDefinition implements Block {
 		this._closures = closures;
 		this._lastTokenOfBody = lastTokenOfBody;
 		this._parent = null;
+		this._funcLocal = null;
 		this._classDef = null;
 		if (this._closures != null) {
 			for (var i = 0; i < this._closures.length; ++i)
@@ -1271,7 +1273,17 @@ class MemberFunctionDefinition extends MemberDefinition implements Block {
 			}, this._statements);
 			// update the link from function expressions to closures
 			Util.forEachStatement(function onStatement(statement : Statement) : boolean {
-				function onExpr(expr : Expression) : boolean {
+				if (statement instanceof FunctionStatement) {
+					for (var i = 0; i < this._closures.length; ++i) {
+						if (this._closures[i] == (statement as FunctionStatement).getFuncDef())
+							break;
+					}
+					if (i == this._closures.length)
+						throw new Error("logic flaw, cannot find the closure");
+					(statement as FunctionStatement).setFuncDef(closures[i]);
+					return true;
+				}
+				statement.forEachExpression(function onExpr(expr : Expression) : boolean {
 					if (expr instanceof FunctionExpression) {
 						for (var i = 0; i < this._closures.length; ++i) {
 							if (this._closures[i] == (expr as FunctionExpression).getFuncDef())
@@ -1282,8 +1294,7 @@ class MemberFunctionDefinition extends MemberDefinition implements Block {
 						(expr as FunctionExpression).setFuncDef(closures[i]);
 					}
 					return expr.forEachExpression(onExpr);
-				}
-				statement.forEachExpression(onExpr);
+				});
 				return statement.forEachStatement(onStatement);
 			}, statements);
 		} else {
@@ -1344,8 +1355,14 @@ class MemberFunctionDefinition extends MemberDefinition implements Block {
 		} else {
 			context.setBlockStack(outerContext.blockStack);
 			context.blockStack.push(new BlockContext(new LocalVariableStatuses(this, outerContext.getTopBlock().localVariableStatuses), this));
-			if (! this.isAnonymous()) { // named function expr
-				context.getTopBlock().localVariableStatuses._statuses[this.name()] = LocalVariableStatuses.ISSET;
+			// make this function visible inside it
+			if (! this.isAnonymous()) {
+				if (this._returnType != null) {
+					context.getTopBlock().localVariableStatuses._statuses[this.name()] = LocalVariableStatuses.ISSET;
+				} else {
+					// ban on recursive function without the return type declared
+					context.getTopBlock().localVariableStatuses._statuses[this.name()] = LocalVariableStatuses.UNTYPED_RECURSIVE_FUNCTION;
+				}
 			}
 		}
 
@@ -1355,15 +1372,21 @@ class MemberFunctionDefinition extends MemberDefinition implements Block {
 			for (var i = 0; i < this._statements.length; ++i)
 				if (! this._statements[i].analyze(context))
 					break;
+			if (this._returnType == null) // no return statement in body
+				this._returnType = Type.voidType;
 			if (! this._returnType.equals(Type.voidType) && context.getTopBlock().localVariableStatuses != null)
 				context.errors.push(new CompileError(this._lastTokenOfBody, "missing return statement"));
 
-			if (this.getNameToken() != null && this.name() == "constructor") {
+			if (this._parent == null && this.getNameToken() != null && this.name() == "constructor") {
 				this._fixupConstructor(context);
 			}
 
 		} finally {
 			context.blockStack.pop();
+		}
+
+		if (this._funcLocal != null) {
+			this._funcLocal.setTypeForced(this.getType());
 		}
 
 	}
@@ -1483,6 +1506,10 @@ class MemberFunctionDefinition extends MemberDefinition implements Block {
 		return this._returnType;
 	}
 
+	function setReturnType (type : Type) : void {
+		this._returnType = type;
+	}
+
 	function getArguments () : ArgumentDeclaration[] {
 		return this._args;
 	}
@@ -1492,6 +1519,14 @@ class MemberFunctionDefinition extends MemberDefinition implements Block {
 		for (var i = 0; i < this._args.length; ++i)
 			argTypes[i] = this._args[i].getType();
 		return argTypes;
+	}
+
+	function getFuncLocal () : LocalVariable {
+		return this._funcLocal;
+	}
+
+	function setFuncLocal (funcLocal : LocalVariable) : void {
+		this._funcLocal = funcLocal;
 	}
 
 	function getParent () : MemberFunctionDefinition {
@@ -1554,8 +1589,11 @@ class MemberFunctionDefinition extends MemberDefinition implements Block {
 			if (this._args[i].getType() == null)
 				break;
 		}
-		if (i == this._args.length && this._returnType != null)
+		if (i == this._args.length && this._returnType != null) {
+			if (this._funcLocal != null)
+				this._funcLocal.setTypeForced(this.getType());
 			return true;
+		}
 		// resolve!
 		if (type.getArgumentTypes().length != this._args.length) {
 			context.errors.push(new CompileError(this.getToken(), "expected the function to have " + type.getArgumentTypes().length as string + " arguments, but found " + this._args.length as string));
@@ -1582,6 +1620,8 @@ class MemberFunctionDefinition extends MemberDefinition implements Block {
 		} else {
 			this._returnType = type.getReturnType();
 		}
+		if (this._funcLocal != null)
+			this._funcLocal.setTypeForced(this.getType());
 		return true;
 	}
 
@@ -1726,6 +1766,9 @@ class LocalVariable {
 			context.getTopBlock().localVariableStatuses.setStatus(this);
 		} else {
 			switch (context.getTopBlock().localVariableStatuses.getStatus(this)) {
+			case LocalVariableStatuses.UNTYPED_RECURSIVE_FUNCTION:
+				context.errors.push(new CompileError(token, "the return type of recursive function needs to be explicitly declared"));
+				return false;
 			case LocalVariableStatuses.ISSET:
 				// ok
 				break;
@@ -1816,6 +1859,8 @@ class ArgumentDeclaration extends LocalVariable {
 }
 
 class LocalVariableStatuses {
+
+	static const UNTYPED_RECURSIVE_FUNCTION = -1;
 
 	static const UNSET = 0;
 	static const ISSET = 1;

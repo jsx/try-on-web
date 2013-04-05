@@ -1,4 +1,4 @@
-// generatedy by JSX compiler 0.9.22 (2013-04-04 20:15:21 +0900; 37d29918a761fcc12e0b27fd1ff7e23c40bf9089)
+// generatedy by JSX compiler 0.9.23 (2013-04-05 12:28:36 +0900; c1077eb99ee3395d16aac723067b9437c8432045)
 var JSX = {};
 (function (JSX) {
 /**
@@ -142,7 +142,7 @@ _Main.main$AS = function (args) {
 			item = (function (v) {
 				if (! (v == null || v instanceof HTMLInputElement)) {
 					debugger;
-					throw new Error("[/Users/gfx/repo/try-on-web/JSX/src/web/playground.jsx:62:36] detected invalid cast, value is not an instance of the designated type or null\n                var item = items[i] as HTMLInputElement;\n                                    ^^\n");
+					throw new Error("[/Users/gfx/repo/try-on-web/JSX/src/web/playground.jsx:64:36] detected invalid cast, value is not an instance of the designated type or null\n                var item = items[i] as HTMLInputElement;\n                                    ^^\n");
 				}
 				return v;
 			}(items[i]));
@@ -153,7 +153,7 @@ _Main.main$AS = function (args) {
 		return 0;
 	}
 	function jsxComplete(cm) {
-		CodeMirror.simpleHint(cm, (function (editor) {
+		CodeMirror.showHint(cm, (function (editor) {
 			/** @type {Cursor} */
 			var cur;
 			/** @type {CompletionRequest} */
@@ -189,7 +189,7 @@ _Main.main$AS = function (args) {
 				if (! $__jsx_ObjectHasOwnProperty.call(uniq, (function (v) {
 					if (! (v != null)) {
 						debugger;
-						throw new Error("[/Users/gfx/repo/try-on-web/JSX/src/web/playground.jsx:93:46] null access\n                    if (! uniq.hasOwnProperty(item)) {\n                                              ^^^^\n");
+						throw new Error("[/Users/gfx/repo/try-on-web/JSX/src/web/playground.jsx:95:46] null access\n                    if (! uniq.hasOwnProperty(item)) {\n                                              ^^^^\n");
 					}
 					return v;
 				}(item)))) {
@@ -208,7 +208,7 @@ _Main.main$AS = function (args) {
 	input = (function (v) {
 		if (! (v == null || v instanceof HTMLTextAreaElement)) {
 			debugger;
-			throw new Error("[/Users/gfx/repo/try-on-web/JSX/src/web/playground.jsx:109:37] detected invalid cast, value is not an instance of the designated type or null\n        var input  = dom.id(\'input\') as HTMLTextAreaElement;\n                                     ^^\n");
+			throw new Error("[/Users/gfx/repo/try-on-web/JSX/src/web/playground.jsx:111:37] detected invalid cast, value is not an instance of the designated type or null\n        var input  = dom.id(\'input\') as HTMLTextAreaElement;\n                                     ^^\n");
 		}
 		return v;
 	}(dom$id$S('input')));
@@ -254,7 +254,7 @@ _Main.main$AS = function (args) {
 		platform.setFileContent$SS((function (v) {
 			if (! (v != null)) {
 				debugger;
-				throw new Error("[/Users/gfx/repo/try-on-web/JSX/src/web/playground.jsx:150:36] null access\n            platform.setFileContent(path, editor.getValue());\n                                    ^^^^\n");
+				throw new Error("[/Users/gfx/repo/try-on-web/JSX/src/web/playground.jsx:152:36] null access\n            platform.setFileContent(path, editor.getValue());\n                                    ^^^^\n");
 			}
 			return v;
 		}(path)), editor.getValue());
@@ -293,7 +293,7 @@ _Main.main$AS = function (args) {
 		c.addSourceFile$LToken$S(null, (function (v) {
 			if (! (v != null)) {
 				debugger;
-				throw new Error("[/Users/gfx/repo/try-on-web/JSX/src/web/playground.jsx:188:34] null access\n            c.addSourceFile(null, path);\n                                  ^^^^\n");
+				throw new Error("[/Users/gfx/repo/try-on-web/JSX/src/web/playground.jsx:190:34] null access\n            c.addSourceFile(null, path);\n                                  ^^^^\n");
 			}
 			return v;
 		}(path)));
@@ -308,7 +308,7 @@ _Main.main$AS = function (args) {
 			out += "JSX.require('" + (function (v) {
 				if (! (v != null)) {
 					debugger;
-					throw new Error("[/Users/gfx/repo/try-on-web/JSX/src/web/playground.jsx:200:39] null access\n                out += \"JSX.require(\'\"+path+\"\')._Main.main$AS([]);\\n\";\n                                       ^^^^\n");
+					throw new Error("[/Users/gfx/repo/try-on-web/JSX/src/web/playground.jsx:202:39] null access\n                out += \"JSX.require(\'\"+path+\"\')._Main.main$AS([]);\\n\";\n                                       ^^^^\n");
 				}
 				return v;
 			}(path)) + "')._Main.main$AS([]);\n";
@@ -353,7 +353,7 @@ _Main.main$AS = function (args) {
 			session = JSON.parse((function (v) {
 				if (! (v != null)) {
 					debugger;
-					throw new Error("[/Users/gfx/repo/try-on-web/JSX/src/web/playground.jsx:238:41] null access\n                var session = JSON.parse(serializedSession);\n                                         ^^^^^^^^^^^^^^^^^\n");
+					throw new Error("[/Users/gfx/repo/try-on-web/JSX/src/web/playground.jsx:240:41] null access\n                var session = JSON.parse(serializedSession);\n                                         ^^^^^^^^^^^^^^^^^\n");
 				}
 				return v;
 			}(serializedSession)));
@@ -365,7 +365,7 @@ _Main.main$AS = function (args) {
 				item = (function (v) {
 					if (! (v == null || v instanceof HTMLInputElement)) {
 						debugger;
-						throw new Error("[/Users/gfx/repo/try-on-web/JSX/src/web/playground.jsx:246:40] detected invalid cast, value is not an instance of the designated type or null\n                    var item = items[i] as HTMLInputElement;\n                                        ^^\n");
+						throw new Error("[/Users/gfx/repo/try-on-web/JSX/src/web/playground.jsx:248:40] detected invalid cast, value is not an instance of the designated type or null\n                    var item = items[i] as HTMLInputElement;\n                                        ^^\n");
 					}
 					return v;
 				}(items[i]));
@@ -393,7 +393,7 @@ _Main.main$AS = function (args) {
 		li = (function (v) {
 			if (! (v == null || v instanceof HTMLLIElement)) {
 				debugger;
-				throw new Error("[/Users/gfx/repo/try-on-web/JSX/src/web/playground.jsx:267:26] detected invalid cast, value is not an instance of the designated type or null\n            var li = elem as HTMLLIElement;\n                          ^^\n");
+				throw new Error("[/Users/gfx/repo/try-on-web/JSX/src/web/playground.jsx:269:26] detected invalid cast, value is not an instance of the designated type or null\n            var li = elem as HTMLLIElement;\n                          ^^\n");
 			}
 			return v;
 		}(elem));
@@ -403,7 +403,7 @@ _Main.main$AS = function (args) {
 		a = (function (v) {
 			if (! (v == null || v instanceof HTMLAnchorElement)) {
 				debugger;
-				throw new Error("[/Users/gfx/repo/try-on-web/JSX/src/web/playground.jsx:270:35] detected invalid cast, value is not an instance of the designated type or null\n            var a = li.children[0] as HTMLAnchorElement;\n                                   ^^\n");
+				throw new Error("[/Users/gfx/repo/try-on-web/JSX/src/web/playground.jsx:272:35] detected invalid cast, value is not an instance of the designated type or null\n            var a = li.children[0] as HTMLAnchorElement;\n                                   ^^\n");
 			}
 			return v;
 		}(li.children[0]));
@@ -429,7 +429,7 @@ _Main.main$AS = function (args) {
 					li = (function (v) {
 						if (! (v == null || v instanceof HTMLLIElement)) {
 							debugger;
-							throw new Error("[/Users/gfx/repo/try-on-web/JSX/src/web/playground.jsx:286:36] detected invalid cast, value is not an instance of the designated type or null\n                        var li = el as HTMLLIElement;\n                                    ^^\n");
+							throw new Error("[/Users/gfx/repo/try-on-web/JSX/src/web/playground.jsx:288:36] detected invalid cast, value is not an instance of the designated type or null\n                        var li = el as HTMLLIElement;\n                                    ^^\n");
 						}
 						return v;
 					}(el));
@@ -455,7 +455,7 @@ _Main.main$AS = function (args) {
 		event = (function (v) {
 			if (! (v == null || v instanceof KeyboardEvent)) {
 				debugger;
-				throw new Error("[/Users/gfx/repo/try-on-web/JSX/src/web/playground.jsx:301:26] detected invalid cast, value is not an instance of the designated type or null\n            var event = e as KeyboardEvent;\n                          ^^\n");
+				throw new Error("[/Users/gfx/repo/try-on-web/JSX/src/web/playground.jsx:303:26] detected invalid cast, value is not an instance of the designated type or null\n            var event = e as KeyboardEvent;\n                          ^^\n");
 			}
 			return v;
 		}(e));
@@ -33941,10 +33941,10 @@ IntegerType._classDef = null;
 NumberType._classDef = null;
 StringType._classDef = null;
 FunctionType._classDef = null;
-Meta.VERSION_STRING = "0.9.22";
-Meta.VERSION_NUMBER = 0.009022;
-Meta.LAST_COMMIT_HASH = "37d29918a761fcc12e0b27fd1ff7e23c40bf9089";
-Meta.LAST_COMMIT_DATE = "2013-04-04 20:15:21 +0900";
+Meta.VERSION_STRING = "0.9.23";
+Meta.VERSION_NUMBER = 0.009023;
+Meta.LAST_COMMIT_HASH = "c1077eb99ee3395d16aac723067b9437c8432045";
+Meta.LAST_COMMIT_DATE = "2013-04-05 12:28:36 +0900";
 $__jsx_lazy_init(Meta, "IDENTIFIER", function () {
 	return Meta.VERSION_STRING + " (" + Meta.LAST_COMMIT_DATE + "; " + Meta.LAST_COMMIT_HASH + ")";
 });

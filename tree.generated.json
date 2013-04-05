@@ -254,11 +254,11 @@
    },
    "assets" : {
       "css" : {
-         "simple-hint.css" : "assets/css/simple-hint.css",
          "bootstrap.css" : "assets/css/bootstrap.css",
          "bootstrap-responsive.min.css" : "assets/css/bootstrap-responsive.min.css",
          "codemirror.css" : "assets/css/codemirror.css",
          "bootstrap.min.css" : "assets/css/bootstrap.min.css",
+         "show-hint.css" : "assets/css/show-hint.css",
          "jquery.treeTable.css" : "assets/css/jquery.treeTable.css",
          "bootstrap-responsive.css" : "assets/css/bootstrap-responsive.css"
       },
@@ -269,9 +269,9 @@
             "jsx.js" : "assets/js/mode/jsx.js",
             "javascript.js" : "assets/js/mode/javascript.js"
          },
+         "show-hint.js" : "assets/js/show-hint.js",
          "jsx-profiler-result.js" : "assets/js/jsx-profiler-result.js",
          "jslexer.js" : "assets/js/jslexer.js",
-         "simple-hint.js" : "assets/js/simple-hint.js",
          "require-simple.js" : "assets/js/require-simple.js",
          "jquery.js" : "assets/js/jquery.js",
          "source-map.js" : "assets/js/source-map.js",

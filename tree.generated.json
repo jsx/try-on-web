@@ -61,6 +61,10 @@
          "sakura.jsx" : "example/sakura/sakura.jsx",
          "index.html" : "example/sakura/index.html"
       },
+      "reversi" : {
+         "reversi.jsx" : "example/reversi/reversi.jsx",
+         "index.html" : "example/reversi/index.html"
+      },
       "hello-world" : {
          "hello-world.jsx" : "example/hello-world/hello-world.jsx",
          "index.html" : "example/hello-world/index.html"

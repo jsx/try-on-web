@@ -1,6 +1,18 @@
-// generatedy by JSX compiler 0.9.26 (2013-04-19 10:46:44 +0900; 29fff0d44ffc20b11d5e6ebebf4239a5c30b097d)
+// generatedy by JSX compiler 0.9.27 (2013-04-30 22:02:53 +0900; dc8eb39823fcbbb00c64ef47025c476ab1662784)
 var JSX = {};
 (function (JSX) {
+/**
+ * extends the class
+ */
+function $__jsx_extend(derivations, base) {
+	var ctor = function () {};
+	ctor.prototype = base.prototype;
+	var proto = new ctor();
+	for (var i in derivations) {
+		derivations[i].prototype = proto;
+	}
+}
+
 /**
  * copies the implementations from source interface to target
  */
@@ -89,26 +101,16 @@ JSX.resetProfileResults = function () {
 	return $__jsx_profiler.resetResults();
 };
 JSX.DEBUG = true;
-/**
- * class Fib extends Object
- * @constructor
- */
-function Fib() {
-}
-
-/**
- * @constructor
- */
-function Fib$() {
+function g_StopIteration() {
+	Error.call(this);
 };
 
-Fib$.prototype = new Fib;
+$__jsx_extend([g_StopIteration], Error);
+function Fib() {
+};
 
-/**
- * @param {!number} n
- * @return {!number}
- */
-Fib.fib1$I = function (n) {
+$__jsx_extend([Fib], Object);
+function Fib$fib1$I(n) {
 	if (n <= 2) {
 		return 1;
 	} else {
@@ -116,30 +118,18 @@ Fib.fib1$I = function (n) {
 	}
 };
 
-var Fib$fib1$I = Fib.fib1$I;
+Fib.fib1$I = Fib$fib1$I;
 
-/**
- * @param {!number} n
- * @return {!number}
- */
-Fib.fib2$N = function (n) {
+function Fib$fib2$N(n) {
 	return (n <= 2 ? 1 : Fib$fib2$N(n - 1) + Fib$fib2$N(n - 2));
 };
 
-var Fib$fib2$N = Fib.fib2$N;
+Fib.fib2$N = Fib$fib2$N;
 
-/**
- * @param {!number} n
- * @return {!number}
- */
-Fib.fib3$I = function (n) {
-	/** @type {!number} */
+function Fib$fib3$I(n) {
 	var value;
-	/** @type {!number} */
 	var prevValue;
-	/** @type {!number} */
 	var i;
-	/** @type {!number} */
 	var t;
 	if (n <= 2) {
 		return 1;
@@ -154,13 +144,9 @@ Fib.fib3$I = function (n) {
 	return (value | 0);
 };
 
-var Fib$fib3$I = Fib.fib3$I;
+Fib.fib3$I = Fib$fib3$I;
 
-/**
- * @param {!number} n
- * @return {!number}
- */
-Fib.fib4$I = function (n) {
+function Fib$fib4$I(n) {
 	switch (n) {
 	case 1:
 		return 1;
@@ -171,28 +157,13 @@ Fib.fib4$I = function (n) {
 	}
 };
 
-var Fib$fib4$I = Fib.fib4$I;
+Fib.fib4$I = Fib$fib4$I;
 
-/**
- * class _Main extends Object
- * @constructor
- */
 function _Main() {
-}
-
-/**
- * @constructor
- */
-function _Main$() {
 };
 
-_Main$.prototype = new _Main;
-
-/**
- * @param {Array.<undefined|!string>} args
- */
-_Main.main$AS = function (args) {
-	/** @type {!number} */
+$__jsx_extend([_Main], Object);
+function _Main$main$AS(args) {
 	var n;
 	n = (args.length > 0 ? +(function (v) {
 		if (! (v != null)) {
@@ -207,14 +178,19 @@ _Main.main$AS = function (args) {
 	console.log("fib4(" + (n + "") + ") = " + (Fib$fib4$I(n) + ""));
 };
 
-var _Main$main$AS = _Main.main$AS;
+_Main.main = _Main$main$AS;
+_Main.main$AS = _Main$main$AS;
 
 var $__jsx_classMap = {
+	"system:lib/built-in.jsx": {
+		g_StopIteration: g_StopIteration,
+		g_StopIteration$: g_StopIteration
+	},
 	"system:example/fib.jsx": {
 		Fib: Fib,
-		Fib$: Fib$,
+		Fib$: Fib,
 		_Main: _Main,
-		_Main$: _Main$
+		_Main$: _Main
 	}
 };
 
@@ -230,10 +206,10 @@ JSX.runMain = function (sourceFile, args) {
 	if (! module._Main) {
 		throw new ReferenceError("entry point _Main not found in " + sourceFile);
 	}
-	if (! module._Main.main$AS) {
+	if (! module._Main.main) {
 		throw new ReferenceError("entry point _Main.main(:string[]):void not found in " + sourceFile);
 	}
-	module._Main.main$AS(args);
+	module._Main.main(args);
 };
 
 /**
@@ -248,27 +224,21 @@ JSX.runTests = function (sourceFile, tests) {
 	if(tests.length === 0) {
 		var p = testClass.prototype;
 		for (var m in p) {
-			if (p[m] instanceof Function
-				&& /^test.*[$]$/.test(m)) {
+			if (p[m] instanceof Function && m.match(/^test\w+$/)) {
 				tests.push(m);
 			}
 		}
 	}
-	else { // set as process arguments
-		tests = tests.map(function (name) {
-			return name + "$"; // mangle for function test*():void
-		});
-	}
 
 	var testCase = new testClass();
 
-	if (testCase.beforeClass$AS != null)
-		testCase.beforeClass$AS(tests);
+	if (testCase.beforeClass != null)
+		testCase.beforeClass(tests);
 
 	for (var i = 0; i < tests.length; ++i) {
 		(function (method) {
 			if (method in testCase) {
-				testCase.run$SF$V$(method, function() { testCase[method](); });
+				testCase.run(method, function() { testCase[method](); });
 			}
 			else {
 				throw new ReferenceError("No such test method: " + method);
@@ -276,8 +246,8 @@ JSX.runTests = function (sourceFile, tests) {
 		}(tests[i]));
 	}
 
-	if (testCase.afterClass$ != null)
-		testCase.afterClass$();
+	if (testCase.afterClass != null)
+		testCase.afterClass();
 };
 /**
  * call a function on load/DOMContentLoaded

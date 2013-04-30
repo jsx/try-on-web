@@ -20,6 +20,7 @@
  * IN THE SOFTWARE.
  */
 
+import "./analysis.jsx";
 import "./parser.jsx";
 import "./classdef.jsx";
 import "./type.jsx";
@@ -28,6 +29,7 @@ import "./platform.jsx";
 import "./util.jsx";
 import "./optimizer.jsx";
 import "./completion.jsx";
+import "./instruments.jsx";
 
 
 class Compiler {
@@ -54,7 +56,7 @@ class Compiler {
 		this._optimizer = null;
 		this._warningFilters = [] : Array.<function(:CompileWarning):Nullable.<boolean>>;
 		this._warningAsError = false;
-		this._parsers = [] : Parser[];
+		this._parsers = new Parser[];
 		this._fileCache = new Map.<string>;
 		this._searchPaths = [ this._platform.getRoot() + "/lib/common" ];
 		// load the built-in classes
@@ -146,12 +148,18 @@ class Compiler {
 		NumberType._classDef = builtins.lookup(errors, null, "Number");
 		StringType._classDef = builtins.lookup(errors, null, "String");
 		FunctionType._classDef = builtins.lookup(errors, null, "Function");
+		// prepare generator stuff
+		CodeTransformer.stopIterationType = new ObjectType(builtins.lookup(errors, null, "g_StopIteration"));
+		for (var i = 0; i < builtins._templateClassDefs.length; ++i)
+			if (builtins._templateClassDefs[i].className() == "__jsx_generator")
+				CodeTransformer.jsxGeneratorClassDef = builtins._templateClassDefs[i];
 		if (! this._handleErrors(errors))
 			return false;
 		// semantic analysis
 		this._resolveTypes(errors);
 		if (! this._handleErrors(errors))
 			return false;
+		this._exportEntryPoints();
 		this._analyze(errors);
 		if (! this._handleErrors(errors))
 			return false;
@@ -161,6 +169,16 @@ class Compiler {
 		case Compiler.MODE_DOC:
 			return true;
 		}
+		// transformation
+		var transformer = new CodeTransformer;
+		this.forEachClassDef(function (parser, classDef) {
+			return classDef.forEachMemberFunction(function onFuncDef (funcDef) {
+				if (funcDef.isGenerator()) {
+					transformer.transformFunctionDefinition(funcDef);
+				}
+				return funcDef.forEachClosure(onFuncDef);
+			});
+		});
 		// optimization
 		this._optimize();
 		// TODO peep-hole and dead store optimizations, etc.
@@ -342,9 +360,28 @@ class Compiler {
 			if (classDefs[i].getInnerClasses().length != 0)
 				classDefs = classDefs.concat(classDefs[i].getInnerClasses());
 		}
+		// check that there are no conflict of names bet. native classes
+		var nativeClassNames = new Map.<ClassDefinition>;
+		var foundConflict = false;
+		classDefs.forEach(function (classDef) {
+			if ((classDef.flags() & ClassDefinition.IS_NATIVE) == 0) {
+				return;
+			}
+			if (nativeClassNames.hasOwnProperty(classDef.className())) {
+				errors.push(
+					new CompileError(classDef.getToken(), "native class with same name is already defined")
+					.addCompileNote(new CompileNote(nativeClassNames[classDef.className()].getToken(), "here")));
+				foundConflict = true;
+				return;
+			}
+			nativeClassNames[classDef.className()] = classDef;
+		});
+		if (foundConflict) {
+			return;
+		}
 		// reorder the classDefs so that base classes would come before their children
 		var getMaxIndexOfClasses = function (deps : ClassDefinition[]) : number {
-			deps = deps.concat(new ClassDefinition[]); // clone the array
+			deps = deps.concat([]); // clone the array
 			if (deps.length == 0)
 				return -1;
 			for (var i = 0; i < classDefs.length; ++i) {
@@ -359,7 +396,7 @@ class Compiler {
 			throw new Error("logic flaw, could not find class definition of '" + deps[0].className() + "'");
 		};
 		for (var i = 0; i < classDefs.length;) {
-			var deps = classDefs[i].implementTypes().map.<ClassDefinition>(function (t) { return t.getClassDef(); }).concat(new ClassDefinition[]);
+			var deps = classDefs[i].implementTypes().map.<ClassDefinition>(function (t) { return t.getClassDef(); }).concat([]);
 			if (classDefs[i].extendType() != null)
 				deps.unshift(classDefs[i].extendType().getClassDef());
 			if (classDefs[i].getOuterClassDef() != null)
@@ -372,46 +409,37 @@ class Compiler {
 				++i;
 			}
 		}
-		// rename the classes with conflicting names
-		var countByName = new Map.<number>;
-		for (var i = 0; i < classDefs.length; ++i) {
-			var classDef = classDefs[i];
-			if ((classDef.flags() & ClassDefinition.IS_NATIVE) != 0) {
-				// check that the names of native classes do not conflict, and register the ocurrences
-				var className = classDef.className();
-				if (countByName[className]) {
-					errors.push(new CompileError(classDef.getToken(), "found multiple definition for native class: " + className));
-					return;
-				}
-				classDef.setOutputClassName(className);
-				countByName[className] = 1;
-			}
-		}
-		for (var i = 0; i < classDefs.length; ++i) {
-			var classDef = classDefs[i];
-			if ((classDef.flags() & ClassDefinition.IS_NATIVE) == 0) {
-				var className;
-				if (classDef.getOuterClassDef() != null)
-					className = classDef.getOuterClassDef().getOutputClassName() + "$C" + classDef.className();
-				else
-					className = classDef.className();
-
-				if (countByName[className]) {
-					classDef.setOutputClassName(className + "$" + (countByName[className] - 1) as string);
-					countByName[className]++;
-				} else {
-					classDef.setOutputClassName(className);
-					countByName[className] = 1;
-				}
-			}
-		}
-		// escape the instantiated class names (note: template classes are never emitted (since they are all native) but their names are used for mangling of function arguments)
-		for (var i = 0; i < classDefs.length; ++i) {
-			var escapedClassName = classDefs[i].getOutputClassName().replace(/\.</g, "$$").replace(/>/g, "$E").replace(/[^A-Za-z0-9_]/g,"$");
-			classDefs[i].setOutputClassName(escapedClassName);
-		}
 		// emit
 		this._emitter.emit(classDefs);
+	}
+
+	function _exportEntryPoints() : void {
+		this.forEachClassDef(function (parser, classDef) {
+			switch (classDef.classFullName()) {
+			case "_Main":
+				classDef.forEachMemberFunction(function (funcDef) {
+					if ((funcDef.flags() & ClassDefinition.IS_STATIC) != 0
+						&& funcDef.name() == "main"
+						&& funcDef.getArguments().length == 1
+						&& Util.isArrayOf(funcDef.getArgumentTypes()[0].getClassDef(), Type.stringType)) {
+						funcDef.setFlags(funcDef.flags() | ClassDefinition.IS_EXPORT);
+					}
+					return true;
+				});
+				break;
+			case "_Test":
+				classDef.forEachMemberFunction(function (funcDef) {
+					if ((funcDef.flags() & ClassDefinition.IS_STATIC) == 0
+						&& funcDef.name().match(/^test/)
+						&& funcDef.getArguments().length == 0) {
+						funcDef.setFlags(funcDef.flags() | ClassDefinition.IS_EXPORT);
+					}
+					return true;
+				});
+				break;
+			}
+			return true;
+		});
 	}
 
 	function _handleErrors (errors : CompileError[]) : boolean {

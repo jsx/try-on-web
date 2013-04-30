@@ -13,6 +13,11 @@ class _Test extends TestCase {
 
 	function testWithSourceMapConsumer() : void {
 		if(process.env["JSX_DISABLE_SOURCE_MAP_TEST"]) {
+			this.diag("skip source-map testing because: JSX_DISABLE_SOURCE_MAP_TEST is true");
+			return;
+		}
+		if ((process.env["JSX_OPTS"] ?: "").match(/\bminify\b/)) {
+			this.diag("skip source-map testing because: JSX_OPTS includes --minify");
 			return;
 		}
 
@@ -47,7 +52,7 @@ class _Test extends TestCase {
 		this.note("mapping.names:   " + JSON.stringify(mapping['names']));
 
 		// mappping.sources
-		["hello.jsx", "timer.jsx", "js.jsx"].forEach((file) -> {
+		["hello.jsx", "timer.jsx"].forEach((file) -> {
 			var sources = mapping['sources'] as string[];
 
 			var found = sources.filter((x) -> { return x.slice(x.length - file.length) == file; });
@@ -89,8 +94,8 @@ class _Test extends TestCase {
 		this.expect(orig['name'], "orig.name").toBe("_Main");
 		this.expect(platform.fileExists("t/src/source-map/" + orig['source'] as string), orig['source'] as string + " exists").toBe(true);
 
-		this.note('search for getFoo$');
-		pos = search(source, function (t) { return /^getFoo\b/.test(t.token); });
+		this.note('search for "getFoo"');
+		pos = search(source, function (t) { return /\bgetFoo\b/.test(t.token); });
 		this.note("generated (member function): " + JSON.stringify(source[pos]));
 		orig = consumer.originalPositionFor(source[pos]);
 		this.note("original: " + JSON.stringify(orig));

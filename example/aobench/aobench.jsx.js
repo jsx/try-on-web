@@ -1,6 +1,18 @@
-// generatedy by JSX compiler 0.9.26 (2013-04-19 10:46:44 +0900; 29fff0d44ffc20b11d5e6ebebf4239a5c30b097d)
+// generatedy by JSX compiler 0.9.27 (2013-04-30 22:02:53 +0900; dc8eb39823fcbbb00c64ef47025c476ab1662784)
 var JSX = {};
 (function (JSX) {
+/**
+ * extends the class
+ */
+function $__jsx_extend(derivations, base) {
+	var ctor = function () {};
+	ctor.prototype = base.prototype;
+	var proto = new ctor();
+	for (var i in derivations) {
+		derivations[i].prototype = proto;
+	}
+}
+
 /**
  * copies the implementations from source interface to target
  */
@@ -89,128 +101,66 @@ JSX.resetProfileResults = function () {
 	return $__jsx_profiler.resetResults();
 };
 JSX.DEBUG = false;
-/**
- * class Config extends Object
- * @constructor
- */
-function Config() {
-}
-
-/**
- * @constructor
- */
-function Config$() {
+function g_StopIteration() {
+	Error.call(this);
 };
 
-Config$.prototype = new Config;
+$__jsx_extend([g_StopIteration], Error);
+function Config() {
+};
 
-/**
- * class vec3 extends Object
- * @constructor
- */
-function vec3() {
-}
-
-/**
- * @constructor
- * @param {!number} x
- * @param {!number} y
- * @param {!number} z
- */
-function vec3$NNN(x, y, z) {
+$__jsx_extend([Config], Object);
+function vec3(x, y, z) {
 	this.x = x;
 	this.y = y;
 	this.z = z;
 };
 
-vec3$NNN.prototype = new vec3;
-
-/**
- * @param {vec3} a
- * @param {vec3} b
- * @return {vec3}
- */
-vec3.vadd$Lvec3$Lvec3$ = function (a, b) {
+$__jsx_extend([vec3], Object);
+function vec3$vadd$Lvec3$Lvec3$(a, b) {
 	return ({x: a.x + b.x, y: a.y + b.y, z: a.z + b.z});
 };
 
-var vec3$vadd$Lvec3$Lvec3$ = vec3.vadd$Lvec3$Lvec3$;
+vec3.vadd$Lvec3$Lvec3$ = vec3$vadd$Lvec3$Lvec3$;
 
-/**
- * @param {vec3} a
- * @param {vec3} b
- * @return {vec3}
- */
-vec3.vsub$Lvec3$Lvec3$ = function (a, b) {
+function vec3$vsub$Lvec3$Lvec3$(a, b) {
 	return ({x: a.x - b.x, y: a.y - b.y, z: a.z - b.z});
 };
 
-var vec3$vsub$Lvec3$Lvec3$ = vec3.vsub$Lvec3$Lvec3$;
+vec3.vsub$Lvec3$Lvec3$ = vec3$vsub$Lvec3$Lvec3$;
 
-/**
- * @param {vec3} a
- * @param {vec3} b
- * @return {vec3}
- */
-vec3.vcross$Lvec3$Lvec3$ = function (a, b) {
-	/** @type {!number} */
+function vec3$vcross$Lvec3$Lvec3$(a, b) {
 	var z$0;
-	/** @type {!number} */
 	var z$1;
-	/** @type {!number} */
 	var x$0;
-	/** @type {!number} */
 	var y$0;
-	/** @type {!number} */
 	var y$1;
-	/** @type {!number} */
 	var x$1;
 	return ({x: (y$1 = a.y) * (z$1 = b.z) - (z$0 = a.z) * (y$0 = b.y), y: z$0 * (x$1 = b.x) - (x$0 = a.x) * z$1, z: x$0 * y$0 - y$1 * x$1});
 };
 
-var vec3$vcross$Lvec3$Lvec3$ = vec3.vcross$Lvec3$Lvec3$;
+vec3.vcross$Lvec3$Lvec3$ = vec3$vcross$Lvec3$Lvec3$;
 
-/**
- * @param {vec3} a
- * @param {vec3} b
- * @return {!number}
- */
-vec3.vdot$Lvec3$Lvec3$ = function (a, b) {
+function vec3$vdot$Lvec3$Lvec3$(a, b) {
 	return a.x * b.x + a.y * b.y + a.z * b.z;
 };
 
-var vec3$vdot$Lvec3$Lvec3$ = vec3.vdot$Lvec3$Lvec3$;
+vec3.vdot$Lvec3$Lvec3$ = vec3$vdot$Lvec3$Lvec3$;
 
-/**
- * @param {vec3} a
- * @return {!number}
- */
-vec3.vlength$Lvec3$ = function (a) {
-	/** @type {!number} */
+function vec3$vlength$Lvec3$(a) {
 	var x$0;
-	/** @type {!number} */
 	var y$0;
-	/** @type {!number} */
 	var z$0;
 	return Math.sqrt((x$0 = a.x) * x$0 + (y$0 = a.y) * y$0 + (z$0 = a.z) * z$0);
 };
 
-var vec3$vlength$Lvec3$ = vec3.vlength$Lvec3$;
+vec3.vlength$Lvec3$ = vec3$vlength$Lvec3$;
 
-/**
- * @param {vec3} a
- * @return {vec3}
- */
-vec3.vnormalize$Lvec3$ = function (a) {
-	/** @type {!number} */
+function vec3$vnormalize$Lvec3$(a) {
 	var len;
-	/** @type {vec3} */
 	var v;
-	/** @type {!number} */
 	var x$0;
-	/** @type {!number} */
 	var y$0;
-	/** @type {!number} */
 	var z$0;
 	len = Math.sqrt((x$0 = a.x) * x$0 + (y$0 = a.y) * y$0 + (z$0 = a.z) * z$0);
 	v = ({x: a.x, y: a.y, z: a.z});
@@ -222,102 +172,44 @@ vec3.vnormalize$Lvec3$ = function (a) {
 	return v;
 };
 
-var vec3$vnormalize$Lvec3$ = vec3.vnormalize$Lvec3$;
+vec3.vnormalize$Lvec3$ = vec3$vnormalize$Lvec3$;
 
-/**
- * class Isect extends Object
- * @constructor
- */
 function Isect() {
-}
-
-/**
- * @constructor
- */
-function Isect$() {
 	this.t = 1000000.0;
 	this.hit = false;
 	this.p = ({x: 0.0, y: 0.0, z: 0.0});
 	this.n = ({x: 0.0, y: 0.0, z: 0.0});
 };
 
-Isect$.prototype = new Isect;
-
-/**
- * class Ray extends Object
- * @constructor
- */
-function Ray() {
-}
-
-/**
- * @constructor
- * @param {vec3} org
- * @param {vec3} dir
- */
-function Ray$Lvec3$Lvec3$(org, dir) {
+$__jsx_extend([Isect], Object);
+function Ray(org, dir) {
 	this.org = org;
 	this.dir = dir;
 };
 
-Ray$Lvec3$Lvec3$.prototype = new Ray;
-
-/**
- * class Sphere extends Object
- * @constructor
- */
-function Sphere() {
-}
-
-/**
- * @constructor
- * @param {vec3} center
- * @param {!number} radius
- */
-function Sphere$Lvec3$N(center, radius) {
+$__jsx_extend([Ray], Object);
+function Sphere(center, radius) {
 	this.center = center;
 	this.radius = radius;
 };
 
-Sphere$Lvec3$N.prototype = new Sphere;
-
-/**
- * @param {Sphere} $this
- * @param {Ray} ray
- * @param {Isect} isect
- */
-Sphere.intersect$LSphere$LRay$LIsect$ = function ($this, ray, isect) {
-	/** @type {!number} */
+$__jsx_extend([Sphere], Object);
+function Sphere$intersect$LSphere$LRay$LIsect$($this, ray, isect) {
 	var B;
-	/** @type {!number} */
 	var C;
-	/** @type {!number} */
 	var D;
-	/** @type {!number} */
 	var t;
-	/** @type {vec3} */
 	var n;
-	/** @type {vec3} */
 	var a$0;
-	/** @type {vec3} */
 	var b$0;
-	/** @type {vec3} */
 	var b$1;
-	/** @type {vec3} */
 	var b$2;
-	/** @type {!number} */
 	var rs$x$0;
-	/** @type {!number} */
 	var rs$y$0;
-	/** @type {!number} */
 	var rs$z$0;
-	/** @type {vec3} */
 	var org$0;
-	/** @type {vec3} */
 	var dir$0;
-	/** @type {vec3} */
 	var p$0;
-	/** @type {!number} */
 	var radius$0;
 	a$0 = ray.org;
 	b$0 = $this.center;
@@ -341,46 +233,21 @@ Sphere.intersect$LSphere$LRay$LIsect$ = function ($this, ray, isect) {
 	}
 };
 
-var Sphere$intersect$LSphere$LRay$LIsect$ = Sphere.intersect$LSphere$LRay$LIsect$;
+Sphere.intersect$LSphere$LRay$LIsect$ = Sphere$intersect$LSphere$LRay$LIsect$;
 
-/**
- * class Plane extends Object
- * @constructor
- */
-function Plane() {
-}
-
-/**
- * @constructor
- * @param {vec3} p
- * @param {vec3} n
- */
-function Plane$Lvec3$Lvec3$(p, n) {
+function Plane(p, n) {
 	this.p = p;
 	this.n = n;
 };
 
-Plane$Lvec3$Lvec3$.prototype = new Plane;
-
-/**
- * @param {Plane} $this
- * @param {Ray} ray
- * @param {Isect} isect
- */
-Plane.intersect$LPlane$LRay$LIsect$ = function ($this, ray, isect) {
-	/** @type {!number} */
+$__jsx_extend([Plane], Object);
+function Plane$intersect$LPlane$LRay$LIsect$($this, ray, isect) {
 	var d;
-	/** @type {!number} */
 	var v;
-	/** @type {!number} */
 	var t;
-	/** @type {vec3} */
 	var a$0;
-	/** @type {vec3} */
 	var b$0;
-	/** @type {vec3} */
 	var org$0;
-	/** @type {vec3} */
 	var dir$0;
 	d = - vec3$vdot$Lvec3$Lvec3$($this.p, $this.n);
 	a$0 = ray.dir;
@@ -398,57 +265,27 @@ Plane.intersect$LPlane$LRay$LIsect$ = function ($this, ray, isect) {
 	}
 };
 
-var Plane$intersect$LPlane$LRay$LIsect$ = Plane.intersect$LPlane$LRay$LIsect$;
+Plane.intersect$LPlane$LRay$LIsect$ = Plane$intersect$LPlane$LRay$LIsect$;
 
-/**
- * class Random extends Object
- * @constructor
- */
 function Random() {
-}
-
-/**
- * @constructor
- */
-function Random$() {
 };
 
-Random$.prototype = new Random;
-
-/**
- * @return {!number}
- */
-Random.next$ = function () {
+$__jsx_extend([Random], Object);
+function Random$next$() {
 	Random._x = Random._x * 0x5DEECE66D + 0xB;
 	Random._x %= 0xFFFFFFFFFFFF;
 	return Random._x * 3.552713678800501e-15;
 };
 
-var Random$next$ = Random.next$;
+Random.next$ = Random$next$;
 
-/**
- * class AOBench extends Object
- * @constructor
- */
 function AOBench() {
-}
-
-/**
- * @constructor
- */
-function AOBench$() {
 	this.spheres = [ ({center: ({x: -2, y: 0.0, z: -3.5}), radius: 0.5}), ({center: ({x: -0.5, y: 0.0, z: -3}), radius: 0.5}), ({center: ({x: 1.0, y: 0.0, z: -2.2}), radius: 0.5}) ];
 	this.plane = ({p: ({x: 0.0, y: -0.5, z: 0.0}), n: ({x: 0.0, y: 1.0, z: 0.0})});
 };
 
-AOBench$.prototype = new AOBench;
-
-/**
- * @param {!number} f
- * @return {!number}
- */
-AOBench.clamp$N = function (f) {
-	/** @type {!number} */
+$__jsx_extend([AOBench], Object);
+function AOBench$clamp$N(f) {
 	var i;
 	i = f * 255.0;
 	if (i > 255.0) {
@@ -460,19 +297,11 @@ AOBench.clamp$N = function (f) {
 	return i | 0;
 };
 
-var AOBench$clamp$N = AOBench.clamp$N;
+AOBench.clamp$N = AOBench$clamp$N;
 
-/**
- * @param {AOBench} $this
- * @param {Array.<undefined|vec3>} basis
- * @param {vec3} n
- */
-AOBench.orthoBasis$LAOBench$ALvec3$Lvec3$ = function ($this, basis, n) {
-	/** @type {!number} */
+function AOBench$orthoBasis$LAOBench$ALvec3$Lvec3$($this, basis, n) {
 	var z$0;
-	/** @type {!number} */
 	var y$0;
-	/** @type {!number} */
 	var x$0;
 	basis[2] = n;
 	basis[1] = ({x: 0.0, y: 0.0, z: 0.0});
@@ -495,51 +324,27 @@ AOBench.orthoBasis$LAOBench$ALvec3$Lvec3$ = function ($this, basis, n) {
 	basis[1] = vec3$vnormalize$Lvec3$(basis[1]);
 };
 
-var AOBench$orthoBasis$LAOBench$ALvec3$Lvec3$ = AOBench.orthoBasis$LAOBench$ALvec3$Lvec3$;
+AOBench.orthoBasis$LAOBench$ALvec3$Lvec3$ = AOBench$orthoBasis$LAOBench$ALvec3$Lvec3$;
 
-/**
- * @param {AOBench} $this
- * @param {Isect} isect
- * @return {vec3}
- */
-AOBench.ambient_occlusion$LAOBench$LIsect$ = function ($this, isect) {
-	/** @type {Array.<undefined|vec3>} */
+function AOBench$ambient_occlusion$LAOBench$LIsect$($this, isect) {
 	var basis;
-	/** @type {vec3} */
 	var p;
-	/** @type {!number} */
 	var occlusion;
-	/** @type {!number} */
 	var j;
-	/** @type {!number} */
 	var i;
-	/** @type {!number} */
 	var r;
-	/** @type {!number} */
 	var phi;
-	/** @type {!number} */
 	var x;
-	/** @type {!number} */
 	var y;
-	/** @type {!number} */
 	var z;
-	/** @type {!number} */
 	var rx;
-	/** @type {!number} */
 	var ry;
-	/** @type {!number} */
 	var rz;
-	/** @type {vec3} */
 	var raydir;
-	/** @type {Ray} */
 	var ray;
-	/** @type {Isect} */
 	var occIsect;
-	/** @type {!number} */
 	var occ_f;
-	/** @type {vec3} */
 	var p$0;
-	/** @type {vec3} */
 	var n$0;
 	basis = new Array(3);
 	AOBench$orthoBasis$LAOBench$ALvec3$Lvec3$($this, basis, isect.n);
@@ -573,40 +378,21 @@ AOBench.ambient_occlusion$LAOBench$LIsect$ = function ($this, isect) {
 	return ({x: occ_f, y: occ_f, z: occ_f});
 };
 
-var AOBench$ambient_occlusion$LAOBench$LIsect$ = AOBench.ambient_occlusion$LAOBench$LIsect$;
+AOBench.ambient_occlusion$LAOBench$LIsect$ = AOBench$ambient_occlusion$LAOBench$LIsect$;
 
-/**
- * @param {AOBench} $this
- * @param {*} fill
- * @param {!number} w
- * @param {!number} h
- */
-AOBench.render$LAOBench$F$IIIIIV$II = function ($this, fill, w, h) {
-	/** @type {!number} */
+function AOBench$render$LAOBench$F$IIIIIV$II($this, fill, w, h) {
 	var half_w;
-	/** @type {!number} */
 	var half_h;
-	/** @type {!number} */
 	var y;
-	/** @type {!number} */
 	var x;
-	/** @type {!number} */
 	var px;
-	/** @type {!number} */
 	var py;
-	/** @type {vec3} */
 	var eye;
-	/** @type {Ray} */
 	var ray;
-	/** @type {Isect} */
 	var isect;
-	/** @type {vec3} */
 	var col;
-	/** @type {!number} */
 	var r;
-	/** @type {!number} */
 	var g;
-	/** @type {!number} */
 	var b;
 	half_w = w * .5;
 	half_h = h * .5;
@@ -633,41 +419,39 @@ AOBench.render$LAOBench$F$IIIIIV$II = function ($this, fill, w, h) {
 	}
 };
 
-var AOBench$render$LAOBench$F$IIIIIV$II = AOBench.render$LAOBench$F$IIIIIV$II;
+AOBench.render$LAOBench$F$IIIIIV$II = AOBench$render$LAOBench$F$IIIIIV$II;
 
-/**
- * class _Main extends Object
- * @constructor
- */
 function _Main() {
-}
-
-/**
- * @constructor
- */
-function _Main$() {
 };
 
-_Main$.prototype = new _Main;
-
-/**
- * @param {Array.<undefined|!string>} args
- */
-_Main.main$AS = function (args) {
-	/** @type {HTMLCanvasElement} */
+$__jsx_extend([_Main], Object);
+function _Main$main$AS(args) {
 	var canvas;
-	/** @type {CanvasRenderingContext2D} */
 	var ctx;
-	/** @type {AOBench} */
 	var ao;
-	/** @type {!number} */
 	var t0;
-	/** @type {!number} */
 	var t1;
-	/** @type {!number} */
 	var d;
-	canvas = dom.document.getElementById("world");
-	ctx = canvas.getContext("2d");
+	canvas = (function ($v) {
+		if (! ($v == null || $v instanceof HTMLCanvasElement)) {
+			debugger;
+			throw new Error("[/Users/gfx/repo/try-on-web/JSX/web/example/aobench/aobench.jsx:305:45] detected invalid cast, value is not an instance of the designated type or null\n        var canvas = dom.id(Config.canvasId) as HTMLCanvasElement;\n                                             ^^\n");
+		}
+		return $v;
+	}((function ($v) {
+		if (! ($v == null || $v instanceof HTMLElement)) {
+			debugger;
+			throw new Error("[/Users/gfx/repo/try-on-web/JSX/lib/js/js/web.jsx:29:47] detected invalid cast, value is not an instance of the designated type or null\n        return dom.document.getElementById(id) as HTMLElement;\n                                               ^^\n");
+		}
+		return $v;
+	}(dom.document.getElementById("world")))));
+	ctx = (function ($v) {
+		if (! ($v == null || $v instanceof CanvasRenderingContext2D)) {
+			debugger;
+			throw new Error("[/Users/gfx/repo/try-on-web/JSX/web/example/aobench/aobench.jsx:306:42] detected invalid cast, value is not an instance of the designated type or null\n        var ctx = canvas.getContext(\"2d\") as CanvasRenderingContext2D;\n                                          ^^\n");
+		}
+		return $v;
+	}(canvas.getContext("2d")));
 	ao = ({spheres: [ ({center: ({x: -2, y: 0.0, z: -3.5}), radius: 0.5}), ({center: ({x: -0.5, y: 0.0, z: -3}), radius: 0.5}), ({center: ({x: 1.0, y: 0.0, z: -2.2}), radius: 0.5}) ], plane: ({p: ({x: 0.0, y: -0.5, z: 0.0}), n: ({x: 0.0, y: 1.0, z: 0.0})})});
 	t0 = Date.now();
 	AOBench$render$LAOBench$F$IIIIIV$II(ao, (function (x, y, r, g, b) {
@@ -676,103 +460,72 @@ _Main.main$AS = function (args) {
 	}), canvas.width, canvas.height);
 	t1 = Date.now();
 	d = t1 - t0;
-	dom.document.getElementById("status").innerHTML = "Time = " + (d + "") + "[ms]";
+	(function ($v) {
+		if (! ($v == null || $v instanceof HTMLElement)) {
+			debugger;
+			throw new Error("[/Users/gfx/repo/try-on-web/JSX/lib/js/js/web.jsx:29:47] detected invalid cast, value is not an instance of the designated type or null\n        return dom.document.getElementById(id) as HTMLElement;\n                                               ^^\n");
+		}
+		return $v;
+	}(dom.document.getElementById("status"))).innerHTML = "Time = " + (d + "") + "[ms]";
 };
 
-var _Main$main$AS = _Main.main$AS;
+_Main.main = _Main$main$AS;
+_Main.main$AS = _Main$main$AS;
 
-/**
- * class dom extends Object
- * @constructor
- */
 function dom() {
-}
-
-/**
- * @constructor
- */
-function dom$() {
 };
 
-dom$.prototype = new dom;
-
-/**
- * @param {!string} id
- * @return {HTMLElement}
- */
-dom.id$S = function (id) {
-	return dom.document.getElementById(id);
+$__jsx_extend([dom], Object);
+function dom$id$S(id) {
+	return (function ($v) {
+		if (! ($v == null || $v instanceof HTMLElement)) {
+			debugger;
+			throw new Error("[/Users/gfx/repo/try-on-web/JSX/lib/js/js/web.jsx:29:47] detected invalid cast, value is not an instance of the designated type or null\n        return dom.document.getElementById(id) as HTMLElement;\n                                               ^^\n");
+		}
+		return $v;
+	}(dom.document.getElementById(id)));
 };
 
-var dom$id$S = dom.id$S;
+dom.id$S = dom$id$S;
 
-/**
- * @param {!string} id
- * @return {HTMLElement}
- */
-dom.getElementById$S = function (id) {
-	return dom.document.getElementById(id);
+function dom$getElementById$S(id) {
+	return (function ($v) {
+		if (! ($v == null || $v instanceof HTMLElement)) {
+			debugger;
+			throw new Error("[/Users/gfx/repo/try-on-web/JSX/lib/js/js/web.jsx:37:47] detected invalid cast, value is not an instance of the designated type or null\n        return dom.document.getElementById(id) as HTMLElement;\n                                               ^^\n");
+		}
+		return $v;
+	}(dom.document.getElementById(id)));
 };
 
-var dom$getElementById$S = dom.getElementById$S;
+dom.getElementById$S = dom$getElementById$S;
 
-/**
- * @param {!string} tag
- * @return {HTMLElement}
- */
-dom.createElement$S = function (tag) {
-	return dom.document.createElement(tag);
+function dom$createElement$S(tag) {
+	return (function ($v) {
+		if (! ($v == null || $v instanceof HTMLElement)) {
+			debugger;
+			throw new Error("[/Users/gfx/repo/try-on-web/JSX/lib/js/js/web.jsx:45:47] detected invalid cast, value is not an instance of the designated type or null\n        return dom.document.createElement(tag) as __noconvert__ HTMLElement;\n                                               ^^\n");
+		}
+		return $v;
+	}(dom.document.createElement(tag)));
 };
 
-var dom$createElement$S = dom.createElement$S;
+dom.createElement$S = dom$createElement$S;
 
-/**
- * class EventInit extends Object
- * @constructor
- */
 function EventInit() {
-}
-
-/**
- * @constructor
- */
-function EventInit$() {
 	this.bubbles = false;
 	this.cancelable = false;
 };
 
-EventInit$.prototype = new EventInit;
-
-/**
- * class CustomEventInit extends EventInit
- * @constructor
- */
+$__jsx_extend([EventInit], Object);
 function CustomEventInit() {
-}
-
-CustomEventInit.prototype = new EventInit;
-/**
- * @constructor
- */
-function CustomEventInit$() {
 	this.bubbles = false;
 	this.cancelable = false;
 	this.detail = null;
 };
 
-CustomEventInit$.prototype = new CustomEventInit;
-
-/**
- * class MutationObserverInit extends Object
- * @constructor
- */
+$__jsx_extend([CustomEventInit], EventInit);
 function MutationObserverInit() {
-}
-
-/**
- * @constructor
- */
-function MutationObserverInit$() {
 	this.childList = false;
 	this.attributes = false;
 	this.characterData = false;
@@ -782,39 +535,16 @@ function MutationObserverInit$() {
 	this.attributeFilter = null;
 };
 
-MutationObserverInit$.prototype = new MutationObserverInit;
-
-/**
- * class UIEventInit extends EventInit
- * @constructor
- */
+$__jsx_extend([MutationObserverInit], Object);
 function UIEventInit() {
-}
-
-UIEventInit.prototype = new EventInit;
-/**
- * @constructor
- */
-function UIEventInit$() {
 	this.bubbles = false;
 	this.cancelable = false;
 	this.view = null;
 	this.detail = 0;
 };
 
-UIEventInit$.prototype = new UIEventInit;
-
-/**
- * class FocusEventInit extends Object
- * @constructor
- */
+$__jsx_extend([UIEventInit], EventInit);
 function FocusEventInit() {
-}
-
-/**
- * @constructor
- */
-function FocusEventInit$() {
 	this.bubbles = false;
 	this.cancelable = false;
 	this.view = null;
@@ -822,20 +552,8 @@ function FocusEventInit$() {
 	this.relatedTarget = null;
 };
 
-FocusEventInit$.prototype = new FocusEventInit;
-
-/**
- * class MouseEventInit extends UIEventInit
- * @constructor
- */
+$__jsx_extend([FocusEventInit], Object);
 function MouseEventInit() {
-}
-
-MouseEventInit.prototype = new UIEventInit;
-/**
- * @constructor
- */
-function MouseEventInit$() {
 	this.bubbles = false;
 	this.cancelable = false;
 	this.view = null;
@@ -854,19 +572,8 @@ function MouseEventInit$() {
 	this.region = null;
 };
 
-MouseEventInit$.prototype = new MouseEventInit;
-
-/**
- * class WheelEventInit extends Object
- * @constructor
- */
+$__jsx_extend([MouseEventInit], UIEventInit);
 function WheelEventInit() {
-}
-
-/**
- * @constructor
- */
-function WheelEventInit$() {
 	this.bubbles = false;
 	this.cancelable = false;
 	this.view = null;
@@ -888,19 +595,8 @@ function WheelEventInit$() {
 	this.deltaMode = 0;
 };
 
-WheelEventInit$.prototype = new WheelEventInit;
-
-/**
- * class KeyboardEventInit extends Object
- * @constructor
- */
+$__jsx_extend([WheelEventInit], Object);
 function KeyboardEventInit() {
-}
-
-/**
- * @constructor
- */
-function KeyboardEventInit$() {
 	this.bubbles = false;
 	this.cancelable = false;
 	this.view = null;
@@ -919,19 +615,8 @@ function KeyboardEventInit$() {
 	this.which = 0;
 };
 
-KeyboardEventInit$.prototype = new KeyboardEventInit;
-
-/**
- * class CompositionEventInit extends Object
- * @constructor
- */
+$__jsx_extend([KeyboardEventInit], Object);
 function CompositionEventInit() {
-}
-
-/**
- * @constructor
- */
-function CompositionEventInit$() {
 	this.bubbles = false;
 	this.cancelable = false;
 	this.view = null;
@@ -940,20 +625,8 @@ function CompositionEventInit$() {
 	this.locale = "";
 };
 
-CompositionEventInit$.prototype = new CompositionEventInit;
-
-/**
- * class ProgressEventInit extends EventInit
- * @constructor
- */
+$__jsx_extend([CompositionEventInit], Object);
 function ProgressEventInit() {
-}
-
-ProgressEventInit.prototype = new EventInit;
-/**
- * @constructor
- */
-function ProgressEventInit$() {
 	this.bubbles = false;
 	this.cancelable = false;
 	this.lengthComputable = false;
@@ -961,113 +634,42 @@ function ProgressEventInit$() {
 	this.total = 0;
 };
 
-ProgressEventInit$.prototype = new ProgressEventInit;
-
-/**
- * class XMLHttpRequestOptions extends Object
- * @constructor
- */
+$__jsx_extend([ProgressEventInit], EventInit);
 function XMLHttpRequestOptions() {
-}
-
-/**
- * @constructor
- */
-function XMLHttpRequestOptions$() {
 	this.anon = false;
 };
 
-XMLHttpRequestOptions$.prototype = new XMLHttpRequestOptions;
-
-/**
- * class TrackEventInit extends EventInit
- * @constructor
- */
+$__jsx_extend([XMLHttpRequestOptions], Object);
 function TrackEventInit() {
-}
-
-TrackEventInit.prototype = new EventInit;
-/**
- * @constructor
- */
-function TrackEventInit$() {
 	this.bubbles = false;
 	this.cancelable = false;
 	this.track = null;
 };
 
-TrackEventInit$.prototype = new TrackEventInit;
-
-/**
- * class PopStateEventInit extends EventInit
- * @constructor
- */
+$__jsx_extend([TrackEventInit], EventInit);
 function PopStateEventInit() {
-}
-
-PopStateEventInit.prototype = new EventInit;
-/**
- * @constructor
- */
-function PopStateEventInit$() {
 	this.bubbles = false;
 	this.cancelable = false;
 	this.state = null;
 };
 
-PopStateEventInit$.prototype = new PopStateEventInit;
-
-/**
- * class HashChangeEventInit extends EventInit
- * @constructor
- */
+$__jsx_extend([PopStateEventInit], EventInit);
 function HashChangeEventInit() {
-}
-
-HashChangeEventInit.prototype = new EventInit;
-/**
- * @constructor
- */
-function HashChangeEventInit$() {
 	this.bubbles = false;
 	this.cancelable = false;
 	this.oldURL = "";
 	this.newURL = "";
 };
 
-HashChangeEventInit$.prototype = new HashChangeEventInit;
-
-/**
- * class PageTransitionEventInit extends EventInit
- * @constructor
- */
+$__jsx_extend([HashChangeEventInit], EventInit);
 function PageTransitionEventInit() {
-}
-
-PageTransitionEventInit.prototype = new EventInit;
-/**
- * @constructor
- */
-function PageTransitionEventInit$() {
 	this.bubbles = false;
 	this.cancelable = false;
 	this.persisted = false;
 };
 
-PageTransitionEventInit$.prototype = new PageTransitionEventInit;
-
-/**
- * class DragEventInit extends EventInit
- * @constructor
- */
+$__jsx_extend([PageTransitionEventInit], EventInit);
 function DragEventInit() {
-}
-
-DragEventInit.prototype = new EventInit;
-/**
- * @constructor
- */
-function DragEventInit$() {
 	this.bubbles = false;
 	this.cancelable = false;
 	this.view = null;
@@ -1086,20 +688,8 @@ function DragEventInit$() {
 	this.dataTransfer = null;
 };
 
-DragEventInit$.prototype = new DragEventInit;
-
-/**
- * class CloseEventInit extends EventInit
- * @constructor
- */
+$__jsx_extend([DragEventInit], EventInit);
 function CloseEventInit() {
-}
-
-CloseEventInit.prototype = new EventInit;
-/**
- * @constructor
- */
-function CloseEventInit$() {
 	this.bubbles = false;
 	this.cancelable = false;
 	this.wasClean = false;
@@ -1107,20 +697,8 @@ function CloseEventInit$() {
 	this.reason = "";
 };
 
-CloseEventInit$.prototype = new CloseEventInit;
-
-/**
- * class StorageEventInit extends EventInit
- * @constructor
- */
+$__jsx_extend([CloseEventInit], EventInit);
 function StorageEventInit() {
-}
-
-StorageEventInit.prototype = new EventInit;
-/**
- * @constructor
- */
-function StorageEventInit$() {
 	this.bubbles = false;
 	this.cancelable = false;
 	this.key = null;
@@ -1130,20 +708,8 @@ function StorageEventInit$() {
 	this.storageArea = null;
 };
 
-StorageEventInit$.prototype = new StorageEventInit;
-
-/**
- * class MessageEventInit extends EventInit
- * @constructor
- */
+$__jsx_extend([StorageEventInit], EventInit);
 function MessageEventInit() {
-}
-
-MessageEventInit.prototype = new EventInit;
-/**
- * @constructor
- */
-function MessageEventInit$() {
 	this.bubbles = false;
 	this.cancelable = false;
 	this.data = null;
@@ -1153,20 +719,8 @@ function MessageEventInit$() {
 	this.ports = null;
 };
 
-MessageEventInit$.prototype = new MessageEventInit;
-
-/**
- * class ErrorEventInit extends EventInit
- * @constructor
- */
+$__jsx_extend([MessageEventInit], EventInit);
 function ErrorEventInit() {
-}
-
-ErrorEventInit.prototype = new EventInit;
-/**
- * @constructor
- */
-function ErrorEventInit$() {
 	this.bubbles = false;
 	this.cancelable = false;
 	this.message = "";
@@ -1174,89 +728,33 @@ function ErrorEventInit$() {
 	this.lineno = 0;
 };
 
-ErrorEventInit$.prototype = new ErrorEventInit;
-
-/**
- * class EventSourceInit extends Object
- * @constructor
- */
+$__jsx_extend([ErrorEventInit], EventInit);
 function EventSourceInit() {
-}
-
-/**
- * @constructor
- */
-function EventSourceInit$() {
 	this.withCredentials = false;
 };
 
-EventSourceInit$.prototype = new EventSourceInit;
-
-/**
- * class IDBObjectStoreParameters extends Object
- * @constructor
- */
+$__jsx_extend([EventSourceInit], Object);
 function IDBObjectStoreParameters() {
-}
-
-/**
- * @constructor
- */
-function IDBObjectStoreParameters$() {
 	this.keyPath = null;
 	this.autoIncrement = false;
 };
 
-IDBObjectStoreParameters$.prototype = new IDBObjectStoreParameters;
-
-/**
- * class IDBIndexParameters extends Object
- * @constructor
- */
+$__jsx_extend([IDBObjectStoreParameters], Object);
 function IDBIndexParameters() {
-}
-
-/**
- * @constructor
- */
-function IDBIndexParameters$() {
 	this.unique = false;
 	this.multiEntry = false;
 };
 
-IDBIndexParameters$.prototype = new IDBIndexParameters;
-
-/**
- * class IDBVersionChangeEventInit extends EventInit
- * @constructor
- */
+$__jsx_extend([IDBIndexParameters], Object);
 function IDBVersionChangeEventInit() {
-}
-
-IDBVersionChangeEventInit.prototype = new EventInit;
-/**
- * @constructor
- */
-function IDBVersionChangeEventInit$() {
 	this.bubbles = false;
 	this.cancelable = false;
 	this.oldVersion = 0;
 	this.newVersion = null;
 };
 
-IDBVersionChangeEventInit$.prototype = new IDBVersionChangeEventInit;
-
-/**
- * class NotificationOptions extends Object
- * @constructor
- */
+$__jsx_extend([IDBVersionChangeEventInit], EventInit);
 function NotificationOptions() {
-}
-
-/**
- * @constructor
- */
-function NotificationOptions$() {
 	this.titleDir = "";
 	this.body = "";
 	this.bodyDir = "";
@@ -1264,194 +762,70 @@ function NotificationOptions$() {
 	this.iconUrl = "";
 };
 
-NotificationOptions$.prototype = new NotificationOptions;
-
-/**
- * class RTCSessionDescriptionInit extends Object
- * @constructor
- */
+$__jsx_extend([NotificationOptions], Object);
 function RTCSessionDescriptionInit() {
-}
-
-/**
- * @constructor
- */
-function RTCSessionDescriptionInit$() {
 	this.type = "";
 	this.sdp = "";
 };
 
-RTCSessionDescriptionInit$.prototype = new RTCSessionDescriptionInit;
-
-/**
- * class RTCIceCandidateInit extends Object
- * @constructor
- */
+$__jsx_extend([RTCSessionDescriptionInit], Object);
 function RTCIceCandidateInit() {
-}
-
-/**
- * @constructor
- */
-function RTCIceCandidateInit$() {
 	this.candidate = "";
 	this.sdpMid = "";
 	this.sdpMLineIndex = 0;
 };
 
-RTCIceCandidateInit$.prototype = new RTCIceCandidateInit;
-
-/**
- * class RTCIceServer extends Object
- * @constructor
- */
+$__jsx_extend([RTCIceCandidateInit], Object);
 function RTCIceServer() {
-}
-
-/**
- * @constructor
- */
-function RTCIceServer$() {
 	this.url = "";
 	this.credential = null;
 };
 
-RTCIceServer$.prototype = new RTCIceServer;
-
-/**
- * class RTCConfiguration extends Object
- * @constructor
- */
+$__jsx_extend([RTCIceServer], Object);
 function RTCConfiguration() {
-}
-
-/**
- * @constructor
- */
-function RTCConfiguration$() {
 	this.iceServers = null;
 };
 
-RTCConfiguration$.prototype = new RTCConfiguration;
-
-/**
- * class DataChannelInit extends Object
- * @constructor
- */
+$__jsx_extend([RTCConfiguration], Object);
 function DataChannelInit() {
-}
-
-/**
- * @constructor
- */
-function DataChannelInit$() {
 	this.reliable = false;
 };
 
-DataChannelInit$.prototype = new DataChannelInit;
-
-/**
- * class RTCPeerConnectionIceEventInit extends EventInit
- * @constructor
- */
+$__jsx_extend([DataChannelInit], Object);
 function RTCPeerConnectionIceEventInit() {
-}
-
-RTCPeerConnectionIceEventInit.prototype = new EventInit;
-/**
- * @constructor
- */
-function RTCPeerConnectionIceEventInit$() {
 	this.bubbles = false;
 	this.cancelable = false;
 	this.candidate = null;
 };
 
-RTCPeerConnectionIceEventInit$.prototype = new RTCPeerConnectionIceEventInit;
-
-/**
- * class MediaStreamEventInit extends EventInit
- * @constructor
- */
+$__jsx_extend([RTCPeerConnectionIceEventInit], EventInit);
 function MediaStreamEventInit() {
-}
-
-MediaStreamEventInit.prototype = new EventInit;
-/**
- * @constructor
- */
-function MediaStreamEventInit$() {
 	this.bubbles = false;
 	this.cancelable = false;
 	this.stream = null;
 };
 
-MediaStreamEventInit$.prototype = new MediaStreamEventInit;
-
-/**
- * class DataChannelEventInit extends EventInit
- * @constructor
- */
+$__jsx_extend([MediaStreamEventInit], EventInit);
 function DataChannelEventInit() {
-}
-
-DataChannelEventInit.prototype = new EventInit;
-/**
- * @constructor
- */
-function DataChannelEventInit$() {
 	this.bubbles = false;
 	this.cancelable = false;
 	this.channel = null;
 };
 
-DataChannelEventInit$.prototype = new DataChannelEventInit;
-
-/**
- * class MediaStreamConstraints extends Object
- * @constructor
- */
+$__jsx_extend([DataChannelEventInit], EventInit);
 function MediaStreamConstraints() {
-}
-
-/**
- * @constructor
- */
-function MediaStreamConstraints$() {
 	this.video = null;
 	this.audio = null;
 };
 
-MediaStreamConstraints$.prototype = new MediaStreamConstraints;
-
-/**
- * class MediaTrackConstraints extends Object
- * @constructor
- */
+$__jsx_extend([MediaStreamConstraints], Object);
 function MediaTrackConstraints() {
-}
-
-/**
- * @constructor
- */
-function MediaTrackConstraints$() {
 	this.mandatory = null;
 	this.optional = null;
 };
 
-MediaTrackConstraints$.prototype = new MediaTrackConstraints;
-
-/**
- * class HitRegionOptions extends Object
- * @constructor
- */
+$__jsx_extend([MediaTrackConstraints], Object);
 function HitRegionOptions() {
-}
-
-/**
- * @constructor
- */
-function HitRegionOptions$() {
 	this.path = null;
 	this.id = "";
 	this.parentID = null;
@@ -1461,19 +835,8 @@ function HitRegionOptions$() {
 	this.role = null;
 };
 
-HitRegionOptions$.prototype = new HitRegionOptions;
-
-/**
- * class WebGLContextAttributes extends Object
- * @constructor
- */
+$__jsx_extend([HitRegionOptions], Object);
 function WebGLContextAttributes() {
-}
-
-/**
- * @constructor
- */
-function WebGLContextAttributes$() {
 	this.alpha = false;
 	this.depth = false;
 	this.stencil = false;
@@ -1482,39 +845,15 @@ function WebGLContextAttributes$() {
 	this.preserveDrawingBuffer = false;
 };
 
-WebGLContextAttributes$.prototype = new WebGLContextAttributes;
-
-/**
- * class WebGLContextEventInit extends EventInit
- * @constructor
- */
+$__jsx_extend([WebGLContextAttributes], Object);
 function WebGLContextEventInit() {
-}
-
-WebGLContextEventInit.prototype = new EventInit;
-/**
- * @constructor
- */
-function WebGLContextEventInit$() {
 	this.bubbles = false;
 	this.cancelable = false;
 	this.statusMessage = "";
 };
 
-WebGLContextEventInit$.prototype = new WebGLContextEventInit;
-
-/**
- * class DeviceOrientationEventInit extends EventInit
- * @constructor
- */
+$__jsx_extend([WebGLContextEventInit], EventInit);
 function DeviceOrientationEventInit() {
-}
-
-DeviceOrientationEventInit.prototype = new EventInit;
-/**
- * @constructor
- */
-function DeviceOrientationEventInit$() {
 	this.bubbles = false;
 	this.cancelable = false;
 	this.alpha = null;
@@ -1523,20 +862,8 @@ function DeviceOrientationEventInit$() {
 	this.absolute = false;
 };
 
-DeviceOrientationEventInit$.prototype = new DeviceOrientationEventInit;
-
-/**
- * class DeviceMotionEventInit extends EventInit
- * @constructor
- */
+$__jsx_extend([DeviceOrientationEventInit], EventInit);
 function DeviceMotionEventInit() {
-}
-
-DeviceMotionEventInit.prototype = new EventInit;
-/**
- * @constructor
- */
-function DeviceMotionEventInit$() {
 	this.bubbles = false;
 	this.cancelable = false;
 	this.acceleration = null;
@@ -1545,23 +872,7 @@ function DeviceMotionEventInit$() {
 	this.interval = null;
 };
 
-DeviceMotionEventInit$.prototype = new DeviceMotionEventInit;
-
-/**
- * class js extends Object
- * @constructor
- */
-function js() {
-}
-
-/**
- * @constructor
- */
-function js$() {
-};
-
-js$.prototype = new js;
-
+$__jsx_extend([DeviceMotionEventInit], EventInit);
 Config.canvasId = "world";
 Config.statusId = "status";
 Random._x = 0;
@@ -1575,117 +886,123 @@ $__jsx_lazy_init(dom, "window", function () {
 	return js.global.window;
 });
 $__jsx_lazy_init(dom, "document", function () {
-	return js.global.document;
+	return (function ($v) {
+		if (! ($v == null || $v instanceof HTMLDocument)) {
+			debugger;
+			throw new Error("[/Users/gfx/repo/try-on-web/JSX/lib/js/js/web.jsx:23:50] detected invalid cast, value is not an instance of the designated type or null\n    static const document = js.global[\"document\"] as __noconvert__ HTMLDocument;\n                                                  ^^\n");
+		}
+		return $v;
+	}(js.global.document));
 });
-js.global = (function () { return this; })();
+var js = { global: function () { return this; }() };
 var $__jsx_classMap = {
+	"system:lib/built-in.jsx": {
+		g_StopIteration: g_StopIteration,
+		g_StopIteration$: g_StopIteration
+	},
 	"system:web/example/aobench/aobench.jsx": {
 		Config: Config,
-		Config$: Config$,
+		Config$: Config,
 		vec3: vec3,
-		vec3$NNN: vec3$NNN,
+		vec3$NNN: vec3,
 		Isect: Isect,
-		Isect$: Isect$,
+		Isect$: Isect,
 		Ray: Ray,
-		Ray$Lvec3$Lvec3$: Ray$Lvec3$Lvec3$,
+		Ray$Lvec3$Lvec3$: Ray,
 		Sphere: Sphere,
-		Sphere$Lvec3$N: Sphere$Lvec3$N,
+		Sphere$Lvec3$N: Sphere,
 		Plane: Plane,
-		Plane$Lvec3$Lvec3$: Plane$Lvec3$Lvec3$,
+		Plane$Lvec3$Lvec3$: Plane,
 		Random: Random,
-		Random$: Random$,
+		Random$: Random,
 		AOBench: AOBench,
-		AOBench$: AOBench$,
+		AOBench$: AOBench,
 		_Main: _Main,
-		_Main$: _Main$
+		_Main$: _Main
 	},
 	"system:lib/js/js/web.jsx": {
 		dom: dom,
-		dom$: dom$,
+		dom$: dom,
 		EventInit: EventInit,
-		EventInit$: EventInit$,
+		EventInit$: EventInit,
 		CustomEventInit: CustomEventInit,
-		CustomEventInit$: CustomEventInit$,
+		CustomEventInit$: CustomEventInit,
 		MutationObserverInit: MutationObserverInit,
-		MutationObserverInit$: MutationObserverInit$,
+		MutationObserverInit$: MutationObserverInit,
 		UIEventInit: UIEventInit,
-		UIEventInit$: UIEventInit$,
+		UIEventInit$: UIEventInit,
 		FocusEventInit: FocusEventInit,
-		FocusEventInit$: FocusEventInit$,
+		FocusEventInit$: FocusEventInit,
 		MouseEventInit: MouseEventInit,
-		MouseEventInit$: MouseEventInit$,
+		MouseEventInit$: MouseEventInit,
 		WheelEventInit: WheelEventInit,
-		WheelEventInit$: WheelEventInit$,
+		WheelEventInit$: WheelEventInit,
 		KeyboardEventInit: KeyboardEventInit,
-		KeyboardEventInit$: KeyboardEventInit$,
+		KeyboardEventInit$: KeyboardEventInit,
 		CompositionEventInit: CompositionEventInit,
-		CompositionEventInit$: CompositionEventInit$,
+		CompositionEventInit$: CompositionEventInit,
 		ProgressEventInit: ProgressEventInit,
-		ProgressEventInit$: ProgressEventInit$,
+		ProgressEventInit$: ProgressEventInit,
 		XMLHttpRequestOptions: XMLHttpRequestOptions,
-		XMLHttpRequestOptions$: XMLHttpRequestOptions$,
+		XMLHttpRequestOptions$: XMLHttpRequestOptions,
 		TrackEventInit: TrackEventInit,
-		TrackEventInit$: TrackEventInit$,
+		TrackEventInit$: TrackEventInit,
 		PopStateEventInit: PopStateEventInit,
-		PopStateEventInit$: PopStateEventInit$,
+		PopStateEventInit$: PopStateEventInit,
 		HashChangeEventInit: HashChangeEventInit,
-		HashChangeEventInit$: HashChangeEventInit$,
+		HashChangeEventInit$: HashChangeEventInit,
 		PageTransitionEventInit: PageTransitionEventInit,
-		PageTransitionEventInit$: PageTransitionEventInit$,
+		PageTransitionEventInit$: PageTransitionEventInit,
 		DragEventInit: DragEventInit,
-		DragEventInit$: DragEventInit$,
+		DragEventInit$: DragEventInit,
 		CloseEventInit: CloseEventInit,
-		CloseEventInit$: CloseEventInit$,
+		CloseEventInit$: CloseEventInit,
 		StorageEventInit: StorageEventInit,
-		StorageEventInit$: StorageEventInit$,
+		StorageEventInit$: StorageEventInit,
 		MessageEventInit: MessageEventInit,
-		MessageEventInit$: MessageEventInit$,
+		MessageEventInit$: MessageEventInit,
 		ErrorEventInit: ErrorEventInit,
-		ErrorEventInit$: ErrorEventInit$,
+		ErrorEventInit$: ErrorEventInit,
 		EventSourceInit: EventSourceInit,
-		EventSourceInit$: EventSourceInit$,
+		EventSourceInit$: EventSourceInit,
 		IDBObjectStoreParameters: IDBObjectStoreParameters,
-		IDBObjectStoreParameters$: IDBObjectStoreParameters$,
+		IDBObjectStoreParameters$: IDBObjectStoreParameters,
 		IDBIndexParameters: IDBIndexParameters,
-		IDBIndexParameters$: IDBIndexParameters$,
+		IDBIndexParameters$: IDBIndexParameters,
 		IDBVersionChangeEventInit: IDBVersionChangeEventInit,
-		IDBVersionChangeEventInit$: IDBVersionChangeEventInit$,
+		IDBVersionChangeEventInit$: IDBVersionChangeEventInit,
 		NotificationOptions: NotificationOptions,
-		NotificationOptions$: NotificationOptions$,
+		NotificationOptions$: NotificationOptions,
 		RTCSessionDescriptionInit: RTCSessionDescriptionInit,
-		RTCSessionDescriptionInit$: RTCSessionDescriptionInit$,
+		RTCSessionDescriptionInit$: RTCSessionDescriptionInit,
 		RTCIceCandidateInit: RTCIceCandidateInit,
-		RTCIceCandidateInit$: RTCIceCandidateInit$,
+		RTCIceCandidateInit$: RTCIceCandidateInit,
 		RTCIceServer: RTCIceServer,
-		RTCIceServer$: RTCIceServer$,
+		RTCIceServer$: RTCIceServer,
 		RTCConfiguration: RTCConfiguration,
-		RTCConfiguration$: RTCConfiguration$,
+		RTCConfiguration$: RTCConfiguration,
 		DataChannelInit: DataChannelInit,
-		DataChannelInit$: DataChannelInit$,
+		DataChannelInit$: DataChannelInit,
 		RTCPeerConnectionIceEventInit: RTCPeerConnectionIceEventInit,
-		RTCPeerConnectionIceEventInit$: RTCPeerConnectionIceEventInit$,
+		RTCPeerConnectionIceEventInit$: RTCPeerConnectionIceEventInit,
 		MediaStreamEventInit: MediaStreamEventInit,
-		MediaStreamEventInit$: MediaStreamEventInit$,
+		MediaStreamEventInit$: MediaStreamEventInit,
 		DataChannelEventInit: DataChannelEventInit,
-		DataChannelEventInit$: DataChannelEventInit$,
+		DataChannelEventInit$: DataChannelEventInit,
 		MediaStreamConstraints: MediaStreamConstraints,
-		MediaStreamConstraints$: MediaStreamConstraints$,
+		MediaStreamConstraints$: MediaStreamConstraints,
 		MediaTrackConstraints: MediaTrackConstraints,
-		MediaTrackConstraints$: MediaTrackConstraints$,
+		MediaTrackConstraints$: MediaTrackConstraints,
 		HitRegionOptions: HitRegionOptions,
-		HitRegionOptions$: HitRegionOptions$,
+		HitRegionOptions$: HitRegionOptions,
 		WebGLContextAttributes: WebGLContextAttributes,
-		WebGLContextAttributes$: WebGLContextAttributes$,
+		WebGLContextAttributes$: WebGLContextAttributes,
 		WebGLContextEventInit: WebGLContextEventInit,
-		WebGLContextEventInit$: WebGLContextEventInit$,
+		WebGLContextEventInit$: WebGLContextEventInit,
 		DeviceOrientationEventInit: DeviceOrientationEventInit,
-		DeviceOrientationEventInit$: DeviceOrientationEventInit$,
+		DeviceOrientationEventInit$: DeviceOrientationEventInit,
 		DeviceMotionEventInit: DeviceMotionEventInit,
-		DeviceMotionEventInit$: DeviceMotionEventInit$
-	},
-	"system:lib/js/js.jsx": {
-		js: js,
-		js$: js$
+		DeviceMotionEventInit$: DeviceMotionEventInit
 	}
 };
 
@@ -1701,10 +1018,10 @@ JSX.runMain = function (sourceFile, args) {
 	if (! module._Main) {
 		throw new ReferenceError("entry point _Main not found in " + sourceFile);
 	}
-	if (! module._Main.main$AS) {
+	if (! module._Main.main) {
 		throw new ReferenceError("entry point _Main.main(:string[]):void not found in " + sourceFile);
 	}
-	module._Main.main$AS(args);
+	module._Main.main(args);
 };
 
 /**
@@ -1719,27 +1036,21 @@ JSX.runTests = function (sourceFile, tests) {
 	if(tests.length === 0) {
 		var p = testClass.prototype;
 		for (var m in p) {
-			if (p[m] instanceof Function
-				&& /^test.*[$]$/.test(m)) {
+			if (p[m] instanceof Function && m.match(/^test\w+$/)) {
 				tests.push(m);
 			}
 		}
 	}
-	else { // set as process arguments
-		tests = tests.map(function (name) {
-			return name + "$"; // mangle for function test*():void
-		});
-	}
 
 	var testCase = new testClass();
 
-	if (testCase.beforeClass$AS != null)
-		testCase.beforeClass$AS(tests);
+	if (testCase.beforeClass != null)
+		testCase.beforeClass(tests);
 
 	for (var i = 0; i < tests.length; ++i) {
 		(function (method) {
 			if (method in testCase) {
-				testCase.run$SF$V$(method, function() { testCase[method](); });
+				testCase.run(method, function() { testCase[method](); });
 			}
 			else {
 				throw new ReferenceError("No such test method: " + method);
@@ -1747,8 +1058,8 @@ JSX.runTests = function (sourceFile, tests) {
 		}(tests[i]));
 	}
 
-	if (testCase.afterClass$ != null)
-		testCase.afterClass$();
+	if (testCase.afterClass != null)
+		testCase.afterClass();
 };
 /**
  * call a function on load/DOMContentLoaded

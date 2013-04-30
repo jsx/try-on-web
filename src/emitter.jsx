@@ -20,9 +20,9 @@
  * IN THE SOFTWARE.
  */
 
+import "./analysis.jsx";
 import "./classdef.jsx";
 import "./platform.jsx";
-import "./optimizer.jsx";
 
 interface Emitter implements Stashable {
 
@@ -36,12 +36,16 @@ interface Emitter implements Stashable {
 
 	function emit(classDefs : ClassDefinition[]) : void;
 
-	function getOutput(sourceFile : string, entryPoint : Nullable.<string>, executableFor : Nullable.<string>) : string;
+	function getOutput() : string;
+
+	function getEnableSourceMap() : boolean;
 
 	function setEnableSourceMap(enable : boolean) : void;
 
 	function setEnableProfiler(enable : boolean) : void;
 
-	function addHeader(header : string) : void;
+	function getEnableMinifier() : boolean;
+
+	function setEnableMinifier(enable : boolean) : void;
 
 }

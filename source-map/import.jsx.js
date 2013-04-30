@@ -1,6 +1,18 @@
-// generatedy by JSX compiler 0.9.26 (2013-04-19 10:46:44 +0900; 29fff0d44ffc20b11d5e6ebebf4239a5c30b097d)
+// generatedy by JSX compiler 0.9.27 (2013-04-30 22:02:53 +0900; dc8eb39823fcbbb00c64ef47025c476ab1662784)
 var JSX = {};
 (function (JSX) {
+/**
+ * extends the class
+ */
+function $__jsx_extend(derivations, base) {
+	var ctor = function () {};
+	ctor.prototype = base.prototype;
+	var proto = new ctor();
+	for (var i in derivations) {
+		derivations[i].prototype = proto;
+	}
+}
+
 /**
  * copies the implementations from source interface to target
  */
@@ -89,50 +101,27 @@ JSX.resetProfileResults = function () {
 	return $__jsx_profiler.resetResults();
 };
 JSX.DEBUG = true;
-/**
- * class _Main extends Object
- * @constructor
- */
-function _Main() {
-}
-
-/**
- * @constructor
- */
-function _Main$() {
+function g_StopIteration() {
+	Error.call(this);
 };
 
-_Main$.prototype = new _Main;
+$__jsx_extend([g_StopIteration], Error);
+function _Main() {
+};
 
-/**
- * @param {Array.<undefined|!string>} args
- */
-_Main.main$AS = function (args) {
+$__jsx_extend([_Main], Object);
+function _Main$main$AS(args) {
 	console.log("fib(10)=" + Fib$fib1$I(10).toString());
 };
 
-var _Main$main$AS = _Main.main$AS;
+_Main.main = _Main$main$AS;
+_Main.main$AS = _Main$main$AS;
 
-/**
- * class Fib extends Object
- * @constructor
- */
 function Fib() {
-}
-
-/**
- * @constructor
- */
-function Fib$() {
 };
 
-Fib$.prototype = new Fib;
-
-/**
- * @param {!number} n
- * @return {!number}
- */
-Fib.fib1$I = function (n) {
+$__jsx_extend([Fib], Object);
+function Fib$fib1$I(n) {
 	if (n <= 2) {
 		return 1;
 	} else {
@@ -140,30 +129,18 @@ Fib.fib1$I = function (n) {
 	}
 };
 
-var Fib$fib1$I = Fib.fib1$I;
+Fib.fib1$I = Fib$fib1$I;
 
-/**
- * @param {!number} n
- * @return {!number}
- */
-Fib.fib2$N = function (n) {
+function Fib$fib2$N(n) {
 	return (n <= 2 ? 1 : Fib$fib2$N(n - 1) + Fib$fib2$N(n - 2));
 };
 
-var Fib$fib2$N = Fib.fib2$N;
+Fib.fib2$N = Fib$fib2$N;
 
-/**
- * @param {!number} n
- * @return {!number}
- */
-Fib.fib3$I = function (n) {
-	/** @type {!number} */
+function Fib$fib3$I(n) {
 	var value;
-	/** @type {!number} */
 	var prevValue;
-	/** @type {!number} */
 	var i;
-	/** @type {!number} */
 	var t;
 	if (n <= 2) {
 		return 1;
@@ -178,13 +155,9 @@ Fib.fib3$I = function (n) {
 	return (value | 0);
 };
 
-var Fib$fib3$I = Fib.fib3$I;
+Fib.fib3$I = Fib$fib3$I;
 
-/**
- * @param {!number} n
- * @return {!number}
- */
-Fib.fib4$I = function (n) {
+function Fib$fib4$I(n) {
 	switch (n) {
 	case 1:
 		return 1;
@@ -195,28 +168,13 @@ Fib.fib4$I = function (n) {
 	}
 };
 
-var Fib$fib4$I = Fib.fib4$I;
+Fib.fib4$I = Fib$fib4$I;
 
-/**
- * class _Main$0 extends Object
- * @constructor
- */
 function _Main$0() {
-}
-
-/**
- * @constructor
- */
-function _Main$0$() {
 };
 
-_Main$0$.prototype = new _Main$0;
-
-/**
- * @param {Array.<undefined|!string>} args
- */
-_Main$0.main$AS = function (args) {
-	/** @type {!number} */
+$__jsx_extend([_Main$0], Object);
+function _Main$0$main$AS(args) {
 	var n;
 	n = (args.length > 0 ? +(function (v) {
 		if (! (v != null)) {
@@ -231,19 +189,10 @@ _Main$0.main$AS = function (args) {
 	console.log("fib4(" + (n + "") + ") = " + (Fib$fib4$I(n) + ""));
 };
 
-var _Main$0$main$AS = _Main$0.main$AS;
+_Main$0.main = _Main$0$main$AS;
+_Main$0.main$AS = _Main$0$main$AS;
 
-/**
- * class TestCase extends Object
- * @constructor
- */
 function TestCase() {
-}
-
-/**
- * @constructor
- */
-function TestCase$() {
 	this.verbose = true;
 	this.showStackTrace = true;
 	this._totalCount = 0;
@@ -255,30 +204,23 @@ function TestCase$() {
 	this._tasks = [  ];
 };
 
-TestCase$.prototype = new TestCase;
-
-/**
- */
+$__jsx_extend([TestCase], Object);
 TestCase.prototype.setUp$ = function () {
 };
 
-/**
- */
+
 TestCase.prototype.tearDown$ = function () {
 };
 
-/**
- * @param {Array.<undefined|!string>} tests
- */
+
 TestCase.prototype.beforeClass$AS = function (tests) {
 	this._tests = tests;
 	this._say$S("1.." + (this._tests.length + ""));
 };
 
-/**
- */
+TestCase.prototype.beforeClass = TestCase.prototype.beforeClass$AS;
+
 TestCase.prototype.afterClass$ = function () {
-	/** @type {*} */
 	var next;
 	if (this._tasks.length === 0) {
 		this.finish$();
@@ -288,14 +230,10 @@ TestCase.prototype.afterClass$ = function () {
 	}
 };
 
-/**
- * @param {!string} name
- * @param {*} testFunction
- */
+TestCase.prototype.afterClass = TestCase.prototype.afterClass$;
+
 TestCase.prototype.run$SF$V$ = function (name, testFunction) {
-	/** @type {!number} */
 	var numAsyncTasks;
-	/** @type {!string} */
 	var msg;
 	name = name.replace(/[$].*$/, "");
 	numAsyncTasks = this._tasks.length;
@@ -326,9 +264,8 @@ TestCase.prototype.run$SF$V$ = function (name, testFunction) {
 	}
 };
 
-/**
- * @param {!string} name
- */
+TestCase.prototype.run = TestCase.prototype.run$SF$V$;
+
 TestCase.prototype.after$S = function (name) {
 	this.tearDown$();
 	++ this._totalCount;
@@ -343,10 +280,8 @@ TestCase.prototype.after$S = function (name) {
 	this._pass = 0;
 };
 
-/**
- */
+
 TestCase.prototype.finish$ = function () {
-	/** @type {!number} */
 	var failed;
 	if (this._totalCount !== this._totalPass) {
 		failed = this._totalCount - this._totalPass;
@@ -354,16 +289,11 @@ TestCase.prototype.finish$ = function () {
 	}
 };
 
-/**
- * @param {*} testBody
- * @param {*} timeoutHandler
- * @param {!number} timeoutMS
- */
+
 TestCase.prototype.async$F$LAsyncContext$V$F$LAsyncContext$V$I = function (testBody, timeoutHandler, timeoutMS) {
 	var $this = this;
-	/** @type {AsyncContext} */
 	var async;
-	async = new AsyncContext$LTestCase$SF$LAsyncContext$V$I(this, (function (v) {
+	async = new AsyncContext(this, (function (v) {
 		if (! (v != null)) {
 			debugger;
 			throw new Error("[/Users/gfx/repo/try-on-web/JSX/lib/common/test-case.jsx:185:47] null access\n        var async = new AsyncContext(this, this._currentName, timeoutHandler, timeoutMS);\n                                               ^\n");
@@ -375,10 +305,7 @@ TestCase.prototype.async$F$LAsyncContext$V$F$LAsyncContext$V$I = function (testB
 	}));
 };
 
-/**
- * @param {*} testBody
- * @param {!number} timeoutMS
- */
+
 TestCase.prototype.async$F$LAsyncContext$V$I = function (testBody, timeoutMS) {
 	var $this = this;
 	this.async$F$LAsyncContext$V$F$LAsyncContext$V$I(testBody, (function (async) {
@@ -387,30 +314,20 @@ TestCase.prototype.async$F$LAsyncContext$V$I = function (testBody, timeoutMS) {
 	}), timeoutMS);
 };
 
-/**
- * @param {*} value
- * @return {TestCase$CMatcher}
- */
+
 TestCase.prototype.expect$X = function (value) {
 	++ this._count;
-	return new TestCase$CMatcher$LTestCase$X(this, value);
+	return new TestCase$CMatcher(this, value);
 };
 
-/**
- * @param {*} value
- * @param {!string} message
- * @return {TestCase$CMatcher}
- */
+
 TestCase.prototype.expect$XS = function (value, message) {
 	++ this._count;
-	return new TestCase$CMatcher$LTestCase$XS(this, value, message);
+	return new TestCase$CMatcher$0(this, value, message);
 };
 
-/**
- * @param {undefined|!string} name
- */
+
 TestCase.prototype._ok$US = function (name) {
-	/** @type {!string} */
 	var s;
 	++ this._pass;
 	s = (name != null ? " - " + (function (v) {
@@ -423,21 +340,13 @@ TestCase.prototype._ok$US = function (name) {
 	this._say$S("\t" + "ok " + (this._count + "") + s);
 };
 
-/**
- * @param {undefined|!string} name
- */
+
 TestCase.prototype._nok$US = function (name) {
 	this._nok$USUSXX(name, null, null, null);
 };
 
-/**
- * @param {undefined|!string} name
- * @param {undefined|!string} op
- * @param {*} got
- * @param {*} expected
- */
+
 TestCase.prototype._nok$USUSXX = function (name, op, got, expected) {
-	/** @type {!string} */
 	var s;
 	s = (name != null ? " - " + (function (v) {
 		if (! (v != null)) {
@@ -458,7 +367,7 @@ TestCase.prototype._nok$USUSXX = function (name, op, got, expected) {
 		this._dump$SX("got:      ", got);
 		this._dump$SX("expected: ", expected);
 	}
-	throw new TestCase$CFailure$S((function (v) {
+	throw new TestCase$CFailure((function (v) {
 		if (! (v != null)) {
 			debugger;
 			throw new Error("[/Users/gfx/repo/try-on-web/JSX/lib/common/test-case.jsx:245:48] null access\n        throw new TestCase.Failure(name != null ? name : \"\");\n                                                ^\n");
@@ -467,27 +376,20 @@ TestCase.prototype._nok$USUSXX = function (name, op, got, expected) {
 	}(name != null ? name : "")));
 };
 
-/**
- * @param {!string} reason
- */
+
 TestCase.prototype.pass$S = function (reason) {
 	++ this._count;
 	++ this._pass;
 	this._say$S("\t" + "ok " + (this._count + "") + " - " + reason);
 };
 
-/**
- * @param {!string} reason
- */
+
 TestCase.prototype.fail$S = function (reason) {
 	++ this._count;
-	throw new TestCase$CFailure$S(reason);
+	throw new TestCase$CFailure(reason);
 };
 
-/**
- * @param {!string} tag
- * @param {*} value
- */
+
 TestCase.prototype._dump$SX = function (tag, value) {
 	if (typeof value === "object") {
 		this.diag$S(tag);
@@ -497,48 +399,27 @@ TestCase.prototype._dump$SX = function (tag, value) {
 	}
 };
 
-/**
- * @param {!string} message
- */
+
 TestCase.prototype._say$S = function (message) {
 	console.info(message);
 };
 
-/**
- * @param {*} a
- * @param {*} b
- * @return {!boolean}
- */
+
 TestCase.prototype.equals$XX = function (a, b) {
 	return this._equals$XXI(a, b, 0);
 };
 
-/**
- * @param {*} a
- * @param {*} b
- * @param {!number} recursion
- * @return {!boolean}
- */
+
 TestCase.prototype._equals$XXI = function (a, b, recursion) {
-	/** @type {Array.<undefined|*>} */
 	var aryA;
-	/** @type {Array.<undefined|*>} */
 	var aryB;
-	/** @type {!number} */
 	var i;
-	/** @type {Object.<string, undefined|*>} */
 	var mapA;
-	/** @type {Object.<string, undefined|*>} */
 	var mapB;
-	/** @type {Array.<undefined|!string>} */
 	var mapAkeys;
-	/** @type {Array.<undefined|!string>} */
 	var mapBkeys;
-	/** @type {undefined|!string} */
 	var key;
-	/** @type {Date} */
 	var dateA;
-	/** @type {Date} */
 	var dateB;
 	if (++ recursion > 1000) {
 		throw new RangeError("Deep recursion in equals()");
@@ -633,25 +514,14 @@ TestCase.prototype._equals$XXI = function (a, b, recursion) {
 	return false;
 };
 
-/**
- * @param {Array.<undefined|*>} a
- * @param {Array.<undefined|*>} b
- * @return {!string}
- */
+
 TestCase.prototype.difflet$AXAX = function (a, b) {
-	/** @type {!string} */
 	var s;
-	/** @type {!number} */
 	var i;
-	/** @type {!number} */
 	var l;
-	/** @type {*} */
 	var ai;
-	/** @type {*} */
 	var bi;
-	/** @type {!boolean} */
 	var aIsOver;
-	/** @type {!boolean} */
 	var aIsLast;
 	if (! (a != null)) {
 		debugger;
@@ -683,25 +553,19 @@ TestCase.prototype.difflet$AXAX = function (a, b) {
 	return s + "]";
 };
 
-/**
- * @param {!string} message
- */
+
 TestCase.prototype.diag$S = function (message) {
 	this._say$S(message.replace(/^/mg, "# "));
 };
 
-/**
- * @param {!string} message
- */
+
 TestCase.prototype.note$S = function (message) {
 	if (this.verbose) {
 		this._say$S(message.replace(/^/mg, "# "));
 	}
 };
 
-/**
- * @return {!string}
- */
+
 TestCase.prototype.toString = function () {
 	if (this._tests != null) {
 		return "TestCase[" + this._tests.join(", ") + "]";
@@ -710,64 +574,38 @@ TestCase.prototype.toString = function () {
 	}
 };
 
-/**
- * class _Test extends TestCase
- * @constructor
- */
-function _Test() {
-}
 
-_Test.prototype = new TestCase;
-/**
- * @constructor
- */
-function _Test$() {
-	TestCase$.call(this);
+function _Test() {
+	TestCase.call(this);
 };
 
-_Test$.prototype = new _Test;
-
-/**
- */
+$__jsx_extend([_Test], TestCase);
 _Test.prototype.testFib1$ = function () {
 	this.expect$X(Fib$fib1$I(10)).toBe$X(55);
 };
 
-/**
- */
+_Test.prototype.testFib1 = _Test.prototype.testFib1$;
+
 _Test.prototype.testFib2$ = function () {
 	this.expect$X(Fib$fib2$N(10)).toBe$X(55);
 };
 
-/**
- */
+_Test.prototype.testFib2 = _Test.prototype.testFib2$;
+
 _Test.prototype.testFib3$ = function () {
 	this.expect$X(Fib$fib3$I(10)).toBe$X(55);
 };
 
-/**
- */
+_Test.prototype.testFib3 = _Test.prototype.testFib3$;
+
 _Test.prototype.testFib4$ = function () {
 	this.expect$X(Fib$fib4$I(10)).toBe$X(55);
 };
 
-/**
- * class AsyncContext extends Object
- * @constructor
- */
-function AsyncContext() {
-}
+_Test.prototype.testFib4 = _Test.prototype.testFib4$;
 
-/**
- * @constructor
- * @param {TestCase} test
- * @param {!string} name
- * @param {*} timeoutHandler
- * @param {!number} timeoutMS
- */
-function AsyncContext$LTestCase$SF$LAsyncContext$V$I(test, name, timeoutHandler, timeoutMS) {
+function AsyncContext(test, name, timeoutHandler, timeoutMS) {
 	var $this = this;
-	/** @type {TimerHandle} */
 	var id;
 	this._timerId = null;
 	this._test = test;
@@ -778,19 +616,13 @@ function AsyncContext$LTestCase$SF$LAsyncContext$V$I(test, name, timeoutHandler,
 	this._timerId = id;
 };
 
-AsyncContext$LTestCase$SF$LAsyncContext$V$I.prototype = new AsyncContext;
-
-/**
- * @return {!string}
- */
+$__jsx_extend([AsyncContext], Object);
 AsyncContext.prototype.name$ = function () {
 	return this._name;
 };
 
-/**
- */
+
 AsyncContext.prototype.done$ = function () {
-	/** @type {*} */
 	var next;
 	Timer$clearTimeout$LTimerHandle$(this._timerId);
 	this._test.after$S(this._name);
@@ -802,27 +634,12 @@ AsyncContext.prototype.done$ = function () {
 	}
 };
 
-/**
- * class Timer extends Object
- * @constructor
- */
-function Timer() {
-}
 
-/**
- * @constructor
- */
-function Timer$() {
+function Timer() {
 };
 
-Timer$.prototype = new Timer;
-
-/**
- * @param {*} callback
- * @param {!number} intervalMS
- * @return {TimerHandle}
- */
-Timer.setTimeout$F$V$N = function (callback, intervalMS) {
+$__jsx_extend([Timer], Object);
+function Timer$setTimeout$F$V$N(callback, intervalMS) {
 	return (function ($v) {
 		if (! ($v == null || typeof $v === "function")) {
 			debugger;
@@ -832,12 +649,9 @@ Timer.setTimeout$F$V$N = function (callback, intervalMS) {
 	}(js.global.setTimeout))(callback, intervalMS);
 };
 
-var Timer$setTimeout$F$V$N = Timer.setTimeout$F$V$N;
+Timer.setTimeout$F$V$N = Timer$setTimeout$F$V$N;
 
-/**
- * @param {TimerHandle} timer
- */
-Timer.clearTimeout$LTimerHandle$ = function (timer) {
+function Timer$clearTimeout$LTimerHandle$(timer) {
 	(function ($v) {
 		if (! ($v == null || typeof $v === "function")) {
 			debugger;
@@ -847,14 +661,9 @@ Timer.clearTimeout$LTimerHandle$ = function (timer) {
 	}(js.global.clearTimeout))(timer);
 };
 
-var Timer$clearTimeout$LTimerHandle$ = Timer.clearTimeout$LTimerHandle$;
+Timer.clearTimeout$LTimerHandle$ = Timer$clearTimeout$LTimerHandle$;
 
-/**
- * @param {*} callback
- * @param {!number} intervalMS
- * @return {TimerHandle}
- */
-Timer.setInterval$F$V$N = function (callback, intervalMS) {
+function Timer$setInterval$F$V$N(callback, intervalMS) {
 	return (function ($v) {
 		if (! ($v == null || typeof $v === "function")) {
 			debugger;
@@ -864,12 +673,9 @@ Timer.setInterval$F$V$N = function (callback, intervalMS) {
 	}(js.global.setInterval))(callback, intervalMS);
 };
 
-var Timer$setInterval$F$V$N = Timer.setInterval$F$V$N;
+Timer.setInterval$F$V$N = Timer$setInterval$F$V$N;
 
-/**
- * @param {TimerHandle} timer
- */
-Timer.clearInterval$LTimerHandle$ = function (timer) {
+function Timer$clearInterval$LTimerHandle$(timer) {
 	(function ($v) {
 		if (! ($v == null || typeof $v === "function")) {
 			debugger;
@@ -879,43 +685,28 @@ Timer.clearInterval$LTimerHandle$ = function (timer) {
 	}(js.global.clearInterval))(timer);
 };
 
-var Timer$clearInterval$LTimerHandle$ = Timer.clearInterval$LTimerHandle$;
+Timer.clearInterval$LTimerHandle$ = Timer$clearInterval$LTimerHandle$;
 
-/**
- * @param {*} callback
- * @return {TimerHandle}
- */
-Timer.requestAnimationFrame$F$NV$ = function (callback) {
+function Timer$requestAnimationFrame$F$NV$(callback) {
 	return Timer._requestAnimationFrame(callback);
 };
 
-var Timer$requestAnimationFrame$F$NV$ = Timer.requestAnimationFrame$F$NV$;
+Timer.requestAnimationFrame$F$NV$ = Timer$requestAnimationFrame$F$NV$;
 
-/**
- * @param {TimerHandle} timer
- */
-Timer.cancelAnimationFrame$LTimerHandle$ = function (timer) {
+function Timer$cancelAnimationFrame$LTimerHandle$(timer) {
 	Timer._cancelAnimationFrame(timer);
 };
 
-var Timer$cancelAnimationFrame$LTimerHandle$ = Timer.cancelAnimationFrame$LTimerHandle$;
+Timer.cancelAnimationFrame$LTimerHandle$ = Timer$cancelAnimationFrame$LTimerHandle$;
 
-/**
- * @param {!boolean} enable
- */
-Timer.useNativeRAF$B = function (enable) {
+function Timer$useNativeRAF$B(enable) {
 	Timer._requestAnimationFrame = Timer$_getRequestAnimationFrameImpl$B(enable);
 	Timer._cancelAnimationFrame = Timer$_getCancelAnimationFrameImpl$B(enable);
 };
 
-var Timer$useNativeRAF$B = Timer.useNativeRAF$B;
+Timer.useNativeRAF$B = Timer$useNativeRAF$B;
 
-/**
- * @param {!boolean} useNativeImpl
- * @return {*}
- */
-Timer._getRequestAnimationFrameImpl$B = function (useNativeImpl) {
-	/** @type {!number} */
+function Timer$_getRequestAnimationFrameImpl$B(useNativeImpl) {
 	var lastTime;
 	if (useNativeImpl) {
 		if (js.global.requestAnimationFrame) {
@@ -980,9 +771,7 @@ Timer._getRequestAnimationFrameImpl$B = function (useNativeImpl) {
 	}
 	lastTime = 0;
 	return (function (callback) {
-		/** @type {!number} */
 		var now;
-		/** @type {!number} */
 		var timeToCall;
 		now = Date.now();
 		timeToCall = Math.max(0, 16 - (now - lastTime));
@@ -993,13 +782,9 @@ Timer._getRequestAnimationFrameImpl$B = function (useNativeImpl) {
 	});
 };
 
-var Timer$_getRequestAnimationFrameImpl$B = Timer._getRequestAnimationFrameImpl$B;
+Timer._getRequestAnimationFrameImpl$B = Timer$_getRequestAnimationFrameImpl$B;
 
-/**
- * @param {!boolean} useNativeImpl
- * @return {*}
- */
-Timer._getCancelAnimationFrameImpl$B = function (useNativeImpl) {
+function Timer$_getCancelAnimationFrameImpl$B(useNativeImpl) {
 	if (useNativeImpl) {
 		if (js.global.cancelAnimationFrame) {
 			return (function (timer) {
@@ -1064,133 +849,66 @@ Timer._getCancelAnimationFrameImpl$B = function (useNativeImpl) {
 	return Timer$clearTimeout$LTimerHandle$;
 };
 
-var Timer$_getCancelAnimationFrameImpl$B = Timer._getCancelAnimationFrameImpl$B;
+Timer._getCancelAnimationFrameImpl$B = Timer$_getCancelAnimationFrameImpl$B;
 
-/**
- * class TimerHandle extends Object
- * @constructor
- */
 function TimerHandle() {
-}
-
-/**
- * @constructor
- */
-function TimerHandle$() {
 };
 
-TimerHandle$.prototype = new TimerHandle;
-
-/**
- * class js extends Object
- * @constructor
- */
-function js() {
-}
-
-/**
- * @constructor
- */
-function js$() {
-};
-
-js$.prototype = new js;
-
-/**
- * class TestCase$CMatcher extends Object
- * @constructor
- */
-function TestCase$CMatcher() {
-}
-
-/**
- * @constructor
- * @param {TestCase} test
- * @param {*} got
- */
-function TestCase$CMatcher$LTestCase$X(test, got) {
+$__jsx_extend([TimerHandle], Object);
+function TestCase$CMatcher(test, got) {
 	this._name = null;
 	this._test = test;
 	this._got = got;
 };
 
-TestCase$CMatcher$LTestCase$X.prototype = new TestCase$CMatcher;
-
-/**
- * @constructor
- * @param {TestCase} test
- * @param {*} got
- * @param {!string} name
- */
-function TestCase$CMatcher$LTestCase$XS(test, got, name) {
+function TestCase$CMatcher$0(test, got, name) {
 	this._test = test;
 	this._got = got;
 	this._name = name;
 };
 
-TestCase$CMatcher$LTestCase$XS.prototype = new TestCase$CMatcher;
-
-/**
- * @param {*} x
- */
+$__jsx_extend([TestCase$CMatcher, TestCase$CMatcher$0], Object);
 TestCase$CMatcher.prototype.toBe$X = function (x) {
 	this._match$BXXS(this._got == x, this._got, x, "==");
 };
 
-/**
- * @param {*} x
- */
+
 TestCase$CMatcher.prototype.notToBe$X = function (x) {
 	this._match$BXXS(this._got != x, this._got, x, "!=");
 };
 
-/**
- * @param {!number} x
- */
+
 TestCase$CMatcher.prototype.toBeLT$N = function (x) {
 	this._match$BXXS(+this._got < x, this._got, x, "<");
 };
 
-/**
- * @param {!number} x
- */
+
 TestCase$CMatcher.prototype.toBeLE$N = function (x) {
 	this._match$BXXS(+this._got <= x, this._got, x, "<=");
 };
 
-/**
- * @param {!number} x
- */
+
 TestCase$CMatcher.prototype.toBeGT$N = function (x) {
 	this._match$BXXS(+this._got > x, this._got, x, ">");
 };
 
-/**
- * @param {!number} x
- */
+
 TestCase$CMatcher.prototype.toBeGE$N = function (x) {
 	this._match$BXXS(+this._got >= x, this._got, x, ">=");
 };
 
-/**
- * @param {RegExp} x
- */
+
 TestCase$CMatcher.prototype.toMatch$LRegExp$ = function (x) {
 	this._match$BXXS(x.test(this._got + ""), this._got, x, "match");
 };
 
-/**
- * @param {RegExp} x
- */
+
 TestCase$CMatcher.prototype.notToMatch$LRegExp$ = function (x) {
 	this._match$BXXS(! x.test(this._got + ""), this._got, x, "not match");
 };
 
-/**
- * @param {Array.<undefined|*>} x
- */
+
 TestCase$CMatcher.prototype.toEqual$AX = function (x) {
-	/** @type {Array.<undefined|*>} */
 	var got;
 	if (! (x != null)) {
 		debugger;
@@ -1215,9 +933,7 @@ TestCase$CMatcher.prototype.toEqual$AX = function (x) {
 	}
 };
 
-/**
- * @param {Array.<undefined|!string>} x
- */
+
 TestCase$CMatcher.prototype.toEqual$AS = function (x) {
 	this.toEqual$AX((function ($v) {
 		if (! ($v == null || $v instanceof Array)) {
@@ -1228,9 +944,7 @@ TestCase$CMatcher.prototype.toEqual$AS = function (x) {
 	}(x)));
 };
 
-/**
- * @param {Array.<undefined|!number>} x
- */
+
 TestCase$CMatcher.prototype.toEqual$AN = function (x) {
 	this.toEqual$AX((function ($v) {
 		if (! ($v == null || $v instanceof Array)) {
@@ -1241,9 +955,7 @@ TestCase$CMatcher.prototype.toEqual$AN = function (x) {
 	}(x)));
 };
 
-/**
- * @param {Array.<undefined|!number>} x
- */
+
 TestCase$CMatcher.prototype.toEqual$AI = function (x) {
 	this.toEqual$AX((function ($v) {
 		if (! ($v == null || $v instanceof Array)) {
@@ -1254,9 +966,7 @@ TestCase$CMatcher.prototype.toEqual$AI = function (x) {
 	}(x)));
 };
 
-/**
- * @param {Array.<undefined|!boolean>} x
- */
+
 TestCase$CMatcher.prototype.toEqual$AB = function (x) {
 	this.toEqual$AX((function ($v) {
 		if (! ($v == null || $v instanceof Array)) {
@@ -1267,12 +977,7 @@ TestCase$CMatcher.prototype.toEqual$AB = function (x) {
 	}(x)));
 };
 
-/**
- * @param {!boolean} value
- * @param {*} got
- * @param {*} expected
- * @param {!string} op
- */
+
 TestCase$CMatcher.prototype._match$BXXS = function (value, got, expected, op) {
 	if (value) {
 		this._test._ok$US(this._name);
@@ -1281,65 +986,53 @@ TestCase$CMatcher.prototype._match$BXXS = function (value, got, expected, op) {
 	}
 };
 
-/**
- * class TestCase$CFailure extends Error
- * @constructor
- */
-function TestCase$CFailure() {
-}
 
-TestCase$CFailure.prototype = new Error;
-/**
- * @constructor
- * @param {!string} reason
- */
-function TestCase$CFailure$S(reason) {
+function TestCase$CFailure(reason) {
 	Error.call(this);
 	this.message = reason;
 };
 
-TestCase$CFailure$S.prototype = new TestCase$CFailure;
-
+$__jsx_extend([TestCase$CFailure], Error);
 $__jsx_lazy_init(Timer, "_requestAnimationFrame", function () {
 	return Timer$_getRequestAnimationFrameImpl$B(true);
 });
 $__jsx_lazy_init(Timer, "_cancelAnimationFrame", function () {
 	return Timer$_getCancelAnimationFrameImpl$B(true);
 });
-js.global = (function () { return this; })();
+var js = { global: function () { return this; }() };
 var $__jsx_classMap = {
+	"system:lib/built-in.jsx": {
+		g_StopIteration: g_StopIteration,
+		g_StopIteration$: g_StopIteration
+	},
 	"system:example/import.jsx": {
 		_Main: _Main,
-		_Main$: _Main$,
+		_Main$: _Main,
 		_Test: _Test,
-		_Test$: _Test$
+		_Test$: _Test
 	},
 	"system:example/fib.jsx": {
 		Fib: Fib,
-		Fib$: Fib$,
+		Fib$: Fib,
 		_Main: _Main$0,
-		_Main$: _Main$0$
+		_Main$: _Main$0
 	},
 	"system:lib/common/test-case.jsx": {
 		TestCase: TestCase,
-		TestCase$: TestCase$,
+		TestCase$: TestCase,
 		AsyncContext: AsyncContext,
-		AsyncContext$LTestCase$SF$LAsyncContext$V$I: AsyncContext$LTestCase$SF$LAsyncContext$V$I,
-		Matcher: TestCase$CMatcher,
-		Matcher$LTestCase$X: TestCase$CMatcher$LTestCase$X,
-		Matcher$LTestCase$XS: TestCase$CMatcher$LTestCase$XS,
-		Failure: TestCase$CFailure,
-		Failure$S: TestCase$CFailure$S
+		AsyncContext$LTestCase$SF$LAsyncContext$V$I: AsyncContext,
+		"TestCase.Matcher": TestCase$CMatcher,
+		"TestCase.Matcher$LTestCase$X": TestCase$CMatcher,
+		"TestCase.Matcher$LTestCase$XS": TestCase$CMatcher$0,
+		"TestCase.Failure": TestCase$CFailure,
+		"TestCase.Failure$S": TestCase$CFailure
 	},
 	"system:lib/js/timer.jsx": {
 		Timer: Timer,
-		Timer$: Timer$,
+		Timer$: Timer,
 		TimerHandle: TimerHandle,
-		TimerHandle$: TimerHandle$
-	},
-	"system:lib/js/js.jsx": {
-		js: js,
-		js$: js$
+		TimerHandle$: TimerHandle
 	}
 };
 
@@ -1355,10 +1048,10 @@ JSX.runMain = function (sourceFile, args) {
 	if (! module._Main) {
 		throw new ReferenceError("entry point _Main not found in " + sourceFile);
 	}
-	if (! module._Main.main$AS) {
+	if (! module._Main.main) {
 		throw new ReferenceError("entry point _Main.main(:string[]):void not found in " + sourceFile);
 	}
-	module._Main.main$AS(args);
+	module._Main.main(args);
 };
 
 /**
@@ -1373,27 +1066,21 @@ JSX.runTests = function (sourceFile, tests) {
 	if(tests.length === 0) {
 		var p = testClass.prototype;
 		for (var m in p) {
-			if (p[m] instanceof Function
-				&& /^test.*[$]$/.test(m)) {
+			if (p[m] instanceof Function && m.match(/^test\w+$/)) {
 				tests.push(m);
 			}
 		}
 	}
-	else { // set as process arguments
-		tests = tests.map(function (name) {
-			return name + "$"; // mangle for function test*():void
-		});
-	}
 
 	var testCase = new testClass();
 
-	if (testCase.beforeClass$AS != null)
-		testCase.beforeClass$AS(tests);
+	if (testCase.beforeClass != null)
+		testCase.beforeClass(tests);
 
 	for (var i = 0; i < tests.length; ++i) {
 		(function (method) {
 			if (method in testCase) {
-				testCase.run$SF$V$(method, function() { testCase[method](); });
+				testCase.run(method, function() { testCase[method](); });
 			}
 			else {
 				throw new ReferenceError("No such test method: " + method);
@@ -1401,8 +1088,8 @@ JSX.runTests = function (sourceFile, tests) {
 		}(tests[i]));
 	}
 
-	if (testCase.afterClass$ != null)
-		testCase.afterClass$();
+	if (testCase.afterClass != null)
+		testCase.afterClass();
 };
 /**
  * call a function on load/DOMContentLoaded

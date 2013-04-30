@@ -21,6 +21,7 @@
  */
 
 import "./type.jsx";
+import "./analysis.jsx";
 import "./classdef.jsx";
 import "./statement.jsx";
 import "./expression.jsx";
@@ -539,16 +540,18 @@ class ParserState {
 	var columnOffset : number;
 	var docComment : DocComment;
 	var tokenLength : number;
+	var isGenerator : boolean;
 	var numErrors : number;
 	var numClosures : number;
 	var numObjectTypesUsed : number;
 	var numTemplateInstantiationRequests : number;
 
-	function constructor (lineNumber : number, columnNumber : number, docComment : DocComment, tokenLength : number, numErrors : number, numClosures : number, numObjectTypesUsed : number, numTemplateInstantiationRequests : number) {
+	function constructor (lineNumber : number, columnNumber : number, docComment : DocComment, tokenLength : number, isGenerator : boolean, numErrors : number, numClosures : number, numObjectTypesUsed : number, numTemplateInstantiationRequests : number) {
 		this.lineNumber = lineNumber;
 		this.columnOffset = columnNumber;
 		this.docComment = docComment;
 		this.tokenLength = tokenLength;
+		this.isGenerator = isGenerator;
 		this.numErrors = numErrors;
 		this.numClosures = numClosures;
 		this.numObjectTypesUsed = numObjectTypesUsed;
@@ -590,14 +593,16 @@ class Scope {
 	var arguments : ArgumentDeclaration[];
 	var statements : Statement[];
 	var closures : MemberFunctionDefinition[];
+	var isGenerator : boolean;
 
-	function constructor (prev : Scope, locals : LocalVariable[], funcLocal : LocalVariable, args : ArgumentDeclaration[], statements : Statement[], closures : MemberFunctionDefinition[]) {
+	function constructor (prev : Scope, locals : LocalVariable[], funcLocal : LocalVariable, args : ArgumentDeclaration[], statements : Statement[], closures : MemberFunctionDefinition[], isGenerator : boolean) {
 		this.prev = prev;
 		this.locals = locals;
 		this.funcLocal = funcLocal;
 		this.arguments = args;
 		this.statements = statements;
 		this.closures = closures;
+		this.isGenerator = isGenerator;
 	}
 
 }
@@ -619,6 +624,7 @@ class Parser {
 	var _templateClassDefs : TemplateClassDefinition[];
 	var _classDefs : ClassDefinition[];
 	var _imports : Import[];
+	var _isGenerator : boolean;
 	var _locals : LocalVariable[];
 	var _statements : Statement[];
 	var _closures : MemberFunctionDefinition[];
@@ -668,6 +674,7 @@ class Parser {
 		this._classDefs = new ClassDefinition[];
 		this._imports = new Import[];
 		// use for function parsing
+		this._isGenerator = false;
 		this._locals = null;
 		this._statements = null;
 		this._closures = new MemberFunctionDefinition[];
@@ -857,13 +864,15 @@ class Parser {
 			this._funcLocal,
 			this._arguments,
 			this._statements,
-			this._closures
+			this._closures,
+			this._isGenerator
 		);
 		this._locals = new LocalVariable[];
 		this._funcLocal = funcLocal;
 		this._arguments = args;
 		this._statements = new Statement[];
 		this._closures = new MemberFunctionDefinition[];
+		this._isGenerator = false;
 	}
 
 	function _popScope () : void {
@@ -872,6 +881,7 @@ class Parser {
 		this._arguments = this._prevScope.arguments;
 		this._statements = this._prevScope.statements;
 		this._closures = this._prevScope.closures;
+		this._isGenerator = this._prevScope.isGenerator;
 		this._prevScope = this._prevScope.prev;
 	}
 
@@ -917,6 +927,7 @@ class Parser {
 			this._columnOffset,
 			this._docComment,
 			this._tokenLength,
+			this._isGenerator,
 			// errors
 			this._errors.length,
 			// closures
@@ -933,6 +944,7 @@ class Parser {
 		this._columnOffset = state.columnOffset;
 		this._docComment = state.docComment;
 		this._tokenLength = state.tokenLength;
+		this._isGenerator = state.isGenerator;
 		this._errors.length = state.numErrors;
 		this._closures.splice(state.numClosures, this._closures.length - state.numClosures);
 		this._objectTypesUsed.splice(state.numObjectTypesUsed, this._objectTypesUsed.length - state.numObjectTypesUsed);
@@ -1363,7 +1375,7 @@ class Parser {
 		this._classFlags = 0;
 		var docComment = null : DocComment;
 		while (true) {
-			var token = this._expect([ "class", "interface", "mixin", "abstract", "final", "native", "__fake__" ]);
+			var token = this._expect([ "class", "interface", "mixin", "abstract", "final", "native", "__fake__", "__export__" ]);
 			if (token == null)
 				return null;
 			if (this._classFlags == 0)
@@ -1379,8 +1391,8 @@ class Parser {
 				break;
 			}
 			if (token.getValue() == "mixin") {
-				if ((this._classFlags & (ClassDefinition.IS_FINAL | ClassDefinition.IS_NATIVE)) != 0) {
-					this._newError("mixin cannot have final or native attribute set");
+				if ((this._classFlags & (ClassDefinition.IS_FINAL | ClassDefinition.IS_NATIVE | ClassDefinition.IS_EXPORT)) != 0) {
+					this._newError("mixin cannot have final, native, or __export__ attribute set");
 					return null;
 				}
 				this._classFlags |= ClassDefinition.IS_MIXIN;
@@ -1399,6 +1411,9 @@ class Parser {
 				break;
 			case "__fake__":
 				newFlag = ClassDefinition.IS_FAKE;
+				break;
+			case "__export__":
+				newFlag = ClassDefinition.IS_EXPORT;
 				break;
 			default:
 				throw new Error("logic flaw");
@@ -1554,6 +1569,7 @@ class Parser {
 			} else {
 				this._templateClassDefs.push(templateClassDef);
 			}
+			templateClassDef.setParser(this);
 			return templateClassDef;
 		} else {
 			var classDef = new ClassDefinition(className, className.getValue(), this._classFlags, this._extendType, this._implementTypes, members, this._inners, this._templateInners, this._objectTypesUsed, docComment);
@@ -1569,9 +1585,10 @@ class Parser {
 
 	function _memberDefinition () : MemberDefinition {
 		var flags = 0;
+		var isNoExport = false;
 		var docComment = null : DocComment;
 		while (true) {
-			var token = this._expect([ "function", "var", "static", "abstract", "override", "final", "const", "native", "__readonly__", "inline", "__pure__", "delete" ]);
+			var token = this._expect([ "function", "var", "static", "abstract", "override", "final", "const", "native", "__readonly__", "inline", "__pure__", "delete", "__export__", "__noexport__" ]);
 			if (token == null)
 				return null;
 			if (flags == 0)
@@ -1583,66 +1600,92 @@ class Parser {
 				}
 				flags |= ClassDefinition.IS_CONST;
 				break;
-			}
-			else if (token.getValue() == "function" || token.getValue() == "var")
+			} else if (token.getValue() == "function" || token.getValue() == "var") {
 				break;
-			var newFlag = 0;
-			switch (token.getValue()) {
-			case "static":
-				if ((this._classFlags & (ClassDefinition.IS_INTERFACE | ClassDefinition.IS_MIXIN)) != 0) {
-					this._newError("interfaces and mixins cannot have static members");
+			} else if (token.getValue() == "__noexport__") {
+				if (isNoExport) {
+					this._newError("same attribute cannot be specified more than once");
+					return null;
+				} else if ((flags & ClassDefinition.IS_EXPORT) != 0) {
+					this._newError("cannot set the attribute, already declared as __export__");
 					return null;
 				}
-				newFlag = ClassDefinition.IS_STATIC;
-				break;
-			case "abstract":
-				newFlag = ClassDefinition.IS_ABSTRACT;
-				break;
-			case "override":
-				if ((this._classFlags & ClassDefinition.IS_INTERFACE) != 0) {
-					this._newError("functions of an interface cannot have 'override' attribute set");
+				isNoExport = true;
+			} else {
+				var newFlag = 0;
+				switch (token.getValue()) {
+				case "static":
+					if ((this._classFlags & (ClassDefinition.IS_INTERFACE | ClassDefinition.IS_MIXIN)) != 0) {
+						this._newError("interfaces and mixins cannot have static members");
+						return null;
+					}
+					newFlag = ClassDefinition.IS_STATIC;
+					break;
+				case "abstract":
+					newFlag = ClassDefinition.IS_ABSTRACT;
+					break;
+				case "override":
+					if ((this._classFlags & ClassDefinition.IS_INTERFACE) != 0) {
+						this._newError("functions of an interface cannot have 'override' attribute set");
+						return null;
+					}
+					newFlag = ClassDefinition.IS_OVERRIDE;
+					break;
+				case "final":
+					if ((this._classFlags & ClassDefinition.IS_INTERFACE) != 0) {
+						this._newError("functions of an interface cannot have 'final' attribute set");
+						return null;
+					}
+					newFlag = ClassDefinition.IS_FINAL;
+					break;
+				case "native":
+					newFlag = ClassDefinition.IS_NATIVE;
+					break;
+				case "__readonly__":
+					newFlag = ClassDefinition.IS_READONLY;
+					break;
+				case "inline":
+					newFlag = ClassDefinition.IS_INLINE;
+					break;
+				case "__pure__":
+					newFlag = ClassDefinition.IS_PURE;
+					break;
+				case "delete":
+					newFlag = ClassDefinition.IS_DELETE;
+					break;
+				case "__export__":
+					if (isNoExport) {
+						this._newError("cannot set the attribute, already declared as __noexport__");
+						return null;
+					}
+					newFlag = ClassDefinition.IS_EXPORT;
+					break;
+				default:
+					throw new Error("logic flaw");
+				}
+				if ((flags & newFlag) != 0) {
+					this._newError("same attribute cannot be specified more than once");
 					return null;
 				}
-				newFlag = ClassDefinition.IS_OVERRIDE;
-				break;
-			case "final":
-				if ((this._classFlags & ClassDefinition.IS_INTERFACE) != 0) {
-					this._newError("functions of an interface cannot have 'final' attribute set");
-					return null;
-				}
-				newFlag = ClassDefinition.IS_FINAL;
-				break;
-			case "native":
-				newFlag = ClassDefinition.IS_NATIVE;
-				break;
-			case "__readonly__":
-				newFlag = ClassDefinition.IS_READONLY;
-				break;
-			case "inline":
-				newFlag = ClassDefinition.IS_INLINE;
-				break;
-			case "__pure__":
-				newFlag = ClassDefinition.IS_PURE;
-				break;
-			case "delete":
-				newFlag = ClassDefinition.IS_DELETE;
-				break;
-			default:
-				throw new Error("logic flaw");
+				flags |= newFlag;
 			}
-			if ((flags & newFlag) != 0) {
-				this._newError("same attribute cannot be specified more than once");
-				return null;
-			}
-			flags |= newFlag;
+		}
+		function shouldExport(name : string) : boolean {
+			if (isNoExport)
+				return false;
+			if ((this._classFlags & ClassDefinition.IS_EXPORT) == 0)
+				return false;
+			if (name.charAt(0) == "_")
+				return false;
+			return true;
 		}
 		if ((this._classFlags & ClassDefinition.IS_INTERFACE) != 0)
 			flags |= ClassDefinition.IS_ABSTRACT;
 		if (token.getValue() == "function") {
-			return this._functionDefinition(token, flags, docComment);
+			return this._functionDefinition(token, flags, docComment, shouldExport);
 		}
 		// member variable decl.
-		if ((flags & ~(ClassDefinition.IS_STATIC | ClassDefinition.IS_ABSTRACT | ClassDefinition.IS_CONST | ClassDefinition.IS_READONLY | ClassDefinition.IS_INLINE)) != 0) {
+		if ((flags & ~(ClassDefinition.IS_STATIC | ClassDefinition.IS_ABSTRACT | ClassDefinition.IS_CONST | ClassDefinition.IS_READONLY | ClassDefinition.IS_EXPORT)) != 0) {
 			this._newError("variables may only have attributes: static, abstract, const");
 			return null;
 		}
@@ -1653,6 +1696,8 @@ class Parser {
 		var name = this._expectIdentifier(null);
 		if (name == null)
 			return null;
+		if (shouldExport(name.getValue()))
+			flags |= ClassDefinition.IS_EXPORT;
 		var type = null : Type;
 		if (this._expectOpt(":") != null)
 			if ((type = this._typeDeclaration(false)) == null)
@@ -1678,11 +1723,13 @@ class Parser {
 		return new MemberVariableDefinition(token, name, flags, type, initialValue, docComment);
 	}
 
-	function _functionDefinition (token : Token, flags : number, docComment : DocComment) : MemberFunctionDefinition {
+	function _functionDefinition (token : Token, flags : number, docComment : DocComment, shouldExport : function (name : string) : boolean) : MemberFunctionDefinition {
 		// name
 		var name = this._expectIdentifier(null);
 		if (name == null)
 			return null;
+		if (shouldExport(name.getValue()))
+			flags |= ClassDefinition.IS_EXPORT;
 		if (name.getValue() == "constructor") {
 			if ((this._classFlags & ClassDefinition.IS_INTERFACE) != 0) {
 				this._newError("interface cannot have a constructor");
@@ -1764,11 +1811,15 @@ class Parser {
 			this._locals = new LocalVariable[];
 			this._statements = new Statement[];
 			this._closures = new MemberFunctionDefinition[];
+			this._isGenerator = false;
 			if (name.getValue() == "constructor")
 				var lastToken = this._initializeBlock();
 			else
 				lastToken = this._block();
 			// done
+			if (this._isGenerator) {
+				flags |= ClassDefinition.IS_GENERATOR;
+			}
 			var funcDef = createDefinition(this._locals, this._statements, this._closures, lastToken);
 			this._locals = null;
 			this._statements = null;
@@ -2108,7 +2159,7 @@ class Parser {
 		}
 		// parse the statement
 		var token = this._expectOpt([
-			"{", "var", ";", "if", "do", "while", "for", "continue", "break", "return", "switch", "throw", "try", "assert", "log", "delete", "debugger", "function", "void"
+			"{", "var", ";", "if", "do", "while", "for", "continue", "break", "return", "yield", "switch", "throw", "try", "assert", "log", "delete", "debugger", "function", "void"
 		]);
 		if (label != null) {
 			if (! (token != null && token.getValue().match(/^(?:do|while|for|switch)$/) != null)) {
@@ -2138,6 +2189,8 @@ class Parser {
 				return this._breakStatement(token);
 			case "return":
 				return this._returnStatement(token);
+			case "yield":
+				return this._yieldStatement(token);
 			case "switch":
 				return this._switchStatement(token, label);
 			case "throw":
@@ -2249,7 +2302,11 @@ class Parser {
 			this._popScope();
 			return false;
 		}
-		var funcDef = new MemberFunctionDefinition(token, name, ClassDefinition.IS_STATIC, returnType, args, this._locals, this._statements, this._closures, lastToken, null);
+		var flags = ClassDefinition.IS_STATIC;
+		if (this._isGenerator) {
+			flags |= ClassDefinition.IS_GENERATOR;
+		}
+		var funcDef = new MemberFunctionDefinition(token, name, flags, returnType, args, this._locals, this._statements, this._closures, lastToken, null);
 		this._popScope();
 		this._closures.push(funcDef);
 		funcDef.setFuncLocal(funcLocal);
@@ -2409,6 +2466,17 @@ class Parser {
 		this._statements.push(new ReturnStatement(token, expr));
 		if (this._expect(";") == null)
 			return false;
+		return true;
+	}
+
+	function _yieldStatement (token : Token) : boolean {
+		var expr = this._expr(false);
+		if (expr == null)
+			return false;
+		this._statements.push(new YieldStatement(token, expr));
+		if (this._expect(";") == null)
+			return false;
+		this._isGenerator = true;
 		return true;
 	}
 
@@ -2978,17 +3046,21 @@ class Parser {
 		this._pushScope(null, args);
 		try {
 			// parse lambda body
+			var flags = ClassDefinition.IS_STATIC;
 			if (openBlock == null) {
 				var expr = this._expr();
 				this._statements.push(new ReturnStatement(token, expr));
 				return new MemberFunctionDefinition(
-						token, null, ClassDefinition.IS_STATIC, returnType, args, this._locals, this._statements, this._closures, null, null);
+					token, null, flags, returnType, args, this._locals, this._statements, this._closures, null, null);
 			} else {
 				var lastToken = this._block();
 				if (lastToken == null)
 					return null;
+				if (this._isGenerator) {
+					flags |= ClassDefinition.IS_GENERATOR;
+				}
 				return new MemberFunctionDefinition(
-						token, null, ClassDefinition.IS_STATIC, returnType, args, this._locals, this._statements, this._closures, lastToken, null);
+					token, null, flags, returnType, args, this._locals, this._statements, this._closures, lastToken, null);
 			}
 		} finally {
 			this._popScope();
@@ -3029,7 +3101,11 @@ class Parser {
 			this._popScope();
 			return null;
 		}
-		var funcDef = new MemberFunctionDefinition(token, name, ClassDefinition.IS_STATIC, returnType, args, this._locals, this._statements, this._closures, lastToken, null);
+		var flags = ClassDefinition.IS_STATIC;
+		if (this._isGenerator) {
+			flags |= ClassDefinition.IS_GENERATOR;
+		}
+		var funcDef = new MemberFunctionDefinition(token, name, flags, returnType, args, this._locals, this._statements, this._closures, lastToken, null);
 		this._popScope();
 		this._closures.push(funcDef);
 		funcDef.setFuncLocal(funcLocal);

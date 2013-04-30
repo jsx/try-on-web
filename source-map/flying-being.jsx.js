@@ -1,6 +1,18 @@
-// generatedy by JSX compiler 0.9.26 (2013-04-19 10:46:44 +0900; 29fff0d44ffc20b11d5e6ebebf4239a5c30b097d)
+// generatedy by JSX compiler 0.9.27 (2013-04-30 22:02:53 +0900; dc8eb39823fcbbb00c64ef47025c476ab1662784)
 var JSX = {};
 (function (JSX) {
+/**
+ * extends the class
+ */
+function $__jsx_extend(derivations, base) {
+	var ctor = function () {};
+	ctor.prototype = base.prototype;
+	var proto = new ctor();
+	for (var i in derivations) {
+		derivations[i].prototype = proto;
+	}
+}
+
 /**
  * copies the implementations from source interface to target
  */
@@ -89,175 +101,103 @@ JSX.resetProfileResults = function () {
 	return $__jsx_profiler.resetResults();
 };
 JSX.DEBUG = true;
-/**
- * class Flyable
- * @constructor
- */
-function Flyable() {
-}
+function g_StopIteration() {
+	Error.call(this);
+};
 
+$__jsx_extend([g_StopIteration], Error);
+function Flyable() {
+};
+
+$__jsx_extend([Flyable], Object);
 Flyable.prototype.$__jsx_implements_Flyable = true;
 
-/**
- * @constructor
- */
-function Flyable$() {
-};
-
-Flyable$.prototype = new Flyable;
-
-/**
- * class Animal extends Object
- * @constructor
- */
 function Animal() {
-}
-
-/**
- * @constructor
- */
-function Animal$() {
 };
 
-Animal$.prototype = new Animal;
-
-/**
- */
+$__jsx_extend([Animal], Object);
 Animal.prototype.eat$ = function () {
 	console.log("An animal is eating!");
 };
 
-/**
- * class Bat extends Animal
- * @constructor
- */
+
 function Bat() {
-}
-
-Bat.prototype = new Animal;
-$__jsx_merge_interface(Bat, Flyable);
-
-/**
- * @constructor
- */
-function Bat$() {
-	Animal$.call(this);
-	Flyable$.call(this);
+	Animal.call(this);
+	Flyable.call(this);
 };
 
-Bat$.prototype = new Bat;
+$__jsx_extend([Bat], Animal);
+$__jsx_merge_interface(Bat, Flyable);
 
-/**
- */
 Bat.prototype.fly$ = function () {
 	console.log("A bat is flying!");
 };
 
-/**
- * class Insect extends Object
- * @constructor
- */
-function Insect() {
-}
 
-/**
- * @constructor
- */
-function Insect$() {
+function Insect() {
 };
 
-Insect$.prototype = new Insect;
-
-/**
- * class Bee extends Insect
- * @constructor
- */
+$__jsx_extend([Insect], Object);
 function Bee() {
-}
+	Insect.call(this);
+	Flyable.call(this);
+};
 
-Bee.prototype = new Insect;
+$__jsx_extend([Bee], Insect);
 $__jsx_merge_interface(Bee, Flyable);
 
-/**
- * @constructor
- */
-function Bee$() {
-	Insect$.call(this);
-	Flyable$.call(this);
-};
-
-Bee$.prototype = new Bee;
-
-/**
- */
 Bee.prototype.fly$ = function () {
 	console.log("A bee is flying!");
 };
 
-/**
- * class _Main extends Object
- * @constructor
- */
-function _Main() {
-}
 
-/**
- * @constructor
- */
-function _Main$() {
+function _Main() {
 };
 
-_Main$.prototype = new _Main;
-
-/**
- * @param {Animal} animal
- */
-_Main.takeAnimal$LAnimal$ = function (animal) {
+$__jsx_extend([_Main], Object);
+function _Main$takeAnimal$LAnimal$(animal) {
 	animal.eat$();
 };
 
-var _Main$takeAnimal$LAnimal$ = _Main.takeAnimal$LAnimal$;
+_Main.takeAnimal$LAnimal$ = _Main$takeAnimal$LAnimal$;
 
-/**
- * @param {Flyable} flyingBeing
- */
-_Main.takeFlyable$LFlyable$ = function (flyingBeing) {
+function _Main$takeFlyable$LFlyable$(flyingBeing) {
 	flyingBeing.fly$();
 };
 
-var _Main$takeFlyable$LFlyable$ = _Main.takeFlyable$LFlyable$;
+_Main.takeFlyable$LFlyable$ = _Main$takeFlyable$LFlyable$;
 
-/**
- * @param {Array.<undefined|!string>} args
- */
-_Main.main$AS = function (args) {
-	/** @type {Bat} */
+function _Main$main$AS(args) {
 	var bat;
-	/** @type {Bee} */
 	var bee;
-	bat = new Bat$();
+	bat = new Bat();
 	_Main$takeAnimal$LAnimal$(bat);
 	_Main$takeFlyable$LFlyable$(bat);
-	bee = new Bee$();
+	bee = new Bee();
 	_Main$takeFlyable$LFlyable$(bee);
 };
 
-var _Main$main$AS = _Main.main$AS;
+_Main.main = _Main$main$AS;
+_Main.main$AS = _Main$main$AS;
 
 var $__jsx_classMap = {
+	"system:lib/built-in.jsx": {
+		g_StopIteration: g_StopIteration,
+		g_StopIteration$: g_StopIteration
+	},
 	"system:example/flying-being.jsx": {
 		Flyable: Flyable,
-		Flyable$: Flyable$,
+		Flyable$: Flyable,
 		Animal: Animal,
-		Animal$: Animal$,
+		Animal$: Animal,
 		Bat: Bat,
-		Bat$: Bat$,
+		Bat$: Bat,
 		Insect: Insect,
-		Insect$: Insect$,
+		Insect$: Insect,
 		Bee: Bee,
-		Bee$: Bee$,
+		Bee$: Bee,
 		_Main: _Main,
-		_Main$: _Main$
+		_Main$: _Main
 	}
 };
 
@@ -273,10 +213,10 @@ JSX.runMain = function (sourceFile, args) {
 	if (! module._Main) {
 		throw new ReferenceError("entry point _Main not found in " + sourceFile);
 	}
-	if (! module._Main.main$AS) {
+	if (! module._Main.main) {
 		throw new ReferenceError("entry point _Main.main(:string[]):void not found in " + sourceFile);
 	}
-	module._Main.main$AS(args);
+	module._Main.main(args);
 };
 
 /**
@@ -291,27 +231,21 @@ JSX.runTests = function (sourceFile, tests) {
 	if(tests.length === 0) {
 		var p = testClass.prototype;
 		for (var m in p) {
-			if (p[m] instanceof Function
-				&& /^test.*[$]$/.test(m)) {
+			if (p[m] instanceof Function && m.match(/^test\w+$/)) {
 				tests.push(m);
 			}
 		}
 	}
-	else { // set as process arguments
-		tests = tests.map(function (name) {
-			return name + "$"; // mangle for function test*():void
-		});
-	}
 
 	var testCase = new testClass();
 
-	if (testCase.beforeClass$AS != null)
-		testCase.beforeClass$AS(tests);
+	if (testCase.beforeClass != null)
+		testCase.beforeClass(tests);
 
 	for (var i = 0; i < tests.length; ++i) {
 		(function (method) {
 			if (method in testCase) {
-				testCase.run$SF$V$(method, function() { testCase[method](); });
+				testCase.run(method, function() { testCase[method](); });
 			}
 			else {
 				throw new ReferenceError("No such test method: " + method);
@@ -319,8 +253,8 @@ JSX.runTests = function (sourceFile, tests) {
 		}(tests[i]));
 	}
 
-	if (testCase.afterClass$ != null)
-		testCase.afterClass$();
+	if (testCase.afterClass != null)
+		testCase.afterClass();
 };
 /**
  * call a function on load/DOMContentLoaded

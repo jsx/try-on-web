@@ -1,6 +1,18 @@
-// generatedy by JSX compiler 0.9.26 (2013-04-19 10:46:44 +0900; 29fff0d44ffc20b11d5e6ebebf4239a5c30b097d)
+// generatedy by JSX compiler 0.9.27 (2013-04-30 22:02:53 +0900; dc8eb39823fcbbb00c64ef47025c476ab1662784)
 var JSX = {};
 (function (JSX) {
+/**
+ * extends the class
+ */
+function $__jsx_extend(derivations, base) {
+	var ctor = function () {};
+	ctor.prototype = base.prototype;
+	var proto = new ctor();
+	for (var i in derivations) {
+		derivations[i].prototype = proto;
+	}
+}
+
 /**
  * copies the implementations from source interface to target
  */
@@ -89,28 +101,17 @@ JSX.resetProfileResults = function () {
 	return $__jsx_profiler.resetResults();
 };
 JSX.DEBUG = true;
-/**
- * class _Main extends Object
- * @constructor
- */
-function _Main() {
-}
-
-/**
- * @constructor
- */
-function _Main$() {
+function g_StopIteration() {
+	Error.call(this);
 };
 
-_Main$.prototype = new _Main;
+$__jsx_extend([g_StopIteration], Error);
+function _Main() {
+};
 
-/**
- * @param {Array.<undefined|!string>} args
- */
-_Main.main$AS = function (args) {
-	/** @type {!number} */
+$__jsx_extend([_Main], Object);
+function _Main$main$AS(args) {
 	var i;
-	/** @type {TimerHandle} */
 	var id;
 	i = 0;
 	id = null;
@@ -122,29 +123,14 @@ _Main.main$AS = function (args) {
 	}), 500);
 };
 
-var _Main$main$AS = _Main.main$AS;
+_Main.main = _Main$main$AS;
+_Main.main$AS = _Main$main$AS;
 
-/**
- * class Timer extends Object
- * @constructor
- */
 function Timer() {
-}
-
-/**
- * @constructor
- */
-function Timer$() {
 };
 
-Timer$.prototype = new Timer;
-
-/**
- * @param {*} callback
- * @param {!number} intervalMS
- * @return {TimerHandle}
- */
-Timer.setTimeout$F$V$N = function (callback, intervalMS) {
+$__jsx_extend([Timer], Object);
+function Timer$setTimeout$F$V$N(callback, intervalMS) {
 	return (function ($v) {
 		if (! ($v == null || typeof $v === "function")) {
 			debugger;
@@ -154,12 +140,9 @@ Timer.setTimeout$F$V$N = function (callback, intervalMS) {
 	}(js.global.setTimeout))(callback, intervalMS);
 };
 
-var Timer$setTimeout$F$V$N = Timer.setTimeout$F$V$N;
+Timer.setTimeout$F$V$N = Timer$setTimeout$F$V$N;
 
-/**
- * @param {TimerHandle} timer
- */
-Timer.clearTimeout$LTimerHandle$ = function (timer) {
+function Timer$clearTimeout$LTimerHandle$(timer) {
 	(function ($v) {
 		if (! ($v == null || typeof $v === "function")) {
 			debugger;
@@ -169,14 +152,9 @@ Timer.clearTimeout$LTimerHandle$ = function (timer) {
 	}(js.global.clearTimeout))(timer);
 };
 
-var Timer$clearTimeout$LTimerHandle$ = Timer.clearTimeout$LTimerHandle$;
+Timer.clearTimeout$LTimerHandle$ = Timer$clearTimeout$LTimerHandle$;
 
-/**
- * @param {*} callback
- * @param {!number} intervalMS
- * @return {TimerHandle}
- */
-Timer.setInterval$F$V$N = function (callback, intervalMS) {
+function Timer$setInterval$F$V$N(callback, intervalMS) {
 	return (function ($v) {
 		if (! ($v == null || typeof $v === "function")) {
 			debugger;
@@ -186,12 +164,9 @@ Timer.setInterval$F$V$N = function (callback, intervalMS) {
 	}(js.global.setInterval))(callback, intervalMS);
 };
 
-var Timer$setInterval$F$V$N = Timer.setInterval$F$V$N;
+Timer.setInterval$F$V$N = Timer$setInterval$F$V$N;
 
-/**
- * @param {TimerHandle} timer
- */
-Timer.clearInterval$LTimerHandle$ = function (timer) {
+function Timer$clearInterval$LTimerHandle$(timer) {
 	(function ($v) {
 		if (! ($v == null || typeof $v === "function")) {
 			debugger;
@@ -201,43 +176,28 @@ Timer.clearInterval$LTimerHandle$ = function (timer) {
 	}(js.global.clearInterval))(timer);
 };
 
-var Timer$clearInterval$LTimerHandle$ = Timer.clearInterval$LTimerHandle$;
+Timer.clearInterval$LTimerHandle$ = Timer$clearInterval$LTimerHandle$;
 
-/**
- * @param {*} callback
- * @return {TimerHandle}
- */
-Timer.requestAnimationFrame$F$NV$ = function (callback) {
+function Timer$requestAnimationFrame$F$NV$(callback) {
 	return Timer._requestAnimationFrame(callback);
 };
 
-var Timer$requestAnimationFrame$F$NV$ = Timer.requestAnimationFrame$F$NV$;
+Timer.requestAnimationFrame$F$NV$ = Timer$requestAnimationFrame$F$NV$;
 
-/**
- * @param {TimerHandle} timer
- */
-Timer.cancelAnimationFrame$LTimerHandle$ = function (timer) {
+function Timer$cancelAnimationFrame$LTimerHandle$(timer) {
 	Timer._cancelAnimationFrame(timer);
 };
 
-var Timer$cancelAnimationFrame$LTimerHandle$ = Timer.cancelAnimationFrame$LTimerHandle$;
+Timer.cancelAnimationFrame$LTimerHandle$ = Timer$cancelAnimationFrame$LTimerHandle$;
 
-/**
- * @param {!boolean} enable
- */
-Timer.useNativeRAF$B = function (enable) {
+function Timer$useNativeRAF$B(enable) {
 	Timer._requestAnimationFrame = Timer$_getRequestAnimationFrameImpl$B(enable);
 	Timer._cancelAnimationFrame = Timer$_getCancelAnimationFrameImpl$B(enable);
 };
 
-var Timer$useNativeRAF$B = Timer.useNativeRAF$B;
+Timer.useNativeRAF$B = Timer$useNativeRAF$B;
 
-/**
- * @param {!boolean} useNativeImpl
- * @return {*}
- */
-Timer._getRequestAnimationFrameImpl$B = function (useNativeImpl) {
-	/** @type {!number} */
+function Timer$_getRequestAnimationFrameImpl$B(useNativeImpl) {
 	var lastTime;
 	if (useNativeImpl) {
 		if (js.global.requestAnimationFrame) {
@@ -302,9 +262,7 @@ Timer._getRequestAnimationFrameImpl$B = function (useNativeImpl) {
 	}
 	lastTime = 0;
 	return (function (callback) {
-		/** @type {!number} */
 		var now;
-		/** @type {!number} */
 		var timeToCall;
 		now = Date.now();
 		timeToCall = Math.max(0, 16 - (now - lastTime));
@@ -315,13 +273,9 @@ Timer._getRequestAnimationFrameImpl$B = function (useNativeImpl) {
 	});
 };
 
-var Timer$_getRequestAnimationFrameImpl$B = Timer._getRequestAnimationFrameImpl$B;
+Timer._getRequestAnimationFrameImpl$B = Timer$_getRequestAnimationFrameImpl$B;
 
-/**
- * @param {!boolean} useNativeImpl
- * @return {*}
- */
-Timer._getCancelAnimationFrameImpl$B = function (useNativeImpl) {
+function Timer$_getCancelAnimationFrameImpl$B(useNativeImpl) {
 	if (useNativeImpl) {
 		if (js.global.cancelAnimationFrame) {
 			return (function (timer) {
@@ -386,59 +340,33 @@ Timer._getCancelAnimationFrameImpl$B = function (useNativeImpl) {
 	return Timer$clearTimeout$LTimerHandle$;
 };
 
-var Timer$_getCancelAnimationFrameImpl$B = Timer._getCancelAnimationFrameImpl$B;
+Timer._getCancelAnimationFrameImpl$B = Timer$_getCancelAnimationFrameImpl$B;
 
-/**
- * class TimerHandle extends Object
- * @constructor
- */
 function TimerHandle() {
-}
-
-/**
- * @constructor
- */
-function TimerHandle$() {
 };
 
-TimerHandle$.prototype = new TimerHandle;
-
-/**
- * class js extends Object
- * @constructor
- */
-function js() {
-}
-
-/**
- * @constructor
- */
-function js$() {
-};
-
-js$.prototype = new js;
-
+$__jsx_extend([TimerHandle], Object);
 $__jsx_lazy_init(Timer, "_requestAnimationFrame", function () {
 	return Timer$_getRequestAnimationFrameImpl$B(true);
 });
 $__jsx_lazy_init(Timer, "_cancelAnimationFrame", function () {
 	return Timer$_getCancelAnimationFrameImpl$B(true);
 });
-js.global = (function () { return this; })();
+var js = { global: function () { return this; }() };
 var $__jsx_classMap = {
+	"system:lib/built-in.jsx": {
+		g_StopIteration: g_StopIteration,
+		g_StopIteration$: g_StopIteration
+	},
 	"system:example/timers.jsx": {
 		_Main: _Main,
-		_Main$: _Main$
+		_Main$: _Main
 	},
 	"system:lib/js/timer.jsx": {
 		Timer: Timer,
-		Timer$: Timer$,
+		Timer$: Timer,
 		TimerHandle: TimerHandle,
-		TimerHandle$: TimerHandle$
-	},
-	"system:lib/js/js.jsx": {
-		js: js,
-		js$: js$
+		TimerHandle$: TimerHandle
 	}
 };
 
@@ -454,10 +382,10 @@ JSX.runMain = function (sourceFile, args) {
 	if (! module._Main) {
 		throw new ReferenceError("entry point _Main not found in " + sourceFile);
 	}
-	if (! module._Main.main$AS) {
+	if (! module._Main.main) {
 		throw new ReferenceError("entry point _Main.main(:string[]):void not found in " + sourceFile);
 	}
-	module._Main.main$AS(args);
+	module._Main.main(args);
 };
 
 /**
@@ -472,27 +400,21 @@ JSX.runTests = function (sourceFile, tests) {
 	if(tests.length === 0) {
 		var p = testClass.prototype;
 		for (var m in p) {
-			if (p[m] instanceof Function
-				&& /^test.*[$]$/.test(m)) {
+			if (p[m] instanceof Function && m.match(/^test\w+$/)) {
 				tests.push(m);
 			}
 		}
 	}
-	else { // set as process arguments
-		tests = tests.map(function (name) {
-			return name + "$"; // mangle for function test*():void
-		});
-	}
 
 	var testCase = new testClass();
 
-	if (testCase.beforeClass$AS != null)
-		testCase.beforeClass$AS(tests);
+	if (testCase.beforeClass != null)
+		testCase.beforeClass(tests);
 
 	for (var i = 0; i < tests.length; ++i) {
 		(function (method) {
 			if (method in testCase) {
-				testCase.run$SF$V$(method, function() { testCase[method](); });
+				testCase.run(method, function() { testCase[method](); });
 			}
 			else {
 				throw new ReferenceError("No such test method: " + method);
@@ -500,8 +422,8 @@ JSX.runTests = function (sourceFile, tests) {
 		}(tests[i]));
 	}
 
-	if (testCase.afterClass$ != null)
-		testCase.afterClass$();
+	if (testCase.afterClass != null)
+		testCase.afterClass();
 };
 /**
  * call a function on load/DOMContentLoaded

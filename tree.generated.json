@@ -483,6 +483,7 @@
          "235.inner-class-static-method.jsx" : "t/run/235.inner-class-static-method.jsx",
          "167.non-bool-exprs-in-loop-exprs.jsx" : "t/run/167.non-bool-exprs-in-loop-exprs.jsx",
          "069.this-after-closure.jsx" : "t/run/069.this-after-closure.jsx",
+         "265.disable-type-check.jsx" : "t/run/265.disable-type-check.jsx",
          "003.binaryops.jsx" : "t/run/003.binaryops.jsx",
          "235.member-init-with-named-func.jsx" : "t/run/235.member-init-with-named-func.jsx",
          "037.as-on-nullable.jsx" : "t/run/037.as-on-nullable.jsx",
@@ -678,6 +679,7 @@
          "131.assign-array-of-imported-class" : {
             "module.jsx" : "t/run/131.assign-array-of-imported-class/module.jsx"
          },
+         "266.staticize-superexpr.todo.jsx" : "t/run/266.staticize-superexpr.todo.jsx",
          "250.minified-keyword-conflict.jsx" : "t/run/250.minified-keyword-conflict.jsx",
          "067.static-member-vars2.jsx" : "t/run/067.static-member-vars2.jsx",
          "114.stmt-starting-w-as-noconvert.jsx" : "t/run/114.stmt-starting-w-as-noconvert.jsx",
@@ -1009,7 +1011,8 @@
          "004.return-if-with-else.jsx" : "t/optimize/004.return-if-with-else.jsx",
          "005.return-if-complicated.jsx" : "t/optimize/005.return-if-complicated.jsx",
          "024.inline-closure.jsx" : "t/optimize/024.inline-closure.jsx",
-         "022.inline-local.jsx" : "t/optimize/022.inline-local.jsx"
+         "022.inline-local.jsx" : "t/optimize/022.inline-local.jsx",
+         "044.staticize-exported-non-virtual.todo.jsx" : "t/optimize/044.staticize-exported-non-virtual.todo.jsx"
       },
       "complete" : {
          "001.class-or-import.jsx" : "t/complete/001.class-or-import.jsx",

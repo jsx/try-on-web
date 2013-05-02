@@ -238,11 +238,13 @@ _ += "at "; _ += (this._escape( (new Date).toISOString() )).replace(/\n$/, ""); 
 _ += "<div class=\"classes\">\n";
 
 		parser.getTemplateClassDefs().forEach(function (classDef) {
+			if (! this._isPrivate(classDef)) {
 _ += (this._buildDocOfClass(parser, classDef)).replace(/\n$/, ""); _ += "\n";
+			}
 		});
 
 		parser.getClassDefs().forEach(function (classDef) {
-			if (! (classDef instanceof InstantiatedClassDefinition)) {
+			if (! (classDef instanceof InstantiatedClassDefinition) && ! this._isPrivate(classDef)) {
 _ += (this._buildDocOfClass(parser, classDef)).replace(/\n$/, ""); _ += "\n";
 			}
 		});
@@ -533,6 +535,10 @@ _ += "<a href=\""; _ += (this._escape(parserOfClassDef.getPath())).replace(/\n$/
 	function _isConstructor (funcDef : MemberFunctionDefinition) : boolean {
 		return funcDef.name() == "constructor"
 			&& (funcDef.flags() & ClassDefinition.IS_STATIC) == 0;
+	}
+
+	function _isPrivate (classDef : ClassDefinition) : boolean {
+		return classDef.className().charAt(0) == "_";
 	}
 
 	function _isPrivate (memberDef : MemberDefinition) : boolean {

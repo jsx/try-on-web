@@ -1,4 +1,4 @@
-// generatedy by JSX compiler 0.9.27 (2013-04-30 22:02:53 +0900; dc8eb39823fcbbb00c64ef47025c476ab1662784)
+// generatedy by JSX compiler 0.9.28 (2013-05-02 12:10:52 +0900; 377db66428df82966f9ef1fd6f1406ae5fa02343)
 var JSX = {};
 (function (JSX) {
 /**
@@ -432,26 +432,8 @@ function _Main$main$AS(args) {
 	var t0;
 	var t1;
 	var d;
-	canvas = (function ($v) {
-		if (! ($v == null || $v instanceof HTMLCanvasElement)) {
-			debugger;
-			throw new Error("[/Users/gfx/repo/try-on-web/JSX/web/example/aobench/aobench.jsx:305:45] detected invalid cast, value is not an instance of the designated type or null\n        var canvas = dom.id(Config.canvasId) as HTMLCanvasElement;\n                                             ^^\n");
-		}
-		return $v;
-	}((function ($v) {
-		if (! ($v == null || $v instanceof HTMLElement)) {
-			debugger;
-			throw new Error("[/Users/gfx/repo/try-on-web/JSX/lib/js/js/web.jsx:29:47] detected invalid cast, value is not an instance of the designated type or null\n        return dom.document.getElementById(id) as HTMLElement;\n                                               ^^\n");
-		}
-		return $v;
-	}(dom.document.getElementById("world")))));
-	ctx = (function ($v) {
-		if (! ($v == null || $v instanceof CanvasRenderingContext2D)) {
-			debugger;
-			throw new Error("[/Users/gfx/repo/try-on-web/JSX/web/example/aobench/aobench.jsx:306:42] detected invalid cast, value is not an instance of the designated type or null\n        var ctx = canvas.getContext(\"2d\") as CanvasRenderingContext2D;\n                                          ^^\n");
-		}
-		return $v;
-	}(canvas.getContext("2d")));
+	canvas = dom.document.getElementById("world");
+	ctx = canvas.getContext("2d");
 	ao = ({spheres: [ ({center: ({x: -2, y: 0.0, z: -3.5}), radius: 0.5}), ({center: ({x: -0.5, y: 0.0, z: -3}), radius: 0.5}), ({center: ({x: 1.0, y: 0.0, z: -2.2}), radius: 0.5}) ], plane: ({p: ({x: 0.0, y: -0.5, z: 0.0}), n: ({x: 0.0, y: 1.0, z: 0.0})})});
 	t0 = Date.now();
 	AOBench$render$LAOBench$F$IIIIIV$II(ao, (function (x, y, r, g, b) {
@@ -460,13 +442,7 @@ function _Main$main$AS(args) {
 	}), canvas.width, canvas.height);
 	t1 = Date.now();
 	d = t1 - t0;
-	(function ($v) {
-		if (! ($v == null || $v instanceof HTMLElement)) {
-			debugger;
-			throw new Error("[/Users/gfx/repo/try-on-web/JSX/lib/js/js/web.jsx:29:47] detected invalid cast, value is not an instance of the designated type or null\n        return dom.document.getElementById(id) as HTMLElement;\n                                               ^^\n");
-		}
-		return $v;
-	}(dom.document.getElementById("status"))).innerHTML = "Time = " + (d + "") + "[ms]";
+	dom.document.getElementById("status").innerHTML = "Time = " + (d + "") + "[ms]";
 };
 
 _Main.main = _Main$main$AS;
@@ -477,37 +453,19 @@ function dom() {
 
 $__jsx_extend([dom], Object);
 function dom$id$S(id) {
-	return (function ($v) {
-		if (! ($v == null || $v instanceof HTMLElement)) {
-			debugger;
-			throw new Error("[/Users/gfx/repo/try-on-web/JSX/lib/js/js/web.jsx:29:47] detected invalid cast, value is not an instance of the designated type or null\n        return dom.document.getElementById(id) as HTMLElement;\n                                               ^^\n");
-		}
-		return $v;
-	}(dom.document.getElementById(id)));
+	return dom.document.getElementById(id);
 };
 
 dom.id$S = dom$id$S;
 
 function dom$getElementById$S(id) {
-	return (function ($v) {
-		if (! ($v == null || $v instanceof HTMLElement)) {
-			debugger;
-			throw new Error("[/Users/gfx/repo/try-on-web/JSX/lib/js/js/web.jsx:37:47] detected invalid cast, value is not an instance of the designated type or null\n        return dom.document.getElementById(id) as HTMLElement;\n                                               ^^\n");
-		}
-		return $v;
-	}(dom.document.getElementById(id)));
+	return dom.document.getElementById(id);
 };
 
 dom.getElementById$S = dom$getElementById$S;
 
 function dom$createElement$S(tag) {
-	return (function ($v) {
-		if (! ($v == null || $v instanceof HTMLElement)) {
-			debugger;
-			throw new Error("[/Users/gfx/repo/try-on-web/JSX/lib/js/js/web.jsx:45:47] detected invalid cast, value is not an instance of the designated type or null\n        return dom.document.createElement(tag) as __noconvert__ HTMLElement;\n                                               ^^\n");
-		}
-		return $v;
-	}(dom.document.createElement(tag)));
+	return dom.document.createElement(tag);
 };
 
 dom.createElement$S = dom$createElement$S;
@@ -886,13 +844,7 @@ $__jsx_lazy_init(dom, "window", function () {
 	return js.global.window;
 });
 $__jsx_lazy_init(dom, "document", function () {
-	return (function ($v) {
-		if (! ($v == null || $v instanceof HTMLDocument)) {
-			debugger;
-			throw new Error("[/Users/gfx/repo/try-on-web/JSX/lib/js/js/web.jsx:23:50] detected invalid cast, value is not an instance of the designated type or null\n    static const document = js.global[\"document\"] as __noconvert__ HTMLDocument;\n                                                  ^^\n");
-		}
-		return $v;
-	}(js.global.document));
+	return js.global.document;
 });
 var js = { global: function () { return this; }() };
 var $__jsx_classMap = {

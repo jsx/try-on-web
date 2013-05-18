@@ -1,4 +1,4 @@
-// generatedy by JSX compiler 0.9.28 (2013-05-02 12:10:52 +0900; 377db66428df82966f9ef1fd6f1406ae5fa02343)
+// generatedy by JSX compiler 0.9.29 (2013-05-17 14:54:36 -0700; 7812cd5ad66f7bc0675778fdb4ef4b46333b3dcd)
 var JSX = {};
 (function (JSX) {
 /**
@@ -180,6 +180,7 @@ function _Main$main$AS(args) {
 _Main.main = _Main$main$AS;
 _Main.main$AS = _Main$main$AS;
 
+
 var $__jsx_classMap = {
 	"system:lib/built-in.jsx": {
 		g_StopIteration: g_StopIteration,
@@ -224,7 +225,7 @@ JSX.runMain = function (sourceFile, args) {
  */
 JSX.runTests = function (sourceFile, tests) {
 	var module = JSX.require(sourceFile);
-	var testClass = module._Test$;
+	var testClass = module._Test;
 
 	if (!testClass) return; // skip if there's no test class
 

@@ -326,10 +326,12 @@
       "js" : {
          "js.jsx" : "lib/js/js.jsx",
          "js" : {
+            "phantomjs" : {
+               "test-case.jsx" : "lib/js/js/phantomjs/test-case.jsx"
+            },
             "nodejs.jsx" : "lib/js/js/nodejs.jsx",
-            "phantom.jsx" : "lib/js/js/phantom.jsx",
-            "web.jsx" : "lib/js/js/web.jsx",
-            "phantom-test-case.jsx" : "lib/js/js/phantom-test-case.jsx"
+            "phantomjs.jsx" : "lib/js/js/phantomjs.jsx",
+            "web.jsx" : "lib/js/js/web.jsx"
          },
          "timer.jsx" : "lib/js/timer.jsx",
          "console.jsx" : "lib/js/console.jsx",
@@ -348,6 +350,7 @@
          "hello.jsx" : "t/008/hello.jsx"
       },
       "web" : {
+         "003.modules.jsx" : "t/web/003.modules.jsx",
          "002.web-compiler.jsx" : "t/web/002.web-compiler.jsx",
          "001.hello.jsx" : "t/web/001.hello.jsx"
       },
@@ -418,12 +421,14 @@
             "1.jsx" : "t/run/119.import-all-into/1.jsx",
             "2.jsx" : "t/run/119.import-all-into/2.jsx"
          },
+         "268.booleanize.jsx" : "t/run/268.booleanize.jsx",
          "081.ununsed-non-typed-local.jsx" : "t/run/081.ununsed-non-typed-local.jsx",
          "140.new-array.jsx" : "t/run/140.new-array.jsx",
          "215.issue80-2.jsx" : "t/run/215.issue80-2.jsx",
          "155.deduct-closure-type-on-assign.jsx" : "t/run/155.deduct-closure-type-on-assign.jsx",
          "217.function-field-in-template.todo.jsx" : "t/run/217.function-field-in-template.todo.jsx",
          "182.null-expr-in-templates.jsx" : "t/run/182.null-expr-in-templates.jsx",
+         "272.mangled-access-in-exported.jsx" : "t/run/272.mangled-access-in-exported.jsx",
          "116.map-of-map.jsx" : "t/run/116.map-of-map.jsx",
          "generator.005.nested.jsx" : "t/run/generator.005.nested.jsx",
          "241.inner-class-with-same-name.jsx" : "t/run/241.inner-class-with-same-name.jsx",
@@ -476,6 +481,7 @@
          "generator.003.sequential.jsx" : "t/run/generator.003.sequential.jsx",
          "243.allow-null-for-nullable-vargs.jsx" : "t/run/243.allow-null-for-nullable-vargs.jsx",
          "226.variant-for-function-arg.todo.jsx" : "t/run/226.variant-for-function-arg.todo.jsx",
+         "279.strip-preserve-static-only-native-class.jsx" : "t/run/279.strip-preserve-static-only-native-class.jsx",
          "258.export-funcs.jsx" : "t/run/258.export-funcs.jsx",
          "057.downcast-interface.jsx" : "t/run/057.downcast-interface.jsx",
          "122.hasownproperty.jsx" : "t/run/122.hasownproperty.jsx",
@@ -503,6 +509,8 @@
          "130.math-abs.jsx" : "t/run/130.math-abs.jsx",
          "185.null-as-nullalble-primitive.jsx" : "t/run/185.null-as-nullalble-primitive.jsx",
          "262.export-vars.jsx" : "t/run/262.export-vars.jsx",
+         "276.strip-unused-native-class.jsx" : "t/run/276.strip-unused-native-class.jsx",
+         "269.unboxing-vs-function-statement.jsx" : "t/run/269.unboxing-vs-function-statement.jsx",
          "177.profile-return-void.jsx" : "t/run/177.profile-return-void.jsx",
          "170.cast-int-in-return.jsx" : "t/run/170.cast-int-in-return.jsx",
          "255.no-catch-empty-finally.jsx" : "t/run/255.no-catch-empty-finally.jsx",
@@ -523,8 +531,10 @@
          "200.template-under-namespace" : {
             "a.jsx" : "t/run/200.template-under-namespace/a.jsx"
          },
+         "270.extend-in-js.todo.jsx" : "t/run/270.extend-in-js.todo.jsx",
          "203.static-var-with-lambda.jsx" : "t/run/203.static-var-with-lambda.jsx",
          "174.undefined-in-array-literal.jsx" : "t/run/174.undefined-in-array-literal.jsx",
+         "274.unbox-object.jsx" : "t/run/274.unbox-object.jsx",
          "024.date.jsx" : "t/run/024.date.jsx",
          "055.downcast.jsx" : "t/run/055.downcast.jsx",
          "223.issue50.jsx" : "t/run/223.issue50.jsx",
@@ -534,6 +544,7 @@
          "191.try-catch-in-template.jsx" : "t/run/191.try-catch-in-template.jsx",
          "131.assign-array-of-imported-class.jsx" : "t/run/131.assign-array-of-imported-class.jsx",
          "093.static-and-non-static-member.jsx" : "t/run/093.static-and-non-static-member.jsx",
+         "278.instanceof-stripped.jsx" : "t/run/278.instanceof-stripped.jsx",
          "096.null-for-function-arg.jsx" : "t/run/096.null-for-function-arg.jsx",
          "039.ctor-overload.jsx" : "t/run/039.ctor-overload.jsx",
          "070.multiple-choises.jsx" : "t/run/070.multiple-choises.jsx",
@@ -550,6 +561,7 @@
          "200.template-under-namespace.jsx" : "t/run/200.template-under-namespace.jsx",
          "254.issue78.jsx" : "t/run/254.issue78.jsx",
          "260.export-funcs-in-mixin.jsx" : "t/run/260.export-funcs-in-mixin.jsx",
+         "267.no-assert.jsx" : "t/run/267.no-assert.jsx",
          "257.export-class.jsx" : "t/run/257.export-class.jsx",
          "245.instanceof-type-param.jsx" : "t/run/245.instanceof-type-param.jsx",
          "086.as_nocheck-to-string.jsx" : "t/run/086.as_nocheck-to-string.jsx",
@@ -626,7 +638,9 @@
          "063.import-by-name" : {
             "foo.jsx" : "t/run/063.import-by-name/foo.jsx"
          },
+         "273.native-require-commonjs.jsx" : "t/run/273.native-require-commonjs.jsx",
          "035.assign-to-int.jsx" : "t/run/035.assign-to-int.jsx",
+         "275.unclassify-vs-tostring.jsx" : "t/run/275.unclassify-vs-tostring.jsx",
          "261.export-rule.jsx" : "t/run/261.export-rule.jsx",
          "201.import-template" : {
             "named.jsx" : "t/run/201.import-template/named.jsx",
@@ -676,15 +690,16 @@
          "157.deduct-closure-type-in-new.jsx" : "t/run/157.deduct-closure-type-in-new.jsx",
          "049.var-in-interface.jsx" : "t/run/049.var-in-interface.jsx",
          "077.const-member-var.jsx" : "t/run/077.const-member-var.jsx",
+         "277.strip-vs-overriding-native.jsx" : "t/run/277.strip-vs-overriding-native.jsx",
          "131.assign-array-of-imported-class" : {
             "module.jsx" : "t/run/131.assign-array-of-imported-class/module.jsx"
          },
-         "266.staticize-superexpr.todo.jsx" : "t/run/266.staticize-superexpr.todo.jsx",
          "250.minified-keyword-conflict.jsx" : "t/run/250.minified-keyword-conflict.jsx",
          "067.static-member-vars2.jsx" : "t/run/067.static-member-vars2.jsx",
          "114.stmt-starting-w-as-noconvert.jsx" : "t/run/114.stmt-starting-w-as-noconvert.jsx",
          "100.for-in-map.jsx" : "t/run/100.for-in-map.jsx",
          "123.tostring-as-property.jsx" : "t/run/123.tostring-as-property.jsx",
+         "280.strip-preserve-asexpr-native.jsx" : "t/run/280.strip-preserve-asexpr-native.jsx",
          "216.var-decl-of-arg.jsx" : "t/run/216.var-decl-of-arg.jsx",
          "generator.001.fib.jsx" : "t/run/generator.001.fib.jsx",
          "105.in.jsx" : "t/run/105.in.jsx",
@@ -693,6 +708,7 @@
          "183.deduce-compfun-of-sort.jsx" : "t/run/183.deduce-compfun-of-sort.jsx",
          "196.type-deduction-for-closures.jsx" : "t/run/196.type-deduction-for-closures.jsx",
          "184.implements-template.jsx" : "t/run/184.implements-template.jsx",
+         "271.export-in-derived.jsx" : "t/run/271.export-in-derived.jsx",
          "146.assign-to-property-of-variant.jsx" : "t/run/146.assign-to-property-of-variant.jsx",
          "234.issue118-2.jsx" : "t/run/234.issue118-2.jsx",
          "065.call-implicit-ctor.jsx" : "t/run/065.call-implicit-ctor.jsx",
@@ -752,6 +768,7 @@
          },
          "134.too-many-closures.jsx" : "t/compile_error/134.too-many-closures.jsx",
          "033.override-wrong-type-of-var.jsx" : "t/compile_error/033.override-wrong-type-of-var.jsx",
+         "177.issue-163.todo.jsx" : "t/compile_error/177.issue-163.todo.jsx",
          "111.cond-wo-trueexpr-type-conflict.jsx" : "t/compile_error/111.cond-wo-trueexpr-type-conflict.jsx",
          "020.add-boolean-number.jsx" : "t/compile_error/020.add-boolean-number.jsx",
          "055.ambiguous-class-reference" : {
@@ -865,6 +882,7 @@
          "091.do-while-expr-is-void.jsx" : "t/compile_error/091.do-while-expr-is-void.jsx",
          "018.assign-undefined.jsx" : "t/compile_error/018.assign-undefined.jsx",
          "059.import-as-conflict-with-builtin.jsx" : "t/compile_error/059.import-as-conflict-with-builtin.jsx",
+         "178.issue-166.jsx" : "t/compile_error/178.issue-166.jsx",
          "131.fused-assign-against-non-lhs.jsx" : "t/compile_error/131.fused-assign-against-non-lhs.jsx",
          "174.try-inside-generator.jsx" : "t/compile_error/174.try-inside-generator.jsx",
          "044.const-function.jsx" : "t/compile_error/044.const-function.jsx",
@@ -972,11 +990,15 @@
          "039.unused-map-literal.jsx" : "t/optimize/039.unused-map-literal.jsx",
          "033.array-length-empty-init-expr.jsx" : "t/optimize/033.array-length-empty-init-expr.jsx",
          "020.inline-arg-using-var.jsx" : "t/optimize/020.inline-arg-using-var.jsx",
+         "045.unclassify-static-initor.jsx" : "t/optimize/045.unclassify-static-initor.jsx",
          "013.fold-const-propagate-string.jsx" : "t/optimize/013.fold-const-propagate-string.jsx",
+         "049.staticize-func-with-func-statement.jsx" : "t/optimize/049.staticize-func-with-func-statement.jsx",
+         "046.staticize-superexpr.jsx" : "t/optimize/046.staticize-superexpr.jsx",
          "010.fold-const-number-vs-int.jsx" : "t/optimize/010.fold-const-number-vs-int.jsx",
          "011.fold-const-propagate-number.jsx" : "t/optimize/011.fold-const-propagate-number.jsx",
          "025.return-if-inlined-to-as.jsx" : "t/optimize/025.return-if-inlined-to-as.jsx",
          "003.return-if.jsx" : "t/optimize/003.return-if.jsx",
+         "047.staticize-super-in-staticizable.jsx" : "t/optimize/047.staticize-super-in-staticizable.jsx",
          "032.inline-call-lambda-in-inner-function.jsx" : "t/optimize/032.inline-call-lambda-in-inner-function.jsx",
          "028.lcse.jsx" : "t/optimize/028.lcse.jsx",
          "009.fold-const.jsx" : "t/optimize/009.fold-const.jsx",
@@ -1000,6 +1022,7 @@
          "025.inline-nested-closure.jsx" : "t/optimize/025.inline-nested-closure.jsx",
          "007.inline-simple-this.jsx" : "t/optimize/007.inline-simple-this.jsx",
          "038.debug-flag.jsx" : "t/optimize/038.debug-flag.jsx",
+         "048.staticize-func-with-caught-var.jsx" : "t/optimize/048.staticize-func-with-caught-var.jsx",
          "012.fold-const-propagate-int.jsx" : "t/optimize/012.fold-const-propagate-int.jsx",
          "035.eliminate-if.jsx" : "t/optimize/035.eliminate-if.jsx",
          "025.inline-static-template-function.jsx" : "t/optimize/025.inline-static-template-function.jsx",
@@ -1008,11 +1031,11 @@
          "034.unclassify-nested-rewrite.jsx" : "t/optimize/034.unclassify-nested-rewrite.jsx",
          "006.inline-simple-static.jsx" : "t/optimize/006.inline-simple-static.jsx",
          "037.unclassify-simple.jsx" : "t/optimize/037.unclassify-simple.jsx",
+         "044.staticize-exported-non-virtual.jsx" : "t/optimize/044.staticize-exported-non-virtual.jsx",
          "004.return-if-with-else.jsx" : "t/optimize/004.return-if-with-else.jsx",
          "005.return-if-complicated.jsx" : "t/optimize/005.return-if-complicated.jsx",
          "024.inline-closure.jsx" : "t/optimize/024.inline-closure.jsx",
-         "022.inline-local.jsx" : "t/optimize/022.inline-local.jsx",
-         "044.staticize-exported-non-virtual.todo.jsx" : "t/optimize/044.staticize-exported-non-virtual.todo.jsx"
+         "022.inline-local.jsx" : "t/optimize/022.inline-local.jsx"
       },
       "complete" : {
          "001.class-or-import.jsx" : "t/complete/001.class-or-import.jsx",

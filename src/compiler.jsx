@@ -172,11 +172,16 @@ class Compiler {
 		// transformation
 		var transformer = new CodeTransformer;
 		this.forEachClassDef(function (parser, classDef) {
-			return classDef.forEachMemberFunction(function onFuncDef (funcDef) {
-				if (funcDef.isGenerator()) {
-					transformer.transformFunctionDefinition(funcDef);
+			return classDef.forEachMember(function onMember(member) {
+				if (member instanceof MemberFunctionDefinition) {
+					var funcDef = member as MemberFunctionDefinition;
+					if (funcDef.isGenerator()) {
+						transformer.transformFunctionDefinition(funcDef);
+					}
 				}
-				return funcDef.forEachClosure(onFuncDef);
+				return member.forEachClosure(function (funcDef) {
+					return onMember(funcDef);
+				});
 			});
 		});
 		// optimization
@@ -417,6 +422,7 @@ class Compiler {
 		this.forEachClassDef(function (parser, classDef) {
 			switch (classDef.classFullName()) {
 			case "_Main":
+				classDef.setFlags(classDef.flags() | ClassDefinition.IS_EXPORT);
 				classDef.forEachMemberFunction(function (funcDef) {
 					if ((funcDef.flags() & ClassDefinition.IS_STATIC) != 0
 						&& funcDef.name() == "main"
@@ -428,9 +434,10 @@ class Compiler {
 				});
 				break;
 			case "_Test":
+				classDef.setFlags(classDef.flags() | ClassDefinition.IS_EXPORT);
 				classDef.forEachMemberFunction(function (funcDef) {
 					if ((funcDef.flags() & ClassDefinition.IS_STATIC) == 0
-						&& funcDef.name().match(/^test/)
+						&& (funcDef.name().match(/^test/) || funcDef.name() == "constructor")
 						&& funcDef.getArguments().length == 0) {
 						funcDef.setFlags(funcDef.flags() | ClassDefinition.IS_EXPORT);
 					}

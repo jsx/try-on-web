@@ -53,14 +53,14 @@ class _Util {
 	}
 
 	static function getOutputClassName(classDef : ClassDefinition) : string {
-		return (classDef.getStash()[_Util.OUTPUTNAME_IDENTIFIER] as _Util.OutputNameStash).outputName;
+		return (classDef.getStash(_Util.OUTPUTNAME_IDENTIFIER) as _Util.OutputNameStash).outputName;
 	}
 
 	static function getOutputConstructorName(ctor : MemberFunctionDefinition) : string {
 		if ((ctor.getClassDef().flags() & ClassDefinition.IS_NATIVE) != 0) {
 			return _Util.getNameOfNativeConstructor(ctor.getClassDef());
 		}
-		return (ctor.getStash()[_Util.OUTPUTNAME_IDENTIFIER] as _Util.OutputNameStash).outputName;
+		return (ctor.getStash(_Util.OUTPUTNAME_IDENTIFIER) as _Util.OutputNameStash).outputName;
 	}
 
 	static function getOutputConstructorName(classDef : ClassDefinition, argTypes : Type[]) : string {
@@ -82,7 +82,7 @@ class _Util {
 
 	static function setOutputClassNames(classDefs : ClassDefinition[]) : void {
 		function setOutputName(stashable : Stashable, name : string) : void {
-			stashable.getStash()[_Util.OUTPUTNAME_IDENTIFIER] = new _Util.OutputNameStash(name);
+			stashable.setStash(_Util.OUTPUTNAME_IDENTIFIER, new _Util.OutputNameStash(name));
 		}
 		function escapeClassNameIfInstantiated(name : string) : string {
 			// escape the instantiated class names (note: template classes are never emitted (since they are all native) but their names are used for mangling of function arguments)
@@ -122,8 +122,8 @@ class _Util {
 				var ctors = _Util.findFunctions(classDef, "constructor", false);
 				if (ctors.length != 0) {
 					// move exported ctor to the top (so that it would not get mangled)
-					for (var j = 0; i < ctors.length; ++j) {
-						if ((ctors[i].flags() & ClassDefinition.IS_EXPORT) != 0) {
+					for (var j = 0; j < ctors.length; ++j) {
+						if ((ctors[j].flags() & ClassDefinition.IS_EXPORT) != 0) {
 							var exportedCtor = ctors[j];
 							ctors.splice(j, 1);
 							ctors.unshift(exportedCtor);
@@ -313,10 +313,10 @@ class _Namer {
 	}
 
 	function _enterCatch(tryStmt : TryStatement, cb : function (getCatchName : function () : string) : void, catchName : string) : void {
-		tryStmt.getStash()[_Namer.IDENTIFIER] = new _Namer._TryStash(catchName);
+		tryStmt.setStash(_Namer.IDENTIFIER, new _Namer._TryStash(catchName));
 		var catchStmts = tryStmt.getCatchStatements();
 		for (var i in catchStmts) {
-			catchStmts[i].getLocal().getStash()[_Namer.IDENTIFIER] = new _Namer._CatchTargetStash(tryStmt);
+			catchStmts[i].getLocal().setStash(_Namer.IDENTIFIER, new _Namer._CatchTargetStash(tryStmt));
 		}
 		cb(function () { return this._getCatchName(tryStmt); });
 	}
@@ -330,11 +330,11 @@ class _Namer {
 	}
 
 	function _getCatchName(caught : CaughtVariable) : string {
-		return this._getCatchName((caught.getStash()[_Namer.IDENTIFIER] as _Namer._CatchTargetStash).tryStmt);
+		return this._getCatchName((caught.getStash(_Namer.IDENTIFIER) as _Namer._CatchTargetStash).tryStmt);
 	}
 
 	function _getCatchName(tryStmt : TryStatement) : string {
-		return (tryStmt.getStash()[_Namer.IDENTIFIER] as _Namer._TryStash).catchName;
+		return (tryStmt.getStash(_Namer.IDENTIFIER) as _Namer._TryStash).catchName;
 	}
 
 }
@@ -739,27 +739,27 @@ class _Minifier {
 	}
 
 	static function _getClassStash(classDef : ClassDefinition) : _Minifier._ClassStash {
-		var stash = classDef.getStash();
-		if (! stash.hasOwnProperty(_Minifier.CLASSSTASH_IDENTIFIER)) {
-			stash[_Minifier.CLASSSTASH_IDENTIFIER] = new _Minifier._ClassStash();
+		var stash = classDef.getStash(_Minifier.CLASSSTASH_IDENTIFIER);
+		if (stash == null) {
+			stash = classDef.setStash(_Minifier.CLASSSTASH_IDENTIFIER, new _Minifier._ClassStash());
 		}
-		return stash[_Minifier.CLASSSTASH_IDENTIFIER] as _Minifier._ClassStash;
+		return stash as _Minifier._ClassStash;
 	}
 
 	static function _getScopeStash(stashable : Stashable) : _Minifier._ScopeStash {
-		var stash = stashable.getStash();
-		if(! stash.hasOwnProperty(_Minifier.SCOPESTASH_IDENTIFIER)) {
-			stash[_Minifier.SCOPESTASH_IDENTIFIER] = new _Minifier._ScopeStash();
+		var stash = stashable.getStash(_Minifier.SCOPESTASH_IDENTIFIER);
+		if(stash == null) {
+			stash = stashable.setStash(_Minifier.SCOPESTASH_IDENTIFIER, new _Minifier._ScopeStash());
 		}
-		return stash[_Minifier.SCOPESTASH_IDENTIFIER] as _Minifier._ScopeStash;
+		return stash as _Minifier._ScopeStash;
 	}
 
 	static function _getLocalStash(local : LocalVariable) : _Minifier._LocalStash {
-		var stash = local.getStash();
-		if(! stash.hasOwnProperty(_Minifier.LOCALSTASH_IDENTIFIER)) {
-			stash[_Minifier.LOCALSTASH_IDENTIFIER] = new _Minifier._LocalStash();
+		var stash = local.getStash(_Minifier.LOCALSTASH_IDENTIFIER);
+		if(stash == null) {
+			stash = local.setStash(_Minifier.LOCALSTASH_IDENTIFIER, new _Minifier._LocalStash());
 		}
-		return stash[_Minifier.LOCALSTASH_IDENTIFIER] as _Minifier._LocalStash;
+		return stash as _Minifier._LocalStash;
 	}
 
 	static function _incr(useCount : Map.<number>, name : string) : void {
@@ -777,17 +777,9 @@ class _Minifier {
 	}
 
 	static function minifyJavaScript(src : string) : string {
-		// load modules
-		var esprima = js.eval("require('esprima')");
-		var esmangle = js.eval("require('esmangle')");
-		var escodegen = js.eval("require('escodegen')");
-		// parse
-		var ast = js.invoke(esprima, "parse", [ src ] : variant[]);
-		// mangle
-		ast = js.invoke(esmangle, "mangle", [ ast, { destructive: true } : Map.<variant> ] : variant[]);
-		// generate
-		return js.invoke(escodegen, "generate", [
-			ast,
+		var ast = esprima.parse(src);
+		ast = esmangle.mangle(ast, { destructive: true } : Map.<variant>);
+		return escodegen.generate(ast,
 			{
 				format: {
 					renumber: true,
@@ -798,11 +790,23 @@ class _Minifier {
 					parentheses: false
 				} : Map.<variant>,
 				directive: true
-			} : Map.<variant>
-		] : variant[]) as string;
+			} : Map.<variant>);
 	}
 
 }
+
+native("require('esprima')") class esprima {
+	static function parse(src : string) : variant;
+}
+
+native("require('esmangle')") class esmangle {
+	static function mangle(ast : variant, opts : Map.<variant>) : variant;
+}
+
+native("require('escodegen')") class escodegen {
+	static function generate(ast : variant, opts : Map.<variant>) : string;
+}
+
 
 // statement emitter
 
@@ -2600,7 +2604,7 @@ class _NewExpressionEmitter extends _OperatorExpressionEmitter {
 
 	override function emit (outerOpPrecedence : number) : void {
 		function getInliner(funcDef : MemberFunctionDefinition) : function(:NewExpression):Expression[] {
-			var stash = funcDef.getStash()["unclassify"];
+			var stash = funcDef.getStash("unclassify");
 			return stash ? (stash as _UnclassifyOptimizationCommand.Stash).inliner : null;
 		}
 		var classDef = this._expr.getType().getClassDef();
@@ -2909,15 +2913,23 @@ class JavaScriptEmitter implements Emitter {
 		this._output += this._fileHeader;
 		this._output += this._platform.load(this._platform.getRoot() + "/src/js/bootstrap.js");
 
-		var stash = (this.getStash()[_NoDebugCommand.IDENTIFIER] as _NoDebugCommand.Stash);
+		var stash = (this.getStash(_NoDebugCommand.IDENTIFIER) as _NoDebugCommand.Stash);
 		this._emit("JSX.DEBUG = "+(stash == null || stash.debugValue ? "true" : "false")+";\n", null);
 	}
 
 	function _emitCore(classDefs : ClassDefinition[]) : void {
 		for (var i = 0; i < classDefs.length; ++i) {
-			classDefs[i].forEachMemberFunction(function onFuncDef(funcDef : MemberFunctionDefinition) : boolean {
+			function onFuncDef(funcDef : MemberFunctionDefinition) : boolean {
 				funcDef.forEachClosure(onFuncDef);
 				this._setupBooleanizeFlags(funcDef);
+				return true;
+			};
+			classDefs[i].forEachMemberFunction(onFuncDef);
+			classDefs[i].forEachMemberVariable(function (varDef) {
+				if ((varDef.flags() & ClassDefinition.IS_STATIC) != 0 && varDef.getInitialValue() != null) {
+					// only handle static vars, initializer of non-static properties are compiled into member function defs.
+					this._setupBooleanizeFlags(varDef.getInitialValue());
+				}
 				return true;
 			});
 		}
@@ -2949,14 +2961,15 @@ class JavaScriptEmitter implements Emitter {
 	}
 
 	function getStash (stashable : Stashable) : _JSEmitterStash {
-		var stash = stashable.getStash();
-		if (stash["jsemitter"] == null) {
-			stash["jsemitter"] = new _JSEmitterStash;
+		var stash = stashable.getStash("jsemitter");
+		if (stash == null) {
+			stash = stashable.setStash("jsemitter", new _JSEmitterStash);
 		}
-		return stash["jsemitter"] as _JSEmitterStash;
+		return stash as _JSEmitterStash;
 	}
 
-	function _setupBooleanizeFlags (funcDef : MemberFunctionDefinition) : void {
+	// the function does not take care of function statements / expressions (in other words the caller should use forEachClosure)
+	function _setupBooleanizeFlags (expr : Expression) : void {
 		var exprReturnsBoolean = function (expr : Expression) : boolean {
 			if (expr instanceof LogicalExpression) {
 				return this.getStash(expr).returnsBoolean;
@@ -2964,36 +2977,45 @@ class JavaScriptEmitter implements Emitter {
 				return expr.getType().equals(Type.booleanType);
 			}
 		};
+		var parentExpr = new Expression[]; // [0] is stack top
+		var onExpr = function (expr : Expression) : boolean {
+			// handle children
+			parentExpr.unshift(expr);
+			expr.forEachExpression(onExpr);
+			parentExpr.shift();
+			// check
+			if (expr instanceof LogicalExpression) {
+				var shouldBooleanize = true;
+				var returnsBoolean = false;
+				if (exprReturnsBoolean((expr as LogicalExpression).getFirstExpr()) && exprReturnsBoolean((expr as LogicalExpression).getSecondExpr())) {
+					returnsBoolean = true;
+					shouldBooleanize = false;
+				} else if (parentExpr.length == 0) {
+					// caller should disable the shouldBooleanize flag if necessary
+				} else if (parentExpr[0] instanceof LogicalExpression
+					|| parentExpr[0] instanceof LogicalNotExpression) {
+					shouldBooleanize = false;
+				} else if (parentExpr[0] instanceof ConditionalExpression && (parentExpr[0] as ConditionalExpression).getCondExpr() == expr) {
+					shouldBooleanize = false;
+				}
+				this.getStash(expr).shouldBooleanize = shouldBooleanize;
+				this.getStash(expr).returnsBoolean   = returnsBoolean;
+			}
+			return true;
+		};
+		onExpr(expr);
+	}
+
+	function _setupBooleanizeFlags (funcDef : MemberFunctionDefinition) : void {
 		funcDef.forEachStatement(function onStatement(statement : Statement) : boolean {
-			var parentExpr = new Expression[]; // [0] is stack top
-			statement.forEachExpression(function onExpr(expr : Expression) : boolean {
-				// handle children
-				parentExpr.unshift(expr);
-				expr.forEachExpression(onExpr);
-				parentExpr.shift();
-				// check
-				if (expr instanceof LogicalExpression) {
-					var shouldBooleanize = true;
-					var returnsBoolean = false;
-					if (exprReturnsBoolean((expr as LogicalExpression).getFirstExpr()) && exprReturnsBoolean((expr as LogicalExpression).getSecondExpr())) {
-						returnsBoolean = true;
-						shouldBooleanize = false;
-					} else if (parentExpr.length == 0) {
-						if (statement instanceof ExpressionStatement
-							|| statement instanceof IfStatement
-							|| statement instanceof DoWhileStatement
-							|| statement instanceof WhileStatement
-							|| statement instanceof ForStatement) {
-							shouldBooleanize = false;
-						}
-					} else if (parentExpr[0] instanceof LogicalExpression
-						|| parentExpr[0] instanceof LogicalNotExpression) {
-						shouldBooleanize = false;
-					} else if (parentExpr[0] instanceof ConditionalExpression && (parentExpr[0] as ConditionalExpression).getCondExpr() == expr) {
-						shouldBooleanize = false;
-					}
-					this.getStash(expr).shouldBooleanize = shouldBooleanize;
-					this.getStash(expr).returnsBoolean   = returnsBoolean;
+			statement.forEachExpression(function (expr) {
+				this._setupBooleanizeFlags(expr);
+				if (statement instanceof ExpressionStatement
+					|| statement instanceof IfStatement
+					|| statement instanceof DoWhileStatement
+					|| statement instanceof WhileStatement
+					|| statement instanceof ForStatement) {
+					this.getStash(expr).shouldBooleanize = false;
 				}
 				return true;
 			});
@@ -3042,6 +3064,11 @@ class JavaScriptEmitter implements Emitter {
 			this._emit("var js = { global: function () { return this; }() };\n", null);
 			return;
 		}
+		// bind native object to JSX class
+		if (classDef.getNativeSource() != null) {
+			this._emit("var " + this._namer.getNameOfClass(classDef) + " = " + Util.decodeStringLiteral(classDef.getNativeSource().getValue()) + ";\n", classDef.getNativeSource());
+		}
+
 		if ((classDef.flags() & ClassDefinition.IS_NATIVE) != 0)
 			return;
 		// normal handling
@@ -3066,21 +3093,33 @@ class JavaScriptEmitter implements Emitter {
 				++i;
 		}
 		// start emitting
-		this._emit("var $__jsx_classMap = {\n", null);
-		this._advanceIndent();
+		this._emit("\n" + "var $__jsx_classMap = {", null);
+		var isFirstEntry = true;
 		while (classDefs.length != 0) {
 			// fetch the first classDef, and others that came from the same file
 			var list = new string[][];
 			var pushClass = (function (classDef : ClassDefinition) : void {
 				var ctors = _Util.findFunctions(classDef, "constructor", false);
 				if ((classDef.flags() & ClassDefinition.IS_EXPORT) != 0) {
-					assert ctors.length == 1;
-					list.push([ classDef.classFullName(), this._namer.getNameOfConstructor(classDef, ctors[0].getArgumentTypes()) ]);
-				} else {
+					var exportedCtor = null : MemberFunctionDefinition;
+					for (var i = 0; i < ctors.length; ++i) {
+						if ((ctors[i].flags() & ClassDefinition.IS_EXPORT) != 0) {
+							assert exportedCtor == null;
+							exportedCtor = ctors[i];
+						}
+					}
+					if (exportedCtor == null) {
+						exportedCtor = ctors[0]; // any ctor will do
+					}
+					list.push([ classDef.classFullName(), this._namer.getNameOfConstructor(classDef, exportedCtor.getArgumentTypes()) ]);
+				}
+				if (! this._enableMinifier) {
+					if ((classDef.flags() & ClassDefinition.IS_EXPORT) == 0) {
+						list.push([ classDef.classFullName(), this._namer.getNameOfClass(classDef) ]);
+					}
 					var push = function (argTypes : Type[]) : void {
 						list.push([ classDef.classFullName() + this._mangler.mangleFunctionArguments(argTypes), this._namer.getNameOfConstructor(classDef, argTypes) ]);
 					};
-					list.push([ classDef.classFullName(), this._namer.getNameOfClass(classDef) ]);
 					if (ctors.length == 0) {
 						push(new Type[]);
 					} else {
@@ -3099,24 +3138,33 @@ class JavaScriptEmitter implements Emitter {
 					++i;
 				}
 			}
-			// emit the map
-			var escapedFilename = JSON.stringify(this._platform.encodeFilename(filename));
-			this._emit(escapedFilename  + ": ", null);
-			this._emit("{\n", null);
-			this._advanceIndent();
-			for (var i = 0; i < list.length; ++i) {
-				this._emit(_Util.encodeObjectLiteralKey(list[i][0]) + ": " + list[i][1], null);
-				if (i != list.length - 1)
-					this._emit(",", null);
-				this._emit("\n", null);
+			if (list.length != 0 || ! this._enableMinifier) {
+				// emit the map
+				if (isFirstEntry) {
+					this._emit("\n", null);
+					this._advanceIndent();
+					isFirstEntry = false;
+				} else {
+					this._emit(",\n", null);
+				}
+				var escapedFilename = JSON.stringify(this._platform.encodeFilename(filename));
+				this._emit(escapedFilename  + ": ", null);
+				this._emit("{\n", null);
+				this._advanceIndent();
+				for (var i = 0; i < list.length; ++i) {
+					this._emit(_Util.encodeObjectLiteralKey(list[i][0]) + ": " + list[i][1], null);
+					if (i != list.length - 1)
+						this._emit(",", null);
+					this._emit("\n", null);
+				}
+				this._reduceIndent();
+				this._emit("}", null);
 			}
-			this._reduceIndent();
-			this._emit("}", null);
-			if (classDefs.length != 0)
-				this._emit(",", null);
-			this._emit("\n", null);
 		}
-		this._reduceIndent();
+		if (! isFirstEntry) {
+			this._emit("\n", null);
+			this._reduceIndent();
+		}
 		this._emit("};\n\n", null);
 	}
 
@@ -3249,18 +3297,16 @@ class JavaScriptEmitter implements Emitter {
 		});
 		if (isStatic) {
 			if (Util.memberIsExported(funcDef.getClassDef(), funcDef.name(), funcDef.getArgumentTypes(), true)) {
-				this._emitHolderOfStatic(funcDef.getClassDef());
 				this._emit(
-					"." + funcDef.name()
+					this._namer.getNameOfClass(funcDef.getClassDef()) + "." + funcDef.name()
 					+ " = "
 					+ this._namer.getNameOfStaticFunction(funcDef.getClassDef(), funcDef.name(), funcDef.getArgumentTypes())
 					+ ";\n",
 					null);
 			}
 			if (! this._enableMinifier) {
-				this._emitHolderOfStatic(funcDef.getClassDef());
 				this._emit(
-					"." + funcDef.name() + this._mangler.mangleFunctionArguments(funcDef.getArgumentTypes())
+					this._namer.getNameOfClass(funcDef.getClassDef()) + "." + funcDef.name() + this._mangler.mangleFunctionArguments(funcDef.getArgumentTypes())
 					+ " = "
 					+ this._namer.getNameOfStaticFunction(funcDef.getClassDef(), funcDef.name(), funcDef.getArgumentTypes())
 					+ ";\n",
@@ -3346,8 +3392,7 @@ class JavaScriptEmitter implements Emitter {
 				|| initialValue instanceof RegExpLiteralExpression)) {
 			// use deferred initialization
 			this._emit("$__jsx_lazy_init(", variable.getNameToken());
-			this._emitHolderOfStatic(variable.getClassDef());
-			this._emit(", \"" + this._namer.getNameOfStaticVariable(variable.getClassDef(), variable.name()) + "\", function () {\n", variable.getNameToken());
+			this._emit(this._namer.getNameOfClass(variable.getClassDef()) + ", \"" + this._namer.getNameOfStaticVariable(variable.getClassDef(), variable.name()) + "\", function () {\n", variable.getNameToken());
 			this._advanceIndent();
 			this._emit("return ", variable.getNameToken());
 			this._emitRHSOfAssignment(initialValue, variable.getType());
@@ -3355,20 +3400,10 @@ class JavaScriptEmitter implements Emitter {
 			this._reduceIndent();
 			this._emit("});\n", variable.getNameToken());
 		} else {
-			this._emitHolderOfStatic(variable.getClassDef());
-			this._emit("." + this._namer.getNameOfStaticVariable(variable.getClassDef(), variable.name()) + " = ", variable.getNameToken());
+			this._emit(this._namer.getNameOfClass(variable.getClassDef()) + "." + this._namer.getNameOfStaticVariable(variable.getClassDef(), variable.name()) + " = ", variable.getNameToken());
 			this._emitRHSOfAssignment(initialValue, variable.getType());
 			this._emit(";\n", initialValue.getToken());
 		}
-	}
-
-	function _emitHolderOfStatic(classDef : ClassDefinition) : void {
-		if ((classDef.flags() & ClassDefinition.IS_EXPORT) != 0) {
-			var holder = this._namer.getNameOfConstructor(classDef, _Util.findFunctions(classDef, "constructor", false)[0].getArgumentTypes());
-		} else {
-			holder = this._namer.getNameOfClass(classDef);
-		}
-		this._emit(holder, null);
 	}
 
 	function _emitDefaultValueOf (type : Type) : void {

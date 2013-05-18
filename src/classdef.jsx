@@ -80,6 +80,8 @@ class ClassDefinition implements Stashable {
 	var _baseClassDef  : ClassDefinition = null;
 	var _outerClassDef : ClassDefinition = null;
 
+	var _nativeSource : Token = null;
+
 	function constructor (token : Token, className : string, flags : number, extendType : ParsedObjectType, implementTypes : ParsedObjectType[], members : MemberDefinition[], inners : ClassDefinition[], templateInners : TemplateClassDefinition[], objectTypesUsed : ParsedObjectType[], docComment : DocComment) {
 		this._parser = null;
 		this._token = token;
@@ -121,6 +123,14 @@ class ClassDefinition implements Stashable {
 
 	function setParser (parser : Parser) : void {
 		this._parser = parser;
+	}
+
+	function getNativeSource () : Token {
+		return this._nativeSource;
+	}
+
+	function setNativeSource (nativeSource : Token) : void {
+		this._nativeSource = nativeSource;
 	}
 
 	function getToken () : Token {
@@ -246,13 +256,10 @@ class ClassDefinition implements Stashable {
 		// member defintions
 		for (var i = 0; i < this._members.length; ++i) {
 			this._members[i].setClassDef(this);
-			if (this._members[i] instanceof MemberFunctionDefinition) {
-				function setClassDef(funcDef : MemberFunctionDefinition) : boolean {
-					funcDef.setClassDef(this);
-					return funcDef.forEachClosure(setClassDef);
-				}
-				(this._members[i] as MemberFunctionDefinition).forEachClosure(setClassDef);
-			}
+			this._members[i].forEachClosure(function setClassDef(funcDef) {
+				funcDef.setClassDef(this);
+				return funcDef.forEachClosure(setClassDef);
+			});
 		}
 
 		// member classes
@@ -491,12 +498,12 @@ class ClassDefinition implements Stashable {
 			var func = new MemberFunctionDefinition(
 				this._token,
 				new Token("constructor", true),
-				ClassDefinition.IS_FINAL | (this.flags() & ClassDefinition.IS_NATIVE),
+				ClassDefinition.IS_FINAL | (this.flags() & (ClassDefinition.IS_NATIVE | ClassDefinition.IS_EXPORT)),
 				Type.voidType,
 				new ArgumentDeclaration[],
 				isNative ? (null) : new LocalVariable[],
 				isNative ? (null) : new Statement[],
-				isNative ? (null) : new MemberFunctionDefinition[],
+				new MemberFunctionDefinition[],
 				this._token, /* FIXME */
 			        null);
 			func.setClassDef(this);
@@ -823,9 +830,11 @@ class ClassDefinition implements Stashable {
 		for (var i = 0; i < this._members.length; ++i) {
 			if (this._members[i].name() != member.name())
 				continue;
-			// property with the same name has been found, we can tell yes or no now
 			if (this._members[i] instanceof MemberVariableDefinition) {
-				throw new Error("logic flaw: " + member.getNotation());
+				var error = new CompileError(member.getNameToken(), "definition of the function conflicts with property '" + this._members[i].getNameToken().getValue() + "'");
+				error.addCompileNote(new CompileNote(this._members[i].getNameToken(), "property with the same name has been found here"));
+				context.errors.push(error);
+				return false;
 			}
 			if (! Util.typesAreEqual((this._members[i] as MemberFunctionDefinition).getArgumentTypes(), member.getArgumentTypes()))
 				continue;
@@ -951,13 +960,16 @@ abstract class MemberDefinition implements Stashable {
 	var _token : Token;
 	var _nameToken : Token;
 	var _flags : number;
+	var _closures : MemberFunctionDefinition[];
 	var _docComment : DocComment;
 	var _classDef : ClassDefinition;
 
-	function constructor (token : Token, nameToken : Token, flags : number, docComment : DocComment) {
+	function constructor (token : Token, nameToken : Token, flags : number, closures : MemberFunctionDefinition[], docComment : DocComment) {
 		this._token = token;
 		this._nameToken = nameToken; // may be null
 		this._flags = flags;
+		assert closures != null;
+		this._closures = closures;
 		this._docComment = docComment;
 		this._classDef = null;
 	}
@@ -989,6 +1001,18 @@ abstract class MemberDefinition implements Stashable {
 		this._flags = flags;
 	}
 
+	function getClosures () : MemberFunctionDefinition[] {
+		return this._closures;
+	}
+
+	function forEachClosure (cb : function(:MemberFunctionDefinition):boolean) : boolean {
+		if (this._closures != null)
+			for (var i = 0; i < this._closures.length; ++i)
+				if (! cb(this._closures[i]))
+					return false;
+		return true;
+	}
+
 	function getDocComment () : DocComment {
 		return this._docComment;
 	}
@@ -1006,6 +1030,31 @@ abstract class MemberDefinition implements Stashable {
 	}
 
 	abstract function getNotation() : string;
+
+	function _instantiateClosures(instantiationContext : InstantiationContext) : MemberFunctionDefinition[] {
+		var closures = new MemberFunctionDefinition[];
+		for (var i = 0; i < this._closures.length; ++i) {
+			closures[i] = this._closures[i].instantiate(instantiationContext);
+		}
+		return closures;
+	}
+
+	function _updateLinkFromExpressionToClosuresUponInstantiation(instantiatedExpr : Expression, instantiatedClosures : MemberFunctionDefinition[]) : void {
+		function onExpr(expr : Expression) : boolean {
+			if (expr instanceof FunctionExpression) {
+				for (var i = 0; i < this._closures.length; ++i) {
+					if (this._closures[i] == (expr as FunctionExpression).getFuncDef())
+						break;
+				}
+				if (i == this._closures.length)
+					throw new Error("logic flaw, cannot find the closure");
+				(expr as FunctionExpression).setFuncDef(instantiatedClosures[i]);
+			}
+			return expr.forEachExpression(onExpr);
+		}
+		onExpr(instantiatedExpr);
+	}
+
 }
 
 class MemberVariableDefinition extends MemberDefinition {
@@ -1020,8 +1069,8 @@ class MemberVariableDefinition extends MemberDefinition {
 	var _analyzeState : number;
 	var _analysisContext : AnalysisContext;
 
-	function constructor (token : Token, name : Token, flags : number, type : Type, initialValue : Expression, docComment : DocComment) {
-		super(token, name, flags, docComment);
+	function constructor (token : Token, name : Token, flags : number, type : Type, initialValue : Expression, closures : MemberFunctionDefinition[], docComment : DocComment) {
+		super(token, name, flags, closures, docComment);
 		this._type = type;
 		this._initialValue = initialValue;
 		this._analyzeState = MemberVariableDefinition.NOT_ANALYZED;
@@ -1034,8 +1083,12 @@ class MemberVariableDefinition extends MemberDefinition {
 		if (this._initialValue != null) {
 			initialValue = this._initialValue.clone();
 			initialValue.instantiate(instantiationContext);
+			var closures = this._instantiateClosures(instantiationContext);
+			this._updateLinkFromExpressionToClosuresUponInstantiation(initialValue, closures);
+		} else {
+			closures = [] : MemberFunctionDefinition[];
 		}
-		return new MemberVariableDefinition(this._token, this._nameToken, this._flags, type, initialValue, null);
+		return new MemberVariableDefinition(this._token, this._nameToken, this._flags, type, initialValue, closures, null);
 	}
 
 	override function toString () : string {
@@ -1123,26 +1176,22 @@ class MemberFunctionDefinition extends MemberDefinition implements Block {
 	var _args : ArgumentDeclaration[];
 	var _locals : LocalVariable[];
 	var _statements : Statement[];
-	var _closures : MemberFunctionDefinition[];
 	var _lastTokenOfBody : Token;
-	var _parent : MemberFunctionDefinition;
+	var _parent : MemberFunctionDefinition; // null for the outermost closure of static variable initialization expression
 	var _funcLocal : LocalVariable;
 
 	function constructor (token : Token, name : Token, flags : number, returnType : Type, args : ArgumentDeclaration[], locals : LocalVariable[], statements : Statement[], closures : MemberFunctionDefinition[], lastTokenOfBody : Token, docComment : DocComment) {
-		super(token, name, flags, docComment);
+		super(token, name, flags, closures, docComment);
 		this._returnType = returnType;
 		this._args = args;
 		this._locals = locals;
 		this._statements = statements;
-		this._closures = closures;
 		this._lastTokenOfBody = lastTokenOfBody;
 		this._parent = null;
 		this._funcLocal = null;
 		this._classDef = null;
-		if (this._closures != null) {
-			for (var i = 0; i < this._closures.length; ++i)
-				this._closures[i].setParent(this);
-		}
+		for (var i = 0; i < this._closures.length; ++i)
+			this._closures[i].setParent(this);
 	}
 
 	function isAnonymous() : boolean { // for anonymous function expression
@@ -1231,10 +1280,7 @@ class MemberFunctionDefinition extends MemberDefinition implements Block {
 				return statement.forEachStatement(onStatement);
 			}, statements);
 			// clone and rewrite the types of closures
-			var closures = new MemberFunctionDefinition[];
-			for (var i = 0; i < this._closures.length; ++i) {
-				closures[i] = this._closures[i].instantiate(instantiationContext);
-			}
+			var closures = this._instantiateClosures(instantiationContext);
 			// pop the instantiated locals
 			for (var i = 0; i < this._locals.length; ++i) {
 				if (this._locals[i].isInstantiated)
@@ -1261,24 +1307,16 @@ class MemberFunctionDefinition extends MemberDefinition implements Block {
 					(statement as FunctionStatement).setFuncDef(closures[i]);
 					return true;
 				}
-				statement.forEachExpression(function onExpr(expr : Expression) : boolean {
-					if (expr instanceof FunctionExpression) {
-						for (var i = 0; i < this._closures.length; ++i) {
-							if (this._closures[i] == (expr as FunctionExpression).getFuncDef())
-								break;
-						}
-						if (i == this._closures.length)
-							throw new Error("logic flaw, cannot find the closure");
-						(expr as FunctionExpression).setFuncDef(closures[i]);
-					}
-					return expr.forEachExpression(onExpr);
+				statement.forEachExpression(function (expr) {
+					this._updateLinkFromExpressionToClosuresUponInstantiation(expr, closures);
+					return true;
 				});
 				return statement.forEachStatement(onStatement);
 			}, statements);
 		} else {
 			locals = null;
 			statements = null;
-			closures = null;
+			closures = new MemberFunctionDefinition[];
 		}
 		// pop the instantiated args
 		for (var i = 0; i < this._args.length; ++i)
@@ -1535,10 +1573,6 @@ class MemberFunctionDefinition extends MemberDefinition implements Block {
 		return this._statements;
 	}
 
-	function getClosures () : MemberFunctionDefinition[] {
-		return this._closures;
-	}
-
 	// return an argument or a local variable
 	function getLocal (context : AnalysisContext, name : string) : LocalVariable {
 		// for the current function, check the caught variables
@@ -1616,14 +1650,6 @@ class MemberFunctionDefinition extends MemberDefinition implements Block {
 
 	function forEachStatement (cb : function(:Statement):boolean) : boolean {
 		return Util.forEachStatement(cb, this._statements);
-	}
-
-	function forEachClosure (cb : function(:MemberFunctionDefinition):boolean) : boolean {
-		if (this._closures != null)
-			for (var i = 0; i < this._closures.length; ++i)
-				if (! cb(this._closures[i]))
-					return false;
-		return true;
 	}
 
 }

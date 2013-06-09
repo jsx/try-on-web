@@ -103,11 +103,12 @@ class _Util {
 		for (var i = 0; i < classDefs.length; ++i) {
 			var classDef = classDefs[i];
 			if ((classDef.flags() & ClassDefinition.IS_NATIVE) != 0) {
-				// check that the names of native classes do not conflict, and register the ocurrences
 				var className = classDef.className();
-				assert ! countByName[className];
-				setOutputName(classDef, escapeClassNameIfInstantiated(className));
-				countByName[className] = 1;
+				if (! countByName.hasOwnProperty(className)) {
+					// FIXME t/run/264
+					setOutputName(classDef, escapeClassNameIfInstantiated(className));
+					countByName[className] = 1;
+				}
 			}
 		}
 		for (var i = 0; i < classDefs.length; ++i) {
@@ -1927,7 +1928,7 @@ class _PropertyExpressionEmitter extends _UnaryExpressionEmitter {
 		var exprType = expr.getType();
 		var identifierToken = expr.getIdentifierToken();
 		// replace methods to global function (e.g. Number.isNaN to isNaN)
-		if (expr.getExpr() instanceof ClassExpression
+		if (expr.getExpr().isClassSpecifier()
 			&& expr.getExpr().getType().getClassDef() == Type.numberType.getClassDef()) {
 			switch (identifierToken.getValue()) {
 			case "parseInt":
@@ -1938,7 +1939,7 @@ class _PropertyExpressionEmitter extends _UnaryExpressionEmitter {
 				return;
 			}
 		}
-		else if (expr.getExpr() instanceof ClassExpression
+		else if (expr.getExpr().isClassSpecifier()
 			&& expr.getExpr().getType().getClassDef() == Type.stringType.getClassDef()) {
 			switch (identifierToken.getValue()) {
 			case "encodeURIComponent":
@@ -1952,7 +1953,7 @@ class _PropertyExpressionEmitter extends _UnaryExpressionEmitter {
 
 		// emit, depending on the type
 		var classDef = expr.getHolderType().getClassDef();
-		if (expr.getExpr() instanceof ClassExpression) {
+		if (expr.getExpr().isClassSpecifier()) {
 			var name = identifierToken.getValue();
 			if (Util.isReferringToFunctionDefinition(expr)) {
 				name = this._emitter.getNamer().getNameOfStaticFunction(classDef, name, (exprType as ResolvedFunctionType).getArgumentTypes());
@@ -2091,7 +2092,7 @@ class _AssignmentExpressionEmitter extends _OperatorExpressionEmitter {
 				this._emitter._getExpressionEmitterFor(propertyExpr.getExpr()).emit(0);
 				this._emitter._emit(", ", this._expr.getToken());
 				var name : string;
-				if (propertyExpr.getExpr() instanceof ClassExpression) {
+				if (propertyExpr.getExpr().isClassSpecifier()) {
 					var classDef = propertyExpr.getHolderType().getClassDef();
 					name = this._emitter.getNamer().getNameOfClass(classDef) + "." + this._emitter.getNamer().getNameOfStaticVariable(classDef, propertyExpr.getIdentifierToken().getValue());
 				} else {
@@ -2327,7 +2328,7 @@ class _ArrayExpressionEmitter extends _OperatorExpressionEmitter {
 		var emitted = false;
 		if (secondExpr instanceof StringLiteralExpression) {
 			var propertyName = Util.decodeStringLiteral(secondExpr.getToken().getValue());
-			if (propertyName.match(/^[\$_A-Za-z][\$_0-9A-Za-z]*$/) != null) {
+			if (propertyName.match(/^[\$_A-Za-z][\$_0-9A-Za-z]*$/) != null && !Util.isECMA262Reserved(propertyName)) {
 				this._emitter._emit(".", this._expr.getToken());
 				this._emitter._emit(propertyName, secondExpr.getToken());
 				emitted = true;

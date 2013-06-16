@@ -2825,17 +2825,17 @@ class JavaScriptEmitter implements Emitter {
 		var files = new Map.<string>;
 		var sourceMapper = this._sourceMapper;
 		if(sourceMapper != null) {
-			files[sourceMapper.getSourceMappingFile()] = sourceMapper.generate();
-			// copy mapped source files for browsers to get them
-			var fileMap = sourceMapper.getSourceFileMap();
-			for (var filename in fileMap) {
-				var dest = fileMap[filename];
-				// reading the file may failed because it is not resolved.
+			sourceMapper.getSourceFiles().forEach((filename) -> {
 				try {
-					files[dest] = this._platform.load(filename);
+					sourceMapper.setSourceContent(filename, this._platform.load(filename));
 				}
-				catch (e : Error) { }
-			}
+				catch (e : Error) {
+					if (JSX.DEBUG) {
+						this._platform.error("XXX: " + e.toString());
+					}
+				}
+			});
+			files[sourceMapper.getSourceMappingFile()] = sourceMapper.generate();
 		}
 		return files;
 	}
@@ -2935,8 +2935,7 @@ class JavaScriptEmitter implements Emitter {
 			});
 		}
 		for (var i = 0; i < classDefs.length; ++i) {
-			if ((classDefs[i].flags() & ClassDefinition.IS_NATIVE) == 0)
-				this._emitClassDefinition(classDefs[i]);
+			this._emitClassDefinition(classDefs[i]);
 		}
 		for (var i = 0; i < classDefs.length; ++i)
 			this._emitStaticInitializationCode(classDefs[i]);
@@ -3030,6 +3029,14 @@ class JavaScriptEmitter implements Emitter {
 
 
 	function _emitClassDefinition (classDef : ClassDefinition) : void {
+		if ((classDef.flags() & ClassDefinition.IS_NATIVE) != 0) {
+			// bind native object to JSX class
+			if (classDef.getNativeSource() != null) {
+				this._emit("var " + this._namer.getNameOfClass(classDef) + " = " + Util.decodeStringLiteral(classDef.getNativeSource().getValue()) + ";\n", classDef.getNativeSource());
+			}
+			return;
+		}
+
 		this._emittingClass = classDef;
 		try {
 
@@ -3065,11 +3072,6 @@ class JavaScriptEmitter implements Emitter {
 			this._emit("var js = { global: function () { return this; }() };\n", null);
 			return;
 		}
-		// bind native object to JSX class
-		if (classDef.getNativeSource() != null) {
-			this._emit("var " + this._namer.getNameOfClass(classDef) + " = " + Util.decodeStringLiteral(classDef.getNativeSource().getValue()) + ";\n", classDef.getNativeSource());
-		}
-
 		if ((classDef.flags() & ClassDefinition.IS_NATIVE) != 0)
 			return;
 		// normal handling
@@ -3433,25 +3435,7 @@ class JavaScriptEmitter implements Emitter {
 	}
 
 	function _addSourceMapping(token : Token) : void {
-		var lastNewLinePos = this._output.lastIndexOf("\n") + 1;
-		var genColumn = (this._output.length - lastNewLinePos);
-		var genPos = {
-			line: this._output.match(/^/mg).length,
-			column: genColumn
-		};
-		var tokenValue = null : Nullable.<string>;
-		var origPos = null : Map.<number>;
-		if (! Number.isNaN(token.getLineNumber())) {
-			origPos = {
-				line: token.getLineNumber(),
-				column: token.getColumnNumber()
-			};
-			if (token.isIdentifier()) {
-				tokenValue = token.getValue();
-			}
-		}
-		var filename = token.getFilename();
-		this._sourceMapper.add(genPos, origPos, filename, tokenValue);
+		this._sourceMapper.add(this._output, token.getLineNumber(), token.getColumnNumber(), token.isIdentifier() ? token.getValue() : null, token.getFilename());
 	}
 
 	function _emit (str : string, token : Token) : void {

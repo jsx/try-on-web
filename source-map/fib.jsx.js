@@ -1,4 +1,4 @@
-// generatedy by JSX compiler 0.9.38 (2013-06-09 00:22:29 -0700; b020f4962bdfea6742b8529baaabbe5303698850)
+// generatedy by JSX compiler 0.9.40 (2013-06-15 20:20:23 -0700; 9a4e853c9b1397f8255469af1d0a0b150c0d97b7)
 var JSX = {};
 (function (JSX) {
 /**
@@ -264,4 +264,4 @@ document.addEventListener("DOMContentLoaded", $__jsx_onload);
 
 })(JSX);
 
-//@ sourceMappingURL=fib.jsx.js.mapping
+//# sourceMappingURL=fib.jsx.js.mapping

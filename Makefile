@@ -9,7 +9,7 @@ update:
 	@echo build finished!
 
 ship:
-	git add .
+	git add -A .
 	git commit -m "update"
 	git push origin gh-pages
 

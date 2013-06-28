@@ -1,4 +1,4 @@
-// generatedy by JSX compiler 0.9.40 (2013-06-15 20:20:23 -0700; 9a4e853c9b1397f8255469af1d0a0b150c0d97b7)
+// generatedy by JSX compiler 0.9.47 (2013-06-28 14:31:45 -0700; 517cd62770065c815b4ea9886d407afeac3c7579)
 var JSX = {};
 (function (JSX) {
 /**
@@ -125,7 +125,7 @@ function Fib$fib1$I(n) {
 	if (n <= 2) {
 		return 1;
 	} else {
-		return Fib$fib1$I(n - 1) + Fib$fib1$I(n - 2);
+		return Fib$fib1$I((n - 1 | 0)) + Fib$fib1$I((n - 2 | 0));
 	}
 };
 
@@ -164,7 +164,7 @@ function Fib$fib4$I(n) {
 	case 2:
 		return 1;
 	default:
-		return Fib$fib4$I(n - 1) + Fib$fib4$I(n - 2);
+		return Fib$fib4$I((n - 1 | 0)) + Fib$fib4$I((n - 2 | 0));
 	}
 };
 
@@ -183,10 +183,10 @@ function _Main$0$main$AS(args) {
 		}
 		return v;
 	}(args[0])) : 10);
-	console.log("fib1(" + (n + "") + ") = " + (Fib$fib1$I(n) + ""));
+	console.log("fib1(" + (n + "") + ") = " + (Fib$fib1$I((n | 0)) + ""));
 	console.log("fib2(" + (n + "") + ") = " + (Fib$fib2$N(n) + ""));
-	console.log("fib3(" + (n + "") + ") = " + (Fib$fib3$I(n) + ""));
-	console.log("fib4(" + (n + "") + ") = " + (Fib$fib4$I(n) + ""));
+	console.log("fib3(" + (n + "") + ") = " + (Fib$fib3$I((n | 0)) + ""));
+	console.log("fib4(" + (n + "") + ") = " + (Fib$fib4$I((n | 0)) + ""));
 };
 
 _Main$0.main = _Main$0$main$AS;
@@ -643,7 +643,7 @@ function Timer$setTimeout$F$V$N(callback, intervalMS) {
 	return (function ($v) {
 		if (! ($v == null || typeof $v === "function")) {
 			debugger;
-			throw new Error("[/Users/gfx/repo/try-on-web/JSX/lib/js/timer.jsx:34:40] detected invalid cast, value is not a function or null\n        return (js.global[\"setTimeout\"] as __noconvert__ function(:function():void,:int) : TimerHandle)(callback, intervalMS);\n                                        ^^\n");
+			throw new Error("[/Users/gfx/repo/try-on-web/JSX/lib/js/timer.jsx:34:40] detected invalid cast, value is not a function or null\n        return (js.global[\"setTimeout\"] as __noconvert__ function(:function():void,:number) : TimerHandle)(callback, intervalMS);\n                                        ^^\n");
 		}
 		return $v;
 	}(js.global.setTimeout))(callback, intervalMS);
@@ -667,7 +667,7 @@ function Timer$setInterval$F$V$N(callback, intervalMS) {
 	return (function ($v) {
 		if (! ($v == null || typeof $v === "function")) {
 			debugger;
-			throw new Error("[/Users/gfx/repo/try-on-web/JSX/lib/js/timer.jsx:42:41] detected invalid cast, value is not a function or null\n        return (js.global[\"setInterval\"] as __noconvert__ function(:function():void,:int) : TimerHandle)(callback, intervalMS);\n                                         ^^\n");
+			throw new Error("[/Users/gfx/repo/try-on-web/JSX/lib/js/timer.jsx:42:41] detected invalid cast, value is not a function or null\n        return (js.global[\"setInterval\"] as __noconvert__ function(:function():void,:number) : TimerHandle)(callback, intervalMS);\n                                         ^^\n");
 		}
 		return $v;
 	}(js.global.setInterval))(callback, intervalMS);
@@ -1067,7 +1067,7 @@ JSX.runTests = function (sourceFile, tests) {
 	if(tests.length === 0) {
 		var p = testClass.prototype;
 		for (var m in p) {
-			if (p[m] instanceof Function && m.match(/^test\w+$/)) {
+			if (p[m] instanceof Function && m.match(/^test\w*$/)) {
 				tests.push(m);
 			}
 		}

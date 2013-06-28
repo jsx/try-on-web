@@ -1268,9 +1268,15 @@ class _AssertStatementEmitter extends _StatementEmitter {
 
 	override function emit () : void {
 		var condExpr = this._statement._expr;
-		this._emitter._emitAssertion(function () {
-			this._emitter._getExpressionEmitterFor(condExpr).emit(0);
-		}, condExpr.getToken(), "assertion failure");
+		if (this._statement._msgExpr != null) {
+			this._emitter._emitAssertionWithMsg(function () {
+				this._emitter._getExpressionEmitterFor(condExpr).emit(0);
+			}, condExpr.getToken(), "assertion failure", this._statement._msgExpr);
+		} else {
+			this._emitter._emitAssertion(function () {
+				this._emitter._getExpressionEmitterFor(condExpr).emit(0);
+			}, condExpr.getToken(), "assertion failure");
+		}
 	}
 
 }
@@ -2268,20 +2274,6 @@ class _BinaryNumberExpressionEmitter extends _OperatorExpressionEmitter {
 		this._expr = expr;
 	}
 
-	override function emit (outerOpPrecedence : number) : void {
-		// optimize "1 * x" => x
-		if (this._expr.getToken().getValue() == "*") {
-			if (this._emitIfEitherIs(outerOpPrecedence, function (expr1, expr2) {
-				return ((expr1 instanceof IntegerLiteralExpression || expr1 instanceof NumberLiteralExpression) && (expr1.getToken().getValue() as number) == 1)
-					? expr2 : null;
-			})) {
-				return;
-			}
-		}
-		// normal
-		super.emit(outerOpPrecedence);
-	}
-
 	override function _emit () : void {
 		var op = this._expr.getToken().getValue();
 		this._emitter._emitWithNullableGuard(this._expr.getFirstExpr(), _BinaryNumberExpressionEmitter._operatorPrecedence[op]);
@@ -2776,6 +2768,7 @@ class JavaScriptEmitter implements Emitter {
 	var _fileFooter =                     "})(JSX);\n";
 
 	var _platform : Platform;
+	var _runenv : string;
 
 	// properties setup by _emitInit
 	var _output : string;
@@ -2786,7 +2779,6 @@ class JavaScriptEmitter implements Emitter {
 	var _emittingFunction : MemberFunctionDefinition;
 
 	// modes
-	var _enableSourceMap : boolean;
 	var _enableProfiler : boolean;
 	var _enableMinifier : boolean;
 	var _enableRunTimeTypeCheck = true;
@@ -2804,7 +2796,10 @@ class JavaScriptEmitter implements Emitter {
 	function isJsModule(classDef : ClassDefinition) : boolean {
 		return classDef.className() == "js"
 			&& classDef.getToken().getFilename() == Util.resolvePath(this._platform.getRoot() + "/lib/js/js.jsx");
+	}
 
+	override function setRunEnv (runenv : string) : void {
+		this._runenv = runenv;
 	}
 
 	override function getSearchPaths () : string[] {
@@ -2815,16 +2810,12 @@ class JavaScriptEmitter implements Emitter {
 		if (name == null) return;
 
 		this._outputFile = Util.resolvePath(name);
-
-		if(this._enableSourceMap) {
-			this._sourceMapper = new SourceMapper(this._platform.getRoot(), name);
-		}
 	}
 
 	override function getSourceMappingFiles() : Map.<string> {
 		var files = new Map.<string>;
 		var sourceMapper = this._sourceMapper;
-		if(sourceMapper != null) {
+		if(sourceMapper != null && this._outputFile != null) {
 			sourceMapper.getSourceFiles().forEach((filename) -> {
 				try {
 					sourceMapper.setSourceContent(filename, this._platform.load(filename));
@@ -2840,10 +2831,6 @@ class JavaScriptEmitter implements Emitter {
 		return files;
 	}
 
-	function setSourceMapper(gen : SourceMapper) : void {
-		this._sourceMapper = gen;
-	}
-
 	function getMangler() : _Mangler {
 		return this._mangler;
 	}
@@ -2857,11 +2844,13 @@ class JavaScriptEmitter implements Emitter {
 	}
 
 	override function getEnableSourceMap() : boolean {
-		return this._enableSourceMap;
+		return this._sourceMapper != null;
 	}
 
 	override function setEnableSourceMap (enable : boolean) : void {
-		this._enableSourceMap = enable;
+		this._sourceMapper = enable
+			? new SourceMapper(this._platform.getRoot(), this._outputFile, this._runenv)
+			: null;
 	}
 
 	override function setEnableProfiler (enable : boolean) : void {
@@ -2879,7 +2868,7 @@ class JavaScriptEmitter implements Emitter {
 	override function emit (classDefs : ClassDefinition[]) : void {
 
 		// current impl. of _Minifier.minifyJavaScript does not support transforming source map
-		assert ! (this._enableMinifier && this._enableSourceMap);
+		assert ! (this._enableMinifier && this._sourceMapper);
 
 		_Util.setOutputClassNames(classDefs);
 
@@ -2904,7 +2893,6 @@ class JavaScriptEmitter implements Emitter {
 	function _emitInit() : void {
 		this._output = "";
 		this._outputEndsWithReturn = true;
-		this._outputFile = null;
 		this._indent = 0;
 		this._emittingClass = null;
 		this._emittingFunction = null;
@@ -3172,8 +3160,12 @@ class JavaScriptEmitter implements Emitter {
 	}
 
 	override function getOutput () : string {
-		// do not add any lines before this._output for source-map
-		var output = this._output + "\n";
+		var output = "";
+		// do not add any lines except source-map header before this._output for source-map
+		if (this._sourceMapper) {
+			output += this._sourceMapper.getSourceMapHeader();
+		}
+		output += this._output + "\n";
 		if (this._enableProfiler) {
 			output += this._platform.load(this._platform.getRoot() + "/src/js/profiler.js");
 		}
@@ -3182,7 +3174,7 @@ class JavaScriptEmitter implements Emitter {
 		}
 		output += this._fileFooter;
 		if (this._sourceMapper) {
-			output += this._sourceMapper.magicToken();
+			output += this._sourceMapper.getSourceMapFooter();
 		}
 		if (this._enableMinifier) {
 			output = _Minifier.minifyJavaScript(output);
@@ -3409,19 +3401,6 @@ class JavaScriptEmitter implements Emitter {
 		}
 	}
 
-	function _emitDefaultValueOf (type : Type) : void {
-		if (type.equals(Type.booleanType))
-			this._emit("false", null);
-		else if (type.equals(Type.integerType) || type.equals(Type.numberType))
-			this._emit("0", null);
-		else if (type.equals(Type.stringType))
-			this._emit("\"\"", null);
-		else if (type instanceof NullableType)
-			this._emit("null", null);
-		else
-			this._emit("null", null);
-	}
-
 	function _emitStatements (statements : Statement[]) : void {
 		this._advanceIndent();
 		for (var i = 0; i < statements.length; ++i)
@@ -3613,7 +3592,7 @@ class JavaScriptEmitter implements Emitter {
 			}
 			// emit with nullable guard if the formal argument is not nullable
 			if (argType != null && ! Type.nullType.isConvertibleTo(argType)) {
-				this._emitWithNullableGuard(args[i], 0);
+				this._emitRHSOfAssignment(args[i], argType);
 			} else {
 				this._getExpressionEmitterFor(args[i]).emit(0);
 			}
@@ -3630,6 +3609,21 @@ class JavaScriptEmitter implements Emitter {
 		var s = Util.makeErrorMessage(this._platform, message, token.getFilename(), token.getLineNumber(), token.getColumnNumber(), token.getValue().length);
 		var err = Util.format('throw new Error(%1);\n', [Util.encodeStringLiteral(s)]);
 		this._emit(err, token);
+		this._reduceIndent();
+		this._emit("}\n", null);
+	}
+
+	function _emitAssertionWithMsg (emitTestExpr : function():void, token : Token, message : string, msgExpr : Expression) : void {
+		this._emit("if (! (", token);
+		emitTestExpr();
+		this._emit(")) {\n", null);
+		this._advanceIndent();
+		this._emit("debugger;\n", null);
+		// any other better way?
+		var s = Util.makeErrorMessage(this._platform, message + ": {MSG}", token.getFilename(), token.getLineNumber(), token.getColumnNumber(), token.getValue().length).split("{MSG}");
+		this._emit(Util.format('throw new Error(%1 + ', [Util.encodeStringLiteral(s[0])]), token);
+		this._getExpressionEmitterFor(msgExpr).emit(0);
+		this._emit(Util.format(' + %1);\n', [Util.encodeStringLiteral(s[1])]), token);
 		this._reduceIndent();
 		this._emit("}\n", null);
 	}

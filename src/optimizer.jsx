@@ -1727,16 +1727,7 @@ class _FoldConstantCommand extends _FunctionOptimizeCommand {
 			this._foldNumericBinaryExpression(expr as BinaryExpression, replaceCb);
 
 		} else if (expr instanceof AsExpression) {
-
-			// convert "literal as string"
-			if (expr.getType().equals(Type.stringType)) {
-				var baseExpr = (expr as AsExpression).getExpr();
-				if (baseExpr instanceof BooleanLiteralExpression || baseExpr instanceof NumberLiteralExpression || baseExpr instanceof IntegerLiteralExpression) {
-					replaceCb(
-						new StringLiteralExpression(
-							new Token(Util.encodeStringLiteral(baseExpr.getToken().getValue()), false)));
-				}
-			}
+			this._foldAsExpression(expr as AsExpression, replaceCb);
 
 		} else if (expr instanceof LogicalNotExpression) {
 
@@ -1807,23 +1798,44 @@ class _FoldConstantCommand extends _FunctionOptimizeCommand {
 				return this._foldNumericBinaryExpressionOfConstants(expr, replaceCb);
 			}
 
-		// if either operand is zero, then...
+		// if either operand is zero or one, then...
 		function exprIsZero(expr : Expression) : boolean {
 			return expr instanceof NumberLiteralExpression && expr.getToken().getValue() as number == 0;
 		}
+		function exprIsOne(expr : Expression) : boolean {
+			return expr instanceof NumberLiteralExpression && expr.getToken().getValue() as number == 1;
+		}
 		switch (expr.getToken().getValue()) {
 		case "+":
-			if (exprIsZero(expr.getFirstExpr())) {
+			if (exprIsZero(expr.getFirstExpr())) { // 0 + x -> x
 				replaceCb(expr.getSecondExpr());
 				return true;
-			} else if (exprIsZero(expr.getSecondExpr())) {
+			} else if (exprIsZero(expr.getSecondExpr())) { // x + 0 -> x
 				replaceCb(expr.getFirstExpr());
 				return true;
 			}
 			break;
-		case "-":
-			// TODO should we rewrite "0 - n"?
-			if (exprIsZero(expr.getSecondExpr())) {
+		case "-": // x - 0 -> x
+			if (exprIsZero(expr.getFirstExpr())) { // 0 - x -> -x
+				replaceCb(new SignExpression(new Token("-", false), expr.getSecondExpr()));
+				return true;
+			}
+			else if (exprIsZero(expr.getSecondExpr())) { // x - 0 -> x
+				replaceCb(expr.getFirstExpr());
+				return true;
+			}
+			break;
+		case "*": // x * 1 or 1 * x -> x
+			if (exprIsOne(expr.getFirstExpr())) {
+				replaceCb(expr.getSecondExpr());
+				return true;
+			} else if (exprIsOne(expr.getSecondExpr())) {
+				replaceCb(expr.getFirstExpr());
+				return true;
+			}
+			break;
+		case "/": // x / 1 -> x
+			if (exprIsOne(expr.getSecondExpr())) {
 				replaceCb(expr.getFirstExpr());
 				return true;
 			}
@@ -1920,6 +1932,81 @@ class _FoldConstantCommand extends _FunctionOptimizeCommand {
 		return null;
 	}
 
+	function _foldAsExpression(expr : AsExpression, replaceCb : function(:Expression):void) : void {
+		var baseExpr = expr.getExpr();
+		if (expr.getType().equals(Type.stringType)) { // as string
+			if (baseExpr.getType().equals(Type.stringType)) {
+				this.log("folding type cast: string as string");
+				replaceCb(baseExpr);
+			}
+			else if (baseExpr instanceof BooleanLiteralExpression || baseExpr instanceof NumberLiteralExpression || baseExpr instanceof IntegerLiteralExpression) {
+				this.log("folding type cast: primitive literal as string");
+				replaceCb(
+					new StringLiteralExpression(
+						new Token(Util.encodeStringLiteral(baseExpr.getToken().getValue()), false)));
+			}
+		}
+		else if (expr.getType().equals(Type.numberType)) { // as number
+			if (baseExpr.getType().equals(Type.numberType)) {
+				this.log("folding type cast: number as number");
+				replaceCb(baseExpr);
+			}
+			else if (baseExpr instanceof StringLiteralExpression) {
+				this.log("folding type cast: string literal as number");
+				replaceCb(
+					new NumberLiteralExpression(
+						new Token(Util.decodeStringLiteral(baseExpr.getToken().getValue()) as number as string, false)));
+			}
+			else if (baseExpr instanceof IntegerLiteralExpression) {
+				this.log("folding type cast: int literal as number");
+				replaceCb(
+					new NumberLiteralExpression(
+						new Token(baseExpr.getToken().getValue() as number as string, false)));
+			}
+		}
+		else if (expr.getType().equals(Type.integerType)) { // as int
+			if (baseExpr.getType().equals(Type.integerType)) {
+				this.log("folding type cast: int as int");
+				replaceCb(baseExpr);
+			}
+			else if (baseExpr instanceof StringLiteralExpression) {
+				this.log("folding type cast: string literal as int");
+				replaceCb(
+					new IntegerLiteralExpression(
+						new Token(Util.decodeStringLiteral(baseExpr.getToken().getValue()) as int as string, false)));
+			}
+			else if (baseExpr instanceof NumberLiteralExpression) {
+				this.log("folding type cast: number literal as int");
+				replaceCb(
+					new IntegerLiteralExpression(
+						new Token(baseExpr.getToken().getValue() as int as string, false)));
+			}
+		}
+		else if (expr.getType().equals(Type.booleanType)) { // as boolean
+			if (baseExpr.getType().equals(Type.booleanType)) {
+				this.log("folding type cast: boolean as boolean");
+				replaceCb(baseExpr);
+			}
+			else if (baseExpr instanceof StringLiteralExpression) {
+				this.log("folding type cast: string literal as boolean");
+				replaceCb(
+					new BooleanLiteralExpression(
+						new Token(Util.decodeStringLiteral(baseExpr.getToken().getValue()) as boolean as string, false)));
+			}
+			else if (baseExpr instanceof NumberLiteralExpression) {
+				this.log("folding type cast: number literal as boolean");
+				replaceCb(
+					new BooleanLiteralExpression(
+						new Token(baseExpr.getToken().getValue() as number ? "true" : "false", false)));
+			}
+			else if (baseExpr instanceof IntegerLiteralExpression) {
+				this.log("folding type cast: integer literal as boolean");
+				replaceCb(
+					new BooleanLiteralExpression(
+						new Token(baseExpr.getToken().getValue() as int ? "true" : "false", false)));
+			}
+		}
+	}
 }
 
 class _DeadCodeEliminationOptimizeCommand extends _FunctionOptimizeCommand {
@@ -2134,26 +2221,25 @@ class _DeadCodeEliminationOptimizeCommand extends _FunctionOptimizeCommand {
 		var onExpr = function (expr : Expression, rewriteCb : function(:Expression):void) : boolean {
 			if (expr instanceof AssignmentExpression) {
 				var assignExpr = expr as AssignmentExpression;
-				if (assignExpr.getToken().getValue() == "="
-					&& assignExpr.getFirstExpr() instanceof LocalExpression) {
-						onExpr(assignExpr.getSecondExpr(), function (assignExpr : AssignmentExpression) : function(:Expression):void {
-							return function (expr) {
-								assignExpr.setSecondExpr(expr);
-							};
-						}(assignExpr));
-						var lhsLocal = (assignExpr.getFirstExpr() as LocalExpression).getLocal();
-						for (var i = 0; i < lastAssignExpr.length; ++i) {
-							if (lastAssignExpr[i].first == lhsLocal) {
-								break;
-							}
+				if (assignExpr.getToken().getValue() == "=" && assignExpr.getFirstExpr() instanceof LocalExpression) {
+					onExpr(assignExpr.getSecondExpr(), function (assignExpr : AssignmentExpression) : function(:Expression):void {
+						return function (expr) {
+							assignExpr.setSecondExpr(expr);
+						};
+					}(assignExpr));
+					var lhsLocal = (assignExpr.getFirstExpr() as LocalExpression).getLocal();
+					for (var i = 0; i < lastAssignExpr.length; ++i) {
+						if (lastAssignExpr[i].first == lhsLocal) {
+							break;
 						}
-						if (i != lastAssignExpr.length) {
-							this.log("eliminating dead store to: " + lhsLocal.getName().getValue());
-							lastAssignExpr[i].third(lastAssignExpr[i].second.getSecondExpr());
-						}
-						lastAssignExpr[i] = new Triple.<LocalVariable, AssignmentExpression, function(:Expression):void>(lhsLocal, expr as AssignmentExpression, rewriteCb);
-						return true;
 					}
+					if (i != lastAssignExpr.length) {
+						this.log("eliminating dead store to: " + lhsLocal.getName().getValue());
+						lastAssignExpr[i].third(lastAssignExpr[i].second.getSecondExpr());
+					}
+					lastAssignExpr[i] = new Triple.<LocalVariable, AssignmentExpression, function(:Expression):void>(lhsLocal, expr as AssignmentExpression, rewriteCb);
+					return true;
+				}
 			} else if (expr instanceof LocalExpression) {
 				for (var i = 0; i < lastAssignExpr.length; ++i) {
 					if (lastAssignExpr[i].first == (expr as LocalExpression).getLocal()) {
@@ -2178,6 +2264,13 @@ class _DeadCodeEliminationOptimizeCommand extends _FunctionOptimizeCommand {
 			} else if (expr instanceof NewExpression) {
 				Util.forEachExpression(onExpr, (expr as NewExpression).getArguments());
 				lastAssignExpr.splice(0, lastAssignExpr.length);
+				return true;
+			} else if (expr instanceof LogicalExpression || expr instanceof ConditionalExpression) {
+				expr.forEachExpression(function (expr, rewriteCb) {
+					var result = onExpr(expr, rewriteCb);
+					lastAssignExpr.splice(0, lastAssignExpr.length);
+					return result;
+				});
 				return true;
 			}
 			return expr.forEachExpression(onExpr);
@@ -2466,28 +2559,27 @@ class _InlineOptimizeCommand extends _FunctionOptimizeCommand {
 			   && this._lhsHasNoSideEffects((expr as AssignmentExpression).getFirstExpr())
 			&& (expr as AssignmentExpression).getSecondExpr() instanceof CallExpression) {
 
-				// inline if the statement is an assignment of a single call expression into a local variable
-				var args = this._getArgsAndThisIfCallExprIsInlineable((expr as AssignmentExpression).getSecondExpr() as CallExpression, false);
-				if (args != null) {
-					stmtIndex = this._expandCallingFunction(funcDef, statements, stmtIndex, _DetermineCalleeCommand.getCallingFuncDef((expr as AssignmentExpression).getSecondExpr() as CallExpression), args);
-					var stmt = statements[stmtIndex - 1];
-					if (stmt instanceof ReturnStatement) {
-						var rhsExpr = (stmt as ReturnStatement).getExpr();
-					} else if (stmt instanceof ExpressionStatement) {
-						rhsExpr = (stmt as ExpressionStatement).getExpr();
-					} else {
-						return false;
-					}
-					var lastExpr = new AssignmentExpression(
-						expr.getToken(),
-						(expr as AssignmentExpression).getFirstExpr(),
-						rhsExpr);
-					statements[stmtIndex - 1] = new ExpressionStatement(lastExpr);
-					cb(stmtIndex);
-					return true;
+			// inline if the statement is an assignment of a single call expression into a local variable
+			var args = this._getArgsAndThisIfCallExprIsInlineable((expr as AssignmentExpression).getSecondExpr() as CallExpression, false);
+			if (args != null) {
+				stmtIndex = this._expandCallingFunction(funcDef, statements, stmtIndex, _DetermineCalleeCommand.getCallingFuncDef((expr as AssignmentExpression).getSecondExpr() as CallExpression), args);
+				var stmt = statements[stmtIndex - 1];
+				if (stmt instanceof ReturnStatement) {
+					var rhsExpr = (stmt as ReturnStatement).getExpr();
+				} else if (stmt instanceof ExpressionStatement) {
+					rhsExpr = (stmt as ExpressionStatement).getExpr();
+				} else {
+					return false;
 				}
-
+				var lastExpr = new AssignmentExpression(
+					expr.getToken(),
+					(expr as AssignmentExpression).getFirstExpr(),
+					rhsExpr);
+				statements[stmtIndex - 1] = new ExpressionStatement(lastExpr);
+				cb(stmtIndex);
+				return true;
 			}
+		}
 
 		return false;
 	}
@@ -3249,7 +3341,9 @@ class _UnboxOptimizeCommand extends _FunctionOptimizeCommand {
 			}
 			// check the rest
 			if (statement instanceof FunctionStatement) {
-				(statement as FunctionStatement).getFuncDef().forEachStatement(onStatement);
+				if (! (statement as FunctionStatement).getFuncDef().forEachStatement(onStatement)) {
+					return false;
+				}
 			}
 			if (! statement.forEachExpression(onExpr)) {
 				return false;

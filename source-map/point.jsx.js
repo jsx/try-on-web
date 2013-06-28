@@ -1,4 +1,4 @@
-// generatedy by JSX compiler 0.9.40 (2013-06-15 20:20:23 -0700; 9a4e853c9b1397f8255469af1d0a0b150c0d97b7)
+// generatedy by JSX compiler 0.9.47 (2013-06-28 14:31:45 -0700; 517cd62770065c815b4ea9886d407afeac3c7579)
 var JSX = {};
 (function (JSX) {
 /**
@@ -201,7 +201,7 @@ JSX.runTests = function (sourceFile, tests) {
 	if(tests.length === 0) {
 		var p = testClass.prototype;
 		for (var m in p) {
-			if (p[m] instanceof Function && m.match(/^test\w+$/)) {
+			if (p[m] instanceof Function && m.match(/^test\w*$/)) {
 				tests.push(m);
 			}
 		}

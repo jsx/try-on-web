@@ -1,4 +1,4 @@
-// generatedy by JSX compiler 0.9.40 (2013-06-15 20:20:23 -0700; 9a4e853c9b1397f8255469af1d0a0b150c0d97b7)
+// generatedy by JSX compiler 0.9.47 (2013-06-28 14:31:45 -0700; 517cd62770065c815b4ea9886d407afeac3c7579)
 var JSX = {};
 (function (JSX) {
 /**
@@ -562,7 +562,7 @@ function AOBench$render$LAOBench$F$IIIIIV$II($this, fill, w, h) {
 			r = AOBench$clamp$N(col.x);
 			g = AOBench$clamp$N(col.y);
 			b = AOBench$clamp$N(col.z);
-			fill(x, y, r, g, b);
+			fill((x | 0), (y | 0), (r | 0), (g | 0), (b | 0));
 		}
 	}
 };
@@ -603,7 +603,7 @@ function AOBench$render_0$LAOBench$F$IIIIIV$II($this, fill, w, h) {
 			r = AOBench$clamp$N(col.x);
 			g = AOBench$clamp$N(col.y);
 			b = AOBench$clamp$N(col.z);
-			fill(x, y, r, g, b);
+			fill((x | 0), (y | 0), (r | 0), (g | 0), (b | 0));
 		}
 	}
 };
@@ -628,7 +628,7 @@ function _Main$main$AS(args) {
 	AOBench$render_0$LAOBench$F$IIIIIV$II(ao, (function (x, y, r, g, b) {
 		ctx.fillStyle = "rgb(" + (r + "") + "," + (g + "") + "," + (b + "") + ")";
 		ctx.fillRect(x, y, 1, 1);
-	}), canvas.width, canvas.height);
+	}), (canvas.width | 0), (canvas.height | 0));
 	t1 = Date.now();
 	d = t1 - t0;
 	dom.document.getElementById("status").innerHTML = "Time = " + (d + "") + "[ms]";
@@ -1178,7 +1178,7 @@ JSX.runTests = function (sourceFile, tests) {
 	if(tests.length === 0) {
 		var p = testClass.prototype;
 		for (var m in p) {
-			if (p[m] instanceof Function && m.match(/^test\w+$/)) {
+			if (p[m] instanceof Function && m.match(/^test\w*$/)) {
 				tests.push(m);
 			}
 		}

@@ -1,4 +1,4 @@
-// generatedy by JSX compiler 0.9.40 (2013-06-15 20:20:23 -0700; 9a4e853c9b1397f8255469af1d0a0b150c0d97b7)
+// generatedy by JSX compiler 0.9.47 (2013-06-28 14:31:45 -0700; 517cd62770065c815b4ea9886d407afeac3c7579)
 var JSX = {};
 (function (JSX) {
 /**
@@ -114,7 +114,7 @@ function Fib$fib1$I(n) {
 	if (n <= 2) {
 		return 1;
 	} else {
-		return Fib$fib1$I(n - 1) + Fib$fib1$I(n - 2);
+		return Fib$fib1$I((n - 1 | 0)) + Fib$fib1$I((n - 2 | 0));
 	}
 };
 
@@ -153,7 +153,7 @@ function Fib$fib4$I(n) {
 	case 2:
 		return 1;
 	default:
-		return Fib$fib4$I(n - 1) + Fib$fib4$I(n - 2);
+		return Fib$fib4$I((n - 1 | 0)) + Fib$fib4$I((n - 2 | 0));
 	}
 };
 
@@ -172,10 +172,10 @@ function _Main$main$AS(args) {
 		}
 		return v;
 	}(args[0])) : 10);
-	console.log("fib1(" + (n + "") + ") = " + (Fib$fib1$I(n) + ""));
+	console.log("fib1(" + (n + "") + ") = " + (Fib$fib1$I((n | 0)) + ""));
 	console.log("fib2(" + (n + "") + ") = " + (Fib$fib2$N(n) + ""));
-	console.log("fib3(" + (n + "") + ") = " + (Fib$fib3$I(n) + ""));
-	console.log("fib4(" + (n + "") + ") = " + (Fib$fib4$I(n) + ""));
+	console.log("fib3(" + (n + "") + ") = " + (Fib$fib3$I((n | 0)) + ""));
+	console.log("fib4(" + (n + "") + ") = " + (Fib$fib4$I((n | 0)) + ""));
 };
 
 _Main.main = _Main$main$AS;
@@ -225,7 +225,7 @@ JSX.runTests = function (sourceFile, tests) {
 	if(tests.length === 0) {
 		var p = testClass.prototype;
 		for (var m in p) {
-			if (p[m] instanceof Function && m.match(/^test\w+$/)) {
+			if (p[m] instanceof Function && m.match(/^test\w*$/)) {
 				tests.push(m);
 			}
 		}

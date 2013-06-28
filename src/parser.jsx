@@ -39,11 +39,7 @@ class Token {
 	var _lineNumber : number;
 	var _columnNumber : number;
 
-	function constructor (value : string, isIdentifier : boolean) {
-		this(value, isIdentifier, null, NaN, NaN);
-	}
-
-	function constructor (value : string, isIdentifier : boolean, filename : Nullable.<string>, lineNumber : number, columnNumber : number) {
+	function constructor (value : string, isIdentifier : boolean = false, filename : Nullable.<string> = null, lineNumber : number = NaN, columnNumber : number = NaN) {
 		this._value = value;
 		this._isIdentifier = isIdentifier;
 		this._filename = filename;
@@ -881,7 +877,7 @@ class Parser {
 	function _registerLocal (identifierToken : Token, type : Type) : LocalVariable {
 		function isEqualTo (local : LocalVariable) : boolean {
 			if (local.getName().getValue() == identifierToken.getValue()) {
-				if (type != null && ! local.getType().equals(type))
+				if (type != null && local.getType() != null && ! local.getType().equals(type))
 					this._newError("conflicting types for variable " + identifierToken.getValue());
 				return true;
 			}
@@ -1495,25 +1491,6 @@ class Parser {
 			}
 			var member = this._memberDefinition();
 			if (member != null) {
-				for (var i = 0; i < members.length; ++i) {
-					if (member.name() == members[i].name()
-						&& (member.flags() & ClassDefinition.IS_STATIC) == (members[i].flags() & ClassDefinition.IS_STATIC)) {
-						if (member instanceof MemberFunctionDefinition && members[i] instanceof MemberFunctionDefinition) {
-							if (Util.typesAreEqual((member as MemberFunctionDefinition).getArgumentTypes(), (members[i] as MemberFunctionDefinition).getArgumentTypes())) {
-								this._errors.push(new CompileError(
-									member.getNameToken(),
-									"a " + ((member.flags() & ClassDefinition.IS_STATIC) != 0 ? "static" : "member")
-									+ " function with same name and arguments is already defined"));
-								success = false;
-								break;
-							}
-						} else {
-							this._errors.push(new CompileError(member.getNameToken(), "a property with same name already exists; only functions may be overloaded"));
-							success = false;
-							break;
-						}
-					}
-				}
 				members.push(member);
 			} else {
 				this._skipStatement();
@@ -2556,6 +2533,8 @@ class Parser {
 		var expr = this._expr();
 		if (expr == null)
 			return false;
+		if (this._expect(";") == null)
+			return false;
 		this._statements.push(new ThrowStatement(token, expr));
 		return true;
 	}
@@ -2609,12 +2588,18 @@ class Parser {
 	}
 
 	function _assertStatement (token : Token) : boolean {
-		var expr = this._expr();
+		var expr = this._assignExpr(false);
 		if (expr == null)
 			return false;
+		var msgExpr : Expression = null;
+		if (this._expectOpt(",") != null) {
+			msgExpr = this._assignExpr(false);
+			if (msgExpr == null)
+				return false;
+		}
 		if (this._expect(";") == null)
 			return false;
-		this._statements.push(new AssertStatement(token, expr));
+		this._statements.push(new AssertStatement(token, expr, msgExpr));
 		return true;
 	}
 
@@ -3313,8 +3298,18 @@ class Parser {
 						return null;
 					break;
 				}
-				// FIXME KAZUHO support default arguments
-				args.push(new ArgumentDeclaration(argName, argType));
+				var defaultValue : Expression = null;
+				if (this._expectOpt("=") != null)  {
+					if ((defaultValue = this._assignExpr(true)) == null) {
+						return null;
+					}
+				} else {
+					if (args.length != 0 && args[args.length - 1].getDefaultValue() != null) {
+						this._errors.push(new CompileError(argName, "required argument cannot be declared after an optional argument"));
+						return null;
+					}
+				}
+				args.push(new ArgumentDeclaration(argName, argType, defaultValue));
 				token = this._expect([ ")", "," ]);
 				if (token == null)
 					return null;

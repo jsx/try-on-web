@@ -349,6 +349,9 @@ class JSXCommand {
 
 		if (emitter == null)
 			emitter = new JavaScriptEmitter(platform);
+		emitter.setRunEnv(executable != null ? executable : "");
+		emitter.setOutputFile(outputFile);
+
 		setBootstrapMode(sourceFile);
 
 		compiler.setEmitter(emitter);
@@ -399,8 +402,6 @@ class JSXCommand {
 			return 1;
 		}
 
-
-		emitter.setOutputFile(outputFile);
 
 		compiler.setOptimizer(optimizer);
 

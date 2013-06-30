@@ -150,6 +150,18 @@ class _Lexer {
 		"extern", "native", "as", "operator"
 		]);
 
+	static const builtInClasses = Util.asSet([
+		// build-in classes
+		"Array", "Boolean", "Date", "Function", "Map", "Math", "Number",
+		"Object", "RegExp", "String", "JSON",
+		"Error", "EvalError", "RangeError", "ReferenceError", "SyntaxError", "TypeError",
+		"JSX",
+		// typed arrays
+		"Transferable", "ArrayBuffer", "Int8Array", "Uint8Array",
+		"Uint8ClampedArray", "Int16Array", "Uint16Array", "Int32Array",
+		"Uint32Array", "Float32Array", "Float64Array", "DataView"
+	]);
+
 	static function makeAlt (patterns : string[]) : string {
 		return "(?: \n" + patterns.join("\n | \n") + "\n)\n";
 	}
@@ -1741,11 +1753,12 @@ class Parser {
 		this._typeArgs = this._typeArgs.concat(typeArgs);
 		var numObjectTypesUsed = this._objectTypesUsed.length;
 
+		this._pushScope(null, null);
 		try {
 			if (this._expect("(") == null)
 				return null;
 			// arguments
-			var args = this._functionArgumentsExpr((this._classFlags & ClassDefinition.IS_NATIVE) != 0, true);
+			var args = this._functionArgumentsExpr((this._classFlags & ClassDefinition.IS_NATIVE) != 0, true, true);
 			if (args == null)
 				return null;
 			// return type
@@ -1792,12 +1805,7 @@ class Parser {
 					return null;
 			}
 			// body
-			this._funcLocal = null;
 			this._arguments = args;
-			this._locals = new LocalVariable[];
-			this._statements = new Statement[];
-			this._closures = new MemberFunctionDefinition[];
-			this._isGenerator = false;
 			if (name.getValue() == "constructor")
 				var lastToken = this._initializeBlock();
 			else
@@ -1807,11 +1815,10 @@ class Parser {
 				flags |= ClassDefinition.IS_GENERATOR;
 			}
 			var funcDef = createDefinition(this._locals, this._statements, this._closures, lastToken);
-			this._locals = null;
-			this._statements = null;
-			this._closures = null;
 			return funcDef;
 		} finally {
+			this._popScope();
+
 			this._typeArgs.splice(this._typeArgs.length - typeArgs.length, this._typeArgs.length);
 			if (typeArgs.length != 0) {
 				this._objectTypesUsed.splice(numObjectTypesUsed, this._objectTypesUsed.length - numObjectTypesUsed);
@@ -2269,7 +2276,7 @@ class Parser {
 			return false;
 		if (this._expect("(") == null)
 			return false;
-		var args = this._functionArgumentsExpr(false, true);
+		var args = this._functionArgumentsExpr(false, true, false);
 		if (args == null)
 			return false;
 		if (this._expect(":") == null)
@@ -3011,7 +3018,7 @@ class Parser {
 	}
 
 	function _lambdaExpr (token : Token) : Expression {
-		var args = this._functionArgumentsExpr(false, false);
+		var args = this._functionArgumentsExpr(false, false, false);
 		if (args == null)
 			return null;
 		var returnType = null : Type;
@@ -3062,7 +3069,7 @@ class Parser {
 		var name = this._expectIdentifierOpt();
 		if (this._expect("(") == null)
 			return null;
-		var args = this._functionArgumentsExpr(false, false);
+		var args = this._functionArgumentsExpr(false, false, false);
 		if (args == null)
 			return null;
 		if (this._expectOpt(":") != null) {
@@ -3249,7 +3256,7 @@ class Parser {
 		return new MapLiteralExpression(token, elements, type);
 	}
 
-	function _functionArgumentsExpr (allowVarArgs : boolean, requireTypeDeclaration : boolean) : ArgumentDeclaration[] {
+	function _functionArgumentsExpr (allowVarArgs : boolean, requireTypeDeclaration : boolean, allowDefaultValues : boolean) : ArgumentDeclaration[] {
 		var args = new ArgumentDeclaration[];
 		if (this._expectOpt(")") == null) {
 			var token = null : Token;
@@ -3286,8 +3293,13 @@ class Parser {
 					break;
 				}
 				var defaultValue : Expression = null;
-				if (this._expectOpt("=") != null)  {
+				var assignToken = this._expectOpt("=");
+				if (assignToken != null)  {
 					if ((defaultValue = this._assignExpr(true)) == null) {
+						return null;
+					}
+					if (! allowDefaultValues) {
+						this._errors.push(new CompileError(assignToken, "default parameters are only allowed for member functions"));
 						return null;
 					}
 				} else {
@@ -3339,7 +3351,7 @@ class Parser {
 	}
 
 	static function _isReservedClassName (name : string) : boolean {
-		return name.match(/^(Array|Boolean|Date|Function|Map|Number|Object|RegExp|String|Error|EvalError|RangeError|ReferenceError|SyntaxError|TypeError|JSX)$/) != null;
+		return _Lexer.builtInClasses.hasOwnProperty(name);
 	}
 
 }

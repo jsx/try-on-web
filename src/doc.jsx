@@ -266,7 +266,7 @@ _ += "</div>\n";
 		var _ = "";
 
 _ += "<div class=\"class\" id=\"class-"; _ += (this._escape(classDef.className())).replace(/\n$/, ""); _ += "\">\n";
-_ += "<h2>"; _ += (this._flagsToHTML(classDef.flags()) + " " + this._escape(typeName + " " + classDef.className()) + this._formalTypeArgsToHTML(typeArgs)).replace(/\n$/, ""); _ += "</h2>\n";
+_ += "<h2>"; _ += (this._flagsToHTML(classDef.flags()) + " " + this._escape(typeName) + " " + this._name(classDef.className()) + this._formalTypeArgsToHTML(typeArgs)).replace(/\n$/, ""); _ += "</h2>\n";
 _ += (this._descriptionToHTML(classDef.getDocComment())).replace(/\n$/, ""); _ += "\n";
 
 		if (this._hasPublicProperties(classDef)) {
@@ -274,7 +274,7 @@ _ += (this._descriptionToHTML(classDef.getDocComment())).replace(/\n$/, ""); _ +
 				if (! this._isPrivate(varDef)) {
 _ += "<div class=\"member property\">\n";
 _ += "<h3>\n";
-_ += (this._flagsToHTML(varDef.flags())).replace(/\n$/, ""); _ += " var "; _ += (varDef.name()).replace(/\n$/, ""); _ += " : "; _ += (this._typeToHTML(parser, varDef.getType())).replace(/\n$/, ""); _ += "\n";
+_ += (this._flagsToHTML(varDef.flags())).replace(/\n$/, ""); _ += " var "; _ += (this._name(varDef.name())).replace(/\n$/, ""); _ += " : "; _ += (this._typeToHTML(parser, varDef.getType())).replace(/\n$/, ""); _ += "\n";
 _ += "</h3>\n";
 _ += (this._descriptionToHTML(varDef.getDocComment())).replace(/\n$/, ""); _ += "\n";
 _ += "</div>\n";
@@ -306,7 +306,10 @@ _ += "</div>\n";
 
 	function _buildDocOfFunction (parser : Parser, funcDef : MemberFunctionDefinition) : string {
 		var _ = "";
-		var funcName = this._isConstructor(funcDef) ? "new " + funcDef.getClassDef().className() : this._flagsToHTML(funcDef.flags()) + " function " + funcDef.name();
+		var ignoreFlags = (funcDef.getClassDef().flags() & (ClassDefinition.IS_FINAL | ClassDefinition.IS_NATIVE)) | ClassDefinition.IS_INLINE;
+		var funcName = this._isConstructor(funcDef)
+			? "new " + this._name(funcDef.getClassDef().className())
+			: this._flagsToHTML(funcDef.flags() & ~ignoreFlags) + " function " + this._name(funcDef.name());
 		var args = funcDef.getArguments();
 		var argsHTML = args.map.<string>(function (arg) {
 			return this._escape(arg.getName().getValue()) + " : " + this._typeToHTML(parser, arg.getType());
@@ -314,7 +317,7 @@ _ += "</div>\n";
 
 _ += "<div class=\"member function\">\n";
 _ += "<h3>\n";
-_ += (this._escape(funcName) + this._formalTypeArgsToHTML(funcDef instanceof TemplateFunctionDefinition ? (funcDef as TemplateFunctionDefinition).getTypeArguments() : new Token[])).replace(/\n$/, ""); _ += "("; _ += (argsHTML).replace(/\n$/, ""); _ += ")\n";
+_ += (funcName + this._formalTypeArgsToHTML(funcDef instanceof TemplateFunctionDefinition ? (funcDef as TemplateFunctionDefinition).getTypeArguments() : new Token[])).replace(/\n$/, ""); _ += "("; _ += (argsHTML).replace(/\n$/, ""); _ += ")\n";
 		if (! this._isConstructor(funcDef)) {
 _ += " : "; _ += (this._typeToHTML(parser, funcDef.getReturnType())).replace(/\n$/, ""); _ += "\n";
 		}
@@ -465,6 +468,8 @@ _ += "<a href=\""; _ += (this._escape(parserOfClassDef.getPath())).replace(/\n$/
 			strs.push("static");
 		if ((flags & ClassDefinition.IS_CONST) != 0)
 			strs.push("const");
+		if ((flags & ClassDefinition.IS_READONLY) != 0)
+			strs.push("__readonly__");
 		if ((flags & ClassDefinition.IS_ABSTRACT) != 0)
 			strs.push("abstract");
 		if ((flags & ClassDefinition.IS_FINAL) != 0)
@@ -473,6 +478,10 @@ _ += "<a href=\""; _ += (this._escape(parserOfClassDef.getPath())).replace(/\n$/
 			strs.push("override");
 		if ((flags & ClassDefinition.IS_INLINE) != 0)
 			strs.push("inline");
+		if ((flags & ClassDefinition.IS_NATIVE) != 0)
+			strs.push("native");
+		if ((flags & ClassDefinition.IS_EXPORT) != 0)
+			strs.push("__export__");
 		return strs.join(" ");
 	}
 
@@ -545,4 +554,7 @@ _ += "<a href=\""; _ += (this._escape(parserOfClassDef.getPath())).replace(/\n$/
 		return memberDef.name().charAt(0) == "_";
 	}
 
+	function _name(name : string) : string {
+		return "<strong>" + this._escape(name) + "</strong>";
+	}
 }

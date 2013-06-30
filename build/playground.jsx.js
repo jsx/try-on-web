@@ -1,4 +1,4 @@
-// generatedy by JSX compiler 0.9.47 (2013-06-29 13:01:41 -0700; f10b6f844ab65a2d87c41a520af392fddeb52234)
+// generatedy by JSX compiler 0.9.48 (2013-06-29 18:26:25 -0700; 4ff2290f5934309626a3d5290efd1b18391abe96)
 var JSX = {};
 (function (JSX) {
 /**
@@ -15569,7 +15569,7 @@ JavaScriptEmitter.prototype._emitInit$ = function () {
 	this._indent = 0;
 	this._emittingClass = null;
 	this._emittingFunction = null;
-	this._output += "// generatedy by JSX compiler 0.9.47 (2013-06-29 13:01:41 -0700; f10b6f844ab65a2d87c41a520af392fddeb52234)\n";
+	this._output += "// generatedy by JSX compiler 0.9.48 (2013-06-29 18:26:25 -0700; 4ff2290f5934309626a3d5290efd1b18391abe96)\n";
 	this._output += this._fileHeader;
 	this._output += (_platform$0 = this._platform).load$S(_platform$0.getRoot$() + "/src/js/bootstrap.js");
 	stash = this.getStash$S("no-debug");
@@ -15585,7 +15585,7 @@ function JavaScriptEmitter$_emitInit_0$LJavaScriptEmitter$($this) {
 	$this._indent = 0;
 	$this._emittingClass = null;
 	$this._emittingFunction = null;
-	$this._output += "// generatedy by JSX compiler 0.9.47 (2013-06-29 13:01:41 -0700; f10b6f844ab65a2d87c41a520af392fddeb52234)\n";
+	$this._output += "// generatedy by JSX compiler 0.9.48 (2013-06-29 18:26:25 -0700; 4ff2290f5934309626a3d5290efd1b18391abe96)\n";
 	$this._output += $this._fileHeader;
 	$this._output += (_platform$0 = $this._platform).load$S(_platform$0.getRoot$() + "/src/js/bootstrap.js");
 	stash = $this.getStash$S("no-debug");
@@ -21729,11 +21729,12 @@ function Parser$_functionDefinition$LParser$LToken$NLDocComment$F$SB$($this, tok
 	}
 	$this._typeArgs = $this._typeArgs.concat(typeArgs);
 	numObjectTypesUsed = $this._objectTypesUsed.length;
+	Parser$_pushScope_0$LParser$LLocalVariable$ALArgumentDeclaration$($this, null, null);
 	try {
 		if (Parser$_expect_0$LParser$S($this, "(") == null) {
 			return null;
 		}
-		args = Parser$_functionArgumentsExpr_0$LParser$BB($this, ($this._classFlags & 16) !== 0, true);
+		args = Parser$_functionArgumentsExpr_0$LParser$BBB($this, ($this._classFlags & 16) !== 0, true, true);
 		if (args == null) {
 			return null;
 		}
@@ -21783,12 +21784,7 @@ function Parser$_functionDefinition$LParser$LToken$NLDocComment$F$SB$($this, tok
 				}
 			}
 		}
-		$this._funcLocal = null;
 		$this._arguments = args;
-		$this._locals = [];
-		$this._statements = [];
-		$this._closures = [];
-		$this._isGenerator = false;
 		if (name._value === "constructor") {
 			lastToken = Parser$_initializeBlock_0$LParser$($this);
 		} else {
@@ -21798,11 +21794,9 @@ function Parser$_functionDefinition$LParser$LToken$NLDocComment$F$SB$($this, tok
 			flags |= 8192;
 		}
 		funcDef = createDefinition($this._locals, $this._statements, $this._closures, lastToken);
-		$this._locals = null;
-		$this._statements = null;
-		$this._closures = null;
 		return funcDef;
 	} finally {
+		Parser$_popScope_0$LParser$($this);
 		(_typeArgs$0 = $this._typeArgs).splice(_typeArgs$0.length - typeArgs.length, _typeArgs$0.length);
 		if (typeArgs.length !== 0) {
 			(_objectTypesUsed$0 = $this._objectTypesUsed).splice(numObjectTypesUsed, _objectTypesUsed$0.length - numObjectTypesUsed);
@@ -21854,11 +21848,12 @@ function Parser$_functionDefinition_0$LParser$LToken$NLDocComment$F$SB$($this, t
 	}
 	$this._typeArgs = $this._typeArgs.concat(typeArgs);
 	numObjectTypesUsed = $this._objectTypesUsed.length;
+	Parser$_pushScope_0$LParser$LLocalVariable$ALArgumentDeclaration$($this, null, null);
 	try {
 		if (Parser$_expect_0$LParser$ASLRegExp$($this, [ "(" ], null) == null) {
 			return null;
 		}
-		args = Parser$_functionArgumentsExpr_0$LParser$BB($this, ($this._classFlags & 16) !== 0, true);
+		args = Parser$_functionArgumentsExpr_0$LParser$BBB($this, ($this._classFlags & 16) !== 0, true, true);
 		if (args == null) {
 			return null;
 		}
@@ -21908,12 +21903,7 @@ function Parser$_functionDefinition_0$LParser$LToken$NLDocComment$F$SB$($this, t
 				}
 			}
 		}
-		$this._funcLocal = null;
 		$this._arguments = args;
-		$this._locals = [];
-		$this._statements = [];
-		$this._closures = [];
-		$this._isGenerator = false;
 		if (name._value === "constructor") {
 			lastToken = Parser$_initializeBlock_0$LParser$($this);
 		} else {
@@ -21923,11 +21913,9 @@ function Parser$_functionDefinition_0$LParser$LToken$NLDocComment$F$SB$($this, t
 			flags |= 8192;
 		}
 		funcDef = createDefinition($this._locals, $this._statements, $this._closures, lastToken);
-		$this._locals = null;
-		$this._statements = null;
-		$this._closures = null;
 		return funcDef;
 	} finally {
+		Parser$_popScope_0$LParser$($this);
 		(_typeArgs$0 = $this._typeArgs).splice(_typeArgs$0.length - typeArgs.length, _typeArgs$0.length);
 		if (typeArgs.length !== 0) {
 			(_objectTypesUsed$0 = $this._objectTypesUsed).splice(numObjectTypesUsed, _objectTypesUsed$0.length - numObjectTypesUsed);
@@ -23048,7 +23036,7 @@ function Parser$_functionStatement$LParser$LToken$($this, token) {
 	if (Parser$_expect_0$LParser$S($this, "(") == null) {
 		return false;
 	}
-	args = Parser$_functionArgumentsExpr_0$LParser$BB($this, false, true);
+	args = Parser$_functionArgumentsExpr_0$LParser$BBB($this, false, true, false);
 	if (args == null) {
 		return false;
 	}
@@ -23090,7 +23078,7 @@ function Parser$_functionStatement_0$LParser$LToken$($this, token) {
 	if (Parser$_expect_0$LParser$ASLRegExp$($this, [ "(" ], null) == null) {
 		return false;
 	}
-	args = Parser$_functionArgumentsExpr_0$LParser$BB($this, false, true);
+	args = Parser$_functionArgumentsExpr_0$LParser$BBB($this, false, true, false);
 	if (args == null) {
 		return false;
 	}
@@ -25025,7 +25013,7 @@ function Parser$_lambdaExpr$LParser$LToken$($this, token) {
 	var args;
 	var returnType;
 	var funcDef;
-	args = Parser$_functionArgumentsExpr_0$LParser$BB($this, false, false);
+	args = Parser$_functionArgumentsExpr_0$LParser$BBB($this, false, false, false);
 	if (args == null) {
 		return null;
 	}
@@ -25052,7 +25040,7 @@ function Parser$_lambdaExpr_0$LParser$LToken$($this, token) {
 	var args;
 	var returnType;
 	var funcDef;
-	args = Parser$_functionArgumentsExpr_0$LParser$BB($this, false, false);
+	args = Parser$_functionArgumentsExpr_0$LParser$BBB($this, false, false, false);
 	if (args == null) {
 		return null;
 	}
@@ -25155,7 +25143,7 @@ function Parser$_functionExpr$LParser$LToken$($this, token) {
 	if (Parser$_expect_0$LParser$S($this, "(") == null) {
 		return null;
 	}
-	args = Parser$_functionArgumentsExpr_0$LParser$BB($this, false, false);
+	args = Parser$_functionArgumentsExpr_0$LParser$BBB($this, false, false, false);
 	if (args == null) {
 		return null;
 	}
@@ -25203,7 +25191,7 @@ function Parser$_functionExpr_0$LParser$LToken$($this, token) {
 	if (Parser$_expect_0$LParser$ASLRegExp$($this, [ "(" ], null) == null) {
 		return null;
 	}
-	args = Parser$_functionArgumentsExpr_0$LParser$BB($this, false, false);
+	args = Parser$_functionArgumentsExpr_0$LParser$BBB($this, false, false, false);
 	if (args == null) {
 		return null;
 	}
@@ -25645,7 +25633,7 @@ function Parser$_hashLiteral_0$LParser$LToken$($this, token) {
 
 Parser._hashLiteral_0$LParser$LToken$ = Parser$_hashLiteral_0$LParser$LToken$;
 
-function Parser$_functionArgumentsExpr$LParser$BB($this, allowVarArgs, requireTypeDeclaration) {
+function Parser$_functionArgumentsExpr$LParser$BBB($this, allowVarArgs, requireTypeDeclaration, allowDefaultValues) {
 	var args;
 	var token;
 	var isVarArg;
@@ -25653,6 +25641,7 @@ function Parser$_functionArgumentsExpr$LParser$BB($this, allowVarArgs, requireTy
 	var argType;
 	var i;
 	var defaultValue;
+	var assignToken;
 	var expected$0;
 	args = [];
 	if (Parser$_expectOpt_0$LParser$S($this, ")") == null) {
@@ -25696,8 +25685,13 @@ function Parser$_functionArgumentsExpr$LParser$BB($this, allowVarArgs, requireTy
 				break;
 			}
 			defaultValue = null;
-			if (Parser$_expectOpt_0$LParser$S($this, "=") != null) {
+			assignToken = Parser$_expectOpt_0$LParser$ASLRegExp$($this, [ "=" ], null);
+			if (assignToken != null) {
 				if ((defaultValue = Parser$_assignExpr_0$LParser$B($this, true)) == null) {
+					return null;
+				}
+				if (! allowDefaultValues) {
+					$this._errors.push(new CompileError(assignToken, "default parameters are only allowed for member functions"));
 					return null;
 				}
 			} else {
@@ -25717,9 +25711,9 @@ function Parser$_functionArgumentsExpr$LParser$BB($this, allowVarArgs, requireTy
 	return args;
 };
 
-Parser._functionArgumentsExpr$LParser$BB = Parser$_functionArgumentsExpr$LParser$BB;
+Parser._functionArgumentsExpr$LParser$BBB = Parser$_functionArgumentsExpr$LParser$BBB;
 
-function Parser$_functionArgumentsExpr_0$LParser$BB($this, allowVarArgs, requireTypeDeclaration) {
+function Parser$_functionArgumentsExpr_0$LParser$BBB($this, allowVarArgs, requireTypeDeclaration, allowDefaultValues) {
 	var args;
 	var token;
 	var isVarArg;
@@ -25727,6 +25721,7 @@ function Parser$_functionArgumentsExpr_0$LParser$BB($this, allowVarArgs, require
 	var argType;
 	var i;
 	var defaultValue;
+	var assignToken;
 	var expected$0;
 	args = [];
 	if (Parser$_expectOpt_0$LParser$ASLRegExp$($this, [ ")" ], null) == null) {
@@ -25770,8 +25765,13 @@ function Parser$_functionArgumentsExpr_0$LParser$BB($this, allowVarArgs, require
 				break;
 			}
 			defaultValue = null;
-			if (Parser$_expectOpt_0$LParser$ASLRegExp$($this, [ "=" ], null) != null) {
+			assignToken = Parser$_expectOpt_0$LParser$ASLRegExp$($this, [ "=" ], null);
+			if (assignToken != null) {
 				if ((defaultValue = Parser$_assignExpr_0$LParser$B($this, true)) == null) {
+					return null;
+				}
+				if (! allowDefaultValues) {
+					$this._errors.push(new CompileError(assignToken, "default parameters are only allowed for member functions"));
 					return null;
 				}
 			} else {
@@ -25791,7 +25791,7 @@ function Parser$_functionArgumentsExpr_0$LParser$BB($this, allowVarArgs, require
 	return args;
 };
 
-Parser._functionArgumentsExpr_0$LParser$BB = Parser$_functionArgumentsExpr_0$LParser$BB;
+Parser._functionArgumentsExpr_0$LParser$BBB = Parser$_functionArgumentsExpr_0$LParser$BBB;
 
 function Parser$_argsExpr$LParser$($this) {
 	var args;
@@ -25894,7 +25894,7 @@ function Parser$_getCompletionCandidatesOfProperty_0$LParser$LExpression$($this,
 Parser._getCompletionCandidatesOfProperty_0$LParser$LExpression$ = Parser$_getCompletionCandidatesOfProperty_0$LParser$LExpression$;
 
 function Parser$_isReservedClassName$S(name) {
-	return name.match(/^(Array|Boolean|Date|Function|Map|Number|Object|RegExp|String|Error|EvalError|RangeError|ReferenceError|SyntaxError|TypeError|JSX)$/) != null;
+	return $__jsx_ObjectHasOwnProperty.call(_Lexer.builtInClasses, name);
 };
 
 Parser._isReservedClassName$S = Parser$_isReservedClassName$S;
@@ -34764,8 +34764,13 @@ AssignmentExpression.prototype.clone$ = function () {
 AssignmentExpression.prototype.analyze$LAnalysisContext$LExpression$ = function (context, parentExpr) {
 	var rhsType;
 	var lhsType;
+	var _expr2$0;
+	var _expr2$1;
 	if (this._expr2 instanceof FunctionExpression) {
 		return AssignmentExpression$_analyzeFunctionExpressionAssignment_0$LAssignmentExpression$LAnalysisContext$LExpression$(this, context, parentExpr);
+	}
+	if ((_expr2$0 = this._expr2) instanceof ArrayLiteralExpression && ArrayLiteralExpression$getExprs_0$LArrayLiteralExpression$(_expr2$0).length === 0 && this._expr2.getType$() == null || (_expr2$1 = this._expr2) instanceof MapLiteralExpression && MapLiteralExpression$getElements_0$LMapLiteralExpression$(_expr2$1).length === 0 && this._expr2.getType$() == null) {
+		return AssignmentExpression$_analyzeEmptyLiteralAssignment_0$LAssignmentExpression$LAnalysisContext$LExpression$(this, context, parentExpr);
 	}
 	if (! BinaryExpression$_analyze_0$LBinaryExpression$LAnalysisContext$(this, context)) {
 		return false;
@@ -34860,6 +34865,73 @@ function AssignmentExpression$_analyzeFusedAssignment_0$LAssignmentExpression$LA
 };
 
 AssignmentExpression._analyzeFusedAssignment_0$LAssignmentExpression$LAnalysisContext$ = AssignmentExpression$_analyzeFusedAssignment_0$LAssignmentExpression$LAnalysisContext$;
+
+AssignmentExpression.prototype._analyzeEmptyLiteralAssignment$LAnalysisContext$LExpression$ = function (context, parentExpr) {
+	var classDef;
+	var $this$0;
+	var type$0;
+	var $this$1;
+	var type$1;
+	if (! this._expr1.analyze$LAnalysisContext$LExpression$(context, this)) {
+		return false;
+	}
+	if (this._expr1.getType$() == null) {
+		context.errors.push(new CompileError(this._token, "either side of the operator should be fully type-qualified"));
+	}
+	if (this._expr2 instanceof ArrayLiteralExpression) {
+		if (! (this._expr1.getType$() instanceof ObjectType && (classDef = this._expr1.getType$().getClassDef$()) instanceof InstantiatedClassDefinition && InstantiatedClassDefinition$getTemplateClassName_0$LInstantiatedClassDefinition$(classDef) === "Array")) {
+			context.errors.push(new CompileError(this._token, "cannot deduce the type of [] because left-hand-side expression is not of Array type"));
+			return false;
+		}
+		$this$0 = this._expr2;
+		type$0 = this._expr1.getType$();
+		$this$0._type = type$0;
+	} else {
+		if (! (this._expr1.getType$() instanceof ObjectType && (classDef = this._expr1.getType$().getClassDef$()) instanceof InstantiatedClassDefinition && InstantiatedClassDefinition$getTemplateClassName_0$LInstantiatedClassDefinition$(classDef) === "Map")) {
+			context.errors.push(new CompileError(this._token, "cannot deduce the type of {} because left-hand-side expression is not of Map type"));
+			return false;
+		}
+		$this$1 = this._expr2;
+		type$1 = this._expr1.getType$();
+		$this$1._type = type$1;
+	}
+	return (! this._expr1.assertIsAssignable$LAnalysisContext$LToken$LType$(context, this._token, this._expr2.getType$()) ? false : ! this._expr2.analyze$LAnalysisContext$LExpression$(context, this) ? false : true);
+};
+
+
+function AssignmentExpression$_analyzeEmptyLiteralAssignment_0$LAssignmentExpression$LAnalysisContext$LExpression$($this, context, parentExpr) {
+	var classDef;
+	var $this$0;
+	var type$0;
+	var $this$1;
+	var type$1;
+	if (! $this._expr1.analyze$LAnalysisContext$LExpression$(context, $this)) {
+		return false;
+	}
+	if ($this._expr1.getType$() == null) {
+		context.errors.push(new CompileError($this._token, "either side of the operator should be fully type-qualified"));
+	}
+	if ($this._expr2 instanceof ArrayLiteralExpression) {
+		if (! ($this._expr1.getType$() instanceof ObjectType && (classDef = $this._expr1.getType$().getClassDef$()) instanceof InstantiatedClassDefinition && InstantiatedClassDefinition$getTemplateClassName_0$LInstantiatedClassDefinition$(classDef) === "Array")) {
+			context.errors.push(new CompileError($this._token, "cannot deduce the type of [] because left-hand-side expression is not of Array type"));
+			return false;
+		}
+		$this$0 = $this._expr2;
+		type$0 = $this._expr1.getType$();
+		$this$0._type = type$0;
+	} else {
+		if (! ($this._expr1.getType$() instanceof ObjectType && (classDef = $this._expr1.getType$().getClassDef$()) instanceof InstantiatedClassDefinition && InstantiatedClassDefinition$getTemplateClassName_0$LInstantiatedClassDefinition$(classDef) === "Map")) {
+			context.errors.push(new CompileError($this._token, "cannot deduce the type of {} because left-hand-side expression is not of Map type"));
+			return false;
+		}
+		$this$1 = $this._expr2;
+		type$1 = $this._expr1.getType$();
+		$this$1._type = type$1;
+	}
+	return (! $this._expr1.assertIsAssignable$LAnalysisContext$LToken$LType$(context, $this._token, $this._expr2.getType$()) ? false : ! $this._expr2.analyze$LAnalysisContext$LExpression$(context, $this) ? false : true);
+};
+
+AssignmentExpression._analyzeEmptyLiteralAssignment_0$LAssignmentExpression$LAnalysisContext$LExpression$ = AssignmentExpression$_analyzeEmptyLiteralAssignment_0$LAssignmentExpression$LAnalysisContext$LExpression$;
 
 AssignmentExpression.prototype._analyzeFunctionExpressionAssignment$LAnalysisContext$LExpression$ = function (context, parentExpr) {
 	if (! this._expr1.analyze$LAnalysisContext$LExpression$(context, this)) {
@@ -38504,7 +38576,7 @@ DocumentGenerator.prototype._buildFooterOfFile$LParser$ = function (parser) {
 		}
 	}
 	_ += "<p class=\"jsxdoc-notice\">This document was automatically generated by <a href=\"http://jsx.github.io/\">JSX</a> ";
-	_ += "0.9.47".replace(/\n$/, "");
+	_ += "0.9.48".replace(/\n$/, "");
 	_ += "<br />\n";
 	_ += "at ";
 	_ += DocumentGenerator$_escape_0$LDocumentGenerator$S(this, new Date().toISOString()).replace(/\n$/, "");
@@ -38541,7 +38613,7 @@ function DocumentGenerator$_buildFooterOfFile_0$LDocumentGenerator$LParser$($thi
 		}
 	}
 	_ += "<p class=\"jsxdoc-notice\">This document was automatically generated by <a href=\"http://jsx.github.io/\">JSX</a> ";
-	_ += "0.9.47".replace(/\n$/, "");
+	_ += "0.9.48".replace(/\n$/, "");
 	_ += "<br />\n";
 	_ += "at ";
 	_ += DocumentGenerator$_escape_0$LDocumentGenerator$S($this, new Date().toISOString()).replace(/\n$/, "");
@@ -38634,7 +38706,7 @@ DocumentGenerator.prototype._buildDocOfClass$LParser$LClassDefinition$ = functio
 	_ += DocumentGenerator$_escape_0$LDocumentGenerator$S(this, classDef.className$()).replace(/\n$/, "");
 	_ += "\">\n";
 	_ += "<h2>";
-	_ += (DocumentGenerator$_flagsToHTML_0$LDocumentGenerator$N(this, classDef.flags$()) + " " + DocumentGenerator$_escape_0$LDocumentGenerator$S(this, typeName + " " + classDef.className$()) + DocumentGenerator$_formalTypeArgsToHTML_0$LDocumentGenerator$ALToken$(this, typeArgs)).replace(/\n$/, "");
+	_ += (DocumentGenerator$_flagsToHTML_0$LDocumentGenerator$N(this, classDef.flags$()) + " " + DocumentGenerator$_escape_0$LDocumentGenerator$S(this, typeName) + " " + DocumentGenerator$_name_0$LDocumentGenerator$S(this, classDef.className$()) + DocumentGenerator$_formalTypeArgsToHTML_0$LDocumentGenerator$ALToken$(this, typeArgs)).replace(/\n$/, "");
 	_ += "</h2>\n";
 	_ += DocumentGenerator$_descriptionToHTML_0$LDocumentGenerator$LDocComment$(this, classDef._docComment).replace(/\n$/, "");
 	_ += "\n";
@@ -38645,7 +38717,7 @@ DocumentGenerator.prototype._buildDocOfClass$LParser$LClassDefinition$ = functio
 				_ += "<h3>\n";
 				_ += DocumentGenerator$_flagsToHTML_0$LDocumentGenerator$N($this, varDef._flags).replace(/\n$/, "");
 				_ += " var ";
-				_ += MemberDefinition$name_0$LMemberDefinition$(varDef).replace(/\n$/, "");
+				_ += DocumentGenerator$_name_0$LDocumentGenerator$S($this, MemberDefinition$name_0$LMemberDefinition$(varDef)).replace(/\n$/, "");
 				_ += " : ";
 				_ += DocumentGenerator$_typeToHTML_0$LDocumentGenerator$LParser$LType$($this, parser, varDef.getType$()).replace(/\n$/, "");
 				_ += "\n";
@@ -38696,7 +38768,7 @@ function DocumentGenerator$_buildDocOfClass_0$LDocumentGenerator$LParser$LClassD
 	_ += DocumentGenerator$_escape_0$LDocumentGenerator$S($this, classDef.className$()).replace(/\n$/, "");
 	_ += "\">\n";
 	_ += "<h2>";
-	_ += (DocumentGenerator$_flagsToHTML_0$LDocumentGenerator$N($this, classDef.flags$()) + " " + DocumentGenerator$_escape_0$LDocumentGenerator$S($this, typeName + " " + classDef.className$()) + DocumentGenerator$_formalTypeArgsToHTML_0$LDocumentGenerator$ALToken$($this, typeArgs)).replace(/\n$/, "");
+	_ += (DocumentGenerator$_flagsToHTML_0$LDocumentGenerator$N($this, classDef.flags$()) + " " + DocumentGenerator$_escape_0$LDocumentGenerator$S($this, typeName) + " " + DocumentGenerator$_name_0$LDocumentGenerator$S($this, classDef.className$()) + DocumentGenerator$_formalTypeArgsToHTML_0$LDocumentGenerator$ALToken$($this, typeArgs)).replace(/\n$/, "");
 	_ += "</h2>\n";
 	_ += DocumentGenerator$_descriptionToHTML_0$LDocumentGenerator$LDocComment$($this, classDef._docComment).replace(/\n$/, "");
 	_ += "\n";
@@ -38707,7 +38779,7 @@ function DocumentGenerator$_buildDocOfClass_0$LDocumentGenerator$LParser$LClassD
 				_ += "<h3>\n";
 				_ += DocumentGenerator$_flagsToHTML_0$LDocumentGenerator$N($this, varDef._flags).replace(/\n$/, "");
 				_ += " var ";
-				_ += MemberDefinition$name_0$LMemberDefinition$(varDef).replace(/\n$/, "");
+				_ += DocumentGenerator$_name_0$LDocumentGenerator$S($this, MemberDefinition$name_0$LMemberDefinition$(varDef)).replace(/\n$/, "");
 				_ += " : ";
 				_ += DocumentGenerator$_typeToHTML_0$LDocumentGenerator$LParser$LType$($this, parser, varDef.getType$()).replace(/\n$/, "");
 				_ += "\n";
@@ -38745,6 +38817,7 @@ DocumentGenerator._buildDocOfClass_0$LDocumentGenerator$LParser$LClassDefinition
 DocumentGenerator.prototype._buildDocOfFunction$LParser$LMemberFunctionDefinition$ = function (parser, funcDef) {
 	var $this = this;
 	var _;
+	var ignoreFlags;
 	var funcName;
 	var args;
 	var argsHTML;
@@ -38753,14 +38826,15 @@ DocumentGenerator.prototype._buildDocOfFunction$LParser$LMemberFunctionDefinitio
 	var argName$0;
 	var $this$0$0;
 	_ = "";
-	funcName = (DocumentGenerator$_isConstructor_0$LDocumentGenerator$LMemberFunctionDefinition$(this, funcDef) ? "new " + funcDef._classDef.className$() : DocumentGenerator$_flagsToHTML_0$LDocumentGenerator$N(this, funcDef._flags) + " function " + MemberDefinition$name_0$LMemberDefinition$(funcDef));
+	ignoreFlags = funcDef._classDef.flags$() & 20 | 1024;
+	funcName = (DocumentGenerator$_isConstructor_0$LDocumentGenerator$LMemberFunctionDefinition$(this, funcDef) ? "new " + DocumentGenerator$_name_0$LDocumentGenerator$S(this, funcDef._classDef.className$()) : DocumentGenerator$_flagsToHTML_0$LDocumentGenerator$N(this, funcDef._flags & ~ ignoreFlags) + " function " + DocumentGenerator$_name_0$LDocumentGenerator$S(this, MemberDefinition$name_0$LMemberDefinition$(funcDef)));
 	args = funcDef._args;
 	argsHTML = args.map((function (arg) {
 		return DocumentGenerator$_escape_0$LDocumentGenerator$S($this, Token$getValue_0$LToken$(arg._name)) + " : " + DocumentGenerator$_typeToHTML_0$LDocumentGenerator$LParser$LType$($this, parser, arg._type);
 	})).join(", ");
 	_ += "<div class=\"member function\">\n";
 	_ += "<h3>\n";
-	_ += (DocumentGenerator$_escape_0$LDocumentGenerator$S(this, funcName) + DocumentGenerator$_formalTypeArgsToHTML_0$LDocumentGenerator$ALToken$(this, funcDef instanceof TemplateFunctionDefinition ? TemplateFunctionDefinition$getTypeArguments_0$LTemplateFunctionDefinition$(funcDef) : [])).replace(/\n$/, "");
+	_ += (funcName + DocumentGenerator$_formalTypeArgsToHTML_0$LDocumentGenerator$ALToken$(this, funcDef instanceof TemplateFunctionDefinition ? TemplateFunctionDefinition$getTypeArguments_0$LTemplateFunctionDefinition$(funcDef) : [])).replace(/\n$/, "");
 	_ += "(";
 	_ += argsHTML.replace(/\n$/, "");
 	_ += ")\n";
@@ -38796,6 +38870,7 @@ DocumentGenerator.prototype._buildDocOfFunction$LParser$LMemberFunctionDefinitio
 
 function DocumentGenerator$_buildDocOfFunction_0$LDocumentGenerator$LParser$LMemberFunctionDefinition$($this, parser, funcDef) {
 	var _;
+	var ignoreFlags;
 	var funcName;
 	var args;
 	var argsHTML;
@@ -38804,14 +38879,15 @@ function DocumentGenerator$_buildDocOfFunction_0$LDocumentGenerator$LParser$LMem
 	var argName$0;
 	var $this$0$0;
 	_ = "";
-	funcName = (MemberDefinition$name_0$LMemberDefinition$(funcDef) === "constructor" && (funcDef._flags & 8) === 0 ? "new " + funcDef._classDef.className$() : DocumentGenerator$_flagsToHTML_0$LDocumentGenerator$N($this, funcDef._flags) + " function " + MemberDefinition$name_0$LMemberDefinition$(funcDef));
+	ignoreFlags = funcDef._classDef.flags$() & 20 | 1024;
+	funcName = (MemberDefinition$name_0$LMemberDefinition$(funcDef) === "constructor" && (funcDef._flags & 8) === 0 ? "new " + DocumentGenerator$_name_0$LDocumentGenerator$S($this, funcDef._classDef.className$()) : DocumentGenerator$_flagsToHTML_0$LDocumentGenerator$N($this, funcDef._flags & ~ ignoreFlags) + " function " + DocumentGenerator$_name_0$LDocumentGenerator$S($this, MemberDefinition$name_0$LMemberDefinition$(funcDef)));
 	args = funcDef._args;
 	argsHTML = args.map((function (arg) {
 		return DocumentGenerator$_escape_0$LDocumentGenerator$S($this, Token$getValue_0$LToken$(arg._name)) + " : " + DocumentGenerator$_typeToHTML_0$LDocumentGenerator$LParser$LType$($this, parser, arg._type);
 	})).join(", ");
 	_ += "<div class=\"member function\">\n";
 	_ += "<h3>\n";
-	_ += (DocumentGenerator$_escape_0$LDocumentGenerator$S($this, funcName) + DocumentGenerator$_formalTypeArgsToHTML_0$LDocumentGenerator$ALToken$($this, funcDef instanceof TemplateFunctionDefinition ? TemplateFunctionDefinition$getTypeArguments_0$LTemplateFunctionDefinition$(funcDef) : [])).replace(/\n$/, "");
+	_ += (funcName + DocumentGenerator$_formalTypeArgsToHTML_0$LDocumentGenerator$ALToken$($this, funcDef instanceof TemplateFunctionDefinition ? TemplateFunctionDefinition$getTypeArguments_0$LTemplateFunctionDefinition$(funcDef) : [])).replace(/\n$/, "");
 	_ += "(";
 	_ += argsHTML.replace(/\n$/, "");
 	_ += ")\n";
@@ -39160,6 +39236,9 @@ DocumentGenerator.prototype._flagsToHTML$N = function (flags) {
 	if ((flags & 1) !== 0) {
 		strs.push("const");
 	}
+	if ((flags & 512) !== 0) {
+		strs.push("__readonly__");
+	}
 	if ((flags & 2) !== 0) {
 		strs.push("abstract");
 	}
@@ -39171,6 +39250,12 @@ DocumentGenerator.prototype._flagsToHTML$N = function (flags) {
 	}
 	if ((flags & 1024) !== 0) {
 		strs.push("inline");
+	}
+	if ((flags & 16) !== 0) {
+		strs.push("native");
+	}
+	if ((flags & 16384) !== 0) {
+		strs.push("__export__");
 	}
 	return strs.join(" ");
 };
@@ -39185,6 +39270,9 @@ function DocumentGenerator$_flagsToHTML_0$LDocumentGenerator$N($this, flags) {
 	if ((flags & 1) !== 0) {
 		strs.push("const");
 	}
+	if ((flags & 512) !== 0) {
+		strs.push("__readonly__");
+	}
 	if ((flags & 2) !== 0) {
 		strs.push("abstract");
 	}
@@ -39196,6 +39284,12 @@ function DocumentGenerator$_flagsToHTML_0$LDocumentGenerator$N($this, flags) {
 	}
 	if ((flags & 1024) !== 0) {
 		strs.push("inline");
+	}
+	if ((flags & 16) !== 0) {
+		strs.push("native");
+	}
+	if ((flags & 16384) !== 0) {
+		strs.push("__export__");
 	}
 	return strs.join(" ");
 };
@@ -39354,6 +39448,17 @@ function DocumentGenerator$_isPrivate_0$LDocumentGenerator$LMemberDefinition$($t
 };
 
 DocumentGenerator._isPrivate_0$LDocumentGenerator$LMemberDefinition$ = DocumentGenerator$_isPrivate_0$LDocumentGenerator$LMemberDefinition$;
+
+DocumentGenerator.prototype._name$S = function (name) {
+	return "<strong>" + DocumentGenerator$_escape_0$LDocumentGenerator$S(this, name) + "</strong>";
+};
+
+
+function DocumentGenerator$_name_0$LDocumentGenerator$S($this, name) {
+	return "<strong>" + DocumentGenerator$_escape_0$LDocumentGenerator$S($this, name) + "</strong>";
+};
+
+DocumentGenerator._name_0$LDocumentGenerator$S = DocumentGenerator$_name_0$LDocumentGenerator$S;
 
 function node() {
 };
@@ -39913,6 +40018,9 @@ $__jsx_lazy_init(_Lexer, "keywords", function () {
 $__jsx_lazy_init(_Lexer, "reserved", function () {
 	return Util$asSet$AS([ "debugger", "with", "const", "export", "let", "private", "public", "yield", "protected", "extern", "native", "as", "operator" ]);
 });
+$__jsx_lazy_init(_Lexer, "builtInClasses", function () {
+	return Util$asSet$AS([ "Array", "Boolean", "Date", "Function", "Map", "Math", "Number", "Object", "RegExp", "String", "JSON", "Error", "EvalError", "RangeError", "ReferenceError", "SyntaxError", "TypeError", "JSX", "Transferable", "ArrayBuffer", "Int8Array", "Uint8Array", "Uint8ClampedArray", "Int16Array", "Uint16Array", "Int32Array", "Uint32Array", "Float32Array", "Float64Array", "DataView" ]);
+});
 ClassDefinition.IS_CONST = 1;
 ClassDefinition.IS_ABSTRACT = 2;
 ClassDefinition.IS_FINAL = 4;
@@ -39967,11 +40075,11 @@ $__jsx_lazy_init(_StatementTransformer, "_statementCountMap", function () {
 });
 CodeTransformer.stopIterationType = null;
 CodeTransformer.jsxGeneratorClassDef = null;
-Meta.VERSION_STRING = "0.9.47";
-Meta.VERSION_NUMBER = 0.009047;
-Meta.LAST_COMMIT_HASH = "f10b6f844ab65a2d87c41a520af392fddeb52234";
-Meta.LAST_COMMIT_DATE = "2013-06-29 13:01:41 -0700";
-Meta.IDENTIFIER = "0.9.47 (2013-06-29 13:01:41 -0700; f10b6f844ab65a2d87c41a520af392fddeb52234)";
+Meta.VERSION_STRING = "0.9.48";
+Meta.VERSION_NUMBER = 0.009048;
+Meta.LAST_COMMIT_HASH = "4ff2290f5934309626a3d5290efd1b18391abe96";
+Meta.LAST_COMMIT_DATE = "2013-06-29 18:26:25 -0700";
+Meta.IDENTIFIER = "0.9.48 (2013-06-29 18:26:25 -0700; 4ff2290f5934309626a3d5290efd1b18391abe96)";
 SourceMapper.NODE_SOURCE_MAP_HEADER = "require('source-map-support').install();\n\n";
 SourceMapper.WEB_SOURCE_MAP_HEADER = "";
 $__jsx_lazy_init(node, "__dirname", function () {

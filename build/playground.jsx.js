@@ -1,4 +1,4 @@
-// generatedy by JSX compiler 0.9.48 (2013-06-29 18:26:25 -0700; 4ff2290f5934309626a3d5290efd1b18391abe96)
+// generatedy by JSX compiler 0.9.49 (2013-07-02 23:09:31 -0700; 2a835991352f379f41ad55e03550652e0dd84358)
 var JSX = {};
 (function (JSX) {
 /**
@@ -212,7 +212,7 @@ function _Main$main$AS(args) {
 		o = ({_compiler: null, _commands: [], _log: [], _dumpLogs: false, _enableRunTimeTypeCheck: true});
 		if (getOptimizationLevel() > 0) {
 			optimizeCommands = [ "lto", "no-assert", "no-log", "no-debug", "staticize", "fold-const", "return-if", "inline", "dce", "unbox", "fold-const", "lcse", "dce", "fold-const", "array-length", "unclassify" ].filter((function (command) {
-				return command != "no-log";
+				return command !== "no-log";
 			}));
 			Optimizer$setup_0$LOptimizer$AS(o, optimizeCommands);
 			o._enableRunTimeTypeCheck = false;
@@ -1745,7 +1745,7 @@ Compiler.prototype._handleErrors$ALCompileError$ = function (errors) {
 						break;
 					}
 				}
-				if (doWarn != false) {
+				if (doWarn !== false) {
 					platform$0 = $this._platform;
 					s$0 = Util$makeErrorMessage$LPlatform$SUSNNN(platform$0, "Warning: " + warning._message, warning._filename, warning._lineNumber, warning._columnNumber, warning._size);
 					console.warn(s$0);
@@ -1794,7 +1794,7 @@ function Compiler$_handleErrors_0$LCompiler$ALCompileError$($this, errors) {
 						break;
 					}
 				}
-				if (doWarn != false) {
+				if (doWarn !== false) {
 					platform$0 = $this._platform;
 					s$0 = Util$makeErrorMessage$LPlatform$SUSNNN(platform$0, "Warning: " + warning._message, warning._filename, warning._lineNumber, warning._columnNumber, warning._size);
 					console.warn(s$0);
@@ -1930,7 +1930,8 @@ function _Util$exprHasSideEffects$LExpression$(expr) {
 	var onExpr;
 	function onExpr(expr, _) {
 		var callingFuncDef;
-		if (expr instanceof FunctionExpression || expr instanceof NewExpression || expr instanceof AssignmentExpression || expr instanceof PreIncrementExpression || expr instanceof PostIncrementExpression || expr instanceof SuperExpression) {
+		var type;
+		if (expr instanceof NewExpression || expr instanceof AssignmentExpression || expr instanceof PreIncrementExpression || expr instanceof PostIncrementExpression || expr instanceof SuperExpression) {
 			return false;
 		} else {
 			if (expr instanceof CallExpression) {
@@ -1940,9 +1941,22 @@ function _Util$exprHasSideEffects$LExpression$(expr) {
 					return false;
 				}
 			} else {
-				return expr.forEachExpression$F$LExpression$F$LExpression$V$B$(onExpr);
+				if (expr instanceof PropertyExpression) {
+					type = UnaryExpression$getExpr_0$LUnaryExpression$(expr).getType$();
+					if (type instanceof ObjectType && (type.getClassDef$().flags$() & 16) !== 0 && ! Util$isBuiltInContainer$LType$(type)) {
+						return false;
+					}
+				} else {
+					if (expr instanceof ArrayExpression) {
+						type = BinaryExpression$getFirstExpr_0$LBinaryExpression$(expr).getType$();
+						if (type instanceof ObjectType && (type.getClassDef$().flags$() & 16) !== 0 && ! Util$isBuiltInContainer$LType$(type)) {
+							return false;
+						}
+					}
+				}
 			}
 		}
+		return expr.forEachExpression$F$LExpression$F$LExpression$V$B$(onExpr);
 	}
 	return ! onExpr(expr, null);
 };
@@ -2097,54 +2111,54 @@ function Optimizer$setup$LOptimizer$AS($this, cmds) {
 	}
 	for (i = 0; i < cmds.length; ++ i) {
 		cmd = cmds[i];
-		if (cmd == "lto") {
+		if (cmd === "lto") {
 			$this._commands.push(new _LinkTimeOptimizationCommand());
 		} else {
-			if (cmd == "no-assert") {
+			if (cmd === "no-assert") {
 				$this._commands.push(new _NoAssertCommand());
 			} else {
-				if (cmd == "no-log") {
+				if (cmd === "no-log") {
 					$this._commands.push(new _NoLogCommand());
 				} else {
-					if (cmd == "no-debug") {
+					if (cmd === "no-debug") {
 						$this._commands.push(new _NoDebugCommand());
 					} else {
-						if (cmd == "strip") {
+						if (cmd === "strip") {
 							$this._commands.push(new _StripOptimizeCommand());
 						} else {
-							if (cmd == "staticize") {
+							if (cmd === "staticize") {
 								$this._commands.push(new _StaticizeOptimizeCommand());
 								calleesAreDetermined = false;
 							} else {
-								if (cmd == "unclassify") {
+								if (cmd === "unclassify") {
 									$this._commands.push(new _UnclassifyOptimizationCommand());
 									calleesAreDetermined = false;
 								} else {
-									if (cmd == "fold-const") {
+									if (cmd === "fold-const") {
 										$this._commands.push(new _FoldConstantCommand());
 									} else {
-										if (cmd == "dce") {
+										if (cmd === "dce") {
 											determineCallee();
 											$this._commands.push(new _DeadCodeEliminationOptimizeCommand());
 										} else {
-											if (cmd == "inline") {
+											if (cmd === "inline") {
 												determineCallee();
 												$this._commands.push(new _InlineOptimizeCommand());
 											} else {
-												if (cmd == "return-if") {
+												if (cmd === "return-if") {
 													$this._commands.push(new _ReturnIfOptimizeCommand());
 												} else {
-													if (cmd == "lcse") {
+													if (cmd === "lcse") {
 														$this._commands.push(new _LCSEOptimizeCommand());
 													} else {
-														if (cmd == "unbox") {
+														if (cmd === "unbox") {
 															determineCallee();
 															$this._commands.push(new _UnboxOptimizeCommand());
 														} else {
-															if (cmd == "array-length") {
+															if (cmd === "array-length") {
 																$this._commands.push(new _ArrayLengthOptimizeCommand());
 															} else {
-																if (cmd == "dump-logs") {
+																if (cmd === "dump-logs") {
 																	$this._dumpLogs = true;
 																} else {
 																	return "unknown optimization command: " + cmd;
@@ -2192,54 +2206,54 @@ function Optimizer$setup_0$LOptimizer$AS($this, cmds) {
 	}
 	for (i = 0; i < cmds.length; ++ i) {
 		cmd = cmds[i];
-		if (cmd == "lto") {
+		if (cmd === "lto") {
 			$this._commands.push(new _LinkTimeOptimizationCommand());
 		} else {
-			if (cmd == "no-assert") {
+			if (cmd === "no-assert") {
 				$this._commands.push(new _NoAssertCommand());
 			} else {
-				if (cmd == "no-log") {
+				if (cmd === "no-log") {
 					$this._commands.push(new _NoLogCommand());
 				} else {
-					if (cmd == "no-debug") {
+					if (cmd === "no-debug") {
 						$this._commands.push(new _NoDebugCommand());
 					} else {
-						if (cmd == "strip") {
+						if (cmd === "strip") {
 							$this._commands.push(new _StripOptimizeCommand());
 						} else {
-							if (cmd == "staticize") {
+							if (cmd === "staticize") {
 								$this._commands.push(new _StaticizeOptimizeCommand());
 								calleesAreDetermined = false;
 							} else {
-								if (cmd == "unclassify") {
+								if (cmd === "unclassify") {
 									$this._commands.push(new _UnclassifyOptimizationCommand());
 									calleesAreDetermined = false;
 								} else {
-									if (cmd == "fold-const") {
+									if (cmd === "fold-const") {
 										$this._commands.push(new _FoldConstantCommand());
 									} else {
-										if (cmd == "dce") {
+										if (cmd === "dce") {
 											determineCallee();
 											$this._commands.push(new _DeadCodeEliminationOptimizeCommand());
 										} else {
-											if (cmd == "inline") {
+											if (cmd === "inline") {
 												determineCallee();
 												$this._commands.push(new _InlineOptimizeCommand());
 											} else {
-												if (cmd == "return-if") {
+												if (cmd === "return-if") {
 													$this._commands.push(new _ReturnIfOptimizeCommand());
 												} else {
-													if (cmd == "lcse") {
+													if (cmd === "lcse") {
 														$this._commands.push(new _LCSEOptimizeCommand());
 													} else {
-														if (cmd == "unbox") {
+														if (cmd === "unbox") {
 															determineCallee();
 															$this._commands.push(new _UnboxOptimizeCommand());
 														} else {
-															if (cmd == "array-length") {
+															if (cmd === "array-length") {
 																$this._commands.push(new _ArrayLengthOptimizeCommand());
 															} else {
-																if (cmd == "dump-logs") {
+																if (cmd === "dump-logs") {
 																	$this._dumpLogs = true;
 																} else {
 																	return "unknown optimization command: " + cmd;
@@ -4073,7 +4087,7 @@ _UnclassifyOptimizationCommand.prototype._getClassesToUnclassify$ = function () 
 			var foundClassDefIndex;
 			if (! (expr != null)) {
 				debugger;
-				throw new Error("[/Users/gfx/repo/try-on-web/JSX/src/optimizer.jsx:1379:28] assertion failure\n                assert expr != null;\n                            ^^\n");
+				throw new Error("[/Users/gfx/repo/try-on-web/JSX/src/optimizer.jsx:1391:28] assertion failure\n                assert expr != null;\n                            ^^\n");
 			}
 			if (expr instanceof InstanceofExpression) {
 				foundClassDefIndex = candidates.indexOf(InstanceofExpression$getExpectedType_0$LInstanceofExpression$(expr).getClassDef$());
@@ -4165,7 +4179,7 @@ function _UnclassifyOptimizationCommand$_getClassesToUnclassify_0$L_UnclassifyOp
 			var foundClassDefIndex;
 			if (! (expr != null)) {
 				debugger;
-				throw new Error("[/Users/gfx/repo/try-on-web/JSX/src/optimizer.jsx:1379:28] assertion failure\n                assert expr != null;\n                            ^^\n");
+				throw new Error("[/Users/gfx/repo/try-on-web/JSX/src/optimizer.jsx:1391:28] assertion failure\n                assert expr != null;\n                            ^^\n");
 			}
 			if (expr instanceof InstanceofExpression) {
 				foundClassDefIndex = candidates.indexOf(InstanceofExpression$getExpectedType_0$LInstanceofExpression$(expr).getClassDef$());
@@ -5711,6 +5725,11 @@ _DeadCodeEliminationOptimizeCommand.prototype._removeExpressionStatementsWithout
 				shouldRetry = true;
 				statements.splice(i, 1);
 			} else {
+				if (statements[i] instanceof ExpressionStatement) {
+					_DeadCodeEliminationOptimizeCommand$_optimizeExprInVoid_0$L_DeadCodeEliminationOptimizeCommand$LExpression$F$LExpression$V$($this, UnaryExpressionStatement$getExpr_0$LUnaryExpressionStatement$(statements[i]), (function (expr) {
+						statements[i] = new ExpressionStatement(expr);
+					}));
+				}
 				statements[i++].handleStatements$F$ALStatement$B$(onStatements);
 			}
 		}
@@ -5730,6 +5749,11 @@ function _DeadCodeEliminationOptimizeCommand$_removeExpressionStatementsWithoutS
 				shouldRetry = true;
 				statements.splice(i, 1);
 			} else {
+				if (statements[i] instanceof ExpressionStatement) {
+					_DeadCodeEliminationOptimizeCommand$_optimizeExprInVoid_0$L_DeadCodeEliminationOptimizeCommand$LExpression$F$LExpression$V$($this, UnaryExpressionStatement$getExpr_0$LUnaryExpressionStatement$(statements[i]), (function (expr) {
+						statements[i] = new ExpressionStatement(expr);
+					}));
+				}
 				statements[i++].handleStatements$F$ALStatement$B$(onStatements);
 			}
 		}
@@ -5739,6 +5763,71 @@ function _DeadCodeEliminationOptimizeCommand$_removeExpressionStatementsWithoutS
 };
 
 _DeadCodeEliminationOptimizeCommand._removeExpressionStatementsWithoutSideEffects_0$L_DeadCodeEliminationOptimizeCommand$LMemberFunctionDefinition$ = _DeadCodeEliminationOptimizeCommand$_removeExpressionStatementsWithoutSideEffects_0$L_DeadCodeEliminationOptimizeCommand$LMemberFunctionDefinition$;
+
+_DeadCodeEliminationOptimizeCommand.prototype._optimizeExprInVoid$LExpression$F$LExpression$V$ = function (expr, replaceCb) {
+	var condExpr;
+	var ifTrueHasSideEffect;
+	var ifFalseHasSideEffect;
+	var condAndIfTrue;
+	var condOrIfFalse;
+	if (expr instanceof ConditionalExpression) {
+		condExpr = expr;
+		ifTrueHasSideEffect = _Util$exprHasSideEffects$LExpression$(condExpr._ifTrueExpr);
+		ifFalseHasSideEffect = _Util$exprHasSideEffects$LExpression$(condExpr._ifFalseExpr);
+		if (ifTrueHasSideEffect && ifFalseHasSideEffect) {
+		} else {
+			if (ifTrueHasSideEffect && ! ifFalseHasSideEffect) {
+				condAndIfTrue = new LogicalExpression(new Token$0("&&"), condExpr._condExpr, condExpr._ifTrueExpr);
+				replaceCb(condAndIfTrue);
+			} else {
+				if (! ifTrueHasSideEffect && ifFalseHasSideEffect) {
+					condOrIfFalse = new LogicalExpression(new Token$0("||"), condExpr._condExpr, condExpr._ifFalseExpr);
+					replaceCb(condOrIfFalse);
+				} else {
+					replaceCb(condExpr._condExpr);
+				}
+			}
+		}
+	} else {
+		if (expr instanceof LogicalNotExpression) {
+			replaceCb(UnaryExpression$getExpr_0$LUnaryExpression$(expr));
+		}
+	}
+};
+
+
+function _DeadCodeEliminationOptimizeCommand$_optimizeExprInVoid_0$L_DeadCodeEliminationOptimizeCommand$LExpression$F$LExpression$V$($this, expr, replaceCb) {
+	var condExpr;
+	var ifTrueHasSideEffect;
+	var ifFalseHasSideEffect;
+	var condAndIfTrue;
+	var condOrIfFalse;
+	if (expr instanceof ConditionalExpression) {
+		condExpr = expr;
+		ifTrueHasSideEffect = _Util$exprHasSideEffects$LExpression$(condExpr._ifTrueExpr);
+		ifFalseHasSideEffect = _Util$exprHasSideEffects$LExpression$(condExpr._ifFalseExpr);
+		if (ifTrueHasSideEffect && ifFalseHasSideEffect) {
+		} else {
+			if (ifTrueHasSideEffect && ! ifFalseHasSideEffect) {
+				condAndIfTrue = new LogicalExpression(new Token$0("&&"), condExpr._condExpr, condExpr._ifTrueExpr);
+				replaceCb(condAndIfTrue);
+			} else {
+				if (! ifTrueHasSideEffect && ifFalseHasSideEffect) {
+					condOrIfFalse = new LogicalExpression(new Token$0("||"), condExpr._condExpr, condExpr._ifFalseExpr);
+					replaceCb(condOrIfFalse);
+				} else {
+					replaceCb(condExpr._condExpr);
+				}
+			}
+		}
+	} else {
+		if (expr instanceof LogicalNotExpression) {
+			replaceCb(UnaryExpression$getExpr_0$LUnaryExpression$(expr));
+		}
+	}
+};
+
+_DeadCodeEliminationOptimizeCommand._optimizeExprInVoid_0$L_DeadCodeEliminationOptimizeCommand$LExpression$F$LExpression$V$ = _DeadCodeEliminationOptimizeCommand$_optimizeExprInVoid_0$L_DeadCodeEliminationOptimizeCommand$LExpression$F$LExpression$V$;
 
 _DeadCodeEliminationOptimizeCommand.prototype._optimizeFunction$LMemberFunctionDefinition$ = function (funcDef) {
 	var $this = this;
@@ -5753,20 +5842,6 @@ _DeadCodeEliminationOptimizeCommand.prototype._optimizeFunction$LMemberFunctionD
 		_DeadCodeEliminationOptimizeCommand$_eliminateDeadStores_0$L_DeadCodeEliminationOptimizeCommand$LMemberFunctionDefinition$ALExpression$($this, funcDef, exprs);
 		_DeadCodeEliminationOptimizeCommand$_eliminateDeadConditions_0$L_DeadCodeEliminationOptimizeCommand$LMemberFunctionDefinition$ALExpression$($this, funcDef, exprs);
 	}));
-	(function onStatements(statements) {
-		var i;
-		var statement;
-		for (i = statements.length - 1; i >= 0; -- i) {
-			statement = statements[i];
-			if (statement instanceof ExpressionStatement) {
-				if (! _Util$exprHasSideEffects$LExpression$(UnaryExpressionStatement$getExpr_0$LUnaryExpressionStatement$(statement))) {
-					statements.splice(i, 1);
-				}
-			}
-			statement.handleStatements$F$ALStatement$B$(onStatements);
-		}
-		return true;
-	})(funcDef._statements);
 	locals = funcDef._locals;
 	localsUsed = new Array(locals.length);
 	Util$forEachStatement$F$LStatement$B$ALStatement$((function onStatement(statement) {
@@ -5851,20 +5926,6 @@ function _DeadCodeEliminationOptimizeCommand$_optimizeFunction_0$L_DeadCodeElimi
 		_DeadCodeEliminationOptimizeCommand$_eliminateDeadStores_0$L_DeadCodeEliminationOptimizeCommand$LMemberFunctionDefinition$ALExpression$($this, funcDef, exprs);
 		_DeadCodeEliminationOptimizeCommand$_eliminateDeadConditions_0$L_DeadCodeEliminationOptimizeCommand$LMemberFunctionDefinition$ALExpression$($this, funcDef, exprs);
 	}));
-	(function onStatements(statements) {
-		var i;
-		var statement;
-		for (i = statements.length - 1; i >= 0; -- i) {
-			statement = statements[i];
-			if (statement instanceof ExpressionStatement) {
-				if (! _Util$exprHasSideEffects$LExpression$(UnaryExpressionStatement$getExpr_0$LUnaryExpressionStatement$(statement))) {
-					statements.splice(i, 1);
-				}
-			}
-			statement.handleStatements$F$ALStatement$B$(onStatements);
-		}
-		return true;
-	})(funcDef._statements);
 	locals = funcDef._locals;
 	localsUsed = new Array(locals.length);
 	Util$forEachStatement$F$LStatement$B$ALStatement$((function onStatement(statement) {
@@ -6070,7 +6131,7 @@ _DeadCodeEliminationOptimizeCommand.prototype._delayAssignmentsBetweenLocals$LMe
 				} else {
 					if (expr instanceof NewExpression) {
 						this$0 = expr;
-						! Util$forEachExpression$F$LExpression$F$LExpression$V$B$ALExpression$(onExpr, this$0._args) ? false : true;
+						Util$forEachExpression$F$LExpression$F$LExpression$V$B$ALExpression$(onExpr, this$0._args);
 						(_list$1 = locals._list).splice(0, _list$1.length);
 						return true;
 					}
@@ -6214,7 +6275,7 @@ function _DeadCodeEliminationOptimizeCommand$_delayAssignmentsBetweenLocals_0$L_
 				} else {
 					if (expr instanceof NewExpression) {
 						this$0 = expr;
-						! Util$forEachExpression$F$LExpression$F$LExpression$V$B$ALExpression$(onExpr, this$0._args) ? false : true;
+						Util$forEachExpression$F$LExpression$F$LExpression$V$B$ALExpression$(onExpr, this$0._args);
 						(_list$1 = locals._list).splice(0, _list$1.length);
 						return true;
 					}
@@ -6614,13 +6675,13 @@ _DeadCodeEliminationOptimizeCommand.prototype._eliminateDeadConditions$LMemberFu
 				cond = _Util$conditionIsConstant$LExpression$(ifStatement._expr);
 				if (cond == null) {
 				} else {
-					if (cond == false && ifStatement._onFalseStatements.length === 0) {
+					if (cond === false && ifStatement._onFalseStatements.length === 0) {
 						statements.splice(i, 1);
 					} else {
-						if (cond == false) {
+						if (cond === false) {
 							spliceStatements(statements, i, ifStatement._onFalseStatements);
 						} else {
-							if (cond == true) {
+							if (cond === true) {
 								spliceStatements(statements, i, ifStatement._onTrueStatements);
 							}
 						}
@@ -6655,13 +6716,13 @@ function _DeadCodeEliminationOptimizeCommand$_eliminateDeadConditions_0$L_DeadCo
 				cond = _Util$conditionIsConstant$LExpression$(ifStatement._expr);
 				if (cond == null) {
 				} else {
-					if (cond == false && ifStatement._onFalseStatements.length === 0) {
+					if (cond === false && ifStatement._onFalseStatements.length === 0) {
 						statements.splice(i, 1);
 					} else {
-						if (cond == false) {
+						if (cond === false) {
 							spliceStatements(statements, i, ifStatement._onFalseStatements);
 						} else {
-							if (cond == true) {
+							if (cond === true) {
 								spliceStatements(statements, i, ifStatement._onTrueStatements);
 							}
 						}
@@ -8043,32 +8104,6 @@ _LCSEOptimizeCommand.prototype._optimizeExpressions$LMemberFunctionDefinition$AL
 			}
 		}
 	});
-	(function (name) {
-		var k;
-		var mayPreserve;
-		var message$0;
-		var $this$0$0;
-		var message$0$0;
-		var message$1;
-		var $this$0$1;
-		var message$0$1;
-		message$0 = "clearing lcse entry for property name: " + name;
-		$this$0$0 = $this._optimizer;
-		message$0$0 = "[" + $this._identifier + "] " + message$0;
-		$this$0$0._log.push(message$0$0);
-		for (k in cachedExprs) {
-			mayPreserve = (function onExpr(expr) {
-				return (expr instanceof LocalExpression || expr instanceof ThisExpression ? true : Token$getValue_0$LToken$(PropertyExpression$getIdentifierToken_0$LPropertyExpression$(expr)) === name ? false : onExpr(UnaryExpression$getExpr_0$LUnaryExpression$(expr)));
-			})(_LCSECachedExpression$getOrigExpr_0$L_LCSECachedExpression$(cachedExprs[k]));
-			if (! mayPreserve) {
-				message$1 = "  removing: " + k;
-				$this$0$1 = $this._optimizer;
-				message$0$1 = "[" + $this._identifier + "] " + message$1;
-				$this$0$1._log.push(message$0$1);
-				delete cachedExprs[k];
-			}
-		}
-	});
 	clearCache = (function () {
 		var $this$0$0;
 		var message$0$0;
@@ -8291,32 +8326,6 @@ function _LCSEOptimizeCommand$_optimizeExpressions_0$L_LCSEOptimizeCommand$LMemb
 		$this$0$0._log.push(message$0$0);
 		for (k in cachedExprs) {
 			if (k.substring(0, name.length + 1) === name + ".") {
-				message$1 = "  removing: " + k;
-				$this$0$1 = $this._optimizer;
-				message$0$1 = "[" + $this._identifier + "] " + message$1;
-				$this$0$1._log.push(message$0$1);
-				delete cachedExprs[k];
-			}
-		}
-	});
-	(function (name) {
-		var k;
-		var mayPreserve;
-		var message$0;
-		var $this$0$0;
-		var message$0$0;
-		var message$1;
-		var $this$0$1;
-		var message$0$1;
-		message$0 = "clearing lcse entry for property name: " + name;
-		$this$0$0 = $this._optimizer;
-		message$0$0 = "[" + $this._identifier + "] " + message$0;
-		$this$0$0._log.push(message$0$0);
-		for (k in cachedExprs) {
-			mayPreserve = (function onExpr(expr) {
-				return (expr instanceof LocalExpression || expr instanceof ThisExpression ? true : Token$getValue_0$LToken$(PropertyExpression$getIdentifierToken_0$LPropertyExpression$(expr)) === name ? false : onExpr(UnaryExpression$getExpr_0$LUnaryExpression$(expr)));
-			})(_LCSECachedExpression$getOrigExpr_0$L_LCSECachedExpression$(cachedExprs[k]));
-			if (! mayPreserve) {
 				message$1 = "  removing: " + k;
 				$this$0$1 = $this._optimizer;
 				message$0$1 = "[" + $this._identifier + "] " + message$1;
@@ -9086,11 +9095,11 @@ _ArrayLengthOptimizeCommand.prototype._optimizeArrayLength$LMemberFunctionDefini
 		});
 		statement._condExpr.forEachExpression$F$LExpression$F$LExpression$V$B$(onExpr);
 		statement._postExpr.forEachExpression$F$LExpression$F$LExpression$V$B$(onExpr);
-		! Util$forEachStatement$F$LStatement$B$ALStatement$((function onStatement2(statement) {
+		Util$forEachStatement$F$LStatement$B$ALStatement$((function onStatement2(statement) {
 			statement.forEachStatement$F$LStatement$B$(onStatement2);
 			statement.forEachExpression$F$LExpression$F$LExpression$V$B$(onExpr);
 			return true;
-		}), statement._statements) ? false : true;
+		}), statement._statements);
 	}
 };
 
@@ -9128,11 +9137,11 @@ function _ArrayLengthOptimizeCommand$_optimizeArrayLength_0$L_ArrayLengthOptimiz
 		});
 		statement._condExpr.forEachExpression$F$LExpression$F$LExpression$V$B$(onExpr);
 		statement._postExpr.forEachExpression$F$LExpression$F$LExpression$V$B$(onExpr);
-		! Util$forEachStatement$F$LStatement$B$ALStatement$((function onStatement2(statement) {
+		Util$forEachStatement$F$LStatement$B$ALStatement$((function onStatement2(statement) {
 			statement.forEachStatement$F$LStatement$B$(onStatement2);
 			statement.forEachExpression$F$LExpression$F$LExpression$V$B$(onExpr);
 			return true;
-		}), statement._statements) ? false : true;
+		}), statement._statements);
 	}
 };
 
@@ -9947,12 +9956,12 @@ _Minifier.prototype._recordUsedIdentifiers$LStashable$F$V$ = function (stashable
 	cb();
 	scopeStash = _Minifier$_getScopeStash$LStashable$(stashable);
 	for (k in this._globalUseCount) {
-		if (this._globalUseCount[k] != globalUseCountBackup[k]) {
+		if (this._globalUseCount[k] !== globalUseCountBackup[k]) {
 			scopeStash.usedGlobals[k] = true;
 		}
 	}
 	for (i in this._outerLocals) {
-		if (outerLocalUseCount[i] != _Minifier$_getLocalStash$LLocalVariable$(this._outerLocals[i]).useCount) {
+		if (outerLocalUseCount[i] !== _Minifier$_getLocalStash$LLocalVariable$(this._outerLocals[i]).useCount) {
 			scopeStash.usedOuterLocals.push(this._outerLocals[i]);
 		}
 	}
@@ -9976,12 +9985,12 @@ function _Minifier$_recordUsedIdentifiers_0$L_Minifier$LStashable$F$V$($this, st
 	cb();
 	scopeStash = _Minifier$_getScopeStash$LStashable$(stashable);
 	for (k in $this._globalUseCount) {
-		if ($this._globalUseCount[k] != globalUseCountBackup[k]) {
+		if ($this._globalUseCount[k] !== globalUseCountBackup[k]) {
 			scopeStash.usedGlobals[k] = true;
 		}
 	}
 	for (i in $this._outerLocals) {
-		if (outerLocalUseCount[i] != _Minifier$_getLocalStash$LLocalVariable$($this._outerLocals[i]).useCount) {
+		if (outerLocalUseCount[i] !== _Minifier$_getLocalStash$LLocalVariable$($this._outerLocals[i]).useCount) {
 			scopeStash.usedOuterLocals.push($this._outerLocals[i]);
 		}
 	}
@@ -11814,19 +11823,31 @@ $__jsx_extend([_EqualityExpressionEmitter], _OperatorExpressionEmitter);
 _EqualityExpressionEmitter.prototype._emit$ = function () {
 	var op;
 	var emitOp;
+	var lhs;
+	var rhs;
 	var $this$0;
 	var $this$1;
+	var $this$2;
+	var $this$3;
 	var _expr$0;
-	$this$1 = _expr$0 = this._expr;
-	$this$0 = $this$1._token;
+	$this$3 = _expr$0 = this._expr;
+	$this$0 = $this$3._token;
 	op = $this$0._value;
 	emitOp = op;
-	if (BinaryExpression$getFirstExpr_0$LBinaryExpression$(_expr$0).getType$() instanceof PrimitiveType && BinaryExpression$getSecondExpr_0$LBinaryExpression$(this._expr).getType$() instanceof PrimitiveType) {
+	$this$1 = _expr$0;
+	lhs = $this$1._expr1;
+	$this$2 = _expr$0;
+	rhs = $this$2._expr2;
+	if (lhs.getType$() instanceof PrimitiveType && rhs.getType$() instanceof PrimitiveType) {
 		emitOp += "=";
+	} else {
+		if (Type$resolveIfNullable_0$LType$(lhs.getType$()) instanceof PrimitiveType && Type$resolveIfNullable_0$LType$(lhs.getType$()).equals$LType$(Type$resolveIfNullable_0$LType$(rhs.getType$()))) {
+			emitOp += "=";
+		}
 	}
-	JavaScriptEmitter$_getExpressionEmitterFor_0$LJavaScriptEmitter$LExpression$(this._emitter, BinaryExpression$getFirstExpr_0$LBinaryExpression$(this._expr)).emit$N(_EqualityExpressionEmitter._operatorPrecedence[op] - 1);
+	JavaScriptEmitter$_getExpressionEmitterFor_0$LJavaScriptEmitter$LExpression$(this._emitter, lhs).emit$N(_EqualityExpressionEmitter._operatorPrecedence[op] - 1);
 	JavaScriptEmitter$_emit_0$LJavaScriptEmitter$SLToken$(this._emitter, " " + emitOp + " ", Expression$getToken_0$LExpression$(this._expr));
-	JavaScriptEmitter$_getExpressionEmitterFor_0$LJavaScriptEmitter$LExpression$(this._emitter, BinaryExpression$getSecondExpr_0$LBinaryExpression$(this._expr)).emit$N(_EqualityExpressionEmitter._operatorPrecedence[op] - 1);
+	JavaScriptEmitter$_getExpressionEmitterFor_0$LJavaScriptEmitter$LExpression$(this._emitter, rhs).emit$N(_EqualityExpressionEmitter._operatorPrecedence[op] - 1);
 };
 
 
@@ -12602,7 +12623,7 @@ _BootstrapBuilder.prototype.addBootstrap$S = function (code) {
 		args = "[]";
 		break;
 	}
-	callEntryPoint = Util$format$SAS("JSX.%1(%2, %3)", [ this._getLauncher$(), JSON.stringify(Platform$encodeFilename_0$LPlatform$S(this._emitter._platform, this._entrySourceFile)), args ]);
+	callEntryPoint = Util$format$SAS("JSX.%1(%2, %3);", [ this._getLauncher$(), JSON.stringify(Platform$encodeFilename_0$LPlatform$S(this._emitter._platform, this._entrySourceFile)), args ]);
 	if (this._executableFor === "web") {
 		wrapper$0 = (_platform$1 = this._emitter._platform).load$S(_platform$1.getRoot$() + "/src/js/web-launcher.js");
 		callEntryPoint = wrapper$0.replace(/\/\/--CODE--\/\//, callEntryPoint);
@@ -12629,7 +12650,7 @@ function _BootstrapBuilder$addBootstrap_0$L_BootstrapBuilder$S($this, code) {
 		args = "[]";
 		break;
 	}
-	callEntryPoint = Util$format$SAS("JSX.%1(%2, %3)", [ $this._getLauncher$(), JSON.stringify(Platform$encodeFilename_0$LPlatform$S($this._emitter._platform, $this._entrySourceFile)), args ]);
+	callEntryPoint = Util$format$SAS("JSX.%1(%2, %3);", [ $this._getLauncher$(), JSON.stringify(Platform$encodeFilename_0$LPlatform$S($this._emitter._platform, $this._entrySourceFile)), args ]);
 	if ($this._executableFor === "web") {
 		wrapper$0 = (_platform$1 = $this._emitter._platform).load$S(_platform$1.getRoot$() + "/src/js/web-launcher.js");
 		callEntryPoint = wrapper$0.replace(/\/\/--CODE--\/\//, callEntryPoint);
@@ -13267,7 +13288,7 @@ BrowserPlatform.prototype._findPath$S = function (path) {
 	resolvedPath = (path.indexOf(this._root + "/") !== -1 ? path.slice(this._root.length + 1) : path);
 	BrowserPlatform$debug_0$LBrowserPlatform$X(this, Util$format$SAS("[D] find path=%1 (resolvedPath=%2)", [ path, resolvedPath ]));
 	parts = resolvedPath.split('/');
-	if (parts[0] == "") {
+	if (parts[0] === "") {
 		parts.shift();
 	}
 	cur = this._tree;
@@ -13292,7 +13313,7 @@ function BrowserPlatform$_findPath_0$LBrowserPlatform$S($this, path) {
 	resolvedPath = (path.indexOf($this._root + "/") !== -1 ? path.slice($this._root.length + 1) : path);
 	BrowserPlatform$debug_0$LBrowserPlatform$X($this, Util$format$SAS("[D] find path=%1 (resolvedPath=%2)", [ path, resolvedPath ]));
 	parts = resolvedPath.split('/');
-	if (parts[0] == "") {
+	if (parts[0] === "") {
 		parts.shift();
 	}
 	cur = $this._tree;
@@ -13513,6 +13534,30 @@ function Util$format$SAS(fmt, args) {
 };
 
 Util.format$SAS = Util$format$SAS;
+
+function Util$isBuiltInContainer$LType$(type) {
+	var classDef;
+	var className;
+	var this$0;
+	var $this$0;
+	var this$0$0;
+	if (type instanceof ObjectType) {
+		this$0 = type;
+		classDef = this$0._classDef;
+		if (classDef instanceof InstantiatedClassDefinition) {
+			$this$0 = classDef;
+			this$0$0 = $this$0._templateClassDef;
+			className = this$0$0._className;
+			return $__jsx_ObjectHasOwnProperty.call(Util._builtInContainer, className);
+		} else {
+			className = classDef.className$();
+			return $__jsx_ObjectHasOwnProperty.call(Util._builtInContainer, className);
+		}
+	}
+	return false;
+};
+
+Util.isBuiltInContainer$LType$ = Util$isBuiltInContainer$LType$;
 
 function Util$instantiateTemplate$LAnalysisContext$LToken$SALType$(context, token, className, typeArguments) {
 	return Parser$lookupTemplate_0$LParser$ALCompileError$LTemplateInstantiationRequest$F$LParser$LClassDefinition$LClassDefinition$$(context.parser, context.errors, ({_token: token, _className: className, _typeArgs: typeArguments}), context.postInstantiationCallback);
@@ -13805,7 +13850,7 @@ function Util$decodeStringLiteral$S(literal) {
 	var backslashAt;
 	var escapeChar;
 	matched = literal.match(/^([\'\"]).*([\'\"])$/);
-	if (matched == null || matched[1] != matched[2]) {
+	if (matched == null || matched[1] !== matched[2]) {
 		throw new Error("input string is not quoted properly: " + literal);
 	}
 	src = literal.substring(1, literal.length - 1);
@@ -13873,10 +13918,10 @@ function Util$_resolvedPathParts$S(path) {
 		return tokens;
 	}
 	for (i = 0; i < tokens.length; ) {
-		if (tokens[i] == ".") {
+		if (tokens[i] === ".") {
 			tokens.splice(i, 1);
 		} else {
-			if (tokens[i] == ".." && i !== 0 && tokens[i - 1] != "..") {
+			if (tokens[i] === ".." && i !== 0 && tokens[i - 1] !== "..") {
 				tokens.splice(i - 1, 2);
 				i -= 1;
 			} else {
@@ -13909,10 +13954,10 @@ function Util$relativePath$SSB(fromPath, toPath, isFile) {
 	if (isFile) {
 		f.pop();
 	}
-	if (f[0] == "") {
+	if (f[0] === "") {
 		f.shift();
 	}
-	if (t[0] == "") {
+	if (t[0] === "") {
 		t.shift();
 	}
 	value1$0 = f.length;
@@ -13920,7 +13965,7 @@ function Util$relativePath$SSB(fromPath, toPath, isFile) {
 	minLen = (value1$0 <= value2$0 ? value1$0 : value2$0);
 	samePartsIndex = minLen;
 	for (i = 0; i < minLen; ++ i) {
-		if (f[i] != t[i]) {
+		if (f[i] !== t[i]) {
 			samePartsIndex = i;
 			break;
 		}
@@ -15413,12 +15458,12 @@ $__jsx_extend([JavaScriptEmitter], Object);
 $__jsx_merge_interface(JavaScriptEmitter, Emitter);
 
 JavaScriptEmitter.prototype.isJsModule$LClassDefinition$ = function (classDef) {
-	return classDef.className$() === "js" && Token$getFilename_0$LToken$(classDef.getToken$()) == Util$resolvePath$S(this._platform.getRoot$() + "/lib/js/js.jsx");
+	return classDef.className$() === "js" && Token$getFilename_0$LToken$(classDef.getToken$()) === Util$resolvePath$S(this._platform.getRoot$() + "/lib/js/js.jsx");
 };
 
 
 function JavaScriptEmitter$isJsModule_0$LJavaScriptEmitter$LClassDefinition$($this, classDef) {
-	return classDef.className$() === "js" && Token$getFilename_0$LToken$(classDef.getToken$()) == Util$resolvePath$S($this._platform.getRoot$() + "/lib/js/js.jsx");
+	return classDef.className$() === "js" && Token$getFilename_0$LToken$(classDef.getToken$()) === Util$resolvePath$S($this._platform.getRoot$() + "/lib/js/js.jsx");
 };
 
 JavaScriptEmitter.isJsModule_0$LJavaScriptEmitter$LClassDefinition$ = JavaScriptEmitter$isJsModule_0$LJavaScriptEmitter$LClassDefinition$;
@@ -15569,7 +15614,7 @@ JavaScriptEmitter.prototype._emitInit$ = function () {
 	this._indent = 0;
 	this._emittingClass = null;
 	this._emittingFunction = null;
-	this._output += "// generatedy by JSX compiler 0.9.48 (2013-06-29 18:26:25 -0700; 4ff2290f5934309626a3d5290efd1b18391abe96)\n";
+	this._output += "// generatedy by JSX compiler 0.9.49 (2013-07-02 23:09:31 -0700; 2a835991352f379f41ad55e03550652e0dd84358)\n";
 	this._output += this._fileHeader;
 	this._output += (_platform$0 = this._platform).load$S(_platform$0.getRoot$() + "/src/js/bootstrap.js");
 	stash = this.getStash$S("no-debug");
@@ -15585,7 +15630,7 @@ function JavaScriptEmitter$_emitInit_0$LJavaScriptEmitter$($this) {
 	$this._indent = 0;
 	$this._emittingClass = null;
 	$this._emittingFunction = null;
-	$this._output += "// generatedy by JSX compiler 0.9.48 (2013-06-29 18:26:25 -0700; 4ff2290f5934309626a3d5290efd1b18391abe96)\n";
+	$this._output += "// generatedy by JSX compiler 0.9.49 (2013-07-02 23:09:31 -0700; 2a835991352f379f41ad55e03550652e0dd84358)\n";
 	$this._output += $this._fileHeader;
 	$this._output += (_platform$0 = $this._platform).load$S(_platform$0.getRoot$() + "/src/js/bootstrap.js");
 	stash = $this.getStash$S("no-debug");
@@ -15920,7 +15965,7 @@ JavaScriptEmitter.prototype._emitStaticInitializationCode$LClassDefinition$ = fu
 	var members;
 	var i;
 	var member;
-	if (classDef.className$() === "js" && Token$getFilename_0$LToken$(classDef.getToken$()) == Util$resolvePath$S(this._platform.getRoot$() + "/lib/js/js.jsx")) {
+	if (classDef.className$() === "js" && Token$getFilename_0$LToken$(classDef.getToken$()) === Util$resolvePath$S(this._platform.getRoot$() + "/lib/js/js.jsx")) {
 		JavaScriptEmitter$_emit_0$LJavaScriptEmitter$SLToken$(this, "var js = { global: function () { return this; }() };\n", null);
 		return;
 	}
@@ -15941,7 +15986,7 @@ function JavaScriptEmitter$_emitStaticInitializationCode_0$LJavaScriptEmitter$LC
 	var members;
 	var i;
 	var member;
-	if (classDef.className$() === "js" && Token$getFilename_0$LToken$(classDef.getToken$()) == Util$resolvePath$S($this._platform.getRoot$() + "/lib/js/js.jsx")) {
+	if (classDef.className$() === "js" && Token$getFilename_0$LToken$(classDef.getToken$()) === Util$resolvePath$S($this._platform.getRoot$() + "/lib/js/js.jsx")) {
 		JavaScriptEmitter$_emit_0$LJavaScriptEmitter$SLToken$($this, "var js = { global: function () { return this; }() };\n", null);
 		return;
 	}
@@ -16019,7 +16064,7 @@ JavaScriptEmitter.prototype._emitClassMap$ALClassDefinition$ = function (classDe
 		filename = $this$0._filename;
 		pushClass(classDefs.shift());
 		for (i = 0; i < classDefs.length; ) {
-			if (Token$getFilename_0$LToken$(classDefs[i].getToken$()) == filename) {
+			if (Token$getFilename_0$LToken$(classDefs[i].getToken$()) === filename) {
 				pushClass(classDefs[i]);
 				classDefs.splice(i, 1);
 			} else {
@@ -16116,7 +16161,7 @@ function JavaScriptEmitter$_emitClassMap_0$LJavaScriptEmitter$ALClassDefinition$
 		filename = $this$0._filename;
 		pushClass(classDefs.shift());
 		for (i = 0; i < classDefs.length; ) {
-			if (Token$getFilename_0$LToken$(classDefs[i].getToken$()) == filename) {
+			if (Token$getFilename_0$LToken$(classDefs[i].getToken$()) === filename) {
 				pushClass(classDefs[i]);
 				classDefs.splice(i, 1);
 			} else {
@@ -17725,7 +17770,7 @@ function LocalVariableStatuses(funcDef, base) {
 	this._statuses = {};
 	if (base != null) {
 		for (k in base._statuses) {
-			this._statuses[k] = (base._statuses[k] == 0 ? 2 : base._statuses[k]);
+			this._statuses[k] = (base._statuses[k] === 0 ? 2 : base._statuses[k]);
 		}
 	}
 	args = funcDef._args;
@@ -17770,9 +17815,9 @@ LocalVariableStatuses.prototype.merge$LLocalVariableStatuses$ = function (that) 
 	}
 	ret = new LocalVariableStatuses$0(this);
 	for (k in ret._statuses) {
-		if (ret._statuses[k] == 0 && that._statuses[k] == 0) {
+		if (ret._statuses[k] === 0 && that._statuses[k] === 0) {
 		} else {
-			if (ret._statuses[k] == 1 && that._statuses[k] == 1) {
+			if (ret._statuses[k] === 1 && that._statuses[k] === 1) {
 			} else {
 				ret._statuses[k] = 2;
 			}
@@ -17794,9 +17839,9 @@ function LocalVariableStatuses$merge_0$LLocalVariableStatuses$LLocalVariableStat
 	}
 	ret = new LocalVariableStatuses$0($this);
 	for (k in ret._statuses) {
-		if (ret._statuses[k] == 0 && that._statuses[k] == 0) {
+		if (ret._statuses[k] === 0 && that._statuses[k] === 0) {
 		} else {
-			if (ret._statuses[k] == 1 && that._statuses[k] == 1) {
+			if (ret._statuses[k] === 1 && that._statuses[k] === 1) {
 			} else {
 				ret._statuses[k] = 2;
 			}
@@ -17817,7 +17862,7 @@ LocalVariableStatuses.prototype.mergeFinally$LLocalVariableStatuses$ = function 
 			ret._statuses[k] = 1;
 			break;
 		case 2:
-			if (ret._statuses[k] != 1) {
+			if (ret._statuses[k] !== 1) {
 				ret._statuses[k] = 2;
 			}
 			break;
@@ -17840,7 +17885,7 @@ function LocalVariableStatuses$mergeFinally_0$LLocalVariableStatuses$LLocalVaria
 			ret._statuses[k] = 1;
 			break;
 		case 2:
-			if (ret._statuses[k] != 1) {
+			if (ret._statuses[k] !== 1) {
 				ret._statuses[k] = 2;
 			}
 			break;
@@ -18399,7 +18444,7 @@ Import.prototype.assertExistenceOfNamedClasses$ALCompileError$ = function (error
 		var allClassNames$len$0;
 		num = 0;
 		for ((i = 0, allClassNames$len$0 = allClassNames.length); i < allClassNames$len$0; ++ i) {
-			if (allClassNames[i] == className) {
+			if (allClassNames[i] === className) {
 				++ num;
 			}
 		}
@@ -18444,7 +18489,7 @@ function Import$assertExistenceOfNamedClasses_0$LImport$ALCompileError$($this, e
 		var allClassNames$len$0;
 		num = 0;
 		for ((i = 0, allClassNames$len$0 = allClassNames.length); i < allClassNames$len$0; ++ i) {
-			if (allClassNames[i] == className) {
+			if (allClassNames[i] === className) {
 				++ num;
 			}
 		}
@@ -19368,7 +19413,7 @@ function Parser$lookupImportAlias$LParser$S($this, name) {
 	for (i = 0; i < $this._imports.length; ++ i) {
 		$this$0 = $this._imports[i];
 		alias = ($this$0._aliasToken ? Token$getValue_0$LToken$($this$0._aliasToken) : null);
-		if (alias != null && alias == name) {
+		if (alias != null && alias === name) {
 			return $this._imports[i];
 		}
 	}
@@ -19384,7 +19429,7 @@ function Parser$lookupImportAlias_0$LParser$S($this, name) {
 	for (i = 0; i < $this._imports.length; ++ i) {
 		$this$0 = $this._imports[i];
 		alias = ($this$0._aliasToken ? Token$getValue_0$LToken$($this$0._aliasToken) : null);
-		if (alias != null && alias == name) {
+		if (alias != null && alias === name) {
 			return $this._imports[i];
 		}
 	}
@@ -20303,7 +20348,7 @@ function Parser$_expectOpt$LParser$ASLRegExp$($this, expected, excludePattern) {
 				$this$0._candidates.push($this$1);
 			}
 		}
-		if (Parser$_getInputByLength_0$LParser$N($this, expected[i].length) == expected[i]) {
+		if (Parser$_getInputByLength_0$LParser$N($this, expected[i].length) === expected[i]) {
 			if (expected[i].match(_Lexer.rxIdent) != null && Parser$_getInput_0$LParser$($this).match(_Lexer.rxIdent)[0].length !== expected[i].length) {
 			} else {
 				if (excludePattern != null && Parser$_getInput_0$LParser$($this).match(excludePattern) != null) {
@@ -20338,7 +20383,7 @@ function Parser$_expectOpt_0$LParser$ASLRegExp$($this, expected, excludePattern)
 				$this$0._candidates.push($this$1);
 			}
 		}
-		if (Parser$_getInputByLength_0$LParser$N($this, expected[i].length) == expected[i]) {
+		if (Parser$_getInputByLength_0$LParser$N($this, expected[i].length) === expected[i]) {
 			if (expected[i].match(_Lexer.rxIdent) != null && $this._lines[$this._lineNumber - 1].substring($this._columnOffset).match(_Lexer.rxIdent)[0].length !== expected[i].length) {
 			} else {
 				if (excludePattern != null && $this._lines[$this._lineNumber - 1].substring($this._columnOffset).match(excludePattern) != null) {
@@ -20933,6 +20978,7 @@ function Parser$_classDefinition$LParser$($this) {
 	var members;
 	var success;
 	var member;
+	var assignToken;
 	var i;
 	var classDef;
 	var templateClassDef;
@@ -20988,6 +21034,7 @@ function Parser$_classDefinition$LParser$($this) {
 			break;
 		case "native":
 			if (Parser$_expectOpt_0$LParser$S($this, "(") != null) {
+				$this._errors.push(new DeprecatedWarning$0($this._filename, $this._lineNumber, $this._columnOffset, "use of native(\"...\") is deprecated, use class N { ... } = \"...\"; instead"));
 				nativeSource = Parser$_expectStringLiteral_0$LParser$($this);
 				Parser$_expect_0$LParser$ASLRegExp$($this, [ ")" ], null);
 			}
@@ -21069,6 +21116,17 @@ function Parser$_classDefinition$LParser$($this) {
 			Parser$_skipStatement_0$LParser$($this);
 		}
 	}
+	assignToken = Parser$_expectOpt_0$LParser$ASLRegExp$($this, [ "=" ], null);
+	if (assignToken != null) {
+		nativeSource = Parser$_expectStringLiteral_0$LParser$($this);
+		if (Parser$_expect_0$LParser$S($this, ";") == null) {
+			return null;
+		}
+		if (($this._classFlags & 16) === 0) {
+			$this._errors.push(new CompileError(assignToken, "in-line native definition requires native attribute"));
+			return null;
+		}
+	}
 	if (($this._classFlags & 16) === 0 && Parser$_isReservedClassName$S(className._value)) {
 		$this._errors.push(new CompileError(className, "cannot re-define a built-in class"));
 		success = false;
@@ -21148,6 +21206,7 @@ function Parser$_classDefinition_0$LParser$($this) {
 	var members;
 	var success;
 	var member;
+	var assignToken;
 	var i;
 	var classDef;
 	var templateClassDef;
@@ -21203,6 +21262,7 @@ function Parser$_classDefinition_0$LParser$($this) {
 			break;
 		case "native":
 			if (Parser$_expectOpt_0$LParser$ASLRegExp$($this, [ "(" ], null) != null) {
+				$this._errors.push(new DeprecatedWarning$0($this._filename, $this._lineNumber, $this._columnOffset, "use of native(\"...\") is deprecated, use class N { ... } = \"...\"; instead"));
 				nativeSource = Parser$_expectStringLiteral_0$LParser$($this);
 				Parser$_expect_0$LParser$ASLRegExp$($this, [ ")" ], null);
 			}
@@ -21282,6 +21342,17 @@ function Parser$_classDefinition_0$LParser$($this) {
 			members.push(member);
 		} else {
 			Parser$_skipStatement_0$LParser$($this);
+		}
+	}
+	assignToken = Parser$_expectOpt_0$LParser$ASLRegExp$($this, [ "=" ], null);
+	if (assignToken != null) {
+		nativeSource = Parser$_expectStringLiteral_0$LParser$($this);
+		if (Parser$_expect_0$LParser$ASLRegExp$($this, [ ";" ], null) == null) {
+			return null;
+		}
+		if (($this._classFlags & 16) === 0) {
+			$this._errors.push(new CompileError(assignToken, "in-line native definition requires native attribute"));
+			return null;
 		}
 	}
 	if (($this._classFlags & 16) === 0 && Parser$_isReservedClassName$S(className._value)) {
@@ -25074,7 +25145,7 @@ function Parser$_functionBody$LParser$LToken$LToken$LLocalVariable$ALArgumentDec
 		flags = 8;
 		if (! withBlock) {
 			lastToken = null;
-			expr = Parser$_expr_0$LParser$B($this, false);
+			expr = Parser$_assignExpr_0$LParser$B($this, false);
 			$this._statements.push(new ReturnStatement(token, expr));
 		} else {
 			lastToken = Parser$_block_0$LParser$($this);
@@ -25108,7 +25179,7 @@ function Parser$_functionBody_0$LParser$LToken$LToken$LLocalVariable$ALArgumentD
 		flags = 8;
 		if (! withBlock) {
 			lastToken = null;
-			expr = Parser$_expr_0$LParser$B($this, false);
+			expr = Parser$_assignExpr_0$LParser$B($this, false);
 			$this._statements.push(new ReturnStatement(token, expr));
 		} else {
 			lastToken = Parser$_block_0$LParser$($this);
@@ -30690,7 +30761,7 @@ ObjectType.prototype.resolveType$LAnalysisContext$ = function (context) {
 
 ObjectType.prototype.isConvertibleTo$LType$ = function (type) {
 	type = (type instanceof NullableType ? NullableType$getBaseType_0$LNullableType$(type) : type);
-	return (type instanceof VariantType ? true : ! (type instanceof ObjectType) ? false : this._classDef == null ? false : ClassDefinition$isConvertibleTo_0$LClassDefinition$LClassDefinition$(this._classDef, type._classDef));
+	return (type instanceof VariantType ? true : ! (type instanceof ObjectType) ? false : this._classDef == null ? false : type._classDef == null ? false : ClassDefinition$isConvertibleTo_0$LClassDefinition$LClassDefinition$(this._classDef, type._classDef));
 };
 
 
@@ -31211,15 +31282,23 @@ ResolvedFunctionType._getExpectedTypes_0$LResolvedFunctionType$AALType$NB = Reso
 ResolvedFunctionType.prototype.toString = function () {
 	var args;
 	var i;
+	var s;
 	args = [];
 	for (i = 0; i < this._argTypes.length; ++ i) {
-		if (this._argTypes[i] instanceof VariableLengthArgumentType) {
-			args[i] = "... : " + VariableLengthArgumentType$getBaseType_0$LVariableLengthArgumentType$(this._argTypes[i]).toString();
+		if (this._argTypes[i] == null) {
 		} else {
-			args[i] = ": " + this._argTypes[i].toString();
+			if (this._argTypes[i] instanceof VariableLengthArgumentType) {
+				args[i] = "... : " + VariableLengthArgumentType$getBaseType_0$LVariableLengthArgumentType$(this._argTypes[i]).toString();
+			} else {
+				args[i] = ": " + this._argTypes[i].toString();
+			}
 		}
 	}
-	return this._toStringPrefix$() + "function (" + args.join(", ") + ") : " + this._returnType.toString();
+	s = this._toStringPrefix$() + "function (" + args.join(", ") + ")";
+	if (this._returnType != null) {
+		s += " : " + this._returnType.toString();
+	}
+	return s;
 };
 
 
@@ -34944,7 +35023,12 @@ AssignmentExpression.prototype._analyzeFunctionExpressionAssignment$LAnalysisCon
 		}
 	} else {
 		if (! this._expr1.getType$().equals$LType$(Type.variantType)) {
-			if (! FunctionExpression$deductTypeIfUnknown_0$LFunctionExpression$LAnalysisContext$LResolvedFunctionType$(this._expr2, context, this._expr1.getType$())) {
+			if (this._expr1.getType$() instanceof ResolvedFunctionType) {
+				if (! FunctionExpression$deductTypeIfUnknown_0$LFunctionExpression$LAnalysisContext$LResolvedFunctionType$(this._expr2, context, this._expr1.getType$())) {
+					return false;
+				}
+			} else {
+				context.errors.push(new CompileError(this._token, Util$format$SAS("%1 is not convertible to %2", [ this._expr2.getType$().toString(), this._expr1.getType$().toString() ])));
 				return false;
 			}
 		}
@@ -34964,7 +35048,12 @@ function AssignmentExpression$_analyzeFunctionExpressionAssignment_0$LAssignment
 		}
 	} else {
 		if (! $this._expr1.getType$().equals$LType$(Type.variantType)) {
-			if (! FunctionExpression$deductTypeIfUnknown_0$LFunctionExpression$LAnalysisContext$LResolvedFunctionType$($this._expr2, context, $this._expr1.getType$())) {
+			if ($this._expr1.getType$() instanceof ResolvedFunctionType) {
+				if (! FunctionExpression$deductTypeIfUnknown_0$LFunctionExpression$LAnalysisContext$LResolvedFunctionType$($this._expr2, context, $this._expr1.getType$())) {
+					return false;
+				}
+			} else {
+				context.errors.push(new CompileError($this._token, Util$format$SAS("%1 is not convertible to %2", [ $this._expr2.getType$().toString(), $this._expr1.getType$().toString() ])));
 				return false;
 			}
 		}
@@ -35014,12 +35103,12 @@ BinaryNumberExpression.prototype.analyze$LAnalysisContext$LExpression$ = functio
 		return false;
 	default:
 		$this$0 = this._expr1.getType$();
-		$this$0 instanceof NullableType ? NullableType$getBaseType_0$LNullableType$($this$0) : $this$0;
+		$this$0 instanceof NullableType && NullableType$getBaseType_0$LNullableType$($this$0);
 		if (! OperatorExpression$assertIsConvertibleTo_0$LOperatorExpression$LAnalysisContext$LExpression$LType$B(this, context, this._expr1, Type.numberType, true)) {
 			return false;
 		}
 		$this$1 = this._expr2.getType$();
-		$this$1 instanceof NullableType ? NullableType$getBaseType_0$LNullableType$($this$1) : $this$1;
+		$this$1 instanceof NullableType && NullableType$getBaseType_0$LNullableType$($this$1);
 		if (! OperatorExpression$assertIsConvertibleTo_0$LOperatorExpression$LAnalysisContext$LExpression$LType$B(this, context, this._expr2, Type.numberType, true)) {
 			return false;
 		}
@@ -38576,7 +38665,7 @@ DocumentGenerator.prototype._buildFooterOfFile$LParser$ = function (parser) {
 		}
 	}
 	_ += "<p class=\"jsxdoc-notice\">This document was automatically generated by <a href=\"http://jsx.github.io/\">JSX</a> ";
-	_ += "0.9.48".replace(/\n$/, "");
+	_ += "0.9.49".replace(/\n$/, "");
 	_ += "<br />\n";
 	_ += "at ";
 	_ += DocumentGenerator$_escape_0$LDocumentGenerator$S(this, new Date().toISOString()).replace(/\n$/, "");
@@ -38613,7 +38702,7 @@ function DocumentGenerator$_buildFooterOfFile_0$LDocumentGenerator$LParser$($thi
 		}
 	}
 	_ += "<p class=\"jsxdoc-notice\">This document was automatically generated by <a href=\"http://jsx.github.io/\">JSX</a> ";
-	_ += "0.9.48".replace(/\n$/, "");
+	_ += "0.9.49".replace(/\n$/, "");
 	_ += "<br />\n";
 	_ += "at ";
 	_ += DocumentGenerator$_escape_0$LDocumentGenerator$S($this, new Date().toISOString()).replace(/\n$/, "");
@@ -39965,6 +40054,9 @@ _CommaExpressionEmitter._operatorPrecedence = 0;
 $__jsx_lazy_init(BrowserPlatform, "debug", function () {
 	return dom.window.location.hash === "#debug";
 });
+$__jsx_lazy_init(Util, "_builtInContainer", function () {
+	return Util$asSet$AS([ "Array", "Map", "Int8Array", "Uint8Array", "Uint8ClampedArray", "Int16Array", "Uint16Array", "Int32Array", "Uint32Array", "Float32Array", "Float64Array" ]);
+});
 $__jsx_lazy_init(Util, "_stringLiteralEncodingMap", function () {
 	return ({ "\0": "\\0", "\r": "\\r", "\n": "\\n", "\t": "\\t", "\"": "\\\"", "\'": "\\\'", "\\": "\\\\" });
 });
@@ -40075,11 +40167,11 @@ $__jsx_lazy_init(_StatementTransformer, "_statementCountMap", function () {
 });
 CodeTransformer.stopIterationType = null;
 CodeTransformer.jsxGeneratorClassDef = null;
-Meta.VERSION_STRING = "0.9.48";
-Meta.VERSION_NUMBER = 0.009048;
-Meta.LAST_COMMIT_HASH = "4ff2290f5934309626a3d5290efd1b18391abe96";
-Meta.LAST_COMMIT_DATE = "2013-06-29 18:26:25 -0700";
-Meta.IDENTIFIER = "0.9.48 (2013-06-29 18:26:25 -0700; 4ff2290f5934309626a3d5290efd1b18391abe96)";
+Meta.VERSION_STRING = "0.9.49";
+Meta.VERSION_NUMBER = 0.009049;
+Meta.LAST_COMMIT_HASH = "2a835991352f379f41ad55e03550652e0dd84358";
+Meta.LAST_COMMIT_DATE = "2013-07-02 23:09:31 -0700";
+Meta.IDENTIFIER = "0.9.49 (2013-07-02 23:09:31 -0700; 2a835991352f379f41ad55e03550652e0dd84358)";
 SourceMapper.NODE_SOURCE_MAP_HEADER = "require('source-map-support').install();\n\n";
 SourceMapper.WEB_SOURCE_MAP_HEADER = "";
 $__jsx_lazy_init(node, "__dirname", function () {
@@ -40878,7 +40970,7 @@ JSX.runTests = function (sourceFile, tests) {
 function $__jsx_onload (event) {
 	window.removeEventListener("load", $__jsx_onload);
 	document.removeEventListener("DOMContentLoaded", $__jsx_onload);
-	JSX.runMain("system:src/web/playground.jsx", [])
+	JSX.runMain("system:src/web/playground.jsx", []);
 }
 
 window.addEventListener("load", $__jsx_onload);

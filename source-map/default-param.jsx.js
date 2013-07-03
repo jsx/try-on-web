@@ -1,4 +1,4 @@
-// generatedy by JSX compiler 0.9.48 (2013-06-29 18:26:25 -0700; 4ff2290f5934309626a3d5290efd1b18391abe96)
+// generatedy by JSX compiler 0.9.49 (2013-07-02 23:09:31 -0700; 2a835991352f379f41ad55e03550652e0dd84358)
 var JSX = {};
 (function (JSX) {
 /**
@@ -236,7 +236,7 @@ JSX.runTests = function (sourceFile, tests) {
 function $__jsx_onload (event) {
 	window.removeEventListener("load", $__jsx_onload);
 	document.removeEventListener("DOMContentLoaded", $__jsx_onload);
-	JSX.runMain("system:example/default-param.jsx", [])
+	JSX.runMain("system:example/default-param.jsx", []);
 }
 
 window.addEventListener("load", $__jsx_onload);

@@ -1414,6 +1414,7 @@ class Parser {
 				break;
 			case "native":
 				if (this._expectOpt("(") != null) { // native("...")
+					this._newDeprecatedWarning("use of native(\"...\") is deprecated, use class N { ... } = \"...\"; instead");
 					nativeSource = this._expectStringLiteral();
 					this._expect(")");
 				}
@@ -1506,6 +1507,19 @@ class Parser {
 				members.push(member);
 			} else {
 				this._skipStatement();
+			}
+		}
+
+		// in-line native definition
+		var assignToken = this._expectOpt("=");
+		if (assignToken  != null) {
+			nativeSource = this._expectStringLiteral();
+			if (this._expect(";") == null) {
+				return null;
+			}
+			if ((this._classFlags & ClassDefinition.IS_NATIVE) == 0) {
+				this._errors.push(new CompileError(assignToken, "in-line native definition requires native attribute"));
+				return null;
 			}
 		}
 
@@ -3044,7 +3058,7 @@ class Parser {
 			var lastToken : Token;
 			if (! withBlock) {
 				lastToken = null;
-				var expr = this._expr();
+				var expr = this._assignExpr();
 				this._statements.push(new ReturnStatement(token, expr));
 			} else {
 				var lastToken = this._block();

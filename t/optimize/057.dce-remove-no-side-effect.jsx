@@ -1,13 +1,12 @@
 /*EXPECTED
 42
 */
-
-native class Foo {
-	static const bar : number;
-} = "{ bar: 42 }";
-
+/*JSX_OPTS
+--optimize dce
+*/
 class _Main {
 	static function main (args : string[]) : void {
-		log Foo.bar;
+		1 + 2;
+		log 42;
 	}
 }

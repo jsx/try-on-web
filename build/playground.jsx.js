@@ -1,4 +1,4 @@
-// generatedy by JSX compiler 0.9.51 (2013-07-06 22:04:30 -0700; 71d68d2de63ba615d3319d1dc1a636832ed302d9)
+// generatedy by JSX compiler 0.9.51 (2013-07-07 00:30:00 -0700; b7a0307c79db5e60b2f2509625bafb7ccc472a1e)
 var JSX = {};
 (function (JSX) {
 /**
@@ -15653,7 +15653,7 @@ JavaScriptEmitter.prototype._emitInit$ = function () {
 	this._indent = 0;
 	this._emittingClass = null;
 	this._emittingFunction = null;
-	this._output += "// generatedy by JSX compiler 0.9.51 (2013-07-06 22:04:30 -0700; 71d68d2de63ba615d3319d1dc1a636832ed302d9)\n";
+	this._output += "// generatedy by JSX compiler 0.9.51 (2013-07-07 00:30:00 -0700; b7a0307c79db5e60b2f2509625bafb7ccc472a1e)\n";
 	this._output += this._fileHeader;
 	this._output += (_platform$0 = this._platform).load$S(_platform$0.getRoot$() + "/src/js/bootstrap.js");
 	stash = this.getStash$S("no-debug");
@@ -15669,7 +15669,7 @@ function JavaScriptEmitter$_emitInit_0$LJavaScriptEmitter$($this) {
 	$this._indent = 0;
 	$this._emittingClass = null;
 	$this._emittingFunction = null;
-	$this._output += "// generatedy by JSX compiler 0.9.51 (2013-07-06 22:04:30 -0700; 71d68d2de63ba615d3319d1dc1a636832ed302d9)\n";
+	$this._output += "// generatedy by JSX compiler 0.9.51 (2013-07-07 00:30:00 -0700; b7a0307c79db5e60b2f2509625bafb7ccc472a1e)\n";
 	$this._output += $this._fileHeader;
 	$this._output += (_platform$0 = $this._platform).load$S(_platform$0.getRoot$() + "/src/js/bootstrap.js");
 	stash = $this.getStash$S("no-debug");
@@ -40282,9 +40282,9 @@ CodeTransformer.stopIterationType = null;
 CodeTransformer.jsxGeneratorClassDef = null;
 Meta.VERSION_STRING = "0.9.51";
 Meta.VERSION_NUMBER = 0.009051;
-Meta.LAST_COMMIT_HASH = "71d68d2de63ba615d3319d1dc1a636832ed302d9";
-Meta.LAST_COMMIT_DATE = "2013-07-06 22:04:30 -0700";
-Meta.IDENTIFIER = "0.9.51 (2013-07-06 22:04:30 -0700; 71d68d2de63ba615d3319d1dc1a636832ed302d9)";
+Meta.LAST_COMMIT_HASH = "b7a0307c79db5e60b2f2509625bafb7ccc472a1e";
+Meta.LAST_COMMIT_DATE = "2013-07-07 00:30:00 -0700";
+Meta.IDENTIFIER = "0.9.51 (2013-07-07 00:30:00 -0700; b7a0307c79db5e60b2f2509625bafb7ccc472a1e)";
 SourceMapper.NODE_SOURCE_MAP_HEADER = "require('source-map-support').install();\n\n";
 SourceMapper.WEB_SOURCE_MAP_HEADER = "";
 $__jsx_lazy_init(node, "__dirname", function () {

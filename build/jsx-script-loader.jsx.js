@@ -1,4 +1,4 @@
-// generatedy by JSX compiler 0.9.49 (2013-07-02 23:09:31 -0700; 2a835991352f379f41ad55e03550652e0dd84358)
+// generatedy by JSX compiler 0.9.51 (2013-07-06 22:04:30 -0700; 71d68d2de63ba615d3319d1dc1a636832ed302d9)
 var JSX = {};
 (function (JSX) {
 /**
@@ -56,7 +56,7 @@ function $__jsx_div_assign(obj, prop, divisor) {
  */
 var $__jsx_parseInt = parseInt;
 var $__jsx_parseFloat = parseFloat;
-var $__jsx_isNaN = isNaN;
+function $__jsx_isNaN(n) { return n !== n; }
 var $__jsx_isFinite = isFinite;
 
 var $__jsx_encodeURIComponent = encodeURIComponent;
@@ -606,7 +606,7 @@ function DeviceMotionEventInit() {
 };
 
 $__jsx_extend([DeviceMotionEventInit], EventInit);
-var require = function require(module) { console.error('ignore loading module: ' + module); return {}; };
+var _remove_require$0 = (function (exports) { exports.require = function (module) { console.error('ignore loading module: ' + module); return {}; }; }(new Function('return this')()));
 function Compiler(platform) {
 	this._builtinParsers = null;
 	this._emitter = null;
@@ -1380,7 +1380,7 @@ Compiler.prototype._generateCode$ALCompileError$ = function (errors) {
 			if ((classDef.flags$() & 16) === 0) {
 				return;
 			}
-			if ($__jsx_ObjectHasOwnProperty.call(nativeClassNames, classDef.className$()) && ! (classDef instanceof InstantiatedClassDefinition && nativeClassNames[classDef.className$()] instanceof InstantiatedClassDefinition && InstantiatedClassDefinition$getTemplateClass_0$LInstantiatedClassDefinition$(classDef) == InstantiatedClassDefinition$getTemplateClass_0$LInstantiatedClassDefinition$(nativeClassNames[classDef.className$()]))) {
+			if ($__jsx_ObjectHasOwnProperty.call(nativeClassNames, classDef.className$()) && ! (classDef instanceof InstantiatedClassDefinition && nativeClassNames[classDef.className$()] instanceof InstantiatedClassDefinition && InstantiatedClassDefinition$getTemplateClass_0$LInstantiatedClassDefinition$(classDef) == InstantiatedClassDefinition$getTemplateClass_0$LInstantiatedClassDefinition$(nativeClassNames[classDef.className$()])) && classDef._nativeSource == null) {
 				errors.push(CompileError$addCompileNote_0$LCompileError$LCompileNote$(new CompileError(classDef.getToken$(), "native class with same name is already defined"), new CompileNote(nativeClassNames[classDef.className$()].getToken$(), "here")));
 				foundConflict = true;
 				return;
@@ -1457,7 +1457,7 @@ function Compiler$_generateCode_0$LCompiler$ALCompileError$($this, errors) {
 			if ((classDef.flags$() & 16) === 0) {
 				return;
 			}
-			if ($__jsx_ObjectHasOwnProperty.call(nativeClassNames, classDef.className$()) && ! (classDef instanceof InstantiatedClassDefinition && nativeClassNames[classDef.className$()] instanceof InstantiatedClassDefinition && InstantiatedClassDefinition$getTemplateClass_0$LInstantiatedClassDefinition$(classDef) == InstantiatedClassDefinition$getTemplateClass_0$LInstantiatedClassDefinition$(nativeClassNames[classDef.className$()]))) {
+			if ($__jsx_ObjectHasOwnProperty.call(nativeClassNames, classDef.className$()) && ! (classDef instanceof InstantiatedClassDefinition && nativeClassNames[classDef.className$()] instanceof InstantiatedClassDefinition && InstantiatedClassDefinition$getTemplateClass_0$LInstantiatedClassDefinition$(classDef) == InstantiatedClassDefinition$getTemplateClass_0$LInstantiatedClassDefinition$(nativeClassNames[classDef.className$()])) && classDef._nativeSource == null) {
 				errors.push(CompileError$addCompileNote_0$LCompileError$LCompileNote$(new CompileError(classDef.getToken$(), "native class with same name is already defined"), new CompileNote(nativeClassNames[classDef.className$()].getToken$(), "here")));
 				foundConflict = true;
 				return;
@@ -2745,6 +2745,9 @@ _StripOptimizeCommand.prototype._touchInstance$LClassDefinition$ = function (cla
 		implementType$0 = this$0[i$0];
 		_StripOptimizeCommand$_touchInstance_0$L_StripOptimizeCommand$LClassDefinition$(this, implementType$0._classDef);
 	}
+	if (classDef._outerClassDef != null) {
+		_StripOptimizeCommand$_touchInstance_0$L_StripOptimizeCommand$LClassDefinition$(this, classDef._outerClassDef);
+	}
 };
 
 
@@ -2786,6 +2789,9 @@ function _StripOptimizeCommand$_touchInstance_0$L_StripOptimizeCommand$LClassDef
 	for (i$0 in this$0) {
 		implementType$0 = this$0[i$0];
 		_StripOptimizeCommand$_touchInstance_0$L_StripOptimizeCommand$LClassDefinition$($this, implementType$0._classDef);
+	}
+	if (classDef._outerClassDef != null) {
+		_StripOptimizeCommand$_touchInstance_0$L_StripOptimizeCommand$LClassDefinition$($this, classDef._outerClassDef);
 	}
 };
 
@@ -3090,6 +3096,7 @@ _StripOptimizeCommand.prototype._walkExpression$LExpression$ = function (expr) {
 	function onExpr(expr) {
 		var callee;
 		var propertyExpr;
+		var holderClassDef;
 		var name;
 		var member;
 		var superExpr;
@@ -3114,16 +3121,21 @@ _StripOptimizeCommand.prototype._walkExpression$LExpression$ = function (expr) {
 						}
 					} else {
 						if (expr instanceof PropertyExpression) {
-							if (! expr.isClassSpecifier$()) {
-								propertyExpr = expr;
+							propertyExpr = expr;
+							holderClassDef = propertyExpr.getHolderType$().getClassDef$();
+							if (propertyExpr._isInner) {
+								if ((holderClassDef.flags$() & 16) !== 0) {
+									_StripOptimizeCommand$_touchInstance_0$L_StripOptimizeCommand$LClassDefinition$($this, holderClassDef);
+								}
+							} else {
 								$this$0 = propertyExpr._identifierToken;
 								name = $this$0._value;
 								if (propertyExpr._expr.isClassSpecifier$()) {
 									exprType$0 = propertyExpr._type;
 									if (! (exprType$0 instanceof FunctionType) ? false : exprType$0.isAssignable$() ? false : true) {
-										member = Util$findFunctionInClass$LClassDefinition$SALType$B(propertyExpr.getHolderType$().getClassDef$(), name, ResolvedFunctionType$getArgumentTypes_0$LResolvedFunctionType$(expr.getType$()), true);
+										member = Util$findFunctionInClass$LClassDefinition$SALType$B(holderClassDef, name, ResolvedFunctionType$getArgumentTypes_0$LResolvedFunctionType$(expr.getType$()), true);
 									} else {
-										member = Util$findVariableInClass$LClassDefinition$SB(propertyExpr.getHolderType$().getClassDef$(), name, true);
+										member = Util$findVariableInClass$LClassDefinition$SB(holderClassDef, name, true);
 									}
 									_StripOptimizeCommand$_touchStatic_0$L_StripOptimizeCommand$LMemberDefinition$($this, member);
 								} else {
@@ -3154,6 +3166,7 @@ function _StripOptimizeCommand$_walkExpression_0$L_StripOptimizeCommand$LExpress
 	function onExpr(expr) {
 		var callee;
 		var propertyExpr;
+		var holderClassDef;
 		var name;
 		var member;
 		var superExpr;
@@ -3178,16 +3191,21 @@ function _StripOptimizeCommand$_walkExpression_0$L_StripOptimizeCommand$LExpress
 						}
 					} else {
 						if (expr instanceof PropertyExpression) {
-							if (! expr.isClassSpecifier$()) {
-								propertyExpr = expr;
+							propertyExpr = expr;
+							holderClassDef = propertyExpr.getHolderType$().getClassDef$();
+							if (propertyExpr._isInner) {
+								if ((holderClassDef.flags$() & 16) !== 0) {
+									_StripOptimizeCommand$_touchInstance_0$L_StripOptimizeCommand$LClassDefinition$($this, holderClassDef);
+								}
+							} else {
 								$this$0 = propertyExpr._identifierToken;
 								name = $this$0._value;
 								if (propertyExpr._expr.isClassSpecifier$()) {
 									exprType$0 = propertyExpr._type;
 									if (! (exprType$0 instanceof FunctionType) ? false : exprType$0.isAssignable$() ? false : true) {
-										member = Util$findFunctionInClass$LClassDefinition$SALType$B(propertyExpr.getHolderType$().getClassDef$(), name, ResolvedFunctionType$getArgumentTypes_0$LResolvedFunctionType$(expr.getType$()), true);
+										member = Util$findFunctionInClass$LClassDefinition$SALType$B(holderClassDef, name, ResolvedFunctionType$getArgumentTypes_0$LResolvedFunctionType$(expr.getType$()), true);
 									} else {
-										member = Util$findVariableInClass$LClassDefinition$SB(propertyExpr.getHolderType$().getClassDef$(), name, true);
+										member = Util$findVariableInClass$LClassDefinition$SB(holderClassDef, name, true);
 									}
 									_StripOptimizeCommand$_touchStatic_0$L_StripOptimizeCommand$LMemberDefinition$($this, member);
 								} else {
@@ -3934,7 +3952,7 @@ _UnclassifyOptimizationCommand.prototype._getClassesToUnclassify$ = function () 
 			var foundClassDefIndex;
 			if (! (expr != null)) {
 				debugger;
-				throw new Error("[/Users/gfx/repo/try-on-web/JSX/src/optimizer.jsx:1391:28] assertion failure\n                assert expr != null;\n                            ^^\n");
+				throw new Error("[/Users/gfx/repo/try-on-web/JSX/src/optimizer.jsx:1400:28] assertion failure\n                assert expr != null;\n                            ^^\n");
 			}
 			if (expr instanceof InstanceofExpression) {
 				foundClassDefIndex = candidates.indexOf(InstanceofExpression$getExpectedType_0$LInstanceofExpression$(expr).getClassDef$());
@@ -4026,7 +4044,7 @@ function _UnclassifyOptimizationCommand$_getClassesToUnclassify_0$L_UnclassifyOp
 			var foundClassDefIndex;
 			if (! (expr != null)) {
 				debugger;
-				throw new Error("[/Users/gfx/repo/try-on-web/JSX/src/optimizer.jsx:1391:28] assertion failure\n                assert expr != null;\n                            ^^\n");
+				throw new Error("[/Users/gfx/repo/try-on-web/JSX/src/optimizer.jsx:1400:28] assertion failure\n                assert expr != null;\n                            ^^\n");
 			}
 			if (expr instanceof InstanceofExpression) {
 				foundClassDefIndex = candidates.indexOf(InstanceofExpression$getExpectedType_0$LInstanceofExpression$(expr).getClassDef$());
@@ -9181,13 +9199,20 @@ function _Util$0() {
 
 $__jsx_extend([_Util$0], Object);
 function _Util$0$getOutputClassName$LClassDefinition$(classDef) {
-	return classDef.getStash$S("emitter.outputname").outputName;
+	var stash;
+	stash = classDef.getStash$S("emitter.outputname");
+	return stash.outputName;
 };
 
 _Util$0.getOutputClassName$LClassDefinition$ = _Util$0$getOutputClassName$LClassDefinition$;
 
 function _Util$0$getOutputConstructorName$LMemberFunctionDefinition$(ctor) {
-	return ((ctor._classDef.flags$() & 16) !== 0 ? _Util$0$getNameOfNativeConstructor$LClassDefinition$(ctor._classDef) : ctor.getStash$S("emitter.outputname").outputName);
+	var stash;
+	if ((ctor._classDef.flags$() & 16) !== 0) {
+		return _Util$0$getNameOfNativeConstructor$LClassDefinition$(ctor._classDef);
+	}
+	stash = ctor.getStash$S("emitter.outputname");
+	return stash.outputName;
 };
 
 _Util$0.getOutputConstructorName$LMemberFunctionDefinition$ = _Util$0$getOutputConstructorName$LMemberFunctionDefinition$;
@@ -9195,13 +9220,13 @@ _Util$0.getOutputConstructorName$LMemberFunctionDefinition$ = _Util$0$getOutputC
 function _Util$0$getOutputConstructorName$LClassDefinition$ALType$(classDef, argTypes) {
 	var ctor;
 	ctor = Util$findFunctionInClass$LClassDefinition$SALType$B(classDef, "constructor", argTypes, false);
-	return ((ctor._classDef.flags$() & 16) !== 0 ? _Util$0$getNameOfNativeConstructor$LClassDefinition$(ctor._classDef) : ctor.getStash$S("emitter.outputname").outputName);
+	return _Util$0$getOutputConstructorName$LMemberFunctionDefinition$(ctor);
 };
 
 _Util$0.getOutputConstructorName$LClassDefinition$ALType$ = _Util$0$getOutputConstructorName$LClassDefinition$ALType$;
 
 function _Util$0$getNameOfNativeConstructor$LClassDefinition$(classDef) {
-	return (classDef instanceof InstantiatedClassDefinition ? InstantiatedClassDefinition$getTemplateClassName_0$LInstantiatedClassDefinition$(classDef) === "Map" ? "Object" : InstantiatedClassDefinition$getTemplateClassName_0$LInstantiatedClassDefinition$(classDef) : classDef.className$());
+	return (classDef._nativeSource != null || classDef._outerClassDef != null ? _Util$0$getOutputClassName$LClassDefinition$(classDef) : classDef instanceof InstantiatedClassDefinition ? InstantiatedClassDefinition$getTemplateClassName_0$LInstantiatedClassDefinition$(classDef) === "Map" ? "Object" : InstantiatedClassDefinition$getTemplateClassName_0$LInstantiatedClassDefinition$(classDef) : classDef.className$());
 };
 
 _Util$0.getNameOfNativeConstructor$LClassDefinition$ = _Util$0$getNameOfNativeConstructor$LClassDefinition$;
@@ -9218,6 +9243,7 @@ function _Util$0$setOutputClassNames$ALClassDefinition$(classDefs) {
 	var j;
 	var exportedCtor;
 	var n;
+	var name;
 	function setOutputName(stashable, name) {
 		stashable.setStash$SLStash$("emitter.outputname", new _Util$0$COutputNameStash(name));
 	}
@@ -9272,6 +9298,15 @@ function _Util$0$setOutputClassNames$ALClassDefinition$(classDefs) {
 				}
 			} else {
 				setOutputName(classDef, newUniqueName(className));
+			}
+		} else {
+			if (classDef._outerClassDef != null) {
+				name = _Util$0$getOutputClassName$LClassDefinition$(classDef._outerClassDef) + "." + classDef.className$();
+				setOutputName(classDef, name);
+			} else {
+				if (classDef._nativeSource != null) {
+					setOutputName(classDef, newUniqueName(classDef.className$()));
+				}
 			}
 		}
 	}
@@ -9351,7 +9386,7 @@ function _Mangler$mangleTypeName$L_Mangler$LType$($this, type) {
 								default:
 								}
 							}
-							return "L" + _Util$0$getOutputClassName$LClassDefinition$(type.getClassDef$()) + "$";
+							return "L" + _Util$0$getOutputClassName$LClassDefinition$(type.getClassDef$()).replace(/\./g, '$C') + "$";
 						} else {
 							if (type instanceof StaticFunctionType) {
 								return "F" + _Mangler$mangleFunctionArguments_0$L_Mangler$ALType$($this, ResolvedFunctionType$getArgumentTypes_0$LResolvedFunctionType$(type)) + _Mangler$mangleTypeName_0$L_Mangler$LType$($this, ResolvedFunctionType$getReturnType_0$LResolvedFunctionType$(type)) + "$";
@@ -9412,7 +9447,7 @@ function _Mangler$mangleTypeName_0$L_Mangler$LType$($this, type) {
 								default:
 								}
 							}
-							return "L" + _Util$0$getOutputClassName$LClassDefinition$(type.getClassDef$()) + "$";
+							return "L" + _Util$0$getOutputClassName$LClassDefinition$(type.getClassDef$()).replace(/\./g, '$C') + "$";
 						} else {
 							if (type instanceof StaticFunctionType) {
 								return "F" + _Mangler$mangleFunctionArguments_0$L_Mangler$ALType$($this, ResolvedFunctionType$getArgumentTypes_0$LResolvedFunctionType$(type)) + _Mangler$mangleTypeName_0$L_Mangler$LType$($this, ResolvedFunctionType$getReturnType_0$LResolvedFunctionType$(type)) + "$";
@@ -9559,7 +9594,9 @@ _Namer.prototype.getNameOfStaticVariable$LClassDefinition$S = function (classDef
 
 _Namer.prototype.getNameOfStaticFunction$LClassDefinition$SALType$ = function (classDef, name, argTypes) {
 	var className;
-	className = classDef.getStash$S("emitter.outputname").outputName;
+	var stash$0;
+	stash$0 = classDef.getStash$S("emitter.outputname");
+	className = stash$0.outputName;
 	return (Util$memberRootIsNative$LClassDefinition$SALType$B(classDef, name, argTypes, true) ? className + "." + name : className + "$" + _Mangler$mangleFunctionName_0$L_Mangler$SALType$(JavaScriptEmitter$getMangler_0$LJavaScriptEmitter$(this._emitter), name, argTypes));
 };
 
@@ -9567,12 +9604,14 @@ _Namer.prototype.getNameOfStaticFunction$LClassDefinition$SALType$ = function (c
 _Namer.prototype.getNameOfConstructor$LClassDefinition$ALType$ = function (classDef, argTypes) {
 	var ctor$0;
 	ctor$0 = Util$findFunctionInClass$LClassDefinition$SALType$B(classDef, "constructor", argTypes, false);
-	return ((ctor$0._classDef.flags$() & 16) !== 0 ? _Util$0$getNameOfNativeConstructor$LClassDefinition$(ctor$0._classDef) : ctor$0.getStash$S("emitter.outputname").outputName);
+	return _Util$0$getOutputConstructorName$LMemberFunctionDefinition$(ctor$0);
 };
 
 
 _Namer.prototype.getNameOfClass$LClassDefinition$ = function (classDef) {
-	return classDef.getStash$S("emitter.outputname").outputName;
+	var stash$0;
+	stash$0 = classDef.getStash$S("emitter.outputname");
+	return stash$0.outputName;
 };
 
 
@@ -10177,16 +10216,16 @@ _Minifier._getArgsAndLocals$LMemberFunctionDefinition$ = _Minifier$_getArgsAndLo
 
 function _Minifier$minifyJavaScript$S(src) {
 	var ast;
-	ast = esprima.parse(src);
-	ast = esmangle.mangle(ast, ({ destructive: true }));
-	return escodegen.generate(ast, ({ format: ({ renumber: true, hexadecimal: true, escapeless: true, compact: true, semicolons: false, parentheses: false }), directive: true }));
+	ast = esprima$0.parse(src);
+	ast = esmangle$0.mangle(ast, ({ destructive: true }));
+	return escodegen$0.generate(ast, ({ format: ({ renumber: true, hexadecimal: true, escapeless: true, compact: true, semicolons: false, parentheses: false }), directive: true }));
 };
 
 _Minifier.minifyJavaScript$S = _Minifier$minifyJavaScript$S;
 
-var esprima = require('esprima');
-var esmangle = require('esmangle');
-var escodegen = require('escodegen');
+var esprima$0 = require('esprima');
+var esmangle$0 = require('esmangle');
+var escodegen$0 = require('escodegen');
 function _StatementEmitter(emitter) {
 	this._emitter = emitter;
 };
@@ -15009,7 +15048,7 @@ JavaScriptEmitter.prototype._emitInit$ = function () {
 	this._indent = 0;
 	this._emittingClass = null;
 	this._emittingFunction = null;
-	this._output += "// generatedy by JSX compiler 0.9.49 (2013-07-02 23:09:31 -0700; 2a835991352f379f41ad55e03550652e0dd84358)\n";
+	this._output += "// generatedy by JSX compiler 0.9.51 (2013-07-06 22:04:30 -0700; 71d68d2de63ba615d3319d1dc1a636832ed302d9)\n";
 	this._output += this._fileHeader;
 	this._output += (_platform$0 = this._platform).load$S(_platform$0.getRoot$() + "/src/js/bootstrap.js");
 	stash = this.getStash$S("no-debug");
@@ -15025,7 +15064,7 @@ function JavaScriptEmitter$_emitInit_0$LJavaScriptEmitter$($this) {
 	$this._indent = 0;
 	$this._emittingClass = null;
 	$this._emittingFunction = null;
-	$this._output += "// generatedy by JSX compiler 0.9.49 (2013-07-02 23:09:31 -0700; 2a835991352f379f41ad55e03550652e0dd84358)\n";
+	$this._output += "// generatedy by JSX compiler 0.9.51 (2013-07-06 22:04:30 -0700; 71d68d2de63ba615d3319d1dc1a636832ed302d9)\n";
 	$this._output += $this._fileHeader;
 	$this._output += (_platform$0 = $this._platform).load$S(_platform$0.getRoot$() + "/src/js/bootstrap.js");
 	stash = $this.getStash$S("no-debug");
@@ -15617,9 +15656,9 @@ JavaScriptEmitter.prototype.getOutput$ = function () {
 		output += SourceMapper$getSourceMapFooter_0$LSourceMapper$(this._sourceMapper);
 	}
 	if (this._enableMinifier) {
-		ast$0 = esprima.parse(output);
-		ast$0 = esmangle.mangle(ast$0, ({ destructive: true }));
-		output = escodegen.generate(ast$0, ({ format: ({ renumber: true, hexadecimal: true, escapeless: true, compact: true, semicolons: false, parentheses: false }), directive: true }));
+		ast$0 = esprima$0.parse(output);
+		ast$0 = esmangle$0.mangle(ast$0, ({ destructive: true }));
+		output = escodegen$0.generate(ast$0, ({ format: ({ renumber: true, hexadecimal: true, escapeless: true, compact: true, semicolons: false, parentheses: false }), directive: true }));
 	}
 	return output;
 };
@@ -19475,25 +19514,32 @@ Parser._skipMultilineComment_0$LParser$ = Parser$_skipMultilineComment_0$LParser
 function Parser$_parseDocComment$LParser$($this) {
 	var docComment;
 	var node;
+	var count;
 	var tagMatch;
 	var tag;
 	var nameMatch;
 	var token;
 	var endAt;
 	var len$0;
+	var s$0;
+	var len$1;
+	var s$1;
 	var _lineNumber$0;
 	var _columnOffset$0;
 	docComment = new DocComment();
 	node = docComment;
 	while (true) {
-		Parser$_parseDocCommentAdvanceWhiteSpace_0$LParser$($this);
+		count = Parser$_parseDocCommentAdvanceWhiteSpace_0$LParser$($this);
 		if (Parser$_getInputByLength_0$LParser$N($this, 2) === "*/") {
 			$this._columnOffset += 2;
-			return docComment;
+			break;
 		} else {
 			if (Parser$_getInputByLength_0$LParser$N($this, 1) === "*") {
 				$this._columnOffset += 1;
 				Parser$_parseDocCommentAdvanceWhiteSpace_0$LParser$($this);
+			} else {
+				len$0 = - count;
+				$this._columnOffset += len$0;
 			}
 		}
 		tagMatch = Parser$_getInput_0$LParser$($this).match(/^\@([0-9A-Za-z_]+)[ \t]*/);
@@ -19522,14 +19568,16 @@ function Parser$_parseDocComment$LParser$($this) {
 		endAt = Parser$_getInput_0$LParser$($this).indexOf("*/");
 		if (endAt !== -1) {
 			if (node != null) {
-				DocCommentNode$appendDescription_0$LDocCommentNode$S(node, Parser$_getInput_0$LParser$($this).substring(0, endAt));
+				s$0 = Parser$_getInput_0$LParser$($this).substring(0, endAt) + "\n";
+				node._description += s$0;
 			}
-			len$0 = endAt + 2;
-			$this._columnOffset += len$0;
-			return docComment;
+			len$1 = endAt + 2;
+			$this._columnOffset += len$1;
+			break;
 		}
 		if (node != null) {
-			DocCommentNode$appendDescription_0$LDocCommentNode$S(node, Parser$_getInput_0$LParser$($this));
+			s$1 = Parser$_getInput_0$LParser$($this) + "\n";
+			node._description += s$1;
 		}
 		if ($this._lineNumber === $this._lines.length) {
 			_columnOffset$0 = $this._columnOffset = $this._lines[(_lineNumber$0 = $this._lineNumber) - 1].length;
@@ -19539,7 +19587,7 @@ function Parser$_parseDocComment$LParser$($this) {
 		++ $this._lineNumber;
 		$this._columnOffset = 0;
 	}
-	return null;
+	return docComment;
 };
 
 Parser._parseDocComment$LParser$ = Parser$_parseDocComment$LParser$;
@@ -19547,12 +19595,16 @@ Parser._parseDocComment$LParser$ = Parser$_parseDocComment$LParser$;
 function Parser$_parseDocComment_0$LParser$($this) {
 	var docComment;
 	var node;
+	var count;
 	var tagMatch;
 	var tag;
 	var nameMatch;
 	var token;
 	var endAt;
 	var len$0;
+	var s$0;
+	var len$1;
+	var s$1;
 	var _columnOffset$0;
 	var _columnOffset$1;
 	var _lineNumber$0;
@@ -19560,14 +19612,17 @@ function Parser$_parseDocComment_0$LParser$($this) {
 	docComment = new DocComment();
 	node = docComment;
 	while (true) {
-		Parser$_parseDocCommentAdvanceWhiteSpace_0$LParser$($this);
+		count = Parser$_parseDocCommentAdvanceWhiteSpace_0$LParser$($this);
 		if ($this._lines[$this._lineNumber - 1].substring(_columnOffset$1 = $this._columnOffset, _columnOffset$1 + 2) === "*/") {
 			$this._columnOffset += 2;
-			return docComment;
+			break;
 		} else {
 			if ($this._lines[$this._lineNumber - 1].substring(_columnOffset$0 = $this._columnOffset, _columnOffset$0 + 1) === "*") {
 				$this._columnOffset += 1;
 				Parser$_parseDocCommentAdvanceWhiteSpace_0$LParser$($this);
+			} else {
+				len$0 = - count;
+				$this._columnOffset += len$0;
 			}
 		}
 		tagMatch = $this._lines[$this._lineNumber - 1].substring($this._columnOffset).match(/^\@([0-9A-Za-z_]+)[ \t]*/);
@@ -19596,14 +19651,16 @@ function Parser$_parseDocComment_0$LParser$($this) {
 		endAt = $this._lines[$this._lineNumber - 1].substring($this._columnOffset).indexOf("*/");
 		if (endAt !== -1) {
 			if (node != null) {
-				DocCommentNode$appendDescription_0$LDocCommentNode$S(node, $this._lines[$this._lineNumber - 1].substring($this._columnOffset).substring(0, endAt));
+				s$0 = $this._lines[$this._lineNumber - 1].substring($this._columnOffset).substring(0, endAt) + "\n";
+				node._description += s$0;
 			}
-			len$0 = endAt + 2;
-			$this._columnOffset += len$0;
-			return docComment;
+			len$1 = endAt + 2;
+			$this._columnOffset += len$1;
+			break;
 		}
 		if (node != null) {
-			DocCommentNode$appendDescription_0$LDocCommentNode$S(node, $this._lines[$this._lineNumber - 1].substring($this._columnOffset));
+			s$1 = $this._lines[$this._lineNumber - 1].substring($this._columnOffset) + "\n";
+			node._description += s$1;
 		}
 		if ($this._lineNumber === $this._lines.length) {
 			_columnOffset$2 = $this._columnOffset = $this._lines[(_lineNumber$0 = $this._lineNumber) - 1].length;
@@ -19613,37 +19670,45 @@ function Parser$_parseDocComment_0$LParser$($this) {
 		++ $this._lineNumber;
 		$this._columnOffset = 0;
 	}
-	return null;
+	return docComment;
 };
 
 Parser._parseDocComment_0$LParser$ = Parser$_parseDocComment_0$LParser$;
 
 function Parser$_parseDocCommentAdvanceWhiteSpace$LParser$($this) {
+	var count;
 	var ch;
 	var _columnOffset$0;
+	count = 0;
 	while (true) {
 		ch = $this._lines[$this._lineNumber - 1].substring(_columnOffset$0 = $this._columnOffset, _columnOffset$0 + 1);
 		if (ch === " " || ch === "\t") {
 			$this._columnOffset += 1;
+			count++;
 		} else {
 			break;
 		}
 	}
+	return count;
 };
 
 Parser._parseDocCommentAdvanceWhiteSpace$LParser$ = Parser$_parseDocCommentAdvanceWhiteSpace$LParser$;
 
 function Parser$_parseDocCommentAdvanceWhiteSpace_0$LParser$($this) {
+	var count;
 	var ch;
 	var _columnOffset$0;
+	count = 0;
 	while (true) {
 		ch = $this._lines[$this._lineNumber - 1].substring(_columnOffset$0 = $this._columnOffset, _columnOffset$0 + 1);
 		if (ch === " " || ch === "\t") {
 			$this._columnOffset += 1;
+			count++;
 		} else {
 			break;
 		}
 	}
+	return count;
 };
 
 Parser._parseDocCommentAdvanceWhiteSpace_0$LParser$ = Parser$_parseDocCommentAdvanceWhiteSpace_0$LParser$;
@@ -20387,6 +20452,9 @@ function Parser$_classDefinition$LParser$($this) {
 	$this._inners = [];
 	$this._templateInners = [];
 	$this._classFlags = 0;
+	if ($this._outerClass) {
+		$this._classFlags |= $this._outerClass.classFlags & 16;
+	}
 	nativeSource = null;
 	docComment = null;
 	while (true) {
@@ -20615,6 +20683,9 @@ function Parser$_classDefinition_0$LParser$($this) {
 	$this._inners = [];
 	$this._templateInners = [];
 	$this._classFlags = 0;
+	if ($this._outerClass) {
+		$this._classFlags |= $this._outerClass.classFlags & 16;
+	}
 	nativeSource = null;
 	docComment = null;
 	while (true) {
@@ -26415,7 +26486,7 @@ ClassDefinition.prototype.analyze$LAnalysisContext$ = function (context) {
 		if ($__jsx_catch_0 instanceof Error) {
 			token = this.getToken$();
 			srcPos = (token != null ? Util$format$SAS(" at file %1, line %2", [ token._filename, token._lineNumber + "" ]) : "");
-			$__jsx_catch_0.message = Util$format$SAS("fatal error while analyzing class %1%2\n%3", [ this.className$(), srcPos, $__jsx_catch_0.message ]);
+			$__jsx_catch_0.message = Util$format$SAS("fatal error while analyzing class %1%2\n%3", [ ClassDefinition$classFullName_0$LClassDefinition$(this), srcPos, $__jsx_catch_0.message ]);
 			throw $__jsx_catch_0;
 		} else {
 			throw $__jsx_catch_0;
@@ -26434,7 +26505,7 @@ function ClassDefinition$analyze_0$LClassDefinition$LAnalysisContext$($this, con
 		if ($__jsx_catch_0 instanceof Error) {
 			token = $this.getToken$();
 			srcPos = (token != null ? Util$format$SAS(" at file %1, line %2", [ token._filename, token._lineNumber + "" ]) : "");
-			$__jsx_catch_0.message = Util$format$SAS("fatal error while analyzing class %1%2\n%3", [ $this.className$(), srcPos, $__jsx_catch_0.message ]);
+			$__jsx_catch_0.message = Util$format$SAS("fatal error while analyzing class %1%2\n%3", [ $this._outerClassDef != null ? ClassDefinition$classFullName_0$LClassDefinition$($this._outerClassDef) + "." + $this._className : $this.className$(), srcPos, $__jsx_catch_0.message ]);
 			throw $__jsx_catch_0;
 		} else {
 			throw $__jsx_catch_0;
@@ -26471,7 +26542,7 @@ ClassDefinition.prototype._analyzeClassDef$LAnalysisContext$ = function (context
 	if ((this.flags$() & 192) === 0) {
 		if (this._baseClassDef != null) {
 			if ((this._baseClassDef.flags$() & 4) !== 0) {
-				context.errors.push(new CompileError(this.getToken$(), "cannot extend final class '" + this._baseClassDef.className$() + "'"));
+				context.errors.push(new CompileError(this.getToken$(), "cannot extend final class '" + ClassDefinition$classFullName_0$LClassDefinition$(this._baseClassDef) + "'"));
 				return;
 			}
 			if ((this._baseClassDef.flags$() & 192) !== 0) {
@@ -26491,7 +26562,7 @@ ClassDefinition.prototype._analyzeClassDef$LAnalysisContext$ = function (context
 	} else {
 		for (i = 0; i < implementClassDefs.length; ++ i) {
 			if ((implementClassDefs[i].flags$() & 192) === 0) {
-				context.errors.push(new CompileError(this.getToken$(), "class '" + implementClassDefs[i].className$() + "' can only be extended, not implemented"));
+				context.errors.push(new CompileError(this.getToken$(), "class '" + ClassDefinition$classFullName_0$LClassDefinition$(implementClassDefs[i]) + "' can only be extended, not implemented"));
 				return;
 			}
 			if (! ClassDefinition$forEachClassToBase_0$LClassDefinition$F$LClassDefinition$B$(implementClassDefs[i], (function (classDef) {
@@ -26509,7 +26580,7 @@ ClassDefinition.prototype._analyzeClassDef$LAnalysisContext$ = function (context
 	if (! ClassDefinition$forEachClassToBase_0$LClassDefinition$F$LClassDefinition$B$(this, (function (classDef) {
 		if ((classDef.flags$() & 128) !== 0) {
 			if (allMixins.indexOf(classDef) !== -1) {
-				context.errors.push(new CompileError($this.getToken$(), "mixin '" + classDef.className$() + "' is implemented twice"));
+				context.errors.push(new CompileError($this.getToken$(), "mixin '" + (classDef._outerClassDef != null ? ClassDefinition$classFullName_0$LClassDefinition$(classDef._outerClassDef) + "." + classDef._className : classDef.className$()) + "' is implemented twice"));
 				return false;
 			}
 			allMixins.push(classDef);
@@ -26669,7 +26740,7 @@ function ClassDefinition$_analyzeClassDef_0$LClassDefinition$LAnalysisContext$($
 	if (($this.flags$() & 192) === 0) {
 		if ($this._baseClassDef != null) {
 			if (($this._baseClassDef.flags$() & 4) !== 0) {
-				context.errors.push(new CompileError($this.getToken$(), "cannot extend final class '" + $this._baseClassDef.className$() + "'"));
+				context.errors.push(new CompileError($this.getToken$(), "cannot extend final class '" + ClassDefinition$classFullName_0$LClassDefinition$($this._baseClassDef) + "'"));
 				return;
 			}
 			if (($this._baseClassDef.flags$() & 192) !== 0) {
@@ -26689,7 +26760,7 @@ function ClassDefinition$_analyzeClassDef_0$LClassDefinition$LAnalysisContext$($
 	} else {
 		for (i = 0; i < implementClassDefs.length; ++ i) {
 			if ((implementClassDefs[i].flags$() & 192) === 0) {
-				context.errors.push(new CompileError($this.getToken$(), "class '" + implementClassDefs[i].className$() + "' can only be extended, not implemented"));
+				context.errors.push(new CompileError($this.getToken$(), "class '" + ClassDefinition$classFullName_0$LClassDefinition$(implementClassDefs[i]) + "' can only be extended, not implemented"));
 				return;
 			}
 			if (! ClassDefinition$forEachClassToBase_0$LClassDefinition$F$LClassDefinition$B$(implementClassDefs[i], (function (classDef) {
@@ -26707,7 +26778,7 @@ function ClassDefinition$_analyzeClassDef_0$LClassDefinition$LAnalysisContext$($
 	if (! ClassDefinition$forEachClassToBase_0$LClassDefinition$F$LClassDefinition$B$($this, (function (classDef) {
 		if ((classDef.flags$() & 128) !== 0) {
 			if (allMixins.indexOf(classDef) !== -1) {
-				context.errors.push(new CompileError($this.getToken$(), "mixin '" + classDef.className$() + "' is implemented twice"));
+				context.errors.push(new CompileError($this.getToken$(), "mixin '" + (classDef._outerClassDef != null ? ClassDefinition$classFullName_0$LClassDefinition$(classDef._outerClassDef) + "." + classDef._className : classDef.className$()) + "' is implemented twice"));
 				return false;
 			}
 			allMixins.push(classDef);
@@ -27043,7 +27114,7 @@ ClassDefinition.prototype._assertMemberVariableIsDefinable$LAnalysisContext$LMem
 	for (i = 0; i < this._members.length; ++ i) {
 		if (MemberDefinition$name_0$LMemberDefinition$(this._members[i]) === MemberDefinition$name_0$LMemberDefinition$(member)) {
 			if ((MemberDefinition$flags_0$LMemberDefinition$(this._members[i]) & 2) === 0) {
-				context.errors.push(new CompileError(member._nameToken, Util$format$SAS("cannot define property '%1', the name is already used in class '%2'", [ member.getNotation$(), this.className$() ])));
+				context.errors.push(new CompileError(member._nameToken, Util$format$SAS("cannot define property '%1', the name is already used in class '%2'", [ member.getNotation$(), ClassDefinition$classFullName_0$LClassDefinition$(this) ])));
 				return false;
 			}
 			if (! this._members[i].getType$().equals$LType$(member.getType$())) {
@@ -27070,7 +27141,7 @@ function ClassDefinition$_assertMemberVariableIsDefinable_0$LClassDefinition$LAn
 	for (i = 0; i < $this._members.length; ++ i) {
 		if (MemberDefinition$name_0$LMemberDefinition$($this._members[i]) === MemberDefinition$name_0$LMemberDefinition$(member)) {
 			if ((MemberDefinition$flags_0$LMemberDefinition$($this._members[i]) & 2) === 0) {
-				context.errors.push(new CompileError(member._nameToken, Util$format$SAS("cannot define property '%1', the name is already used in class '%2'", [ member.getNotation$(), $this.className$() ])));
+				context.errors.push(new CompileError(member._nameToken, Util$format$SAS("cannot define property '%1', the name is already used in class '%2'", [ member.getNotation$(), $this._outerClassDef != null ? ClassDefinition$classFullName_0$LClassDefinition$($this._outerClassDef) + "." + $this._className : $this.className$() ])));
 				return false;
 			}
 			if (! $this._members[i].getType$().equals$LType$(member.getType$())) {
@@ -27115,11 +27186,11 @@ ClassDefinition.prototype._assertMemberFunctionIsDefinable$LAnalysisContext$LMem
 			continue;
 		}
 		if (! isCheckingInterface && (member._flags & 32) === 0) {
-			context.errors.push(new CompileError(member._nameToken, "overriding functions must have 'override' attribute set (defined in base class '" + this.className$() + "')"));
+			context.errors.push(new CompileError(member._nameToken, "overriding functions must have 'override' attribute set (defined in base class '" + ClassDefinition$classFullName_0$LClassDefinition$(this) + "')"));
 			return false;
 		}
 		if (reportOverridesAsWell && (MemberDefinition$flags_0$LMemberDefinition$(this._members[i]) & 32) !== 0) {
-			context.errors.push(new CompileError(member._nameToken, "definition of the function conflicts with sibling mix-in '" + this.className$() + "'"));
+			context.errors.push(new CompileError(member._nameToken, "definition of the function conflicts with sibling mix-in '" + ClassDefinition$classFullName_0$LClassDefinition$(this) + "'"));
 			return false;
 		}
 		return true;
@@ -27159,11 +27230,11 @@ function ClassDefinition$_assertMemberFunctionIsDefinable_0$LClassDefinition$LAn
 			continue;
 		}
 		if (! isCheckingInterface && (member._flags & 32) === 0) {
-			context.errors.push(new CompileError(member._nameToken, "overriding functions must have 'override' attribute set (defined in base class '" + $this.className$() + "')"));
+			context.errors.push(new CompileError(member._nameToken, "overriding functions must have 'override' attribute set (defined in base class '" + ($this._outerClassDef != null ? ClassDefinition$classFullName_0$LClassDefinition$($this._outerClassDef) + "." + $this._className : $this.className$()) + "')"));
 			return false;
 		}
 		if (reportOverridesAsWell && (MemberDefinition$flags_0$LMemberDefinition$($this._members[i]) & 32) !== 0) {
-			context.errors.push(new CompileError(member._nameToken, "definition of the function conflicts with sibling mix-in '" + $this.className$() + "'"));
+			context.errors.push(new CompileError(member._nameToken, "definition of the function conflicts with sibling mix-in '" + ($this._outerClassDef != null ? ClassDefinition$classFullName_0$LClassDefinition$($this._outerClassDef) + "." + $this._className : $this.className$()) + "'"));
 			return false;
 		}
 		return true;
@@ -27190,7 +27261,7 @@ ClassDefinition.prototype._assertFunctionIsOverridable$LAnalysisContext$LMemberF
 	for (i = 0; i < this._members.length; ++ i) {
 		if (MemberDefinition$name_0$LMemberDefinition$(this._members[i]) === MemberDefinition$name_0$LMemberDefinition$(overrideDef) && (_members$0 = this._members)[i] instanceof MemberFunctionDefinition && (MemberDefinition$flags_0$LMemberDefinition$(_members$0[i]) & 8) === 0 && Util$typesAreEqual$ALType$ALType$(MemberFunctionDefinition$getArgumentTypes_0$LMemberFunctionDefinition$(this._members[i]), MemberFunctionDefinition$getArgumentTypes_0$LMemberFunctionDefinition$(overrideDef))) {
 			if ((MemberDefinition$flags_0$LMemberDefinition$(this._members[i]) & 4) !== 0) {
-				context.errors.push(new CompileError(overrideDef._token, "cannot override final function defined in class '" + this.className$() + "'"));
+				context.errors.push(new CompileError(overrideDef._token, "cannot override final function defined in class '" + ClassDefinition$classFullName_0$LClassDefinition$(this) + "'"));
 				return false;
 			}
 			overrideReturnType = overrideDef._returnType;
@@ -27217,7 +27288,7 @@ function ClassDefinition$_assertFunctionIsOverridable_0$LClassDefinition$LAnalys
 	for (i = 0; i < $this._members.length; ++ i) {
 		if (MemberDefinition$name_0$LMemberDefinition$($this._members[i]) === MemberDefinition$name_0$LMemberDefinition$(overrideDef) && (_members$0 = $this._members)[i] instanceof MemberFunctionDefinition && (MemberDefinition$flags_0$LMemberDefinition$(_members$0[i]) & 8) === 0 && Util$typesAreEqual$ALType$ALType$(MemberFunctionDefinition$getArgumentTypes_0$LMemberFunctionDefinition$($this._members[i]), MemberFunctionDefinition$getArgumentTypes_0$LMemberFunctionDefinition$(overrideDef))) {
 			if ((MemberDefinition$flags_0$LMemberDefinition$($this._members[i]) & 4) !== 0) {
-				context.errors.push(new CompileError(overrideDef._token, "cannot override final function defined in class '" + $this.className$() + "'"));
+				context.errors.push(new CompileError(overrideDef._token, "cannot override final function defined in class '" + ($this._outerClassDef != null ? ClassDefinition$classFullName_0$LClassDefinition$($this._outerClassDef) + "." + $this._className : $this.className$()) + "'"));
 				return false;
 			}
 			overrideReturnType = overrideDef._returnType;
@@ -27774,7 +27845,7 @@ MemberVariableDefinition.prototype.getNotation$ = function () {
 	var s;
 	var $this$0$0;
 	classDef = this._classDef;
-	s = (classDef != null ? classDef.className$() : "<<unknown>>");
+	s = (classDef != null ? classDef._outerClassDef != null ? ClassDefinition$classFullName_0$LClassDefinition$(classDef._outerClassDef) + "." + classDef._className : classDef.className$() : "<<unknown>>");
 	s += ((MemberDefinition$flags_0$LMemberDefinition$(this) & 8) !== 0 ? "." : "#");
 	$this$0$0 = this._nameToken;
 	s += $this$0$0._value;
@@ -27830,7 +27901,7 @@ MemberFunctionDefinition.prototype.getNotation$ = function () {
 	var classDef;
 	var s;
 	classDef = this._classDef;
-	s = (classDef != null ? classDef.className$() : "<<unknown>>");
+	s = (classDef != null ? classDef._outerClassDef != null ? ClassDefinition$classFullName_0$LClassDefinition$(classDef._outerClassDef) + "." + classDef._className : classDef.className$() : "<<unknown>>");
 	s += ((MemberDefinition$flags_0$LMemberDefinition$(this) & 8) !== 0 ? "." : "#");
 	s += (MemberDefinition$getNameToken_0$LMemberDefinition$(this) != null ? MemberDefinition$name_0$LMemberDefinition$(this) : "$" + (Token$getLineNumber_0$LToken$(MemberDefinition$getToken_0$LMemberDefinition$(this)) + "") + "_" + (Token$getColumnNumber_0$LToken$(MemberDefinition$getToken_0$LMemberDefinition$(this)) + ""));
 	s += "(";
@@ -28550,7 +28621,7 @@ MemberFunctionDefinition.prototype.generateWrappersForDefaultParameters$ALCompil
 				statement = new ExpressionStatement(callExpression);
 			}
 		}
-		wrapper = new MemberFunctionDefinition(MemberDefinition$getToken_0$LMemberDefinition$(this), MemberDefinition$getNameToken_0$LMemberDefinition$(this), MemberDefinition$flags_0$LMemberDefinition$(this) | 1024, MemberFunctionDefinition$getReturnType_0$LMemberFunctionDefinition$(this), formalArgs, [], [ statement ], [], this._lastTokenOfBody, null);
+		wrapper = new MemberFunctionDefinition(MemberDefinition$getToken_0$LMemberDefinition$(this), MemberDefinition$getNameToken_0$LMemberDefinition$(this), MemberDefinition$flags_0$LMemberDefinition$(this) | 1024, MemberFunctionDefinition$getReturnType_0$LMemberFunctionDefinition$(this), formalArgs, [], [ statement ], [], this._lastTokenOfBody, this._docComment);
 		classDef$0 = this._classDef;
 		wrapper._classDef = classDef$0;
 		ClassDefinition$members_0$LClassDefinition$(MemberDefinition$getClassDef_0$LMemberDefinition$(this)).push(wrapper);
@@ -28601,7 +28672,7 @@ function MemberFunctionDefinition$generateWrappersForDefaultParameters_0$LMember
 				statement = new ExpressionStatement(callExpression);
 			}
 		}
-		wrapper = new MemberFunctionDefinition($this._token, $this._nameToken, $this._flags | 1024, $this._returnType, formalArgs, [], [ statement ], [], $this._lastTokenOfBody, null);
+		wrapper = new MemberFunctionDefinition($this._token, $this._nameToken, $this._flags | 1024, $this._returnType, formalArgs, [], [ statement ], [], $this._lastTokenOfBody, $this._docComment);
 		classDef$0 = _classDef$0 = $this._classDef;
 		wrapper._classDef = classDef$0;
 		ClassDefinition$members_0$LClassDefinition$(_classDef$0).push(wrapper);
@@ -30987,7 +31058,7 @@ function CompletionCandidates$makeClassCandidate$LClassDefinition$(classDef) {
 	}
 	docComment = classDef._docComment;
 	if (docComment) {
-		data.doc = docComment._description;
+		data.doc = docComment.getDescription$();
 	}
 	return data;
 };
@@ -31215,7 +31286,7 @@ function _CompletionCandidatesOfProperty$_makeMemberCandidate$LMemberDefinition$
 	data.definedLineNumber = $this$1._lineNumber;
 	docComment = member._docComment;
 	if (docComment) {
-		data.doc = docComment._description;
+		data.doc = docComment.getDescription$();
 	}
 	if (member instanceof MemberFunctionDefinition) {
 		mf = member;
@@ -37934,8 +38005,8 @@ function Meta() {
 };
 
 $__jsx_extend([Meta], Object);
-var SourceMapGenerator = require('source-map').SourceMapGenerator;
-var SourceMapConsumer = require('source-map').SourceMapConsumer;
+var SourceMapGenerator$0 = require('source-map').SourceMapGenerator;
+var SourceMapConsumer$0 = require('source-map').SourceMapConsumer;
 function SourceMapper(rootDir, outputFile, runenv) {
 	var _header$0;
 	this._header = "";
@@ -37944,7 +38015,7 @@ function SourceMapper(rootDir, outputFile, runenv) {
 	this._outputLineNumber = 1;
 	this._rootDir = rootDir;
 	this._outputFile = (outputFile != null ? Util$_resolvedPathParts$S(outputFile).join("/") : null);
-	this._impl = new SourceMapGenerator(({ file: outputFile != null ? Util$basename$S(this._outputFile) : null }));
+	this._impl = new SourceMapGenerator$0(({ file: outputFile != null ? Util$basename$S(this._outputFile) : null }));
 	switch (runenv) {
 	case "node":
 		this._header = "require('source-map-support').install();\n\n";
@@ -38015,7 +38086,7 @@ SourceMapper.prototype.add$SNNUSUS = function (output, tokenLineNumber, tokenCol
 	var origPos;
 	var sourceFile;
 	genPos = SourceMapper$makeGeneratedPos_0$LSourceMapper$S(this, output);
-	if ($__jsx_isNaN(tokenLineNumber) || tokenFilename == null) {
+	if (tokenLineNumber !== tokenLineNumber || tokenFilename == null) {
 		origPos = null;
 		sourceFile = null;
 		tokenValue = null;
@@ -38036,7 +38107,7 @@ function SourceMapper$add_0$LSourceMapper$SNNUSUS($this, output, tokenLineNumber
 	var origPos;
 	var sourceFile;
 	genPos = SourceMapper$makeGeneratedPos_0$LSourceMapper$S($this, output);
-	if ($__jsx_isNaN(tokenLineNumber) || tokenFilename == null) {
+	if (tokenLineNumber !== tokenLineNumber || tokenFilename == null) {
 		origPos = null;
 		sourceFile = null;
 		tokenValue = null;
@@ -38134,35 +38205,17 @@ function DocCommentNode() {
 
 $__jsx_extend([DocCommentNode], Object);
 DocCommentNode.prototype.getDescription$ = function () {
-	return this._description;
+	return this._description.replace(/^[\r\n]+/, "").replace(/[\r\n\t ]+$/, "");
 };
 
-
-function DocCommentNode$getDescription_0$LDocCommentNode$($this) {
-	return $this._description;
-};
-
-DocCommentNode.getDescription_0$LDocCommentNode$ = DocCommentNode$getDescription_0$LDocCommentNode$;
 
 DocCommentNode.prototype.appendDescription$S = function (s) {
-	s = s.trim();
-	if (s !== "") {
-		if (this._description !== "") {
-			this._description += " ";
-		}
-		this._description += s;
-	}
+	this._description += s;
 };
 
 
 function DocCommentNode$appendDescription_0$LDocCommentNode$S($this, s) {
-	s = s.trim();
-	if (s !== "") {
-		if ($this._description !== "") {
-			$this._description += " ";
-		}
-		$this._description += s;
-	}
+	$this._description += s;
 };
 
 DocCommentNode.appendDescription_0$LDocCommentNode$S = DocCommentNode$appendDescription_0$LDocCommentNode$S;
@@ -38198,6 +38251,13 @@ function DocCommentParameter$getParamName_0$LDocCommentParameter$($this) {
 };
 
 DocCommentParameter.getParamName_0$LDocCommentParameter$ = DocCommentParameter$getParamName_0$LDocCommentParameter$;
+
+DocCommentParameter.prototype.getDescription$ = function () {
+	var d;
+	d = DocCommentNode.prototype.getDescription$.call(this);
+	return d.trim();
+};
+
 
 function DocCommentTag(tagName) {
 	this._description = "";
@@ -38499,12 +38559,12 @@ DocumentGenerator.prototype._buildFooterOfFile$LParser$ = function (parser) {
 			_ += "<p>This is <strong>";
 			_ += DocumentGenerator$_escape_0$LDocumentGenerator$S(this, parser._filename).replace(/\n$/, "");
 			_ += " version ";
-			_ += DocumentGenerator$_escape_0$LDocumentGenerator$S(this, version._description).replace(/\n$/, "");
+			_ += DocumentGenerator$_escape_0$LDocumentGenerator$S(this, version.getDescription$()).replace(/\n$/, "");
 			_ += "</strong>.</p>\n";
 		}
 		author = DocComment$getTagByName_0$LDocComment$S(docComment, "author");
 		if (author) {
-			d = author._description;
+			d = author.getDescription$();
 			endWithDot = d.charAt(d.length - 1) === ".";
 			_ += "<p>Copyright &copy; ";
 			_ += (DocumentGenerator$_escape_0$LDocumentGenerator$S(this, d) + (endWithDot ? "" : ".")).replace(/\n$/, "");
@@ -38512,7 +38572,7 @@ DocumentGenerator.prototype._buildFooterOfFile$LParser$ = function (parser) {
 		}
 	}
 	_ += "<p class=\"jsxdoc-notice\">This document was automatically generated by <a href=\"http://jsx.github.io/\">JSX</a> ";
-	_ += "0.9.49".replace(/\n$/, "");
+	_ += "0.9.51".replace(/\n$/, "");
 	_ += "<br />\n";
 	_ += "at ";
 	_ += DocumentGenerator$_escape_0$LDocumentGenerator$S(this, new Date().toISOString()).replace(/\n$/, "");
@@ -38536,12 +38596,12 @@ function DocumentGenerator$_buildFooterOfFile_0$LDocumentGenerator$LParser$($thi
 			_ += "<p>This is <strong>";
 			_ += DocumentGenerator$_escape_0$LDocumentGenerator$S($this, parser._filename).replace(/\n$/, "");
 			_ += " version ";
-			_ += DocumentGenerator$_escape_0$LDocumentGenerator$S($this, version._description).replace(/\n$/, "");
+			_ += DocumentGenerator$_escape_0$LDocumentGenerator$S($this, version.getDescription$()).replace(/\n$/, "");
 			_ += "</strong>.</p>\n";
 		}
 		author = DocComment$getTagByName_0$LDocComment$S(docComment, "author");
 		if (author) {
-			d = author._description;
+			d = author.getDescription$();
 			endWithDot = d.charAt(d.length - 1) === ".";
 			_ += "<p>Copyright &copy; ";
 			_ += (DocumentGenerator$_escape_0$LDocumentGenerator$S($this, d) + (endWithDot ? "" : ".")).replace(/\n$/, "");
@@ -38549,7 +38609,7 @@ function DocumentGenerator$_buildFooterOfFile_0$LDocumentGenerator$LParser$($thi
 		}
 	}
 	_ += "<p class=\"jsxdoc-notice\">This document was automatically generated by <a href=\"http://jsx.github.io/\">JSX</a> ";
-	_ += "0.9.49".replace(/\n$/, "");
+	_ += "0.9.51".replace(/\n$/, "");
 	_ += "<br />\n";
 	_ += "at ";
 	_ += DocumentGenerator$_escape_0$LDocumentGenerator$S($this, new Date().toISOString()).replace(/\n$/, "");
@@ -38602,7 +38662,8 @@ function DocumentGenerator$_buildListOfClasses_0$LDocumentGenerator$LParser$($th
 	this$0 = parser._templateClassDefs;
 	for (i$0 in this$0) {
 		(function (classDef) {
-			if (! (classDef.className$().charAt(0) === "_")) {
+			var _docComment$0;
+			if (! (classDef.className$().charAt(0) === "_" || (_docComment$0 = classDef._docComment) && DocComment$getTagByName_0$LDocComment$S(_docComment$0, 'private'))) {
 				_ += DocumentGenerator$_buildDocOfClass_0$LDocumentGenerator$LParser$LClassDefinition$($this, parser, classDef).replace(/\n$/, "");
 				_ += "\n";
 			}
@@ -38611,7 +38672,8 @@ function DocumentGenerator$_buildListOfClasses_0$LDocumentGenerator$LParser$($th
 	this$1 = parser._classDefs;
 	for (i$1 in this$1) {
 		(function (classDef) {
-			if (! (classDef instanceof InstantiatedClassDefinition) && ! (classDef.className$().charAt(0) === "_")) {
+			var _docComment$0;
+			if (! (classDef instanceof InstantiatedClassDefinition) && ! (classDef.className$().charAt(0) === "_" || (_docComment$0 = classDef._docComment) && DocComment$getTagByName_0$LDocComment$S(_docComment$0, 'private'))) {
 				_ += DocumentGenerator$_buildDocOfClass_0$LDocumentGenerator$LParser$LClassDefinition$($this, parser, classDef).replace(/\n$/, "");
 				_ += "\n";
 			}
@@ -38625,9 +38687,14 @@ DocumentGenerator._buildListOfClasses_0$LDocumentGenerator$LParser$ = DocumentGe
 
 DocumentGenerator.prototype._buildDocOfClass$LParser$LClassDefinition$ = function (parser, classDef) {
 	var $this = this;
+	var _;
 	var typeName;
 	var typeArgs;
-	var _;
+	var this$0;
+	var i$0;
+	var this$1;
+	var i$1;
+	_ = "";
 	typeName = "class";
 	if ((classDef.flags$() & 64) !== 0) {
 		typeName = "interface";
@@ -38637,15 +38704,32 @@ DocumentGenerator.prototype._buildDocOfClass$LParser$LClassDefinition$ = functio
 		}
 	}
 	typeArgs = (classDef instanceof TemplateClassDefinition ? TemplateClassDefinition$getTypeArguments_0$LTemplateClassDefinition$(classDef) : []);
-	_ = "";
 	_ += "<div class=\"class\" id=\"class-";
-	_ += DocumentGenerator$_escape_0$LDocumentGenerator$S(this, classDef.className$()).replace(/\n$/, "");
+	_ += DocumentGenerator$_escape_0$LDocumentGenerator$S(this, (classDef._outerClassDef != null ? ClassDefinition$classFullName_0$LClassDefinition$(classDef._outerClassDef) + "." + classDef._className : classDef.className$())).replace(/\n$/, "");
 	_ += "\">\n";
 	_ += "<h2>";
-	_ += (DocumentGenerator$_flagsToHTML_0$LDocumentGenerator$N(this, classDef.flags$()) + " " + DocumentGenerator$_escape_0$LDocumentGenerator$S(this, typeName) + " " + DocumentGenerator$_name_0$LDocumentGenerator$S(this, classDef.className$()) + DocumentGenerator$_formalTypeArgsToHTML_0$LDocumentGenerator$ALToken$(this, typeArgs)).replace(/\n$/, "");
+	_ += (DocumentGenerator$_flagsToHTML_0$LDocumentGenerator$N(this, classDef.flags$()) + " " + DocumentGenerator$_escape_0$LDocumentGenerator$S(this, typeName) + " " + DocumentGenerator$_name_0$LDocumentGenerator$S(this, (classDef._outerClassDef != null ? ClassDefinition$classFullName_0$LClassDefinition$(classDef._outerClassDef) + "." + classDef._className : classDef.className$())) + DocumentGenerator$_formalTypeArgsToHTML_0$LDocumentGenerator$ALToken$(this, typeArgs)).replace(/\n$/, "");
 	_ += "</h2>\n";
 	_ += DocumentGenerator$_descriptionToHTML_0$LDocumentGenerator$LDocComment$(this, classDef._docComment).replace(/\n$/, "");
 	_ += "\n";
+	this$0 = classDef._templateInners;
+	for (i$0 in this$0) {
+		(function (classDef) {
+			if (! DocumentGenerator$_isPrivate_0$LDocumentGenerator$LClassDefinition$($this, classDef)) {
+				_ += DocumentGenerator$_buildDocOfClass_0$LDocumentGenerator$LParser$LClassDefinition$($this, parser, classDef).replace(/\n$/, "");
+				_ += "\n";
+			}
+		})(this$0[i$0]);
+	}
+	this$1 = classDef._inners;
+	for (i$1 in this$1) {
+		(function (classDef) {
+			if (! (classDef instanceof InstantiatedClassDefinition) && ! DocumentGenerator$_isPrivate_0$LDocumentGenerator$LClassDefinition$($this, classDef)) {
+				_ += DocumentGenerator$_buildDocOfClass_0$LDocumentGenerator$LParser$LClassDefinition$($this, parser, classDef).replace(/\n$/, "");
+				_ += "\n";
+			}
+		})(this$1[i$1]);
+	}
 	if (DocumentGenerator$_hasPublicProperties_0$LDocumentGenerator$LClassDefinition$(this, classDef)) {
 		ClassDefinition$forEachMemberVariable_0$LClassDefinition$F$LMemberVariableDefinition$B$(classDef, (function (varDef) {
 			if (! DocumentGenerator$_isPrivate_0$LDocumentGenerator$LMemberDefinition$($this, varDef)) {
@@ -38666,7 +38750,7 @@ DocumentGenerator.prototype._buildDocOfClass$LParser$LClassDefinition$ = functio
 		}));
 	}
 	ClassDefinition$forEachMemberFunction_0$LClassDefinition$F$LMemberFunctionDefinition$B$(classDef, (function (funcDef) {
-		if (! (funcDef instanceof InstantiatedMemberFunctionDefinition) && DocumentGenerator$_isConstructor_0$LDocumentGenerator$LMemberFunctionDefinition$($this, funcDef) && (funcDef._flags & 4096) === 0) {
+		if (! (funcDef instanceof InstantiatedMemberFunctionDefinition) && DocumentGenerator$_isConstructor_0$LDocumentGenerator$LMemberFunctionDefinition$($this, funcDef) && (funcDef._flags & 4096) === 0 && ! DocumentGenerator$_isPrivate_0$LDocumentGenerator$LMemberDefinition$($this, funcDef)) {
 			_ += DocumentGenerator$_buildDocOfFunction_0$LDocumentGenerator$LParser$LMemberFunctionDefinition$($this, parser, funcDef).replace(/\n$/, "");
 			_ += "\n";
 		}
@@ -38674,7 +38758,7 @@ DocumentGenerator.prototype._buildDocOfClass$LParser$LClassDefinition$ = functio
 	}));
 	if (DocumentGenerator$_hasPublicFunctions_0$LDocumentGenerator$LClassDefinition$(this, classDef)) {
 		ClassDefinition$forEachMemberFunction_0$LClassDefinition$F$LMemberFunctionDefinition$B$(classDef, (function (funcDef) {
-			if (! (funcDef instanceof InstantiatedMemberFunctionDefinition || DocumentGenerator$_isConstructor_0$LDocumentGenerator$LMemberFunctionDefinition$($this, funcDef) || DocumentGenerator$_isPrivate_0$LDocumentGenerator$LMemberDefinition$($this, funcDef))) {
+			if (! (funcDef instanceof InstantiatedMemberFunctionDefinition) && ! DocumentGenerator$_isConstructor_0$LDocumentGenerator$LMemberFunctionDefinition$($this, funcDef) && ! DocumentGenerator$_isPrivate_0$LDocumentGenerator$LMemberDefinition$($this, funcDef)) {
 				_ += DocumentGenerator$_buildDocOfFunction_0$LDocumentGenerator$LParser$LMemberFunctionDefinition$($this, parser, funcDef).replace(/\n$/, "");
 				_ += "\n";
 			}
@@ -38687,9 +38771,14 @@ DocumentGenerator.prototype._buildDocOfClass$LParser$LClassDefinition$ = functio
 
 
 function DocumentGenerator$_buildDocOfClass_0$LDocumentGenerator$LParser$LClassDefinition$($this, parser, classDef) {
+	var _;
 	var typeName;
 	var typeArgs;
-	var _;
+	var this$0;
+	var i$0;
+	var this$1;
+	var i$1;
+	_ = "";
 	typeName = "class";
 	if ((classDef.flags$() & 64) !== 0) {
 		typeName = "interface";
@@ -38699,18 +38788,38 @@ function DocumentGenerator$_buildDocOfClass_0$LDocumentGenerator$LParser$LClassD
 		}
 	}
 	typeArgs = (classDef instanceof TemplateClassDefinition ? TemplateClassDefinition$getTypeArguments_0$LTemplateClassDefinition$(classDef) : []);
-	_ = "";
 	_ += "<div class=\"class\" id=\"class-";
-	_ += DocumentGenerator$_escape_0$LDocumentGenerator$S($this, classDef.className$()).replace(/\n$/, "");
+	_ += DocumentGenerator$_escape_0$LDocumentGenerator$S($this, (classDef._outerClassDef != null ? ClassDefinition$classFullName_0$LClassDefinition$(classDef._outerClassDef) + "." + classDef._className : classDef.className$())).replace(/\n$/, "");
 	_ += "\">\n";
 	_ += "<h2>";
-	_ += (DocumentGenerator$_flagsToHTML_0$LDocumentGenerator$N($this, classDef.flags$()) + " " + DocumentGenerator$_escape_0$LDocumentGenerator$S($this, typeName) + " " + DocumentGenerator$_name_0$LDocumentGenerator$S($this, classDef.className$()) + DocumentGenerator$_formalTypeArgsToHTML_0$LDocumentGenerator$ALToken$($this, typeArgs)).replace(/\n$/, "");
+	_ += (DocumentGenerator$_flagsToHTML_0$LDocumentGenerator$N($this, classDef.flags$()) + " " + DocumentGenerator$_escape_0$LDocumentGenerator$S($this, typeName) + " " + DocumentGenerator$_name_0$LDocumentGenerator$S($this, (classDef._outerClassDef != null ? ClassDefinition$classFullName_0$LClassDefinition$(classDef._outerClassDef) + "." + classDef._className : classDef.className$())) + DocumentGenerator$_formalTypeArgsToHTML_0$LDocumentGenerator$ALToken$($this, typeArgs)).replace(/\n$/, "");
 	_ += "</h2>\n";
 	_ += DocumentGenerator$_descriptionToHTML_0$LDocumentGenerator$LDocComment$($this, classDef._docComment).replace(/\n$/, "");
 	_ += "\n";
+	this$0 = classDef._templateInners;
+	for (i$0 in this$0) {
+		(function (classDef) {
+			var _docComment$0;
+			if (! (classDef.className$().charAt(0) === "_" || (_docComment$0 = classDef._docComment) && DocComment$getTagByName_0$LDocComment$S(_docComment$0, 'private'))) {
+				_ += DocumentGenerator$_buildDocOfClass_0$LDocumentGenerator$LParser$LClassDefinition$($this, parser, classDef).replace(/\n$/, "");
+				_ += "\n";
+			}
+		})(this$0[i$0]);
+	}
+	this$1 = classDef._inners;
+	for (i$1 in this$1) {
+		(function (classDef) {
+			var _docComment$0;
+			if (! (classDef instanceof InstantiatedClassDefinition) && ! (classDef.className$().charAt(0) === "_" || (_docComment$0 = classDef._docComment) && DocComment$getTagByName_0$LDocComment$S(_docComment$0, 'private'))) {
+				_ += DocumentGenerator$_buildDocOfClass_0$LDocumentGenerator$LParser$LClassDefinition$($this, parser, classDef).replace(/\n$/, "");
+				_ += "\n";
+			}
+		})(this$1[i$1]);
+	}
 	if (DocumentGenerator$_hasPublicProperties_0$LDocumentGenerator$LClassDefinition$($this, classDef)) {
 		ClassDefinition$forEachMemberVariable_0$LClassDefinition$F$LMemberVariableDefinition$B$(classDef, (function (varDef) {
-			if (! (MemberDefinition$name_0$LMemberDefinition$(varDef).charAt(0) === "_")) {
+			var _docComment$0;
+			if (! (MemberDefinition$name_0$LMemberDefinition$(varDef).charAt(0) === "_" || (_docComment$0 = varDef._docComment) && DocComment$getTagByName_0$LDocComment$S(_docComment$0, 'private'))) {
 				_ += "<div class=\"member property\">\n";
 				_ += "<h3>\n";
 				_ += DocumentGenerator$_flagsToHTML_0$LDocumentGenerator$N($this, varDef._flags).replace(/\n$/, "");
@@ -38729,7 +38838,8 @@ function DocumentGenerator$_buildDocOfClass_0$LDocumentGenerator$LParser$LClassD
 	}
 	ClassDefinition$forEachMemberFunction_0$LClassDefinition$F$LMemberFunctionDefinition$B$(classDef, (function (funcDef) {
 		var _flags$0;
-		if (! (funcDef instanceof InstantiatedMemberFunctionDefinition) && (MemberDefinition$name_0$LMemberDefinition$(funcDef) === "constructor" && ((_flags$0 = funcDef._flags) & 8) === 0) && (_flags$0 & 4096) === 0) {
+		var _docComment$0;
+		if (! (funcDef instanceof InstantiatedMemberFunctionDefinition) && (MemberDefinition$name_0$LMemberDefinition$(funcDef) === "constructor" && ((_flags$0 = funcDef._flags) & 8) === 0) && (_flags$0 & 4096) === 0 && ! (MemberDefinition$name_0$LMemberDefinition$(funcDef).charAt(0) === "_" || (_docComment$0 = funcDef._docComment) && DocComment$getTagByName_0$LDocComment$S(_docComment$0, 'private'))) {
 			_ += DocumentGenerator$_buildDocOfFunction_0$LDocumentGenerator$LParser$LMemberFunctionDefinition$($this, parser, funcDef).replace(/\n$/, "");
 			_ += "\n";
 		}
@@ -38737,7 +38847,8 @@ function DocumentGenerator$_buildDocOfClass_0$LDocumentGenerator$LParser$LClassD
 	}));
 	if (DocumentGenerator$_hasPublicFunctions_0$LDocumentGenerator$LClassDefinition$($this, classDef)) {
 		ClassDefinition$forEachMemberFunction_0$LClassDefinition$F$LMemberFunctionDefinition$B$(classDef, (function (funcDef) {
-			if (! (funcDef instanceof InstantiatedMemberFunctionDefinition || MemberDefinition$name_0$LMemberDefinition$(funcDef) === "constructor" && (funcDef._flags & 8) === 0 || MemberDefinition$name_0$LMemberDefinition$(funcDef).charAt(0) === "_")) {
+			var _docComment$0;
+			if (! (funcDef instanceof InstantiatedMemberFunctionDefinition) && ! (MemberDefinition$name_0$LMemberDefinition$(funcDef) === "constructor" && (funcDef._flags & 8) === 0) && ! (MemberDefinition$name_0$LMemberDefinition$(funcDef).charAt(0) === "_" || (_docComment$0 = funcDef._docComment) && DocComment$getTagByName_0$LDocComment$S(_docComment$0, 'private'))) {
 				_ += DocumentGenerator$_buildDocOfFunction_0$LDocumentGenerator$LParser$LMemberFunctionDefinition$($this, parser, funcDef).replace(/\n$/, "");
 				_ += "\n";
 			}
@@ -38763,7 +38874,7 @@ DocumentGenerator.prototype._buildDocOfFunction$LParser$LMemberFunctionDefinitio
 	var $this$0$0;
 	_ = "";
 	ignoreFlags = funcDef._classDef.flags$() & 20 | 1024;
-	funcName = (DocumentGenerator$_isConstructor_0$LDocumentGenerator$LMemberFunctionDefinition$(this, funcDef) ? "new " + DocumentGenerator$_name_0$LDocumentGenerator$S(this, funcDef._classDef.className$()) : DocumentGenerator$_flagsToHTML_0$LDocumentGenerator$N(this, funcDef._flags & ~ ignoreFlags) + " function " + DocumentGenerator$_name_0$LDocumentGenerator$S(this, MemberDefinition$name_0$LMemberDefinition$(funcDef)));
+	funcName = (DocumentGenerator$_isConstructor_0$LDocumentGenerator$LMemberFunctionDefinition$(this, funcDef) ? "new " + DocumentGenerator$_name_0$LDocumentGenerator$S(this, ClassDefinition$classFullName_0$LClassDefinition$(funcDef._classDef)) : DocumentGenerator$_flagsToHTML_0$LDocumentGenerator$N(this, funcDef._flags & ~ ignoreFlags) + " function " + DocumentGenerator$_name_0$LDocumentGenerator$S(this, MemberDefinition$name_0$LMemberDefinition$(funcDef)));
 	args = funcDef._args;
 	argsHTML = args.map((function (arg) {
 		return DocumentGenerator$_escape_0$LDocumentGenerator$S($this, Token$getValue_0$LToken$(arg._name)) + " : " + DocumentGenerator$_typeToHTML_0$LDocumentGenerator$LParser$LType$($this, parser, arg._type);
@@ -38816,7 +38927,7 @@ function DocumentGenerator$_buildDocOfFunction_0$LDocumentGenerator$LParser$LMem
 	var $this$0$0;
 	_ = "";
 	ignoreFlags = funcDef._classDef.flags$() & 20 | 1024;
-	funcName = (MemberDefinition$name_0$LMemberDefinition$(funcDef) === "constructor" && (funcDef._flags & 8) === 0 ? "new " + DocumentGenerator$_name_0$LDocumentGenerator$S($this, funcDef._classDef.className$()) : DocumentGenerator$_flagsToHTML_0$LDocumentGenerator$N($this, funcDef._flags & ~ ignoreFlags) + " function " + DocumentGenerator$_name_0$LDocumentGenerator$S($this, MemberDefinition$name_0$LMemberDefinition$(funcDef)));
+	funcName = (MemberDefinition$name_0$LMemberDefinition$(funcDef) === "constructor" && (funcDef._flags & 8) === 0 ? "new " + DocumentGenerator$_name_0$LDocumentGenerator$S($this, ClassDefinition$classFullName_0$LClassDefinition$(funcDef._classDef)) : DocumentGenerator$_flagsToHTML_0$LDocumentGenerator$N($this, funcDef._flags & ~ ignoreFlags) + " function " + DocumentGenerator$_name_0$LDocumentGenerator$S($this, MemberDefinition$name_0$LMemberDefinition$(funcDef)));
 	args = funcDef._args;
 	argsHTML = args.map((function (arg) {
 		return DocumentGenerator$_escape_0$LDocumentGenerator$S($this, Token$getValue_0$LToken$(arg._name)) + " : " + DocumentGenerator$_typeToHTML_0$LDocumentGenerator$LParser$LType$($this, parser, arg._type);
@@ -38866,9 +38977,9 @@ DocumentGenerator.prototype._descriptionToHTML$LDocComment$ = function (docComme
 	var tag$0;
 	_ = "";
 	if (docComment != null) {
-		if (docComment._description !== "") {
+		if (docComment.getDescription$() !== "") {
 			_ += "<div class=\"description\">\n";
-			_ += docComment._description.replace(/\n$/, "");
+			_ += docComment.getDescription$().replace(/\t/g, "  ").replace(/\n$/, "");
 			_ += "\n";
 			_ += "</div>\n";
 		}
@@ -38878,7 +38989,7 @@ DocumentGenerator.prototype._descriptionToHTML$LDocComment$ = function (docComme
 			for (i$0 in seeTags) {
 				tag$0 = seeTags[i$0];
 				_ += "<li>";
-				_ += DocumentGenerator$_autoLink_0$LDocumentGenerator$S(this, tag$0._description).replace(/\n$/, "");
+				_ += DocumentGenerator$_autoLink_0$LDocumentGenerator$S(this, tag$0.getDescription$()).replace(/\n$/, "");
 				_ += "</li>\n";
 			}
 			_ += "</ul>\n";
@@ -38895,9 +39006,9 @@ function DocumentGenerator$_descriptionToHTML_0$LDocumentGenerator$LDocComment$(
 	var tag$0;
 	_ = "";
 	if (docComment != null) {
-		if (docComment._description !== "") {
+		if (docComment.getDescription$() !== "") {
 			_ += "<div class=\"description\">\n";
-			_ += docComment._description.replace(/\n$/, "");
+			_ += docComment.getDescription$().replace(/\t/g, "  ").replace(/\n$/, "");
 			_ += "\n";
 			_ += "</div>\n";
 		}
@@ -38907,7 +39018,7 @@ function DocumentGenerator$_descriptionToHTML_0$LDocumentGenerator$LDocComment$(
 			for (i$0 in seeTags) {
 				tag$0 = seeTags[i$0];
 				_ += "<li>";
-				_ += DocumentGenerator$_autoLink_0$LDocumentGenerator$S($this, tag$0._description).replace(/\n$/, "");
+				_ += DocumentGenerator$_autoLink_0$LDocumentGenerator$S($this, tag$0.getDescription$()).replace(/\n$/, "");
 				_ += "</li>\n";
 			}
 			_ += "</ul>\n";
@@ -38921,7 +39032,7 @@ DocumentGenerator._descriptionToHTML_0$LDocumentGenerator$LDocComment$ = Documen
 DocumentGenerator.prototype._autoLink$S = function (str) {
 	var $this = this;
 	var uri;
-	uri = /^https?:\/\/[A-Za-z0-9\-\._~:\/?#\[\]@!$&'()*+,;=]+/;
+	uri = /^https?:\/\/[A-Za-z0-9\-\._~:\/?#\[\]@!$&'()*+,;=]+/g;
 	return str.replace(uri, (function (matched) {
 		return Util$format$SAS('<a href="%1">%1</a>', [ matched ]);
 	}));
@@ -38930,7 +39041,7 @@ DocumentGenerator.prototype._autoLink$S = function (str) {
 
 function DocumentGenerator$_autoLink_0$LDocumentGenerator$S($this, str) {
 	var uri;
-	uri = /^https?:\/\/[A-Za-z0-9\-\._~:\/?#\[\]@!$&'()*+,;=]+/;
+	uri = /^https?:\/\/[A-Za-z0-9\-\._~:\/?#\[\]@!$&'()*+,;=]+/g;
 	return str.replace(uri, (function (matched) {
 		return Util$format$SAS('<a href="%1">%1</a>', [ matched ]);
 	}));
@@ -39076,19 +39187,19 @@ DocumentGenerator.prototype._classDefToHTML$LParser$LClassDefinition$ = function
 				}
 			}
 		}
-		throw new Error("could not determine the parser to which the class belongs:" + classDef.className$());
+		throw new Error("could not determine the parser to which the class belongs:" + (classDef._outerClassDef != null ? ClassDefinition$classFullName_0$LClassDefinition$(classDef._outerClassDef) + "." + classDef._className : classDef.className$()));
 	}
 	parserOfClassDef = determineParserOfClassDef();
 	if (! this._pathFilter(parserOfClassDef._filename)) {
-		return DocumentGenerator$_escape_0$LDocumentGenerator$S(this, classDef.className$());
+		return DocumentGenerator$_escape_0$LDocumentGenerator$S(this, (classDef._outerClassDef != null ? ClassDefinition$classFullName_0$LClassDefinition$(classDef._outerClassDef) + "." + classDef._className : classDef.className$()));
 	}
 	_ = "";
 	_ += "<a href=\"";
 	_ += DocumentGenerator$_escape_0$LDocumentGenerator$S(this, parserOfClassDef._filename).replace(/\n$/, "");
 	_ += ".html#class-";
-	_ += DocumentGenerator$_escape_0$LDocumentGenerator$S(this, classDef.className$()).replace(/\n$/, "");
+	_ += DocumentGenerator$_escape_0$LDocumentGenerator$S(this, (classDef._outerClassDef != null ? ClassDefinition$classFullName_0$LClassDefinition$(classDef._outerClassDef) + "." + classDef._className : classDef.className$())).replace(/\n$/, "");
 	_ += "\">";
-	_ += DocumentGenerator$_escape_0$LDocumentGenerator$S(this, classDef.className$()).replace(/\n$/, "");
+	_ += DocumentGenerator$_escape_0$LDocumentGenerator$S(this, (classDef._outerClassDef != null ? ClassDefinition$classFullName_0$LClassDefinition$(classDef._outerClassDef) + "." + classDef._className : classDef.className$())).replace(/\n$/, "");
 	_ += "</a>\n";
 	_ = _.trim();
 	TypedMap$ClassDefinition$string$E$set_0$LTypedMap$ClassDefinition$string$E$LClassDefinition$S(this._classDefToHTMLCache, classDef, _);
@@ -39142,19 +39253,19 @@ function DocumentGenerator$_classDefToHTML_0$LDocumentGenerator$LParser$LClassDe
 				}
 			}
 		}
-		throw new Error("could not determine the parser to which the class belongs:" + classDef.className$());
+		throw new Error("could not determine the parser to which the class belongs:" + (classDef._outerClassDef != null ? ClassDefinition$classFullName_0$LClassDefinition$(classDef._outerClassDef) + "." + classDef._className : classDef.className$()));
 	}
 	parserOfClassDef = determineParserOfClassDef();
 	if (! $this._pathFilter(parserOfClassDef._filename)) {
-		return DocumentGenerator$_escape_0$LDocumentGenerator$S($this, classDef.className$());
+		return DocumentGenerator$_escape_0$LDocumentGenerator$S($this, (classDef._outerClassDef != null ? ClassDefinition$classFullName_0$LClassDefinition$(classDef._outerClassDef) + "." + classDef._className : classDef.className$()));
 	}
 	_ = "";
 	_ += "<a href=\"";
 	_ += DocumentGenerator$_escape_0$LDocumentGenerator$S($this, parserOfClassDef._filename).replace(/\n$/, "");
 	_ += ".html#class-";
-	_ += DocumentGenerator$_escape_0$LDocumentGenerator$S($this, classDef.className$()).replace(/\n$/, "");
+	_ += DocumentGenerator$_escape_0$LDocumentGenerator$S($this, (classDef._outerClassDef != null ? ClassDefinition$classFullName_0$LClassDefinition$(classDef._outerClassDef) + "." + classDef._className : classDef.className$())).replace(/\n$/, "");
 	_ += "\">";
-	_ += DocumentGenerator$_escape_0$LDocumentGenerator$S($this, classDef.className$()).replace(/\n$/, "");
+	_ += DocumentGenerator$_escape_0$LDocumentGenerator$S($this, (classDef._outerClassDef != null ? ClassDefinition$classFullName_0$LClassDefinition$(classDef._outerClassDef) + "." + classDef._className : classDef.className$())).replace(/\n$/, "");
 	_ += "</a>\n";
 	_ = _.trim();
 	TypedMap$ClassDefinition$string$E$set_0$LTypedMap$ClassDefinition$string$E$LClassDefinition$S($this._classDefToHTMLCache, classDef, _);
@@ -39258,7 +39369,8 @@ DocumentGenerator.prototype._hasPublicProperties$LClassDefinition$ = function (c
 
 function DocumentGenerator$_hasPublicProperties_0$LDocumentGenerator$LClassDefinition$($this, classDef) {
 	return ! ClassDefinition$forEachMemberVariable_0$LClassDefinition$F$LMemberVariableDefinition$B$(classDef, (function (varDef) {
-		return (! (MemberDefinition$name_0$LMemberDefinition$(varDef).charAt(0) === "_") ? false : true);
+		var _docComment$0;
+		return (! (MemberDefinition$name_0$LMemberDefinition$(varDef).charAt(0) === "_" || (_docComment$0 = varDef._docComment) && DocComment$getTagByName_0$LDocComment$S(_docComment$0, 'private')) ? false : true);
 	}));
 };
 
@@ -39274,7 +39386,8 @@ DocumentGenerator.prototype._hasPublicFunctions$LClassDefinition$ = function (cl
 
 function DocumentGenerator$_hasPublicFunctions_0$LDocumentGenerator$LClassDefinition$($this, classDef) {
 	return ! ClassDefinition$forEachMemberFunction_0$LClassDefinition$F$LMemberFunctionDefinition$B$(classDef, (function (funcDef) {
-		return (funcDef instanceof InstantiatedMemberFunctionDefinition || MemberDefinition$name_0$LMemberDefinition$(funcDef) === "constructor" && (funcDef._flags & 8) === 0 || MemberDefinition$name_0$LMemberDefinition$(funcDef).charAt(0) === "_" ? true : false);
+		var _docComment$0;
+		return (funcDef instanceof InstantiatedMemberFunctionDefinition || MemberDefinition$name_0$LMemberDefinition$(funcDef) === "constructor" && (funcDef._flags & 8) === 0 || (MemberDefinition$name_0$LMemberDefinition$(funcDef).charAt(0) === "_" || (_docComment$0 = funcDef._docComment) && DocComment$getTagByName_0$LDocComment$S(_docComment$0, 'private')) ? true : false);
 	}));
 };
 
@@ -39322,13 +39435,10 @@ DocumentGenerator._argsHasDocComment_0$LDocumentGenerator$LMemberFunctionDefinit
 DocumentGenerator.prototype._getDescriptionOfNamedArgument$LDocComment$S = function (docComment, argName) {
 	var params;
 	var paramIndex;
-	var $this$0;
-	var params$len$0;
 	params = docComment._params;
-	for ((paramIndex = 0, params$len$0 = params.length); paramIndex < params$len$0; ++ paramIndex) {
+	for (paramIndex = 0; paramIndex < params.length; ++ paramIndex) {
 		if (DocCommentParameter$getParamName_0$LDocCommentParameter$(params[paramIndex]) === argName) {
-			$this$0 = params[paramIndex];
-			return $this$0._description;
+			return params[paramIndex].getDescription$();
 		}
 	}
 	return "";
@@ -39338,13 +39448,10 @@ DocumentGenerator.prototype._getDescriptionOfNamedArgument$LDocComment$S = funct
 function DocumentGenerator$_getDescriptionOfNamedArgument_0$LDocumentGenerator$LDocComment$S($this, docComment, argName) {
 	var params;
 	var paramIndex;
-	var $this$0;
-	var params$len$0;
 	params = docComment._params;
-	for ((paramIndex = 0, params$len$0 = params.length); paramIndex < params$len$0; ++ paramIndex) {
+	for (paramIndex = 0; paramIndex < params.length; ++ paramIndex) {
 		if (DocCommentParameter$getParamName_0$LDocCommentParameter$(params[paramIndex]) === argName) {
-			$this$0 = params[paramIndex];
-			return $this$0._description;
+			return params[paramIndex].getDescription$();
 		}
 	}
 	return "";
@@ -39364,23 +39471,27 @@ function DocumentGenerator$_isConstructor_0$LDocumentGenerator$LMemberFunctionDe
 DocumentGenerator._isConstructor_0$LDocumentGenerator$LMemberFunctionDefinition$ = DocumentGenerator$_isConstructor_0$LDocumentGenerator$LMemberFunctionDefinition$;
 
 DocumentGenerator.prototype._isPrivate$LClassDefinition$ = function (classDef) {
-	return classDef.className$().charAt(0) === "_";
+	var _docComment$0;
+	return !! (classDef.className$().charAt(0) === "_" || (_docComment$0 = classDef._docComment) && DocComment$getTagByName_0$LDocComment$S(_docComment$0, 'private'));
 };
 
 
 function DocumentGenerator$_isPrivate_0$LDocumentGenerator$LClassDefinition$($this, classDef) {
-	return classDef.className$().charAt(0) === "_";
+	var _docComment$0;
+	return !! (classDef.className$().charAt(0) === "_" || (_docComment$0 = classDef._docComment) && DocComment$getTagByName_0$LDocComment$S(_docComment$0, 'private'));
 };
 
 DocumentGenerator._isPrivate_0$LDocumentGenerator$LClassDefinition$ = DocumentGenerator$_isPrivate_0$LDocumentGenerator$LClassDefinition$;
 
 DocumentGenerator.prototype._isPrivate$LMemberDefinition$ = function (memberDef) {
-	return MemberDefinition$name_0$LMemberDefinition$(memberDef).charAt(0) === "_";
+	var _docComment$0;
+	return !! (MemberDefinition$name_0$LMemberDefinition$(memberDef).charAt(0) === "_" || (_docComment$0 = memberDef._docComment) && DocComment$getTagByName_0$LDocComment$S(_docComment$0, 'private'));
 };
 
 
 function DocumentGenerator$_isPrivate_0$LDocumentGenerator$LMemberDefinition$($this, memberDef) {
-	return MemberDefinition$name_0$LMemberDefinition$(memberDef).charAt(0) === "_";
+	var _docComment$0;
+	return !! (MemberDefinition$name_0$LMemberDefinition$(memberDef).charAt(0) === "_" || (_docComment$0 = memberDef._docComment) && DocComment$getTagByName_0$LDocComment$S(_docComment$0, 'private'));
 };
 
 DocumentGenerator._isPrivate_0$LDocumentGenerator$LMemberDefinition$ = DocumentGenerator$_isPrivate_0$LDocumentGenerator$LMemberDefinition$;
@@ -39702,7 +39813,7 @@ _Minifier$C_MinifyingNamer.prototype.getNameOfStaticFunction$LClassDefinition$SA
 	if (Util$memberRootIsNative$LClassDefinition$SALType$B(classDef, name, argTypes, true)) {
 		return this.getNameOfClass$LClassDefinition$(classDef) + "." + name;
 	}
-	mangledName = classDef.getStash$S("emitter.outputname").outputName + "$" + _Mangler$mangleFunctionName_0$L_Mangler$SALType$(_Minifier$C_MinifyingNamer$_getMangler_0$L_Minifier$C_MinifyingNamer$(this), name, argTypes);
+	mangledName = _Util$0$getOutputClassName$LClassDefinition$(classDef) + "$" + _Mangler$mangleFunctionName_0$L_Mangler$SALType$(_Minifier$C_MinifyingNamer$_getMangler_0$L_Minifier$C_MinifyingNamer$(this), name, argTypes);
 	$this$0$0 = this._minifier;
 	if ($this$0$0._propertyConversionTable == null) {
 		_Minifier$_incr$HNS(this._minifier._globalUseCount, mangledName);
@@ -39720,7 +39831,7 @@ _Minifier$C_MinifyingNamer.prototype.getNameOfConstructor$LClassDefinition$ALTyp
 	var ctor$0;
 	var $this$0$1;
 	if ((classDef.flags$() & 16) !== 0) {
-		name = (classDef instanceof InstantiatedClassDefinition ? InstantiatedClassDefinition$getTemplateClassName_0$LInstantiatedClassDefinition$(classDef) === "Map" ? "Object" : InstantiatedClassDefinition$getTemplateClassName_0$LInstantiatedClassDefinition$(classDef) : classDef.className$());
+		name = _Util$0$getNameOfNativeConstructor$LClassDefinition$(classDef);
 		$this$0$0 = this._minifier;
 		if ($this$0$0._propertyConversionTable == null) {
 			_Minifier$_incr$HNS(this._minifier._globalUseCount, name);
@@ -39728,7 +39839,7 @@ _Minifier$C_MinifyingNamer.prototype.getNameOfConstructor$LClassDefinition$ALTyp
 		return name;
 	}
 	ctor$0 = Util$findFunctionInClass$LClassDefinition$SALType$B(classDef, "constructor", argTypes, false);
-	mangledName = ((ctor$0._classDef.flags$() & 16) !== 0 ? _Util$0$getNameOfNativeConstructor$LClassDefinition$(ctor$0._classDef) : ctor$0.getStash$S("emitter.outputname").outputName);
+	mangledName = _Util$0$getOutputConstructorName$LMemberFunctionDefinition$(ctor$0);
 	$this$0$1 = this._minifier;
 	if ($this$0$1._propertyConversionTable == null) {
 		_Minifier$_incr$HNS(this._minifier._globalUseCount, mangledName);
@@ -39741,8 +39852,10 @@ _Minifier$C_MinifyingNamer.prototype.getNameOfConstructor$LClassDefinition$ALTyp
 
 _Minifier$C_MinifyingNamer.prototype.getNameOfClass$LClassDefinition$ = function (classDef) {
 	var name;
+	var stash$0;
 	var $this$0$0;
-	name = classDef.getStash$S("emitter.outputname").outputName;
+	stash$0 = classDef.getStash$S("emitter.outputname");
+	name = stash$0.outputName;
 	$this$0$0 = this._minifier;
 	if ($this$0$0._propertyConversionTable == null) {
 		_Minifier$_incr$HNS(this._minifier._globalUseCount, name);
@@ -40018,11 +40131,11 @@ $__jsx_lazy_init(_StatementTransformer, "_statementCountMap", function () {
 });
 CodeTransformer.stopIterationType = null;
 CodeTransformer.jsxGeneratorClassDef = null;
-Meta.VERSION_STRING = "0.9.49";
-Meta.VERSION_NUMBER = 0.009049;
-Meta.LAST_COMMIT_HASH = "2a835991352f379f41ad55e03550652e0dd84358";
-Meta.LAST_COMMIT_DATE = "2013-07-02 23:09:31 -0700";
-Meta.IDENTIFIER = "0.9.49 (2013-07-02 23:09:31 -0700; 2a835991352f379f41ad55e03550652e0dd84358)";
+Meta.VERSION_STRING = "0.9.51";
+Meta.VERSION_NUMBER = 0.009051;
+Meta.LAST_COMMIT_HASH = "71d68d2de63ba615d3319d1dc1a636832ed302d9";
+Meta.LAST_COMMIT_DATE = "2013-07-06 22:04:30 -0700";
+Meta.IDENTIFIER = "0.9.51 (2013-07-06 22:04:30 -0700; 71d68d2de63ba615d3319d1dc1a636832ed302d9)";
 SourceMapper.NODE_SOURCE_MAP_HEADER = "require('source-map-support').install();\n\n";
 SourceMapper.WEB_SOURCE_MAP_HEADER = "";
 $__jsx_lazy_init(node, "__dirname", function () {

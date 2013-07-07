@@ -36,18 +36,11 @@ class DocCommentNode {
 	}
 
 	function getDescription () : string {
-		return this._description;
+		return this._description.replace(/^[\r\n]+/, "").replace(/[\r\n\t ]+$/, "");
 	}
 
 	function appendDescription (s : string) : void {
-		s = s.trim();
-		// append
-		if (s != "") {
-			if (this._description != "") {
-				this._description += " ";
-			}
-			this._description += s;
-		}
+		this._description += s;
 	}
 
 }
@@ -69,6 +62,10 @@ class DocCommentParameter extends DocCommentNode {
 		return this._token.getValue();
 	}
 
+	override function getDescription() : string {
+		var d = super.getDescription();
+		return d.trim();
+	}
 }
 
 class DocCommentTag extends DocCommentNode {
@@ -255,6 +252,8 @@ _ += "</div>\n";
 	}
 
 	function _buildDocOfClass (parser : Parser, classDef : ClassDefinition) : string {
+		var _ = "";
+
 		var typeName = "class";
 		if ((classDef.flags() & ClassDefinition.IS_INTERFACE) != 0) {
 			typeName = "interface";
@@ -263,11 +262,23 @@ _ += "</div>\n";
 		}
 		var typeArgs = classDef instanceof TemplateClassDefinition ? (classDef as TemplateClassDefinition).getTypeArguments() : new Token[];
 
-		var _ = "";
-
-_ += "<div class=\"class\" id=\"class-"; _ += (this._escape(classDef.className())).replace(/\n$/, ""); _ += "\">\n";
-_ += "<h2>"; _ += (this._flagsToHTML(classDef.flags()) + " " + this._escape(typeName) + " " + this._name(classDef.className()) + this._formalTypeArgsToHTML(typeArgs)).replace(/\n$/, ""); _ += "</h2>\n";
+_ += "<div class=\"class\" id=\"class-"; _ += (this._escape(classDef.classFullName())).replace(/\n$/, ""); _ += "\">\n";
+_ += "<h2>"; _ += (this._flagsToHTML(classDef.flags()) + " " + this._escape(typeName) + " " + this._name(classDef.classFullName()) + this._formalTypeArgsToHTML(typeArgs)).replace(/\n$/, ""); _ += "</h2>\n";
 _ += (this._descriptionToHTML(classDef.getDocComment())).replace(/\n$/, ""); _ += "\n";
+
+		// inner classes
+		classDef.getTemplateInnerClasses().forEach((classDef) -> {
+			if (! this._isPrivate(classDef)) {
+_ += (this._buildDocOfClass(parser, classDef)).replace(/\n$/, ""); _ += "\n";
+			}
+		});
+		classDef.getInnerClasses().forEach((classDef) -> {
+			if (! (classDef instanceof InstantiatedClassDefinition) && ! this._isPrivate(classDef)) {
+_ += (this._buildDocOfClass(parser, classDef)).replace(/\n$/, ""); _ += "\n";
+			}
+		});
+
+		// properties
 
 		if (this._hasPublicProperties(classDef)) {
 			classDef.forEachMemberVariable(function (varDef) {
@@ -283,16 +294,20 @@ _ += "</div>\n";
 			});
 		}
 
+		// constructors
+
 		classDef.forEachMemberFunction(function (funcDef) {
-			if (! (funcDef instanceof InstantiatedMemberFunctionDefinition) && this._isConstructor(funcDef) && (funcDef.flags() & ClassDefinition.IS_DELETE) == 0) {
+			if (! (funcDef instanceof InstantiatedMemberFunctionDefinition) && this._isConstructor(funcDef) && (funcDef.flags() & ClassDefinition.IS_DELETE) == 0 && !this._isPrivate(funcDef)) {
 _ += (this._buildDocOfFunction(parser, funcDef)).replace(/\n$/, ""); _ += "\n";
 			}
 			return true;
 		});
 
+		// member functions
+
 		if (this._hasPublicFunctions(classDef)) {
 			classDef.forEachMemberFunction(function (funcDef) {
-				if (! (funcDef instanceof InstantiatedMemberFunctionDefinition || this._isConstructor(funcDef) || this._isPrivate(funcDef))) {
+				if (! (funcDef instanceof InstantiatedMemberFunctionDefinition) && !this._isConstructor(funcDef) && !this._isPrivate(funcDef)) {
 _ += (this._buildDocOfFunction(parser, funcDef)).replace(/\n$/, ""); _ += "\n";
 				}
 				return true;
@@ -308,7 +323,7 @@ _ += "</div>\n";
 		var _ = "";
 		var ignoreFlags = (funcDef.getClassDef().flags() & (ClassDefinition.IS_FINAL | ClassDefinition.IS_NATIVE)) | ClassDefinition.IS_INLINE;
 		var funcName = this._isConstructor(funcDef)
-			? "new " + this._name(funcDef.getClassDef().className())
+			? "new " + this._name(funcDef.getClassDef().classFullName())
 			: this._flagsToHTML(funcDef.flags() & ~ignoreFlags) + " function " + this._name(funcDef.name());
 		var args = funcDef.getArguments();
 		var argsHTML = args.map.<string>(function (arg) {
@@ -346,7 +361,7 @@ _ += "</div>\n";
 		if (docComment != null) {
 			if (docComment.getDescription() != "") {
 _ += "<div class=\"description\">\n";
-_ += (docComment.getDescription()).replace(/\n$/, ""); _ += "\n";
+_ += (docComment.getDescription().replace(/\t/g, "  ")).replace(/\n$/, ""); _ += "\n";
 _ += "</div>\n";
 			}
 			var seeTags = docComment.getTagsByName("see");
@@ -362,7 +377,7 @@ _ += "</ul>\n";
 	}
 
 	function _autoLink (str : string) : string {
-		var uri = /^https?:\/\/[A-Za-z0-9\-\._~:\/?#\[\]@!$&'()*+,;=]+/;
+		var uri = /^https?:\/\/[A-Za-z0-9\-\._~:\/?#\[\]@!$&'()*+,;=]+/g;
 		return str.replace(uri, (matched) -> {
 			return Util.format('<a href="%1">%1</a>', [matched]);
 		});
@@ -446,16 +461,16 @@ _ += "</ul>\n";
 					}
 				}
 			}
-			throw new Error("could not determine the parser to which the class belongs:" + classDef.className());
+			throw new Error("could not determine the parser to which the class belongs:" + classDef.classFullName());
 		};
 		var parserOfClassDef = determineParserOfClassDef();
 		// return text if we cannot linkify the class name
 		if (! this._pathFilter(parserOfClassDef.getPath())) {
-			return this._escape(classDef.className());
+			return this._escape(classDef.classFullName());
 		}
 		// linkify and return
 		var _ = "";
-_ += "<a href=\""; _ += (this._escape(parserOfClassDef.getPath())).replace(/\n$/, ""); _ += ".html#class-"; _ += (this._escape(classDef.className())).replace(/\n$/, ""); _ += "\">"; _ += (this._escape(classDef.className())).replace(/\n$/, ""); _ += "</a>\n";
+_ += "<a href=\""; _ += (this._escape(parserOfClassDef.getPath())).replace(/\n$/, ""); _ += ".html#class-"; _ += (this._escape(classDef.classFullName())).replace(/\n$/, ""); _ += "\">"; _ += (this._escape(classDef.classFullName())).replace(/\n$/, ""); _ += "</a>\n";
 		_ = _.trim();
 		this._classDefToHTMLCache.set(classDef, _);
 		return _;
@@ -547,11 +562,11 @@ _ += "<a href=\""; _ += (this._escape(parserOfClassDef.getPath())).replace(/\n$/
 	}
 
 	function _isPrivate (classDef : ClassDefinition) : boolean {
-		return classDef.className().charAt(0) == "_";
+		return classDef.className().charAt(0) == "_" || (classDef.getDocComment() && classDef.getDocComment().getTagByName('private'));
 	}
 
 	function _isPrivate (memberDef : MemberDefinition) : boolean {
-		return memberDef.name().charAt(0) == "_";
+		return memberDef.name().charAt(0) == "_" || (memberDef.getDocComment() && memberDef.getDocComment().getTagByName('private'));
 	}
 
 	function _name(name : string) : string {

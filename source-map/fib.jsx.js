@@ -1,4 +1,4 @@
-// generatedy by JSX compiler 0.9.49 (2013-07-02 23:09:31 -0700; 2a835991352f379f41ad55e03550652e0dd84358)
+// generatedy by JSX compiler 0.9.51 (2013-07-06 22:04:30 -0700; 71d68d2de63ba615d3319d1dc1a636832ed302d9)
 var JSX = {};
 (function (JSX) {
 /**
@@ -56,7 +56,7 @@ function $__jsx_div_assign(obj, prop, divisor) {
  */
 var $__jsx_parseInt = parseInt;
 var $__jsx_parseFloat = parseFloat;
-var $__jsx_isNaN = isNaN;
+function $__jsx_isNaN(n) { return n !== n; }
 var $__jsx_isFinite = isFinite;
 
 var $__jsx_encodeURIComponent = encodeURIComponent;

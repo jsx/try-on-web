@@ -106,21 +106,129 @@ function g_StopIteration() {
 };
 
 $__jsx_extend([g_StopIteration], Error);
+function g_Enumerable$function$$$$variant$$$$void$E() {
+};
+
+$__jsx_extend([g_Enumerable$function$$$$variant$$$$void$E], Object);
+g_Enumerable$function$$$$variant$$$$void$E.prototype.$__jsx_implements_g_Enumerable$function$$$$variant$$$$void$E = true;
+
+function __jsx_generator$function$$$$variant$$$$void$E() {
+	g_Enumerable$function$$$$variant$$$$void$E.call(this);
+	this.__next = null;
+	this.__value = null;
+	this.__end = false;
+};
+
+$__jsx_extend([__jsx_generator$function$$$$variant$$$$void$E], Object);
+$__jsx_merge_interface(__jsx_generator$function$$$$variant$$$$void$E, g_Enumerable$function$$$$variant$$$$void$E);
+
+__jsx_generator$function$$$$variant$$$$void$E.prototype.next$ = function () {
+	if (! this.__end) {
+		try {
+			this.__next();
+		} catch ($__jsx_catch_0) {
+			if ($__jsx_catch_0 instanceof g_StopIteration) {
+				this.__end = true;
+				throw $__jsx_catch_0;
+			} else {
+				throw $__jsx_catch_0;
+			}
+		}
+		return this.__value;
+	} else {
+		throw new g_StopIteration();
+	}
+};
+
+
+function Async() {
+};
+
+$__jsx_extend([Async], Object);
+function Async$sleep$N(durationMS) {
+	return (function (g) {
+		Timer$setTimeout$F$V$N((function () {
+			Async$go$X(g);
+		}), durationMS);
+	});
+};
+
+Async.sleep$N = Async$sleep$N;
+
+function Async$run$F$Lg_Enumerable$function$$$$variant$$$$void$E$$(coro) {
+	Async$go$X(coro());
+};
+
+Async.run$F$Lg_Enumerable$function$$$$variant$$$$void$E$$ = Async$run$F$Lg_Enumerable$function$$$$variant$$$$void$E$$;
+
+function Async$go$X(v) {
+	var g;
+	var cb;
+	g = (function ($v) {
+		if (! ($v == null || $v.$__jsx_implements_g_Enumerable$function$$$$variant$$$$void$E)) {
+			debugger;
+			throw new Error("[/Users/gfx/repo/try-on-web/JSX/example/yield.jsx:21:14] detected invalid cast, value is not an instance of the designated type or null\n    var g = v as g_Enumerable.<(variant)->void>;\n              ^^\n");
+		}
+		return $v;
+	}(v));
+	try {
+		cb = g.next$();
+		cb(g);
+	} catch ($__jsx_catch_0) {
+		if ($__jsx_catch_0 instanceof g_StopIteration) {
+			return;
+		} else {
+			throw $__jsx_catch_0;
+		}
+	}
+};
+
+Async.go$X = Async$go$X;
+
 function _Main() {
 };
 
 $__jsx_extend([_Main], Object);
 function _Main$main$AS(args) {
-	var i;
-	var id;
-	i = 0;
-	id = null;
-	id = Timer$setInterval$F$V$N((function () {
-		console.log(++ i);
-		if (i === 4) {
-			Timer$clearInterval$LTimerHandle$(id);
-		}
-	}), 500);
+	Async$run$F$Lg_Enumerable$function$$$$variant$$$$void$E$$((function () {
+		var $START;
+		var $YIELD_0;
+		var $YIELD_1;
+		var $YIELD_2;
+		var $YIELD_3;
+		var $END;
+		var $generator0;
+		$generator0 = new __jsx_generator$function$$$$variant$$$$void$E();
+		$START = (function () {
+			console.log("H");
+			$generator0.__value = Async$sleep$N(100);
+			$generator0.__next = $YIELD_0;
+		});
+		$YIELD_0 = (function () {
+			console.log("e");
+			$generator0.__value = Async$sleep$N(100);
+			$generator0.__next = $YIELD_1;
+		});
+		$YIELD_1 = (function () {
+			console.log("l");
+			$generator0.__value = Async$sleep$N(100);
+			$generator0.__next = $YIELD_2;
+		});
+		$YIELD_2 = (function () {
+			console.log("l");
+			$generator0.__value = Async$sleep$N(100);
+			$generator0.__next = $YIELD_3;
+		});
+		$YIELD_3 = (function () {
+			console.log("o");
+			throw new g_StopIteration();
+			$END();
+		});
+		$END = (function () {
+		});
+		$generator0.__next = $START;
+		return $generator0;
+	}));
 };
 
 _Main.main = _Main$main$AS;
@@ -359,7 +467,9 @@ var $__jsx_classMap = {
 		g_StopIteration: g_StopIteration,
 		g_StopIteration$: g_StopIteration
 	},
-	"system:example/timers.jsx": {
+	"system:example/yield.jsx": {
+		Async: Async,
+		Async$: Async,
 		_Main: _Main,
 		_Main$: _Main
 	},
@@ -432,7 +542,7 @@ JSX.runTests = function (sourceFile, tests) {
 function $__jsx_onload (event) {
 	window.removeEventListener("load", $__jsx_onload);
 	document.removeEventListener("DOMContentLoaded", $__jsx_onload);
-	JSX.runMain("system:example/timers.jsx", []);
+	JSX.runMain("system:example/yield.jsx", []);
 }
 
 window.addEventListener("load", $__jsx_onload);
@@ -440,4 +550,4 @@ document.addEventListener("DOMContentLoaded", $__jsx_onload);
 
 })(JSX);
 
-//# sourceMappingURL=timers.jsx.js.mapping
+//# sourceMappingURL=yield.jsx.js.mapping

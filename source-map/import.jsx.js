@@ -1,4 +1,4 @@
-// generatedy by JSX compiler 0.9.49 (2013-07-02 23:09:31 -0700; 2a835991352f379f41ad55e03550652e0dd84358)
+// generatedy by JSX compiler 0.9.51 (2013-07-06 22:04:30 -0700; 71d68d2de63ba615d3319d1dc1a636832ed302d9)
 var JSX = {};
 (function (JSX) {
 /**
@@ -56,7 +56,7 @@ function $__jsx_div_assign(obj, prop, divisor) {
  */
 var $__jsx_parseInt = parseInt;
 var $__jsx_parseFloat = parseFloat;
-var $__jsx_isNaN = isNaN;
+function $__jsx_isNaN(n) { return n !== n; }
 var $__jsx_isFinite = isFinite;
 
 var $__jsx_encodeURIComponent = encodeURIComponent;
@@ -317,13 +317,13 @@ TestCase.prototype.async$F$LAsyncContext$V$I = function (testBody, timeoutMS) {
 
 TestCase.prototype.expect$X = function (value) {
 	++ this._count;
-	return new TestCase$CMatcher(this, value);
+	return new TestCase$CMatcher$0(this, value);
 };
 
 
 TestCase.prototype.expect$XS = function (value, message) {
 	++ this._count;
-	return new TestCase$CMatcher$0(this, value, message);
+	return new TestCase$CMatcher(this, value, message);
 };
 
 
@@ -855,16 +855,14 @@ function TimerHandle() {
 };
 
 $__jsx_extend([TimerHandle], Object);
-function TestCase$CMatcher(test, got) {
-	this._name = null;
-	this._test = test;
-	this._got = got;
-};
-
-function TestCase$CMatcher$0(test, got, name) {
+function TestCase$CMatcher(test, got, name) {
 	this._test = test;
 	this._got = got;
 	this._name = name;
+};
+
+function TestCase$CMatcher$0(test, got) {
+	TestCase$CMatcher.call(this, test, got, null);
 };
 
 $__jsx_extend([TestCase$CMatcher, TestCase$CMatcher$0], Object);
@@ -912,7 +910,7 @@ TestCase$CMatcher.prototype.toEqual$AX = function (x) {
 	var got;
 	if (! (x != null)) {
 		debugger;
-		throw new Error("[/Users/gfx/repo/try-on-web/JSX/lib/common/test-case.jsx:470:21] assertion failure\n            assert x != null;\n                     ^^\n");
+		throw new Error("[/Users/gfx/repo/try-on-web/JSX/lib/common/test-case.jsx:468:21] assertion failure\n            assert x != null;\n                     ^^\n");
 	}
 	if (! (this._got instanceof Array)) {
 		this._test._nok$USUSXX(this._name, "equals", this._got, x);
@@ -921,7 +919,7 @@ TestCase$CMatcher.prototype.toEqual$AX = function (x) {
 	got = (function ($v) {
 		if (! ($v == null || $v instanceof Array)) {
 			debugger;
-			throw new Error("[/Users/gfx/repo/try-on-web/JSX/lib/common/test-case.jsx:477:32] detected invalid cast, value is not an Array or null\n            var got = this._got as Array.<variant>;\n                                ^^\n");
+			throw new Error("[/Users/gfx/repo/try-on-web/JSX/lib/common/test-case.jsx:475:32] detected invalid cast, value is not an Array or null\n            var got = this._got as Array.<variant>;\n                                ^^\n");
 		}
 		return $v;
 	}(this._got));
@@ -938,7 +936,7 @@ TestCase$CMatcher.prototype.toEqual$AS = function (x) {
 	this.toEqual$AX((function ($v) {
 		if (! ($v == null || $v instanceof Array)) {
 			debugger;
-			throw new Error("[/Users/gfx/repo/try-on-web/JSX/lib/common/test-case.jsx:488:27] detected invalid cast, value is not an Array or null\n            this.toEqual(x as __noconvert__ Array.<variant>);\n                           ^^\n");
+			throw new Error("[/Users/gfx/repo/try-on-web/JSX/lib/common/test-case.jsx:486:27] detected invalid cast, value is not an Array or null\n            this.toEqual(x as __noconvert__ Array.<variant>);\n                           ^^\n");
 		}
 		return $v;
 	}(x)));
@@ -949,7 +947,7 @@ TestCase$CMatcher.prototype.toEqual$AN = function (x) {
 	this.toEqual$AX((function ($v) {
 		if (! ($v == null || $v instanceof Array)) {
 			debugger;
-			throw new Error("[/Users/gfx/repo/try-on-web/JSX/lib/common/test-case.jsx:491:27] detected invalid cast, value is not an Array or null\n            this.toEqual(x as __noconvert__ Array.<variant>);\n                           ^^\n");
+			throw new Error("[/Users/gfx/repo/try-on-web/JSX/lib/common/test-case.jsx:489:27] detected invalid cast, value is not an Array or null\n            this.toEqual(x as __noconvert__ Array.<variant>);\n                           ^^\n");
 		}
 		return $v;
 	}(x)));
@@ -960,7 +958,7 @@ TestCase$CMatcher.prototype.toEqual$AI = function (x) {
 	this.toEqual$AX((function ($v) {
 		if (! ($v == null || $v instanceof Array)) {
 			debugger;
-			throw new Error("[/Users/gfx/repo/try-on-web/JSX/lib/common/test-case.jsx:494:27] detected invalid cast, value is not an Array or null\n            this.toEqual(x as __noconvert__ Array.<variant>);\n                           ^^\n");
+			throw new Error("[/Users/gfx/repo/try-on-web/JSX/lib/common/test-case.jsx:492:27] detected invalid cast, value is not an Array or null\n            this.toEqual(x as __noconvert__ Array.<variant>);\n                           ^^\n");
 		}
 		return $v;
 	}(x)));
@@ -971,7 +969,7 @@ TestCase$CMatcher.prototype.toEqual$AB = function (x) {
 	this.toEqual$AX((function ($v) {
 		if (! ($v == null || $v instanceof Array)) {
 			debugger;
-			throw new Error("[/Users/gfx/repo/try-on-web/JSX/lib/common/test-case.jsx:497:27] detected invalid cast, value is not an Array or null\n            this.toEqual(x as __noconvert__ Array.<variant>);\n                           ^^\n");
+			throw new Error("[/Users/gfx/repo/try-on-web/JSX/lib/common/test-case.jsx:495:27] detected invalid cast, value is not an Array or null\n            this.toEqual(x as __noconvert__ Array.<variant>);\n                           ^^\n");
 		}
 		return $v;
 	}(x)));
@@ -1024,8 +1022,8 @@ var $__jsx_classMap = {
 		AsyncContext: AsyncContext,
 		AsyncContext$LTestCase$SF$LAsyncContext$V$I: AsyncContext,
 		"TestCase.Matcher": TestCase$CMatcher,
-		"TestCase.Matcher$LTestCase$X": TestCase$CMatcher,
-		"TestCase.Matcher$LTestCase$XS": TestCase$CMatcher$0,
+		"TestCase.Matcher$LTestCase$XUS": TestCase$CMatcher,
+		"TestCase.Matcher$LTestCase$X": TestCase$CMatcher$0,
 		"TestCase.Failure": TestCase$CFailure,
 		"TestCase.Failure$S": TestCase$CFailure
 	},

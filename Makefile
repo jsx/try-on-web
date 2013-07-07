@@ -13,3 +13,4 @@ ship:
 	git commit -m "update"
 	git push origin gh-pages
 
+publish: ship

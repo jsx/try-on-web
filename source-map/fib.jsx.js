@@ -1,4 +1,4 @@
-// generatedy by JSX compiler 0.9.51 (2013-07-07 00:30:00 -0700; b7a0307c79db5e60b2f2509625bafb7ccc472a1e)
+// generatedy by JSX compiler 0.9.55 (2013-07-13 23:28:48 -0700; 9ea75a42d4121e9f146745b3b350be8b2ee894c9)
 var JSX = {};
 (function (JSX) {
 /**
@@ -218,6 +218,8 @@ JSX.runMain = function (sourceFile, args) {
  */
 JSX.runTests = function (sourceFile, tests) {
 	var module = JSX.require(sourceFile);
+	if (! module) return;
+
 	var testClass = module._Test;
 
 	if (!testClass) return; // skip if there's no test class

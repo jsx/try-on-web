@@ -362,16 +362,10 @@ class _MinifiedNameGenerator {
 
 	static const _MINIFY_CHARS = "$_ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789";
 
-	// every object has eval, so it is listed as a keyword
-	static const KEYWORDS = (
-		"break else new var case finally return void catch for switch while continue function this with default if throw"
-		+ " delete in try do instanceof typeof abstract enum int"
-		+ " boolean export interface byte extends long char final native class float package const goto private debugger implements protected double import public"
-		+ " NaN Infinity undefined eval"
-		).split(/\s+/);
-
+	/// ECMA 262 global objects
 	static const GLOBALS = (
-		"parseInt parseFloat isNaN isFinite decodeURI decodeURIComponent encodeURI encodeURIComponent"
+		"NaN Infinity undefined eval"
+		+ "parseInt parseFloat isNaN isFinite decodeURI decodeURIComponent encodeURI encodeURIComponent"
 		+ " Object Function Array String Boolean Number Date RegExp Error EvalError RangeError ReferenceError SyntaxError TypeError URIError Math"
 		).split(/\s+/);
 
@@ -633,8 +627,7 @@ class _Minifier {
 		this._propertyConversionTable = _Minifier._buildConversionTable(
 			this._propertyUseCount,
 			new _MinifiedNameGenerator(
-				([] : string[]).concat(
-					_MinifiedNameGenerator.KEYWORDS,
+				Util.getECMA262ReservedWords().concat(
 					(function () : string[] {
 						var nativePropertyNames = new Map.<boolean>;
 						this._classDefs.forEach(function (classDef) {
@@ -668,7 +661,7 @@ class _Minifier {
 				var stash = _Minifier._getClassStash(classDef);
 				stash.staticVariableConversionTable = _Minifier._buildConversionTable(
 					stash.staticVariableUseCount,
-					new _MinifiedNameGenerator(_MinifiedNameGenerator.KEYWORDS.concat(exportedStaticVarNames)));
+					new _MinifiedNameGenerator(Util.getECMA262ReservedWords().concat(exportedStaticVarNames)));
 			}
 		});
 	}
@@ -689,8 +682,7 @@ class _Minifier {
 		this._globalConversionTable = _Minifier._buildConversionTable(
 			useCount,
 			new _MinifiedNameGenerator(
-				([] : string[]).concat(
-					_MinifiedNameGenerator.KEYWORDS,
+				Util.getECMA262ReservedWords().concat(
 					_MinifiedNameGenerator.GLOBALS,
 					(function () : string[] {
 						var nativeClassNames = new string[];
@@ -727,7 +719,7 @@ class _Minifier {
 			reserved.push(_Minifier._getLocalStash(scopeStash.usedOuterLocals[i]).minifiedName);
 		}
 		this._log("local minification, preserving: " + reserved.join(","));
-		reserved = reserved.concat(_MinifiedNameGenerator.KEYWORDS);
+		reserved = reserved.concat(Util.getECMA262ReservedWords());
 		// doit
 		var conversionTable = _Minifier._buildConversionTable(useCount, new _MinifiedNameGenerator(reserved));
 		// store the result
@@ -1988,6 +1980,7 @@ class _PropertyExpressionEmitter extends _UnaryExpressionEmitter {
 		} else {
 			var name = identifierToken.getValue();
 			if (Util.isReferringToFunctionDefinition(expr)) {
+				assert exprType instanceof ResolvedFunctionType, exprType.toString();
 				name = this._emitter.getNamer().getNameOfMethod(classDef, name, (exprType as ResolvedFunctionType).getArgumentTypes());
 			} else {
 				name = this._emitter.getNamer().getNameOfProperty(classDef, name);
@@ -2445,8 +2438,6 @@ class _CallExpressionEmitter extends _OperatorExpressionEmitter {
 			return true;
 		else if (this._emitCallsToMap(calleeExpr as PropertyExpression))
 			return true;
-		else if (this._emitIfMathAbs(calleeExpr as PropertyExpression))
-			return true;
 		return false;
 	}
 
@@ -2529,53 +2520,6 @@ class _CallExpressionEmitter extends _OperatorExpressionEmitter {
 		default:
 			return false;
 		}
-	}
-
-	function _emitIfMathAbs (calleeExpr : PropertyExpression) : boolean {
-		if (! _CallExpressionEmitter._calleeIsMathAbs(calleeExpr))
-			return false;
-		var argExpr = this._expr.getArguments()[0];
-		if (argExpr instanceof LeafExpression) {
-			this._emitter._emit("(", this._expr.getToken());
-			this._emitter._getExpressionEmitterFor(argExpr).emit(0);
-			this._emitter._emit(" >= 0 ? ", this._expr.getToken());
-			this._emitter._getExpressionEmitterFor(argExpr).emit(0);
-			this._emitter._emit(" : - ", this._expr.getToken());
-			this._emitter._getExpressionEmitterFor(argExpr).emit(0);
-			this._emitter._emit(")", this._expr.getToken());
-		} else {
-			this._emitter._emit("(($math_abs_t = ", this._expr.getToken());
-			this._emitter._getExpressionEmitterFor(argExpr).emit(_AssignmentExpressionEmitter._operatorPrecedence["="]);
-			this._emitter._emit(") >= 0 ? $math_abs_t : -$math_abs_t)", this._expr.getToken());
-		}
-		return true;
-	}
-
-	static function _calleeIsMathAbs (calleeExpr : PropertyExpression) : boolean {
-		if (! (calleeExpr.getType() instanceof StaticFunctionType))
-			return false;
-		if (calleeExpr.getIdentifierToken().getValue() != "abs")
-			return false;
-		if (calleeExpr.getExpr().getType().getClassDef().className() != "Math")
-			return false;
-		return true;
-	}
-
-	static function mathAbsUsesTemporary (funcDef : MemberFunctionDefinition) : boolean {
-		return ! funcDef.forEachStatement(function onStatement(statement : Statement) : boolean {
-			if (! statement.forEachExpression(function onExpr(expr : Expression) : boolean {
-				var calleeExpr;
-				if (expr instanceof CallExpression
-					&& (calleeExpr = (expr as CallExpression).getExpr()) instanceof PropertyExpression
-					&& _CallExpressionEmitter._calleeIsMathAbs(calleeExpr as PropertyExpression)
-					&& ! ((expr as CallExpression).getArguments()[0] instanceof LeafExpression))
-					return false;
-				return expr.forEachExpression(onExpr);
-			})) {
-				return false;
-			}
-			return statement.forEachStatement(onStatement);
-		});
 	}
 
 }
@@ -3370,10 +3314,6 @@ class JavaScriptEmitter implements Emitter {
 			// if funDef is NOT in another closure
 			if (funcDef.getClosures().length != 0 && (funcDef.flags() & ClassDefinition.IS_STATIC) == 0)
 				this._emit("var $this = this;\n", null);
-			// emit helper variable for Math.abs
-			if (_CallExpressionEmitter.mathAbsUsesTemporary(funcDef)) {
-				this._emit("var $math_abs_t;\n", null);
-			}
 			// emit local variable declarations
 			var locals = funcDef.getLocals();
 			for (var i = 0; i < locals.length; ++i) {

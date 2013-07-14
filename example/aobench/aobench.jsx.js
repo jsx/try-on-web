@@ -1,4 +1,4 @@
-// generatedy by JSX compiler 0.9.51 (2013-07-07 00:30:00 -0700; b7a0307c79db5e60b2f2509625bafb7ccc472a1e)
+// generatedy by JSX compiler 0.9.55 (2013-07-13 23:28:48 -0700; 9ea75a42d4121e9f146745b3b350be8b2ee894c9)
 var JSX = {};
 (function (JSX) {
 /**
@@ -195,30 +195,26 @@ function Sphere(center, radius) {
 
 $__jsx_extend([Sphere], Object);
 function Sphere$intersect$LSphere$LRay$LIsect$($this, ray, isect) {
+	var rs;
 	var B;
 	var C;
 	var D;
 	var t;
 	var n;
-	var a$0;
-	var b$0;
-	var b$1;
-	var b$2;
-	var rs$x$0;
-	var rs$y$0;
-	var rs$z$0;
+	var vsub$a$0;
+	var vsub$b$0;
+	var vdot$b$0;
+	var vsub$b$1;
 	var org$0;
 	var dir$0;
 	var p$0;
+	var x$0;
+	var y$0;
+	var z$0;
 	var radius$0;
-	a$0 = ray.org;
-	b$0 = $this.center;
-	rs$x$0 = a$0.x - b$0.x;
-	rs$y$0 = a$0.y - b$0.y;
-	rs$z$0 = a$0.z - b$0.z;
-	b$1 = ray.dir;
-	B = rs$x$0 * b$1.x + rs$y$0 * b$1.y + rs$z$0 * b$1.z;
-	C = rs$x$0 * rs$x$0 + rs$y$0 * rs$y$0 + rs$z$0 * rs$z$0 - (radius$0 = $this.radius) * radius$0;
+	rs = (vsub$b$0 = $this.center, vsub$a$0 = ray.org, ({x: vsub$a$0.x - vsub$b$0.x, y: vsub$a$0.y - vsub$b$0.y, z: vsub$a$0.z - vsub$b$0.z}));
+	B = (vdot$b$0 = ray.dir, (x$0 = rs.x) * vdot$b$0.x + (y$0 = rs.y) * vdot$b$0.y + (z$0 = rs.z) * vdot$b$0.z);
+	C = x$0 * x$0 + y$0 * y$0 + z$0 * z$0 - (radius$0 = $this.radius) * radius$0;
 	D = B * B - C;
 	if (D > 0.0) {
 		t = - B - Math.sqrt(D);
@@ -226,55 +222,13 @@ function Sphere$intersect$LSphere$LRay$LIsect$($this, ray, isect) {
 			isect.t = t;
 			isect.hit = true;
 			p$0 = isect.p = ({x: (org$0 = ray.org).x + (dir$0 = ray.dir).x * t, y: org$0.y + dir$0.y * t, z: org$0.z + dir$0.z * t});
-			b$2 = $this.center;
-			n = ({x: p$0.x - b$2.x, y: p$0.y - b$2.y, z: p$0.z - b$2.z});
+			n = (vsub$b$1 = $this.center, p$0, ({x: p$0.x - vsub$b$1.x, y: p$0.y - vsub$b$1.y, z: p$0.z - vsub$b$1.z}));
 			isect.n = vec3$vnormalize$Lvec3$(n);
 		}
 	}
 };
 
 Sphere.intersect$LSphere$LRay$LIsect$ = Sphere$intersect$LSphere$LRay$LIsect$;
-
-function Sphere$intersect_0$LSphere$LRay$LIsect$($this, ray, isect) {
-	var B;
-	var C;
-	var D;
-	var t;
-	var n;
-	var a$0;
-	var b$0;
-	var b$1;
-	var b$2;
-	var rs$x$0;
-	var rs$y$0;
-	var rs$z$0;
-	var org$0;
-	var dir$0;
-	var p$0;
-	var radius$0;
-	a$0 = ray.org;
-	b$0 = $this.center;
-	rs$x$0 = a$0.x - b$0.x;
-	rs$y$0 = a$0.y - b$0.y;
-	rs$z$0 = a$0.z - b$0.z;
-	b$1 = ray.dir;
-	B = rs$x$0 * b$1.x + rs$y$0 * b$1.y + rs$z$0 * b$1.z;
-	C = rs$x$0 * rs$x$0 + rs$y$0 * rs$y$0 + rs$z$0 * rs$z$0 - (radius$0 = $this.radius) * radius$0;
-	D = B * B - C;
-	if (D > 0.0) {
-		t = - B - Math.sqrt(D);
-		if (t > 0.0 && t < isect.t) {
-			isect.t = t;
-			isect.hit = true;
-			p$0 = isect.p = ({x: (org$0 = ray.org).x + (dir$0 = ray.dir).x * t, y: org$0.y + dir$0.y * t, z: org$0.z + dir$0.z * t});
-			b$2 = $this.center;
-			n = ({x: p$0.x - b$2.x, y: p$0.y - b$2.y, z: p$0.z - b$2.z});
-			isect.n = vec3$vnormalize$Lvec3$(n);
-		}
-	}
-};
-
-Sphere.intersect_0$LSphere$LRay$LIsect$ = Sphere$intersect_0$LSphere$LRay$LIsect$;
 
 function Plane(p, n) {
 	this.p = p;
@@ -286,18 +240,20 @@ function Plane$intersect$LPlane$LRay$LIsect$($this, ray, isect) {
 	var d;
 	var v;
 	var t;
-	var a$0;
-	var b$0;
+	var vdot$a$0;
+	var vdot$b$0;
+	var vdot$a$1;
+	var vdot$a$2;
+	var vdot$b$2;
+	var n$0;
 	var org$0;
 	var dir$0;
-	d = - vec3$vdot$Lvec3$Lvec3$($this.p, $this.n);
-	a$0 = ray.dir;
-	b$0 = $this.n;
-	v = a$0.x * b$0.x + a$0.y * b$0.y + a$0.z * b$0.z;
+	d = - (vdot$b$0 = n$0 = $this.n, vdot$a$0 = $this.p, vdot$a$0.x * vdot$b$0.x + vdot$a$0.y * vdot$b$0.y + vdot$a$0.z * vdot$b$0.z);
+	v = (n$0, vdot$a$1 = ray.dir, vdot$a$1.x * n$0.x + vdot$a$1.y * n$0.y + vdot$a$1.z * n$0.z);
 	if ((v >= 0 ? v : - v) < 1.0e-17) {
 		return;
 	}
-	t = - (vec3$vdot$Lvec3$Lvec3$(ray.org, $this.n) + d) / v;
+	t = - ((vdot$b$2 = $this.n, vdot$a$2 = ray.org, vdot$a$2.x * vdot$b$2.x + vdot$a$2.y * vdot$b$2.y + vdot$a$2.z * vdot$b$2.z) + d) / v;
 	if (t > 0.0 && t < isect.t) {
 		isect.hit = true;
 		isect.t = t;
@@ -307,32 +263,6 @@ function Plane$intersect$LPlane$LRay$LIsect$($this, ray, isect) {
 };
 
 Plane.intersect$LPlane$LRay$LIsect$ = Plane$intersect$LPlane$LRay$LIsect$;
-
-function Plane$intersect_0$LPlane$LRay$LIsect$($this, ray, isect) {
-	var d;
-	var v;
-	var t;
-	var a$0;
-	var b$0;
-	var org$0;
-	var dir$0;
-	d = - vec3$vdot$Lvec3$Lvec3$($this.p, $this.n);
-	a$0 = ray.dir;
-	b$0 = $this.n;
-	v = a$0.x * b$0.x + a$0.y * b$0.y + a$0.z * b$0.z;
-	if ((v >= 0 ? v : - v) < 1.0e-17) {
-		return;
-	}
-	t = - (vec3$vdot$Lvec3$Lvec3$(ray.org, $this.n) + d) / v;
-	if (t > 0.0 && t < isect.t) {
-		isect.hit = true;
-		isect.t = t;
-		isect.n = $this.n;
-		isect.p = ({x: (org$0 = ray.org).x + t * (dir$0 = ray.dir).x, y: org$0.y + t * dir$0.y, z: org$0.z + t * dir$0.z});
-	}
-};
-
-Plane.intersect_0$LPlane$LRay$LIsect$ = Plane$intersect_0$LPlane$LRay$LIsect$;
 
 function Random() {
 };
@@ -393,33 +323,6 @@ function AOBench$orthoBasis$LAOBench$ALvec3$Lvec3$($this, basis, n) {
 
 AOBench.orthoBasis$LAOBench$ALvec3$Lvec3$ = AOBench$orthoBasis$LAOBench$ALvec3$Lvec3$;
 
-function AOBench$orthoBasis_0$LAOBench$ALvec3$Lvec3$($this, basis, n) {
-	var z$0;
-	var y$0;
-	var x$0;
-	basis[2] = n;
-	basis[1] = ({x: 0.0, y: 0.0, z: 0.0});
-	if ((x$0 = n.x) < 0.6 && x$0 > -0.6) {
-		basis[1].x = 1.0;
-	} else {
-		if ((y$0 = n.y) < 0.6 && y$0 > -0.6) {
-			basis[1].y = 1.0;
-		} else {
-			if ((z$0 = n.z) < 0.6 && z$0 > -0.6) {
-				basis[1].z = 1.0;
-			} else {
-				basis[1].x = 1.0;
-			}
-		}
-	}
-	basis[0] = vec3$vcross$Lvec3$Lvec3$(basis[1], basis[2]);
-	basis[0] = vec3$vnormalize$Lvec3$(basis[0]);
-	basis[1] = vec3$vcross$Lvec3$Lvec3$(basis[2], basis[0]);
-	basis[1] = vec3$vnormalize$Lvec3$(basis[1]);
-};
-
-AOBench.orthoBasis_0$LAOBench$ALvec3$Lvec3$ = AOBench$orthoBasis_0$LAOBench$ALvec3$Lvec3$;
-
 function AOBench$ambient_occlusion$LAOBench$LIsect$($this, isect) {
 	var basis;
 	var p;
@@ -441,7 +344,7 @@ function AOBench$ambient_occlusion$LAOBench$LIsect$($this, isect) {
 	var p$0;
 	var n$0;
 	basis = new Array(3);
-	AOBench$orthoBasis_0$LAOBench$ALvec3$Lvec3$($this, basis, isect.n);
+	AOBench$orthoBasis$LAOBench$ALvec3$Lvec3$($this, basis, isect.n);
 	p = ({x: (p$0 = isect.p).x + 0.0001 * (n$0 = isect.n).x, y: p$0.y + 0.0001 * n$0.y, z: p$0.z + 0.0001 * n$0.z});
 	occlusion = 0;
 	for (j = 0; j < 8; j++) {
@@ -459,10 +362,10 @@ function AOBench$ambient_occlusion$LAOBench$LIsect$($this, isect) {
 			raydir = ({x: rx, y: ry, z: rz});
 			ray = ({org: p, dir: raydir});
 			occIsect = ({t: 1000000.0, hit: false, p: ({x: 0.0, y: 0.0, z: 0.0}), n: ({x: 0.0, y: 0.0, z: 0.0})});
-			Sphere$intersect_0$LSphere$LRay$LIsect$($this.spheres[0], ray, occIsect);
-			Sphere$intersect_0$LSphere$LRay$LIsect$($this.spheres[1], ray, occIsect);
-			Sphere$intersect_0$LSphere$LRay$LIsect$($this.spheres[2], ray, occIsect);
-			Plane$intersect_0$LPlane$LRay$LIsect$($this.plane, ray, occIsect);
+			Sphere$intersect$LSphere$LRay$LIsect$($this.spheres[0], ray, occIsect);
+			Sphere$intersect$LSphere$LRay$LIsect$($this.spheres[1], ray, occIsect);
+			Sphere$intersect$LSphere$LRay$LIsect$($this.spheres[2], ray, occIsect);
+			Plane$intersect$LPlane$LRay$LIsect$($this.plane, ray, occIsect);
 			if (occIsect.hit) {
 				occlusion++;
 			}
@@ -473,60 +376,6 @@ function AOBench$ambient_occlusion$LAOBench$LIsect$($this, isect) {
 };
 
 AOBench.ambient_occlusion$LAOBench$LIsect$ = AOBench$ambient_occlusion$LAOBench$LIsect$;
-
-function AOBench$ambient_occlusion_0$LAOBench$LIsect$($this, isect) {
-	var basis;
-	var p;
-	var occlusion;
-	var j;
-	var i;
-	var r;
-	var phi;
-	var x;
-	var y;
-	var z;
-	var rx;
-	var ry;
-	var rz;
-	var raydir;
-	var ray;
-	var occIsect;
-	var occ_f;
-	var p$0;
-	var n$0;
-	basis = new Array(3);
-	AOBench$orthoBasis_0$LAOBench$ALvec3$Lvec3$($this, basis, isect.n);
-	p = ({x: (p$0 = isect.p).x + 0.0001 * (n$0 = isect.n).x, y: p$0.y + 0.0001 * n$0.y, z: p$0.z + 0.0001 * n$0.z});
-	occlusion = 0;
-	for (j = 0; j < 8; j++) {
-		for (i = 0; i < 8; i++) {
-			Random._x = Random._x * 0x5DEECE66D + 0xB;
-			Random._x %= 0xFFFFFFFFFFFF;
-			r = Random._x * 3.552713678800501e-15;
-			phi = 6.283185307179586 * Random$next$();
-			x = Math.cos(phi) * Math.sqrt(1.0 - r);
-			y = Math.sin(phi) * Math.sqrt(1.0 - r);
-			z = Math.sqrt(r);
-			rx = x * basis[0].x + y * basis[1].x + z * basis[2].x;
-			ry = x * basis[0].y + y * basis[1].y + z * basis[2].y;
-			rz = x * basis[0].z + y * basis[1].z + z * basis[2].z;
-			raydir = ({x: rx, y: ry, z: rz});
-			ray = ({org: p, dir: raydir});
-			occIsect = ({t: 1000000.0, hit: false, p: ({x: 0.0, y: 0.0, z: 0.0}), n: ({x: 0.0, y: 0.0, z: 0.0})});
-			Sphere$intersect_0$LSphere$LRay$LIsect$($this.spheres[0], ray, occIsect);
-			Sphere$intersect_0$LSphere$LRay$LIsect$($this.spheres[1], ray, occIsect);
-			Sphere$intersect_0$LSphere$LRay$LIsect$($this.spheres[2], ray, occIsect);
-			Plane$intersect_0$LPlane$LRay$LIsect$($this.plane, ray, occIsect);
-			if (occIsect.hit) {
-				occlusion++;
-			}
-		}
-	}
-	occ_f = (64 - occlusion) / 64;
-	return ({x: occ_f, y: occ_f, z: occ_f});
-};
-
-AOBench.ambient_occlusion_0$LAOBench$LIsect$ = AOBench$ambient_occlusion_0$LAOBench$LIsect$;
 
 function AOBench$render$LAOBench$F$IIIIIV$II($this, fill, w, h) {
 	var half_w;
@@ -551,13 +400,13 @@ function AOBench$render$LAOBench$F$IIIIIV$II($this, fill, w, h) {
 			eye = vec3$vnormalize$Lvec3$(({x: px, y: py, z: -1}));
 			ray = ({org: ({x: 0.0, y: 0.0, z: 0.0}), dir: eye});
 			isect = ({t: 1000000.0, hit: false, p: ({x: 0.0, y: 0.0, z: 0.0}), n: ({x: 0.0, y: 0.0, z: 0.0})});
-			Sphere$intersect_0$LSphere$LRay$LIsect$($this.spheres[0], ray, isect);
-			Sphere$intersect_0$LSphere$LRay$LIsect$($this.spheres[1], ray, isect);
-			Sphere$intersect_0$LSphere$LRay$LIsect$($this.spheres[2], ray, isect);
-			Plane$intersect_0$LPlane$LRay$LIsect$($this.plane, ray, isect);
+			Sphere$intersect$LSphere$LRay$LIsect$($this.spheres[0], ray, isect);
+			Sphere$intersect$LSphere$LRay$LIsect$($this.spheres[1], ray, isect);
+			Sphere$intersect$LSphere$LRay$LIsect$($this.spheres[2], ray, isect);
+			Plane$intersect$LPlane$LRay$LIsect$($this.plane, ray, isect);
 			col = ({x: 0.0, y: 0.0, z: 0.0});
 			if (isect.hit) {
-				col = AOBench$ambient_occlusion_0$LAOBench$LIsect$($this, isect);
+				col = AOBench$ambient_occlusion$LAOBench$LIsect$($this, isect);
 			}
 			r = AOBench$clamp$N(col.x);
 			g = AOBench$clamp$N(col.y);
@@ -568,47 +417,6 @@ function AOBench$render$LAOBench$F$IIIIIV$II($this, fill, w, h) {
 };
 
 AOBench.render$LAOBench$F$IIIIIV$II = AOBench$render$LAOBench$F$IIIIIV$II;
-
-function AOBench$render_0$LAOBench$F$IIIIIV$II($this, fill, w, h) {
-	var half_w;
-	var half_h;
-	var y;
-	var x;
-	var px;
-	var py;
-	var eye;
-	var ray;
-	var isect;
-	var col;
-	var r;
-	var g;
-	var b;
-	half_w = w * .5;
-	half_h = h * .5;
-	for (y = 0; y < h; y++) {
-		for (x = 0; x < w; x++) {
-			px = (x - half_w) / half_w;
-			py = - (y - half_h) / half_h;
-			eye = vec3$vnormalize$Lvec3$(({x: px, y: py, z: -1}));
-			ray = ({org: ({x: 0.0, y: 0.0, z: 0.0}), dir: eye});
-			isect = ({t: 1000000.0, hit: false, p: ({x: 0.0, y: 0.0, z: 0.0}), n: ({x: 0.0, y: 0.0, z: 0.0})});
-			Sphere$intersect_0$LSphere$LRay$LIsect$($this.spheres[0], ray, isect);
-			Sphere$intersect_0$LSphere$LRay$LIsect$($this.spheres[1], ray, isect);
-			Sphere$intersect_0$LSphere$LRay$LIsect$($this.spheres[2], ray, isect);
-			Plane$intersect_0$LPlane$LRay$LIsect$($this.plane, ray, isect);
-			col = ({x: 0.0, y: 0.0, z: 0.0});
-			if (isect.hit) {
-				col = AOBench$ambient_occlusion_0$LAOBench$LIsect$($this, isect);
-			}
-			r = AOBench$clamp$N(col.x);
-			g = AOBench$clamp$N(col.y);
-			b = AOBench$clamp$N(col.z);
-			fill((x | 0), (y | 0), (r | 0), (g | 0), (b | 0));
-		}
-	}
-};
-
-AOBench.render_0$LAOBench$F$IIIIIV$II = AOBench$render_0$LAOBench$F$IIIIIV$II;
 
 function _Main() {
 };
@@ -625,7 +433,7 @@ function _Main$main$AS(args) {
 	ctx = canvas.getContext("2d");
 	ao = ({spheres: [ ({center: ({x: -2, y: 0.0, z: -3.5}), radius: 0.5}), ({center: ({x: -0.5, y: 0.0, z: -3}), radius: 0.5}), ({center: ({x: 1.0, y: 0.0, z: -2.2}), radius: 0.5}) ], plane: ({p: ({x: 0.0, y: -0.5, z: 0.0}), n: ({x: 0.0, y: 1.0, z: 0.0})})});
 	t0 = Date.now();
-	AOBench$render_0$LAOBench$F$IIIIIV$II(ao, (function (x, y, r, g, b) {
+	AOBench$render$LAOBench$F$IIIIIV$II(ao, (function (x, y, r, g, b) {
 		ctx.fillStyle = "rgb(" + (r + "") + "," + (g + "") + "," + (b + "") + ")";
 		ctx.fillRect(x, y, 1, 1);
 	}), (canvas.width | 0), (canvas.height | 0));
@@ -1171,6 +979,8 @@ JSX.runMain = function (sourceFile, args) {
  */
 JSX.runTests = function (sourceFile, tests) {
 	var module = JSX.require(sourceFile);
+	if (! module) return;
+
 	var testClass = module._Test;
 
 	if (!testClass) return; // skip if there's no test class

@@ -106,76 +106,37 @@ function g_StopIteration() {
 };
 
 $__jsx_extend([g_StopIteration], Error);
-function Fib() {
+function Point(x, y) {
+	this.x = x;
+	this.y = y;
 };
 
-$__jsx_extend([Fib], Object);
-function Fib$fib1$I(n) {
-	if (n <= 2) {
-		return 1;
-	} else {
-		return Fib$fib1$I((n - 1 | 0)) + Fib$fib1$I((n - 2 | 0));
-	}
+$__jsx_extend([Point], Object);
+function Matrix(m11, m12, m13, m21, m22, m23) {
+	this.m11 = m11;
+	this.m12 = m12;
+	this.m13 = m13;
+	this.m21 = m21;
+	this.m22 = m22;
+	this.m23 = m23;
 };
 
-Fib.fib1$I = Fib$fib1$I;
-
-function Fib$fib2$N(n) {
-	return (n <= 2 ? 1 : Fib$fib2$N(n - 1) + Fib$fib2$N(n - 2));
+$__jsx_extend([Matrix], Object);
+Matrix.prototype.transform$LPoint$ = function (pt) {
+	return new Point(this.m11 * pt.x + this.m12 * pt.y + this.m13, this.m21 * pt.x + this.m22 * pt.y + this.m22);
 };
 
-Fib.fib2$N = Fib$fib2$N;
-
-function Fib$fib3$I(n) {
-	var value;
-	var prevValue;
-	var i;
-	var t;
-	if (n <= 2) {
-		return 1;
-	}
-	value = 1;
-	prevValue = 1;
-	for (i = 3; i <= n; i++) {
-		t = value + prevValue;
-		prevValue = value;
-		value = t;
-	}
-	return (value | 0);
-};
-
-Fib.fib3$I = Fib$fib3$I;
-
-function Fib$fib4$I(n) {
-	switch (n) {
-	case 1:
-		return 1;
-	case 2:
-		return 1;
-	default:
-		return Fib$fib4$I((n - 1 | 0)) + Fib$fib4$I((n - 2 | 0));
-	}
-};
-
-Fib.fib4$I = Fib$fib4$I;
 
 function _Main() {
 };
 
 $__jsx_extend([_Main], Object);
 function _Main$main$AS(args) {
-	var n;
-	n = (args.length > 0 ? +(function (v) {
-		if (! (v != null)) {
-			debugger;
-			throw new Error("[/Users/gfx/repo/try-on-web/JSX/example/fib.jsx:42:38] null access\n        var n = args.length > 0 ? args[0] as number : 10;\n                                      ^\n");
-		}
-		return v;
-	}(args[0])) : 10);
-	console.log("fib1(" + (n + "") + ") = " + (Fib$fib1$I((n | 0)) + ""));
-	console.log("fib2(" + (n + "") + ") = " + (Fib$fib2$N(n) + ""));
-	console.log("fib3(" + (n + "") + ") = " + (Fib$fib3$I((n | 0)) + ""));
-	console.log("fib4(" + (n + "") + ") = " + (Fib$fib4$I((n | 0)) + ""));
+	var x;
+	x = new Matrix(1, 0, 0, 0, 2, 0).transform$LPoint$(new Point(1, 0));
+	console.log(x);
+	x = new Matrix(1, 0, 0, 0, 2, 0).transform$LPoint$(new Point(2, 1));
+	console.log(x);
 };
 
 _Main.main = _Main$main$AS;
@@ -187,9 +148,11 @@ var $__jsx_classMap = {
 		g_StopIteration: g_StopIteration,
 		g_StopIteration$: g_StopIteration
 	},
-	"system:example/fib.jsx": {
-		Fib: Fib,
-		Fib$: Fib,
+	"system:example/affine-transform.jsx": {
+		Point: Point,
+		Point$NN: Point,
+		Matrix: Matrix,
+		Matrix$NNNNNN: Matrix,
 		_Main: _Main,
 		_Main$: _Main
 	}
@@ -258,7 +221,7 @@ JSX.runTests = function (sourceFile, tests) {
 function $__jsx_onload (event) {
 	window.removeEventListener("load", $__jsx_onload);
 	document.removeEventListener("DOMContentLoaded", $__jsx_onload);
-	JSX.runMain("system:example/fib.jsx", []);
+	JSX.runMain("system:example/affine-transform.jsx", []);
 }
 
 window.addEventListener("load", $__jsx_onload);
@@ -266,4 +229,4 @@ document.addEventListener("DOMContentLoaded", $__jsx_onload);
 
 })(JSX);
 
-//# sourceMappingURL=fib.jsx.js.mapping
+//# sourceMappingURL=affine-transform.jsx.js.mapping

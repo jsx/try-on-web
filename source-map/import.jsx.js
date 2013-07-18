@@ -1,4 +1,4 @@
-// generatedy by JSX compiler 0.9.55 (2013-07-13 23:28:48 -0700; 9ea75a42d4121e9f146745b3b350be8b2ee894c9)
+// generatedy by JSX compiler 0.9.56 (2013-07-17 21:18:01 -0700; 6acc52a3f509ed30c9e04715405d1181adc00070)
 var JSX = {};
 (function (JSX) {
 /**
@@ -243,7 +243,7 @@ TestCase.prototype.run$SF$V$ = function (name, testFunction) {
 		testFunction();
 	} catch ($__jsx_catch_0) {
 		if ($__jsx_catch_0 instanceof Error) {
-			if ($__jsx_catch_0 instanceof TestCase$CFailure) {
+			if ($__jsx_catch_0 instanceof TestCase$x2EFailure) {
 				msg = ($__jsx_catch_0.message ? " - " + $__jsx_catch_0.message : "");
 			} else {
 				msg = " - failed with exception";
@@ -317,13 +317,13 @@ TestCase.prototype.async$F$LAsyncContext$V$I = function (testBody, timeoutMS) {
 
 TestCase.prototype.expect$X = function (value) {
 	++ this._count;
-	return new TestCase$CMatcher$0(this, value);
+	return new TestCase$x2EMatcher$0(this, value);
 };
 
 
 TestCase.prototype.expect$XS = function (value, message) {
 	++ this._count;
-	return new TestCase$CMatcher(this, value, message);
+	return new TestCase$x2EMatcher(this, value, message);
 };
 
 
@@ -367,7 +367,7 @@ TestCase.prototype._nok$USUSXX = function (name, op, got, expected) {
 		this._dump$SX("got:      ", got);
 		this._dump$SX("expected: ", expected);
 	}
-	throw new TestCase$CFailure((function (v) {
+	throw new TestCase$x2EFailure((function (v) {
 		if (! (v != null)) {
 			debugger;
 			throw new Error("[/Users/gfx/repo/try-on-web/JSX/lib/common/test-case.jsx:245:48] null access\n        throw new TestCase.Failure(name != null ? name : \"\");\n                                                ^\n");
@@ -386,7 +386,7 @@ TestCase.prototype.pass$S = function (reason) {
 
 TestCase.prototype.fail$S = function (reason) {
 	++ this._count;
-	throw new TestCase$CFailure(reason);
+	throw new TestCase$x2EFailure(reason);
 };
 
 
@@ -855,58 +855,58 @@ function TimerHandle() {
 };
 
 $__jsx_extend([TimerHandle], Object);
-function TestCase$CMatcher(test, got, name) {
+function TestCase$x2EMatcher(test, got, name) {
 	this._test = test;
 	this._got = got;
 	this._name = name;
 };
 
-function TestCase$CMatcher$0(test, got) {
-	TestCase$CMatcher.call(this, test, got, null);
+function TestCase$x2EMatcher$0(test, got) {
+	TestCase$x2EMatcher.call(this, test, got, null);
 };
 
-$__jsx_extend([TestCase$CMatcher, TestCase$CMatcher$0], Object);
-TestCase$CMatcher.prototype.toBe$X = function (x) {
+$__jsx_extend([TestCase$x2EMatcher, TestCase$x2EMatcher$0], Object);
+TestCase$x2EMatcher.prototype.toBe$X = function (x) {
 	this._match$BXXS(this._got == x, this._got, x, "==");
 };
 
 
-TestCase$CMatcher.prototype.notToBe$X = function (x) {
+TestCase$x2EMatcher.prototype.notToBe$X = function (x) {
 	this._match$BXXS(this._got != x, this._got, x, "!=");
 };
 
 
-TestCase$CMatcher.prototype.toBeLT$N = function (x) {
+TestCase$x2EMatcher.prototype.toBeLT$N = function (x) {
 	this._match$BXXS(+this._got < x, this._got, x, "<");
 };
 
 
-TestCase$CMatcher.prototype.toBeLE$N = function (x) {
+TestCase$x2EMatcher.prototype.toBeLE$N = function (x) {
 	this._match$BXXS(+this._got <= x, this._got, x, "<=");
 };
 
 
-TestCase$CMatcher.prototype.toBeGT$N = function (x) {
+TestCase$x2EMatcher.prototype.toBeGT$N = function (x) {
 	this._match$BXXS(+this._got > x, this._got, x, ">");
 };
 
 
-TestCase$CMatcher.prototype.toBeGE$N = function (x) {
+TestCase$x2EMatcher.prototype.toBeGE$N = function (x) {
 	this._match$BXXS(+this._got >= x, this._got, x, ">=");
 };
 
 
-TestCase$CMatcher.prototype.toMatch$LRegExp$ = function (x) {
+TestCase$x2EMatcher.prototype.toMatch$LRegExp$ = function (x) {
 	this._match$BXXS(x.test(this._got + ""), this._got, x, "match");
 };
 
 
-TestCase$CMatcher.prototype.notToMatch$LRegExp$ = function (x) {
+TestCase$x2EMatcher.prototype.notToMatch$LRegExp$ = function (x) {
 	this._match$BXXS(! x.test(this._got + ""), this._got, x, "not match");
 };
 
 
-TestCase$CMatcher.prototype.toEqual$AX = function (x) {
+TestCase$x2EMatcher.prototype.toEqual$AX = function (x) {
 	var got;
 	if (! (x != null)) {
 		debugger;
@@ -932,7 +932,7 @@ TestCase$CMatcher.prototype.toEqual$AX = function (x) {
 };
 
 
-TestCase$CMatcher.prototype.toEqual$AS = function (x) {
+TestCase$x2EMatcher.prototype.toEqual$AS = function (x) {
 	this.toEqual$AX((function ($v) {
 		if (! ($v == null || $v instanceof Array)) {
 			debugger;
@@ -943,7 +943,7 @@ TestCase$CMatcher.prototype.toEqual$AS = function (x) {
 };
 
 
-TestCase$CMatcher.prototype.toEqual$AN = function (x) {
+TestCase$x2EMatcher.prototype.toEqual$AN = function (x) {
 	this.toEqual$AX((function ($v) {
 		if (! ($v == null || $v instanceof Array)) {
 			debugger;
@@ -954,7 +954,7 @@ TestCase$CMatcher.prototype.toEqual$AN = function (x) {
 };
 
 
-TestCase$CMatcher.prototype.toEqual$AI = function (x) {
+TestCase$x2EMatcher.prototype.toEqual$AI = function (x) {
 	this.toEqual$AX((function ($v) {
 		if (! ($v == null || $v instanceof Array)) {
 			debugger;
@@ -965,7 +965,7 @@ TestCase$CMatcher.prototype.toEqual$AI = function (x) {
 };
 
 
-TestCase$CMatcher.prototype.toEqual$AB = function (x) {
+TestCase$x2EMatcher.prototype.toEqual$AB = function (x) {
 	this.toEqual$AX((function ($v) {
 		if (! ($v == null || $v instanceof Array)) {
 			debugger;
@@ -976,7 +976,7 @@ TestCase$CMatcher.prototype.toEqual$AB = function (x) {
 };
 
 
-TestCase$CMatcher.prototype._match$BXXS = function (value, got, expected, op) {
+TestCase$x2EMatcher.prototype._match$BXXS = function (value, got, expected, op) {
 	if (value) {
 		this._test._ok$US(this._name);
 	} else {
@@ -985,12 +985,12 @@ TestCase$CMatcher.prototype._match$BXXS = function (value, got, expected, op) {
 };
 
 
-function TestCase$CFailure(reason) {
+function TestCase$x2EFailure(reason) {
 	Error.call(this);
 	this.message = reason;
 };
 
-$__jsx_extend([TestCase$CFailure], Error);
+$__jsx_extend([TestCase$x2EFailure], Error);
 $__jsx_lazy_init(Timer, "_requestAnimationFrame", function () {
 	return Timer$_getRequestAnimationFrameImpl$B(true);
 });
@@ -1021,11 +1021,11 @@ var $__jsx_classMap = {
 		TestCase$: TestCase,
 		AsyncContext: AsyncContext,
 		AsyncContext$LTestCase$SF$LAsyncContext$V$I: AsyncContext,
-		"TestCase.Matcher": TestCase$CMatcher,
-		"TestCase.Matcher$LTestCase$XUS": TestCase$CMatcher,
-		"TestCase.Matcher$LTestCase$X": TestCase$CMatcher$0,
-		"TestCase.Failure": TestCase$CFailure,
-		"TestCase.Failure$S": TestCase$CFailure
+		"TestCase.Matcher": TestCase$x2EMatcher,
+		"TestCase.Matcher$LTestCase$XUS": TestCase$x2EMatcher,
+		"TestCase.Matcher$LTestCase$X": TestCase$x2EMatcher$0,
+		"TestCase.Failure": TestCase$x2EFailure,
+		"TestCase.Failure$S": TestCase$x2EFailure
 	},
 	"system:lib/js/timer.jsx": {
 		Timer: Timer,

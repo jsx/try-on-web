@@ -1,4 +1,4 @@
-// generatedy by JSX compiler 0.9.55 (2013-07-13 23:28:48 -0700; 9ea75a42d4121e9f146745b3b350be8b2ee894c9)
+// generatedy by JSX compiler 0.9.56 (2013-07-17 21:18:01 -0700; 6acc52a3f509ed30c9e04715405d1181adc00070)
 var JSX = {};
 (function (JSX) {
 /**
@@ -195,26 +195,30 @@ function Sphere(center, radius) {
 
 $__jsx_extend([Sphere], Object);
 function Sphere$intersect$LSphere$LRay$LIsect$($this, ray, isect) {
-	var rs;
 	var B;
 	var C;
 	var D;
 	var t;
 	var n;
-	var vsub$a$0;
-	var vsub$b$0;
-	var vdot$b$0;
-	var vsub$b$1;
+	var a$0;
+	var b$0;
+	var b$1;
+	var b$2;
+	var rs$x$0;
+	var rs$y$0;
+	var rs$z$0;
 	var org$0;
 	var dir$0;
 	var p$0;
-	var x$0;
-	var y$0;
-	var z$0;
 	var radius$0;
-	rs = (vsub$b$0 = $this.center, vsub$a$0 = ray.org, ({x: vsub$a$0.x - vsub$b$0.x, y: vsub$a$0.y - vsub$b$0.y, z: vsub$a$0.z - vsub$b$0.z}));
-	B = (vdot$b$0 = ray.dir, (x$0 = rs.x) * vdot$b$0.x + (y$0 = rs.y) * vdot$b$0.y + (z$0 = rs.z) * vdot$b$0.z);
-	C = x$0 * x$0 + y$0 * y$0 + z$0 * z$0 - (radius$0 = $this.radius) * radius$0;
+	a$0 = ray.org;
+	b$0 = $this.center;
+	rs$x$0 = a$0.x - b$0.x;
+	rs$y$0 = a$0.y - b$0.y;
+	rs$z$0 = a$0.z - b$0.z;
+	b$1 = ray.dir;
+	B = rs$x$0 * b$1.x + rs$y$0 * b$1.y + rs$z$0 * b$1.z;
+	C = rs$x$0 * rs$x$0 + rs$y$0 * rs$y$0 + rs$z$0 * rs$z$0 - (radius$0 = $this.radius) * radius$0;
 	D = B * B - C;
 	if (D > 0.0) {
 		t = - B - Math.sqrt(D);
@@ -222,7 +226,8 @@ function Sphere$intersect$LSphere$LRay$LIsect$($this, ray, isect) {
 			isect.t = t;
 			isect.hit = true;
 			p$0 = isect.p = ({x: (org$0 = ray.org).x + (dir$0 = ray.dir).x * t, y: org$0.y + dir$0.y * t, z: org$0.z + dir$0.z * t});
-			n = (vsub$b$1 = $this.center, p$0, ({x: p$0.x - vsub$b$1.x, y: p$0.y - vsub$b$1.y, z: p$0.z - vsub$b$1.z}));
+			b$2 = $this.center;
+			n = ({x: p$0.x - b$2.x, y: p$0.y - b$2.y, z: p$0.z - b$2.z});
 			isect.n = vec3$vnormalize$Lvec3$(n);
 		}
 	}
@@ -242,14 +247,15 @@ function Plane$intersect$LPlane$LRay$LIsect$($this, ray, isect) {
 	var t;
 	var vdot$a$0;
 	var vdot$b$0;
-	var vdot$a$1;
+	var a$0;
 	var vdot$a$2;
 	var vdot$b$2;
 	var n$0;
 	var org$0;
 	var dir$0;
 	d = - (vdot$b$0 = n$0 = $this.n, vdot$a$0 = $this.p, vdot$a$0.x * vdot$b$0.x + vdot$a$0.y * vdot$b$0.y + vdot$a$0.z * vdot$b$0.z);
-	v = (n$0, vdot$a$1 = ray.dir, vdot$a$1.x * n$0.x + vdot$a$1.y * n$0.y + vdot$a$1.z * n$0.z);
+	a$0 = ray.dir;
+	v = a$0.x * n$0.x + a$0.y * n$0.y + a$0.z * n$0.z;
 	if ((v >= 0 ? v : - v) < 1.0e-17) {
 		return;
 	}

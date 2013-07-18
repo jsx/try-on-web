@@ -26,7 +26,6 @@ import "./parser.jsx";
 import "./type.jsx";
 import "./util.jsx";
 import "./statement.jsx";
-import "./optimizer.jsx";
 
 
 abstract class Expression implements Stashable {
@@ -57,6 +56,16 @@ abstract class Expression implements Stashable {
 				var srcType = expr.getType();
 				if (srcType != null) {
 					(expr as NewExpression).setType(srcType.instantiate(instantiationContext));
+				}
+			} else if (expr instanceof PropertyExpression) {
+				var propertyExpr = expr as PropertyExpression;
+				var srcType = expr.getType();
+				if (srcType != null) {
+					propertyExpr.setType(srcType.instantiate(instantiationContext));
+				}
+				var srcTypes = propertyExpr.getTypeArguments();
+				if (srcTypes != null) {
+					propertyExpr.setTypeArguments(srcTypes.map.<Type>((type) -> type.instantiate(instantiationContext)));
 				}
 			} else if (expr instanceof ArrayLiteralExpression) {
 				var srcType = expr.getType();
@@ -1192,6 +1201,10 @@ class PropertyExpression extends UnaryExpression {
 		return this._typeArgs;
 	}
 
+	function setTypeArguments (types : Type[]) : void {
+		this._typeArgs = types;
+	}
+
 	override function serialize () : variant {
 		return [
 			"PropertyExpression",
@@ -1254,6 +1267,10 @@ class PropertyExpression extends UnaryExpression {
 
 	override function getType () : Type {
 		return this._type;
+	}
+
+	function setType (type : Type) : void {
+		this._type = type;
 	}
 
 	override function getHolderType () : Type {
@@ -2169,10 +2186,6 @@ class NewExpression extends OperatorExpression {
 
 	override function clone () : NewExpression {
 		return new NewExpression(this);
-	}
-
-	function getQualifiedName () : QualifiedName {
-		throw new Error("will be removed");
 	}
 
 	function getArguments () : Expression[] {

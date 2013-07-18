@@ -1,4 +1,4 @@
-// generatedy by JSX compiler 0.9.55 (2013-07-13 23:28:48 -0700; 9ea75a42d4121e9f146745b3b350be8b2ee894c9)
+// generatedy by JSX compiler 0.9.56 (2013-07-17 21:18:01 -0700; 6acc52a3f509ed30c9e04715405d1181adc00070)
 var JSX = {};
 (function (JSX) {
 /**
@@ -106,23 +106,23 @@ function g_StopIteration() {
 };
 
 $__jsx_extend([g_StopIteration], Error);
-function g_Enumerable$function$$$$variant$$$$void$E() {
+function g_Enumerable$x2E$x3Cfunction$x20$x28$x3A$x20variant$x29$x20$x3A$x20void$x3E() {
 };
 
-$__jsx_extend([g_Enumerable$function$$$$variant$$$$void$E], Object);
-g_Enumerable$function$$$$variant$$$$void$E.prototype.$__jsx_implements_g_Enumerable$function$$$$variant$$$$void$E = true;
+$__jsx_extend([g_Enumerable$x2E$x3Cfunction$x20$x28$x3A$x20variant$x29$x20$x3A$x20void$x3E], Object);
+g_Enumerable$x2E$x3Cfunction$x20$x28$x3A$x20variant$x29$x20$x3A$x20void$x3E.prototype.$__jsx_implements_g_Enumerable$x2E$x3Cfunction$x20$x28$x3A$x20variant$x29$x20$x3A$x20void$x3E = true;
 
-function __jsx_generator$function$$$$variant$$$$void$E() {
-	g_Enumerable$function$$$$variant$$$$void$E.call(this);
+function __jsx_generator$x2E$x3Cfunction$x20$x28$x3A$x20variant$x29$x20$x3A$x20void$x3E() {
+	g_Enumerable$x2E$x3Cfunction$x20$x28$x3A$x20variant$x29$x20$x3A$x20void$x3E.call(this);
 	this.__next = null;
 	this.__value = null;
 	this.__end = false;
 };
 
-$__jsx_extend([__jsx_generator$function$$$$variant$$$$void$E], Object);
-$__jsx_merge_interface(__jsx_generator$function$$$$variant$$$$void$E, g_Enumerable$function$$$$variant$$$$void$E);
+$__jsx_extend([__jsx_generator$x2E$x3Cfunction$x20$x28$x3A$x20variant$x29$x20$x3A$x20void$x3E], Object);
+$__jsx_merge_interface(__jsx_generator$x2E$x3Cfunction$x20$x28$x3A$x20variant$x29$x20$x3A$x20void$x3E, g_Enumerable$x2E$x3Cfunction$x20$x28$x3A$x20variant$x29$x20$x3A$x20void$x3E);
 
-__jsx_generator$function$$$$variant$$$$void$E.prototype.next$ = function () {
+__jsx_generator$x2E$x3Cfunction$x20$x28$x3A$x20variant$x29$x20$x3A$x20void$x3E.prototype.next$ = function () {
 	if (! this.__end) {
 		try {
 			this.__next();
@@ -155,17 +155,17 @@ function Async$sleep$N(durationMS) {
 
 Async.sleep$N = Async$sleep$N;
 
-function Async$run$F$Lg_Enumerable$function$$$$variant$$$$void$E$$(coro) {
+function Async$run$F$Lg_Enumerable$x2E$x3Cfunction$x20$x28$x3A$x20variant$x29$x20$x3A$x20void$x3E$$(coro) {
 	Async$go$X(coro());
 };
 
-Async.run$F$Lg_Enumerable$function$$$$variant$$$$void$E$$ = Async$run$F$Lg_Enumerable$function$$$$variant$$$$void$E$$;
+Async.run$F$Lg_Enumerable$x2E$x3Cfunction$x20$x28$x3A$x20variant$x29$x20$x3A$x20void$x3E$$ = Async$run$F$Lg_Enumerable$x2E$x3Cfunction$x20$x28$x3A$x20variant$x29$x20$x3A$x20void$x3E$$;
 
 function Async$go$X(v) {
 	var g;
 	var cb;
 	g = (function ($v) {
-		if (! ($v == null || $v.$__jsx_implements_g_Enumerable$function$$$$variant$$$$void$E)) {
+		if (! ($v == null || $v.$__jsx_implements_g_Enumerable$x2E$x3Cfunction$x20$x28$x3A$x20variant$x29$x20$x3A$x20void$x3E)) {
 			debugger;
 			throw new Error("[/Users/gfx/repo/try-on-web/JSX/example/yield.jsx:21:14] detected invalid cast, value is not an instance of the designated type or null\n    var g = v as g_Enumerable.<(variant)->void>;\n              ^^\n");
 		}
@@ -190,7 +190,7 @@ function _Main() {
 
 $__jsx_extend([_Main], Object);
 function _Main$main$AS(args) {
-	Async$run$F$Lg_Enumerable$function$$$$variant$$$$void$E$$((function () {
+	Async$run$F$Lg_Enumerable$x2E$x3Cfunction$x20$x28$x3A$x20variant$x29$x20$x3A$x20void$x3E$$((function () {
 		var $START;
 		var $YIELD_0;
 		var $YIELD_1;
@@ -198,7 +198,7 @@ function _Main$main$AS(args) {
 		var $YIELD_3;
 		var $END;
 		var $generator0;
-		$generator0 = new __jsx_generator$function$$$$variant$$$$void$E();
+		$generator0 = new __jsx_generator$x2E$x3Cfunction$x20$x28$x3A$x20variant$x29$x20$x3A$x20void$x3E();
 		$START = (function () {
 			console.log("H");
 			$generator0.__value = Async$sleep$N(100);

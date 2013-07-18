@@ -1,4 +1,4 @@
-// generatedy by JSX compiler 0.9.55 (2013-07-13 23:28:48 -0700; 9ea75a42d4121e9f146745b3b350be8b2ee894c9)
+// generatedy by JSX compiler 0.9.56 (2013-07-17 21:18:01 -0700; 6acc52a3f509ed30c9e04715405d1181adc00070)
 var JSX = {};
 (function (JSX) {
 /**
@@ -112,7 +112,7 @@ function _Main() {
 $__jsx_extend([_Main], Object);
 function _Main$main$AS(args) {
 	var queue;
-	queue = new Queue$string$E();
+	queue = new Queue$x2E$x3Cstring$x3E();
 	queue.enqueue$S("foo");
 	queue.enqueue$S("bar");
 	console.log(queue.dequeue$());
@@ -122,17 +122,17 @@ function _Main$main$AS(args) {
 _Main.main = _Main$main$AS;
 _Main.main$AS = _Main$main$AS;
 
-function Queue$string$E() {
+function Queue$x2E$x3Cstring$x3E() {
 	this._buf = [];
 };
 
-$__jsx_extend([Queue$string$E], Object);
-Queue$string$E.prototype.enqueue$S = function (value) {
+$__jsx_extend([Queue$x2E$x3Cstring$x3E], Object);
+Queue$x2E$x3Cstring$x3E.prototype.enqueue$S = function (value) {
 	this._buf.push(value);
 };
 
 
-Queue$string$E.prototype.dequeue$ = function () {
+Queue$x2E$x3Cstring$x3E.prototype.dequeue$ = function () {
 	if (this.isEmpty$()) {
 		throw new Error("empty queue");
 	}
@@ -146,7 +146,7 @@ Queue$string$E.prototype.dequeue$ = function () {
 };
 
 
-Queue$string$E.prototype.isEmpty$ = function () {
+Queue$x2E$x3Cstring$x3E.prototype.isEmpty$ = function () {
 	return this._buf.length === 0;
 };
 

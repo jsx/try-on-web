@@ -1,4 +1,4 @@
-// generatedy by JSX compiler 0.9.56 (2013-07-17 21:18:01 -0700; 6acc52a3f509ed30c9e04715405d1181adc00070)
+// generatedy by JSX compiler 0.9.57 (2013-07-21 09:29:11 -0700; 3116e11459163d65dd09e578fd516f0c532fb30b)
 var JSX = {};
 (function (JSX) {
 /**
@@ -148,8 +148,8 @@ Fib.fib3$I = Fib$fib3$I;
 
 function Fib$fib4$I(n) {
 	switch (n) {
+	case 0:
 	case 1:
-		return 1;
 	case 2:
 		return 1;
 	default:
@@ -158,6 +158,30 @@ function Fib$fib4$I(n) {
 };
 
 Fib.fib4$I = Fib$fib4$I;
+
+function Fib$fib5$III(n, a, b) {
+	switch (n) {
+	case 0:
+	case 1:
+		return a;
+	default:
+		return Fib$fib5$III((n - 1 | 0), a + b, a);
+	}
+};
+
+Fib.fib5$III = Fib$fib5$III;
+
+function Fib$fib5$I(n) {
+	return Fib$fib5$III(n, 1, 0);
+};
+
+Fib.fib5$I = Fib$fib5$I;
+
+function Fib$fib5$II(n, a) {
+	return Fib$fib5$III(n, a, 0);
+};
+
+Fib.fib5$II = Fib$fib5$II;
 
 function _Main() {
 };
@@ -168,7 +192,7 @@ function _Main$main$AS(args) {
 	n = (args.length > 0 ? +(function (v) {
 		if (! (v != null)) {
 			debugger;
-			throw new Error("[/Users/gfx/repo/try-on-web/JSX/example/fib.jsx:42:38] null access\n        var n = args.length > 0 ? args[0] as number : 10;\n                                      ^\n");
+			throw new Error("[/Users/gfx/repo/try-on-web/JSX/example/fib.jsx:52:38] null access\n        var n = args.length > 0 ? args[0] as number : 10;\n                                      ^\n");
 		}
 		return v;
 	}(args[0])) : 10);
@@ -176,6 +200,7 @@ function _Main$main$AS(args) {
 	console.log("fib2(" + (n + "") + ") = " + (Fib$fib2$N(n) + ""));
 	console.log("fib3(" + (n + "") + ") = " + (Fib$fib3$I((n | 0)) + ""));
 	console.log("fib4(" + (n + "") + ") = " + (Fib$fib4$I((n | 0)) + ""));
+	console.log("fib5(" + (n + "") + ") = " + (Fib$fib5$I((n | 0)) + ""));
 };
 
 _Main.main = _Main$main$AS;

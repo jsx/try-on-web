@@ -1,4 +1,4 @@
-// generatedy by JSX compiler 0.9.56 (2013-07-17 21:18:01 -0700; 6acc52a3f509ed30c9e04715405d1181adc00070)
+// generatedy by JSX compiler 0.9.57 (2013-07-21 09:29:11 -0700; 3116e11459163d65dd09e578fd516f0c532fb30b)
 var JSX = {};
 (function (JSX) {
 /**
@@ -202,8 +202,8 @@ function Sphere$intersect$LSphere$LRay$LIsect$($this, ray, isect) {
 	var n;
 	var a$0;
 	var b$0;
-	var b$1;
 	var b$2;
+	var b$4;
 	var rs$x$0;
 	var rs$y$0;
 	var rs$z$0;
@@ -216,8 +216,8 @@ function Sphere$intersect$LSphere$LRay$LIsect$($this, ray, isect) {
 	rs$x$0 = a$0.x - b$0.x;
 	rs$y$0 = a$0.y - b$0.y;
 	rs$z$0 = a$0.z - b$0.z;
-	b$1 = ray.dir;
-	B = rs$x$0 * b$1.x + rs$y$0 * b$1.y + rs$z$0 * b$1.z;
+	b$2 = ray.dir;
+	B = rs$x$0 * b$2.x + rs$y$0 * b$2.y + rs$z$0 * b$2.z;
 	C = rs$x$0 * rs$x$0 + rs$y$0 * rs$y$0 + rs$z$0 * rs$z$0 - (radius$0 = $this.radius) * radius$0;
 	D = B * B - C;
 	if (D > 0.0) {
@@ -226,8 +226,8 @@ function Sphere$intersect$LSphere$LRay$LIsect$($this, ray, isect) {
 			isect.t = t;
 			isect.hit = true;
 			p$0 = isect.p = ({x: (org$0 = ray.org).x + (dir$0 = ray.dir).x * t, y: org$0.y + dir$0.y * t, z: org$0.z + dir$0.z * t});
-			b$2 = $this.center;
-			n = ({x: p$0.x - b$2.x, y: p$0.y - b$2.y, z: p$0.z - b$2.z});
+			b$4 = $this.center;
+			n = ({x: p$0.x - b$4.x, y: p$0.y - b$4.y, z: p$0.z - b$4.z});
 			isect.n = vec3$vnormalize$Lvec3$(n);
 		}
 	}
@@ -245,21 +245,21 @@ function Plane$intersect$LPlane$LRay$LIsect$($this, ray, isect) {
 	var d;
 	var v;
 	var t;
-	var vdot$a$0;
-	var vdot$b$0;
 	var a$0;
-	var vdot$a$2;
-	var vdot$b$2;
+	var b$0;
+	var a$1;
+	var a$3;
+	var b$3;
 	var n$0;
 	var org$0;
 	var dir$0;
-	d = - (vdot$b$0 = n$0 = $this.n, vdot$a$0 = $this.p, vdot$a$0.x * vdot$b$0.x + vdot$a$0.y * vdot$b$0.y + vdot$a$0.z * vdot$b$0.z);
-	a$0 = ray.dir;
-	v = a$0.x * n$0.x + a$0.y * n$0.y + a$0.z * n$0.z;
+	d = - (a$0 = $this.p, b$0 = n$0 = $this.n, a$0.x * b$0.x + a$0.y * b$0.y + a$0.z * b$0.z);
+	a$1 = ray.dir;
+	v = a$1.x * n$0.x + a$1.y * n$0.y + a$1.z * n$0.z;
 	if ((v >= 0 ? v : - v) < 1.0e-17) {
 		return;
 	}
-	t = - ((vdot$b$2 = $this.n, vdot$a$2 = ray.org, vdot$a$2.x * vdot$b$2.x + vdot$a$2.y * vdot$b$2.y + vdot$a$2.z * vdot$b$2.z) + d) / v;
+	t = - ((a$3 = ray.org, b$3 = $this.n, a$3.x * b$3.x + a$3.y * b$3.y + a$3.z * b$3.z) + d) / v;
 	if (t > 0.0 && t < isect.t) {
 		isect.hit = true;
 		isect.t = t;
@@ -397,6 +397,12 @@ function AOBench$render$LAOBench$F$IIIIIV$II($this, fill, w, h) {
 	var r;
 	var g;
 	var b;
+	var f$0;
+	var i$0;
+	var f$1;
+	var i$1;
+	var f$2;
+	var i$2;
 	half_w = w * .5;
 	half_h = h * .5;
 	for (y = 0; y < h; y++) {
@@ -414,9 +420,33 @@ function AOBench$render$LAOBench$F$IIIIIV$II($this, fill, w, h) {
 			if (isect.hit) {
 				col = AOBench$ambient_occlusion$LAOBench$LIsect$($this, isect);
 			}
-			r = AOBench$clamp$N(col.x);
-			g = AOBench$clamp$N(col.y);
-			b = AOBench$clamp$N(col.z);
+			f$0 = col.x;
+			i$0 = f$0 * 255.0;
+			if (i$0 > 255.0) {
+				i$0 = 255.0;
+			}
+			if (i$0 < 0.0) {
+				i$0 = 0.0;
+			}
+			r = i$0 | 0;
+			f$1 = col.y;
+			i$1 = f$1 * 255.0;
+			if (i$1 > 255.0) {
+				i$1 = 255.0;
+			}
+			if (i$1 < 0.0) {
+				i$1 = 0.0;
+			}
+			g = i$1 | 0;
+			f$2 = col.z;
+			i$2 = f$2 * 255.0;
+			if (i$2 > 255.0) {
+				i$2 = 255.0;
+			}
+			if (i$2 < 0.0) {
+				i$2 = 0.0;
+			}
+			b = i$2 | 0;
 			fill((x | 0), (y | 0), (r | 0), (g | 0), (b | 0));
 		}
 	}

@@ -20,7 +20,6 @@
  * IN THE SOFTWARE.
  */
 
-import "js.jsx";
 import "./meta.jsx";
 import "./analysis.jsx";
 import "./classdef.jsx";
@@ -30,7 +29,6 @@ import "./statement.jsx";
 import "./emitter.jsx";
 import "./jssourcemap.jsx";
 import "./util.jsx";
-import "./optimizer.jsx";
 import "./parser.jsx";
 import "./platform.jsx";
 import _UnclassifyOptimizationCommand,
@@ -195,6 +193,36 @@ class _Util {
 		return functions;
 	}
 
+	static function nameIsValidAsProperty(name : string) : boolean {
+		return /^[\$_A-Za-z][\$_0-9A-Za-z]*$/.test(name) && !_Util.isECMA262Reserved(name);
+	}
+
+	static const _ecma262reserved = Util.asSet([
+		"break", "do", "instanceof", "typeof",
+		"case", "else", "new", "var",
+		"catch", "finally", "return", "void",
+		"continue", "for", "switch", "while",
+		"debugger", "function", "this", "with",
+		"default", "if", "throw",
+		"delete", "in", "try",
+		"class", "enum", "extends", "super",
+		"const", "export", "import",
+		"implements", "let", "private", "public", "yield",
+		"interface", "package", "protected", "static",
+		"null",
+		"true", "false"
+	]);
+
+	/**
+	 * @see ECMA 262 5th, 7.6.1 Reserved Words
+	 */
+	static function isECMA262Reserved(word : string) : boolean {
+		return _Util._ecma262reserved.hasOwnProperty(word);
+	}
+
+	static function getECMA262ReservedWords() : string[] {
+		return _Util._ecma262reserved.keys();
+	}
 }
 
 class _Mangler {
@@ -643,7 +671,7 @@ class _Minifier {
 		this._propertyConversionTable = _Minifier._buildConversionTable(
 			this._propertyUseCount,
 			new _MinifiedNameGenerator(
-				Util.getECMA262ReservedWords().concat(
+				_Util.getECMA262ReservedWords().concat(
 					(function () : string[] {
 						var nativePropertyNames = new Map.<boolean>;
 						this._classDefs.forEach(function (classDef) {
@@ -677,7 +705,7 @@ class _Minifier {
 				var stash = _Minifier._getClassStash(classDef);
 				stash.staticVariableConversionTable = _Minifier._buildConversionTable(
 					stash.staticVariableUseCount,
-					new _MinifiedNameGenerator(Util.getECMA262ReservedWords().concat(exportedStaticVarNames)));
+					new _MinifiedNameGenerator(_Util.getECMA262ReservedWords().concat(exportedStaticVarNames)));
 			}
 		});
 	}
@@ -698,7 +726,7 @@ class _Minifier {
 		this._globalConversionTable = _Minifier._buildConversionTable(
 			useCount,
 			new _MinifiedNameGenerator(
-				Util.getECMA262ReservedWords().concat(
+				_Util.getECMA262ReservedWords().concat(
 					_MinifiedNameGenerator.GLOBALS,
 					(function () : string[] {
 						var nativeClassNames = new string[];
@@ -735,7 +763,7 @@ class _Minifier {
 			reserved.push(_Minifier._getLocalStash(scopeStash.usedOuterLocals[i]).minifiedName);
 		}
 		this._log("local minification, preserving: " + reserved.join(","));
-		reserved = reserved.concat(Util.getECMA262ReservedWords());
+		reserved = reserved.concat(_Util.getECMA262ReservedWords());
 		// doit
 		var conversionTable = _Minifier._buildConversionTable(useCount, new _MinifiedNameGenerator(reserved));
 		// store the result
@@ -2353,7 +2381,7 @@ class _ArrayExpressionEmitter extends _OperatorExpressionEmitter {
 		var emitted = false;
 		if (secondExpr instanceof StringLiteralExpression) {
 			var propertyName = Util.decodeStringLiteral(secondExpr.getToken().getValue());
-			if (propertyName.match(/^[\$_A-Za-z][\$_0-9A-Za-z]*$/) != null && !Util.isECMA262Reserved(propertyName)) {
+			if (_Util.nameIsValidAsProperty(propertyName)) {
 				this._emitter._emit(".", this._expr.getToken());
 				this._emitter._emit(propertyName, secondExpr.getToken());
 				emitted = true;
@@ -2490,10 +2518,16 @@ class _CallExpressionEmitter extends _OperatorExpressionEmitter {
 		var args = this._expr.getArguments();
 		if (args[2] instanceof ArrayLiteralExpression) {
 			this._emitter._getExpressionEmitterFor(args[0]).emit(_PropertyExpressionEmitter._operatorPrecedence);
-			// FIXME emit as property expression if possible
-			this._emitter._emit("[", calleeExpr.getToken());
-			this._emitter._getExpressionEmitterFor(args[1]).emit(0);
-			this._emitter._emit("]", calleeExpr.getToken());
+			if (args[1] instanceof StringLiteralExpression && _Util.nameIsValidAsProperty(Util.decodeStringLiteral(args[1].getToken().getValue()))) {
+
+				this._emitter._emit(".", calleeExpr.getToken());
+				this._emitter._emit(Util.decodeStringLiteral(args[1].getToken().getValue()), args[1].getToken());
+			}
+			else {
+				this._emitter._emit("[", calleeExpr.getToken());
+				this._emitter._getExpressionEmitterFor(args[1]).emit(0);
+				this._emitter._emit("]", calleeExpr.getToken());
+			}
 			this._emitter._emitCallArguments(this._expr.getToken(), "(", (args[2] as ArrayLiteralExpression).getExprs(), null);
 		} else {
 			this._emitter._emit("(function (o, p, a) { return o[p].apply(o, a); }(", calleeExpr.getToken());
@@ -3039,11 +3073,6 @@ class JavaScriptEmitter implements Emitter {
 	}
 
 	function _emitStaticInitializationCode (classDef : ClassDefinition) : void {
-		// special handling for js.jsx
-		if (this.isJsModule(classDef)) {
-			this._emit("var js = { global: function () { return this; }() };\n", null);
-			return;
-		}
 		if ((classDef.flags() & ClassDefinition.IS_NATIVE) != 0)
 			return;
 		// normal handling

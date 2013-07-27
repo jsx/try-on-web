@@ -80,7 +80,7 @@ class Token {
 	// "'x' at filename:linenumber" for debugging purpose
 	function getNotation() : string {
 		return "'" + this._value + "'"
-				+ " at " + (this._filename ?: "<<unknown>>")  + ":" + this._lineNumber as string;
+				+ " at " + (this._filename ?: "<<unknown>>")  + ":" + this._lineNumber as string + ":" + this._columnNumber as string;
 	}
 }
 
@@ -485,7 +485,7 @@ class QualifiedName {
 				return null;
 			if (typeArguments.length == 0) {
 				if ((classDef = enclosingClassDef.lookupInnerClass(this._token.getValue())) == null) {
-					context.errors.push(new CompileError(this._token, "no class definition for '" + this.toString() + "'"));
+					context.errors.push(new CompileError(this._token, "no class definition or variable for '" + this.toString() + "'"));
 					return null;
 				}
 			} else {
@@ -497,7 +497,7 @@ class QualifiedName {
 		} else {
 			if (typeArguments.length == 0) {
 				if ((classDef = context.parser.lookup(context.errors, this._token, this._token.getValue())) == null) {
-					context.errors.push(new CompileError(this._token, "no class definition for '" + this.toString() + "'"));
+					context.errors.push(new CompileError(this._token, "no class definition or variable for '" + this.toString() + "'"));
 					return null;
 				}
 			} else {
@@ -891,11 +891,11 @@ class Parser {
 		this._prevScope = this._prevScope.prev;
 	}
 
-	function _registerLocal (identifierToken : Token, type : Type) : LocalVariable {
+	function _registerLocal (identifierToken : Token, type : Type, isFunctionStmt : boolean = false) : LocalVariable {
 		function isEqualTo (local : LocalVariable) : boolean {
 			if (local.getName().getValue() == identifierToken.getValue()) {
-				if (type != null && local.getType() != null && ! local.getType().equals(type))
-					this._newError("conflicting types for variable " + identifierToken.getValue());
+				if ((type != null && local.getType() != null && ! local.getType().equals(type)) || isFunctionStmt)
+					this._newError("conflicting types for variable " + identifierToken.getValue(), identifierToken);
 				return true;
 			}
 			return false;
@@ -967,8 +967,20 @@ class Parser {
 		this._errors.push(new CompileError(this._filename, this._lineNumber, this._getColumn(), message));
 	}
 
+	function _newError (message : string, lineNumber : number, columnOffset : number) : void {
+		this._errors.push(new CompileError(this._filename, lineNumber, columnOffset, message));
+	}
+
+	function _newError (message : string, token : Token) : void {
+		this._errors.push(new CompileError(token, message));
+	}
+
 	function _newDeprecatedWarning (message : string) : void {
 		this._errors.push(new DeprecatedWarning(this._filename, this._lineNumber, this._getColumn(), message));
+	}
+
+	function _newExperimentalWarning(feature : Token) : void {
+		this._errors.push(new ExperimentalWarning(feature, feature.getValue()));
 	}
 
 	function _advanceToken () : void {
@@ -1196,7 +1208,26 @@ class Parser {
 	function _expect (expected : string[], excludePattern : RegExp) : Token {
 		var token = this._expectOpt(expected, excludePattern);
 		if (token == null) {
-			this._newError("expected keyword: " + expected.join(" "));
+			// move to the point where expect
+			// see t/compile_error/178
+			var lineOffset = this._lineNumber - 1;
+			var columnOffset = this._columnOffset - 1;
+			while (lineOffset >= 0 && columnOffset >= 0) {
+				if (! /[ \t\r\n]/.test(this._lines[lineOffset].charAt(columnOffset) ?: " ")) {
+					break;
+				}
+
+				if (columnOffset != 0) {
+					columnOffset--;
+				}
+				else {
+					do {
+						columnOffset = this._lines[--lineOffset].length - 1;
+					} while (this._lines[lineOffset].length == 0 && lineOffset >= 0);
+				}
+			}
+
+			this._newError("expected keyword: " + expected.join(" "), lineOffset + 1, columnOffset + 1);
 			return null;
 		}
 		return token;
@@ -1777,10 +1808,6 @@ class Parser {
 		if (typeArgs == null) {
 			return null;
 		}
-		if (typeArgs.length != 0 && (this._classFlags & ClassDefinition.IS_NATIVE) == 0) {
-			this._newError("only native classes may have template functions (for the time being)");
-			return null;
-		}
 		this._typeArgs = this._typeArgs.concat(typeArgs);
 		var numObjectTypesUsed = this._objectTypesUsed.length;
 
@@ -2319,7 +2346,7 @@ class Parser {
 		if (this._expect("{") == null)
 			return false;
 
-		var funcLocal = this._registerLocal(name, new StaticFunctionType(token, returnType, args.map.<Type>((arg) -> arg.getType()), false));
+		var funcLocal = this._registerLocal(name, new StaticFunctionType(token, returnType, args.map.<Type>((arg) -> arg.getType()), false), true);
 
 		var funcDef = this._functionBody(token, name, funcLocal, args, returnType, true);
 		if (funcDef == null) {
@@ -2487,6 +2514,7 @@ class Parser {
 	}
 
 	function _yieldStatement (token : Token) : boolean {
+		this._newExperimentalWarning(token);
 		var expr = this._expr(false);
 		if (expr == null)
 			return false;
@@ -3236,16 +3264,19 @@ class Parser {
 
 	function _arrayLiteral (token : Token) : ArrayLiteralExpression {
 		var exprs = new Expression[];
-		if (this._expectOpt("]") == null) {
-			do {
-				var expr = this._assignExpr();
-				if (expr == null)
-					return null;
-				exprs.push(expr);
-				token = this._expect([ ",", "]" ]);
-				if (token == null)
-					return null;
-			} while (token.getValue() == ",");
+		while (this._expectOpt("]") == null) {
+			var expr = this._assignExpr();
+			if (expr == null)
+				return null;
+			exprs.push(expr);
+			// separator
+			var separator = this._expect([",", "]"]);
+			if (separator == null) {
+				return null;
+			}
+			else if (separator.getValue() == "]") {
+				break;
+			}
 		}
 		var type = null : Type;
 		if (this._expectOpt(":") != null)
@@ -3256,29 +3287,34 @@ class Parser {
 
 	function _mapLiteral (token : Token) : MapLiteralExpression {
 		var elements = new MapLiteralElement[];
-		if (this._expectOpt("}") == null) {
-			do {
-				// obtain key
-				var keyToken;
-				if ((keyToken = this._expectIdentifierOpt(null)) != null
-					|| (keyToken = this._expectNumberLiteralOpt()) != null
-					|| (keyToken = this._expectStringLiteralOpt()) != null) {
-					// ok
-				} else {
-					this._newError("expected identifier, number or string but got '" + token.getValue() + "'");
-				}
-				// separator
-				if (this._expect(":") == null)
-					return null;
-				// obtain value
-				var expr = this._assignExpr();
-				if (expr == null)
-					return null;
-				elements.push(new MapLiteralElement(keyToken, expr));
-				// separator
-				if ((token = this._expect([ ",", "}" ])) == null)
-					return null;
-			} while (token.getValue() == ",");
+		while (this._expectOpt("}") == null) {
+			// obtain key
+			var keyToken;
+			if ((keyToken = this._expectIdentifierOpt(null)) != null
+				|| (keyToken = this._expectNumberLiteralOpt()) != null
+				|| (keyToken = this._expectStringLiteralOpt()) != null) {
+				// ok
+			} else {
+				this._newError("expected identifier, number or string");
+				return null;
+			}
+			// separator
+			if (this._expect(":") == null)
+				return null;
+			// obtain value
+			var expr = this._assignExpr();
+			if (expr == null)
+				return null;
+			elements.push(new MapLiteralElement(keyToken, expr));
+
+			// separator
+			var separator = this._expect([",", "}"]);
+			if (separator == null) {
+				return null;
+			}
+			else if (separator.getValue() == "}") {
+				break;
+			}
 		}
 		var type = null : Type;
 		if (this._expectOpt(":") != null)

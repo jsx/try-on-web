@@ -1,4 +1,4 @@
-// generatedy by JSX compiler 0.9.57 (2013-07-21 09:29:11 -0700; 3116e11459163d65dd09e578fd516f0c532fb30b)
+// generatedy by JSX compiler 0.9.58 (2013-07-26 17:15:06 -0700; c65bb37c18bf34b2a4bdd2df22234b2833827eba)
 var JSX = {};
 (function (JSX) {
 /**
@@ -101,11 +101,11 @@ JSX.resetProfileResults = function () {
 	return $__jsx_profiler.resetResults();
 };
 JSX.DEBUG = false;
-function g_StopIteration() {
+function StopIteration() {
 	Error.call(this);
 };
 
-$__jsx_extend([g_StopIteration], Error);
+$__jsx_extend([StopIteration], Error);
 function Config() {
 };
 
@@ -202,8 +202,13 @@ function Sphere$intersect$LSphere$LRay$LIsect$($this, ray, isect) {
 	var n;
 	var a$0;
 	var b$0;
+	var a$1;
+	var b$1;
 	var b$2;
+	var b$3;
 	var b$4;
+	var a$3;
+	var b$5;
 	var rs$x$0;
 	var rs$y$0;
 	var rs$z$0;
@@ -248,6 +253,8 @@ function Plane$intersect$LPlane$LRay$LIsect$($this, ray, isect) {
 	var a$0;
 	var b$0;
 	var a$1;
+	var a$2;
+	var b$2;
 	var a$3;
 	var b$3;
 	var n$0;
@@ -358,7 +365,7 @@ function AOBench$ambient_occlusion$LAOBench$LIsect$($this, isect) {
 			Random._x = Random._x * 0x5DEECE66D + 0xB;
 			Random._x %= 0xFFFFFFFFFFFF;
 			r = Random._x * 3.552713678800501e-15;
-			phi = 6.283185307179586 * Random$next$();
+			phi = 6.283185307179586 * (Random._x = Random._x * 0x5DEECE66D + 0xB, Random._x %= 0xFFFFFFFFFFFF, Random._x * 3.552713678800501e-15);
 			x = Math.cos(phi) * Math.sqrt(1.0 - r);
 			y = Math.sin(phi) * Math.sqrt(1.0 - r);
 			z = Math.sqrt(r);
@@ -864,6 +871,7 @@ function DeviceMotionEventInit() {
 };
 
 $__jsx_extend([DeviceMotionEventInit], EventInit);
+var js$0 = (function () { var global = (function () { return this; }()); return { global: global, eval: global.eval, invoke: function(invocant, methodName, args) { return invocant[methodName].apply(invocant, args); } }; }());
 Config.canvasId = "world";
 Config.statusId = "status";
 Random._x = 0;
@@ -874,17 +882,16 @@ AOBench.NPHI = 8;
 AOBench.NTHETA = 8;
 AOBench.ALLRAY = 64;
 $__jsx_lazy_init(dom, "window", function () {
-	return js.global.window;
+	return js$0.global.window;
 });
 $__jsx_lazy_init(dom, "document", function () {
-	return js.global.document;
+	return js$0.global.document;
 });
-var js = { global: function () { return this; }() };
 
 var $__jsx_classMap = {
 	"system:lib/built-in.jsx": {
-		g_StopIteration: g_StopIteration,
-		g_StopIteration$: g_StopIteration
+		StopIteration: StopIteration,
+		StopIteration$: StopIteration
 	},
 	"system:web/example/aobench/aobench.jsx": {
 		Config: Config,

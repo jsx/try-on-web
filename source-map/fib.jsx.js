@@ -1,4 +1,4 @@
-// generatedy by JSX compiler 0.9.57 (2013-07-21 09:29:11 -0700; 3116e11459163d65dd09e578fd516f0c532fb30b)
+// generatedy by JSX compiler 0.9.58 (2013-07-26 17:15:06 -0700; c65bb37c18bf34b2a4bdd2df22234b2833827eba)
 var JSX = {};
 (function (JSX) {
 /**
@@ -101,11 +101,11 @@ JSX.resetProfileResults = function () {
 	return $__jsx_profiler.resetResults();
 };
 JSX.DEBUG = true;
-function g_StopIteration() {
+function StopIteration() {
 	Error.call(this);
 };
 
-$__jsx_extend([g_StopIteration], Error);
+$__jsx_extend([StopIteration], Error);
 function Fib() {
 };
 
@@ -148,7 +148,6 @@ Fib.fib3$I = Fib$fib3$I;
 
 function Fib$fib4$I(n) {
 	switch (n) {
-	case 0:
 	case 1:
 	case 2:
 		return 1;
@@ -161,8 +160,8 @@ Fib.fib4$I = Fib$fib4$I;
 
 function Fib$fib5$III(n, a, b) {
 	switch (n) {
-	case 0:
 	case 1:
+	case 2:
 		return a;
 	default:
 		return Fib$fib5$III((n - 1 | 0), a + b, a);
@@ -172,13 +171,13 @@ function Fib$fib5$III(n, a, b) {
 Fib.fib5$III = Fib$fib5$III;
 
 function Fib$fib5$I(n) {
-	return Fib$fib5$III(n, 1, 0);
+	return Fib$fib5$III(n, 1, 1);
 };
 
 Fib.fib5$I = Fib$fib5$I;
 
 function Fib$fib5$II(n, a) {
-	return Fib$fib5$III(n, a, 0);
+	return Fib$fib5$III(n, a, 1);
 };
 
 Fib.fib5$II = Fib$fib5$II;
@@ -192,7 +191,7 @@ function _Main$main$AS(args) {
 	n = (args.length > 0 ? +(function (v) {
 		if (! (v != null)) {
 			debugger;
-			throw new Error("[/Users/gfx/repo/try-on-web/JSX/example/fib.jsx:52:38] null access\n        var n = args.length > 0 ? args[0] as number : 10;\n                                      ^\n");
+			throw new Error("[/Users/gfx/repo/try-on-web/JSX/example/fib.jsx:51:38] null access\n        var n = args.length > 0 ? args[0] as number : 10;\n                                      ^\n");
 		}
 		return v;
 	}(args[0])) : 10);
@@ -209,8 +208,8 @@ _Main.main$AS = _Main$main$AS;
 
 var $__jsx_classMap = {
 	"system:lib/built-in.jsx": {
-		g_StopIteration: g_StopIteration,
-		g_StopIteration$: g_StopIteration
+		StopIteration: StopIteration,
+		StopIteration$: StopIteration
 	},
 	"system:example/fib.jsx": {
 		Fib: Fib,

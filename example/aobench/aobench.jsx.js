@@ -1,4 +1,4 @@
-// generatedy by JSX compiler 0.9.58 (2013-07-26 17:15:06 -0700; c65bb37c18bf34b2a4bdd2df22234b2833827eba)
+// generatedy by JSX compiler 0.9.59 (2013-08-08 21:45:23 +0900; 45c866115f50499f6899410900427d146fd1f06e)
 var JSX = {};
 (function (JSX) {
 /**
@@ -103,6 +103,8 @@ JSX.resetProfileResults = function () {
 JSX.DEBUG = false;
 function StopIteration() {
 	Error.call(this);
+	this.name = "StopIteration";
+	if (Error.captureStackTrace) Error.captureStackTrace(this, StopIteration);
 };
 
 $__jsx_extend([StopIteration], Error);
@@ -202,13 +204,8 @@ function Sphere$intersect$LSphere$LRay$LIsect$($this, ray, isect) {
 	var n;
 	var a$0;
 	var b$0;
-	var a$1;
-	var b$1;
 	var b$2;
-	var b$3;
 	var b$4;
-	var a$3;
-	var b$5;
 	var rs$x$0;
 	var rs$y$0;
 	var rs$z$0;
@@ -253,8 +250,6 @@ function Plane$intersect$LPlane$LRay$LIsect$($this, ray, isect) {
 	var a$0;
 	var b$0;
 	var a$1;
-	var a$2;
-	var b$2;
 	var a$3;
 	var b$3;
 	var n$0;
@@ -317,16 +312,12 @@ function AOBench$orthoBasis$LAOBench$ALvec3$Lvec3$($this, basis, n) {
 	basis[1] = ({x: 0.0, y: 0.0, z: 0.0});
 	if ((x$0 = n.x) < 0.6 && x$0 > -0.6) {
 		basis[1].x = 1.0;
+	} else if ((y$0 = n.y) < 0.6 && y$0 > -0.6) {
+		basis[1].y = 1.0;
+	} else if ((z$0 = n.z) < 0.6 && z$0 > -0.6) {
+		basis[1].z = 1.0;
 	} else {
-		if ((y$0 = n.y) < 0.6 && y$0 > -0.6) {
-			basis[1].y = 1.0;
-		} else {
-			if ((z$0 = n.z) < 0.6 && z$0 > -0.6) {
-				basis[1].z = 1.0;
-			} else {
-				basis[1].x = 1.0;
-			}
-		}
+		basis[1].x = 1.0;
 	}
 	basis[0] = vec3$vcross$Lvec3$Lvec3$(basis[1], basis[2]);
 	basis[0] = vec3$vnormalize$Lvec3$(basis[0]);
@@ -638,6 +629,13 @@ function XMLHttpRequestOptions() {
 };
 
 $__jsx_extend([XMLHttpRequestOptions], Object);
+function ScrollOptions() {
+	this.x = 0;
+	this.y = 0;
+	this.behavior = "";
+};
+
+$__jsx_extend([ScrollOptions], Object);
 function TrackEventInit() {
 	this.bubbles = false;
 	this.cancelable = false;
@@ -667,26 +665,22 @@ function PageTransitionEventInit() {
 };
 
 $__jsx_extend([PageTransitionEventInit], EventInit);
-function DragEventInit() {
+function ErrorEventInit() {
 	this.bubbles = false;
 	this.cancelable = false;
-	this.view = null;
-	this.detail = 0;
-	this.screenX = 0;
-	this.screenY = 0;
-	this.clientX = 0;
-	this.clientY = 0;
-	this.ctrlKey = false;
-	this.shiftKey = false;
-	this.altKey = false;
-	this.metaKey = false;
-	this.button = 0;
-	this.buttons = 0;
-	this.relatedTarget = null;
+	this.message = "";
+	this.filename = "";
+	this.lineno = 0;
+	this.column = 0;
+};
+
+$__jsx_extend([ErrorEventInit], EventInit);
+function DragEventInit() {
+	MouseEventInit.call(this);
 	this.dataTransfer = null;
 };
 
-$__jsx_extend([DragEventInit], EventInit);
+$__jsx_extend([DragEventInit], MouseEventInit);
 function CloseEventInit() {
 	this.bubbles = false;
 	this.cancelable = false;
@@ -718,15 +712,6 @@ function MessageEventInit() {
 };
 
 $__jsx_extend([MessageEventInit], EventInit);
-function ErrorEventInit() {
-	this.bubbles = false;
-	this.cancelable = false;
-	this.message = "";
-	this.filename = "";
-	this.lineno = 0;
-};
-
-$__jsx_extend([ErrorEventInit], EventInit);
 function EventSourceInit() {
 	this.withCredentials = false;
 };
@@ -938,6 +923,8 @@ var $__jsx_classMap = {
 		ProgressEventInit$: ProgressEventInit,
 		XMLHttpRequestOptions: XMLHttpRequestOptions,
 		XMLHttpRequestOptions$: XMLHttpRequestOptions,
+		ScrollOptions: ScrollOptions,
+		ScrollOptions$: ScrollOptions,
 		TrackEventInit: TrackEventInit,
 		TrackEventInit$: TrackEventInit,
 		PopStateEventInit: PopStateEventInit,
@@ -946,6 +933,8 @@ var $__jsx_classMap = {
 		HashChangeEventInit$: HashChangeEventInit,
 		PageTransitionEventInit: PageTransitionEventInit,
 		PageTransitionEventInit$: PageTransitionEventInit,
+		ErrorEventInit: ErrorEventInit,
+		ErrorEventInit$: ErrorEventInit,
 		DragEventInit: DragEventInit,
 		DragEventInit$: DragEventInit,
 		CloseEventInit: CloseEventInit,
@@ -954,8 +943,6 @@ var $__jsx_classMap = {
 		StorageEventInit$: StorageEventInit,
 		MessageEventInit: MessageEventInit,
 		MessageEventInit$: MessageEventInit,
-		ErrorEventInit: ErrorEventInit,
-		ErrorEventInit$: ErrorEventInit,
 		EventSourceInit: EventSourceInit,
 		EventSourceInit$: EventSourceInit,
 		IDBObjectStoreParameters: IDBObjectStoreParameters,

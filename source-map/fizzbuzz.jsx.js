@@ -1,4 +1,4 @@
-// generatedy by JSX compiler 0.9.58 (2013-07-26 17:15:06 -0700; c65bb37c18bf34b2a4bdd2df22234b2833827eba)
+// generatedy by JSX compiler 0.9.59 (2013-08-08 21:45:23 +0900; 45c866115f50499f6899410900427d146fd1f06e)
 var JSX = {};
 (function (JSX) {
 /**
@@ -103,6 +103,8 @@ JSX.resetProfileResults = function () {
 JSX.DEBUG = true;
 function StopIteration() {
 	Error.call(this);
+	this.name = "StopIteration";
+	if (Error.captureStackTrace) Error.captureStackTrace(this, StopIteration);
 };
 
 $__jsx_extend([StopIteration], Error);
@@ -115,16 +117,12 @@ function _Main$main$AS(args) {
 	for (i = 1; i <= 100; ++ i) {
 		if (i % 15 === 0) {
 			console.log("FizzBuzz");
+		} else if (i % 3 === 0) {
+			console.log("Fizz");
+		} else if (i % 5 === 0) {
+			console.log("Buzz");
 		} else {
-			if (i % 3 === 0) {
-				console.log("Fizz");
-			} else {
-				if (i % 5 === 0) {
-					console.log("Buzz");
-				} else {
-					console.log(i);
-				}
-			}
+			console.log(i);
 		}
 	}
 };

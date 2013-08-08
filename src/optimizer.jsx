@@ -58,16 +58,6 @@ class _Util {
 		return ret;
 	}
 
-	static function classIsNative (classDef : ClassDefinition) : boolean {
-		return ! classDef.forEachClassToBase(function (classDef) {
-			if (classDef.className() == "Object"
-				|| (classDef.flags() & ClassDefinition.IS_NATIVE) == 0) {
-					return true;
-				}
-			return false;
-		});
-	}
-
 	static function exprHasSideEffects (expr : Expression) : boolean {
 		return !(function onExpr (expr : Expression) : boolean {
 			if (   expr instanceof NewExpression
@@ -87,14 +77,14 @@ class _Util {
 			}
 			else if (expr instanceof PropertyExpression) {
 				var type = (expr as PropertyExpression).getExpr().getType();
-				if (type instanceof ObjectType && ((type as ObjectType).getClassDef().flags() & ClassDefinition.IS_NATIVE) != 0 && ! Util.isBuiltInContainer(type)) {
+				if (!(Util.isBuiltInClass(type) || !Util.isNativeClass(type))) {
 					return false;
 				}
 			}
 			else if (expr instanceof ArrayExpression) {
 				var type = (expr as ArrayExpression).getFirstExpr().getType();
+				if (!(Util.isBuiltInClass(type) || !Util.isNativeClass(type))) {
 
-				if (type instanceof ObjectType && ((type as ObjectType).getClassDef().flags() & ClassDefinition.IS_NATIVE) != 0 && ! Util.isBuiltInContainer(type)) {
 					return false;
 				}
 			}
@@ -1337,6 +1327,9 @@ class _StaticizeOptimizeCommand extends _OptimizeCommand {
 
 }
 
+/**
+ * Converts POD objects into Map objects + static methods.
+ */
 class _UnclassifyOptimizationCommand extends _OptimizeCommand {
 
 	static const IDENTIFIER = "unclassify";
@@ -1428,7 +1421,7 @@ class _UnclassifyOptimizationCommand extends _OptimizeCommand {
 				}
 			return true;
 		});
-		// check that the class is not referred to by: instanceof
+		// check that the class is not referred to by `instanceof` and `as`
 		this.getCompiler().forEachClassDef(function (parser : Parser, classDef : ClassDefinition) : boolean {
 			if (candidates.length == 0) {
 				return false;
@@ -2283,7 +2276,6 @@ class _DeadCodeEliminationOptimizeCommand extends _FunctionOptimizeCommand {
 	}
 
 	function _optimizeFunction (funcDef : MemberFunctionDefinition) : boolean {
-		var shouldRetry = false;
 		// use the assignment source, if possible
 		_Util.optimizeBasicBlock(funcDef, function (exprs : Expression[]) : void {
 			this._eliminateDeadStoresToProperties(funcDef, exprs);
@@ -2291,6 +2283,13 @@ class _DeadCodeEliminationOptimizeCommand extends _FunctionOptimizeCommand {
 			this._eliminateDeadStores(funcDef, exprs);
 			this._eliminateDeadConditions(funcDef, exprs);
 		});
+
+		return this._eliminateUnusedVariables(funcDef);
+	}
+
+	function _eliminateUnusedVariables(funcDef : MemberFunctionDefinition) : boolean {
+		var shouldRetry = false;
+
 		// mark the variables that are used (as RHS)
 		var locals = funcDef.getLocals();
 		var localsUsed = new Array.<boolean>(locals.length);
@@ -2328,43 +2327,47 @@ class _DeadCodeEliminationOptimizeCommand extends _FunctionOptimizeCommand {
 				continue;
 			}
 			// remove assignment to the variable
-			var removed = false;
-			funcDef.forEachStatement(function onStatement(statement : Statement) : boolean {
-				if (statement instanceof FunctionStatement) {
-					var localFuncDef = (statement as FunctionStatement).getFuncDef();
-					localFuncDef.forEachStatement(onStatement);
-					if (localFuncDef.getFuncLocal() == locals[localIndex]) {
-						// FIXME remove local function statements and closures
-						//this.log("removing definition of " + locals[localIndex].getName().getNotation());
-						//funcDef.getClosures().splice(funcDef.getClosures().indexOf(localFuncDef), 1);
+			(function onStatements(statements : Statement[]) : boolean {
+				for (var i = 0; i < statements.length;) {
+					var statement = statements[i];
+					if (statement instanceof FunctionStatement) {
+						var localFuncDef = (statement as FunctionStatement).getFuncDef();
+						onStatements(localFuncDef.getStatements());
+						if (localFuncDef.getFuncLocal() == locals[localIndex]) {
+							this.log("removing definition of " + locals[localIndex].getName().getNotation());
+							funcDef.getClosures().splice(funcDef.getClosures().indexOf(localFuncDef), 1);
+							statements.splice(i, 1);
+						}
+						else {
+							i++;
+						}
+					}
+					else {
+						i++;
+					}
+					statement.forEachExpression(function onExpr(expr, replaceCb) {
+						if (expr instanceof AssignmentExpression
+							&& (expr as AssignmentExpression).getFirstExpr() instanceof LocalExpression
+							&& ((expr as AssignmentExpression).getFirstExpr() as LocalExpression).getLocal() == locals[localIndex]
+						) {
+							this.log("removing assignment to " + locals[localIndex].getName().getNotation());
+							var rhsExpr = (expr as AssignmentExpression).getSecondExpr();
+							replaceCb(rhsExpr);
+							shouldRetry = true;
+							return rhsExpr.forEachExpression(onExpr);
+						} else if (expr instanceof LocalExpression && (expr as LocalExpression).getLocal() == locals[localIndex]) {
+							throw new Error("logic flaw, found a variable going to be removed being used");
+						} else if (expr instanceof FunctionExpression) {
+							onStatements((expr as FunctionExpression).getFuncDef().getStatements());
+						}
+						return expr.forEachExpression(onExpr);
+					});
 
-						//funcDef.getStatements().splice(funcDef.getStatements().indexOf(statement), 1);
-					}
+					_Util.handleSubStatements(onStatements, statement);
 				}
-				statement.forEachExpression(function onExpr(expr : Expression, replaceCb : function(:Expression):void) : boolean {
-					if (expr instanceof AssignmentExpression
-					    && (expr as AssignmentExpression).getFirstExpr() instanceof LocalExpression
-						&& ((expr as AssignmentExpression).getFirstExpr() as LocalExpression).getLocal() == locals[localIndex]
-					) {
-						this.log("removing assignment to " + locals[localIndex].getName().getNotation());
-						var rhsExpr = (expr as AssignmentExpression).getSecondExpr();
-						replaceCb(rhsExpr);
-						shouldRetry = true;
-						removed = true;
-						return onExpr(rhsExpr, null);
-					} else if (expr instanceof LocalExpression && (expr as LocalExpression).getLocal() == locals[localIndex]) {
-						throw new Error("logic flaw, found a variable going to be removed being used");
-					} else if (expr instanceof FunctionExpression) {
-						(expr as FunctionExpression).getFuncDef().forEachStatement(onStatement);
-					}
-					return expr.forEachExpression(onExpr);
-				});
-				return statement.forEachStatement(onStatement);
-			});
-			// remove from locals array
-			if (removed) {
-				locals.splice(localIndex, 1);
-			}
+				return true;
+			}(funcDef.getStatements()));
+			locals.splice(localIndex, 1);
 		}
 		return shouldRetry;
 	}
@@ -2523,7 +2526,7 @@ class _DeadCodeEliminationOptimizeCommand extends _FunctionOptimizeCommand {
 				var firstExpr      = assignmentExpr.getFirstExpr();
 				if (expr.getToken().getValue() == "="
 					&& isFirstLevelPropertyAccess(firstExpr)
-					&& ! _Util.classIsNative((firstExpr as PropertyExpression).getExpr().getType().getClassDef())) {
+					&& ! Util.isNativeClass((firstExpr as PropertyExpression).getExpr().getType())) {
 					var propertyName = (firstExpr as PropertyExpression).getIdentifierToken().getValue();
 					onExpr(assignmentExpr.getSecondExpr(), null);
 					if (lastAssignExpr[propertyName]
@@ -3202,7 +3205,7 @@ class _ReturnIfOptimizeCommand extends _FunctionOptimizeCommand {
 	}
 
 	override function optimizeFunction (funcDef : MemberFunctionDefinition) : boolean {
-		if (funcDef.getReturnType().equals(Type.voidType))
+		if (funcDef.getReturnType() == null || funcDef.getReturnType().equals(Type.voidType))
 			return false;
 
 		this._altered = false;
@@ -3342,7 +3345,7 @@ class _LCSEOptimizeCommand extends _FunctionOptimizeCommand {
 			if (expr instanceof PropertyExpression) {
                 var propertyExpr = expr as PropertyExpression;
 				var receiverType = propertyExpr.getExpr().getType();
-				if (receiverType instanceof ObjectType && _Util.classIsNative(receiverType.getClassDef())) {
+				if (Util.isNativeClass(receiverType)) {
 					return null;
 				}
 				var base = getCacheKey(propertyExpr.getExpr());
@@ -3521,7 +3524,11 @@ class _LCSEOptimizeCommand extends _FunctionOptimizeCommand {
 
 }
 
-
+/**
+ * Expands POD objects into local variables
+ * e.g. <code>var p = new Point(10, 20); log p.x; log p.y;</code>
+ * into <code>var p$x = 10, p$y = 20; log p$x; log p$y;</code>
+ */
 class _UnboxOptimizeCommand extends _FunctionOptimizeCommand {
 	static const IDENTIFIER = "unbox";
 
@@ -3570,8 +3577,7 @@ class _UnboxOptimizeCommand extends _FunctionOptimizeCommand {
 		if (! (local.getType() instanceof ObjectType)) {
 			return false;
 		}
-		var classDef = local.getType().getClassDef();
-		if (_Util.classIsNative(classDef)) {
+		if (Util.isNativeClass(local.getType())) {
 			return false;
 		}
 		// determine if the local can be unboxed
@@ -3655,7 +3661,6 @@ class _UnboxOptimizeCommand extends _FunctionOptimizeCommand {
 			}
 			return ctor.forEachStatement(function (statement) {
 				// only allow list of this.X = ...
-				var assigned = new Map.<boolean>;
 				if (! (statement instanceof ExpressionStatement)) {
 					return false;
 				}
@@ -3667,11 +3672,6 @@ class _UnboxOptimizeCommand extends _FunctionOptimizeCommand {
 				if (! (lhsExpr instanceof PropertyExpression && (lhsExpr as PropertyExpression).getExpr() instanceof ThisExpression)) {
 					return false;
 				}
-				var propertyName = (lhsExpr as PropertyExpression).getIdentifierToken().getValue();
-				if (assigned[propertyName]) {
-					return false;
-				}
-				assigned[propertyName] = true;
 				// check rhs
 				return function onExpr(expr : Expression) : boolean {
 					if (expr instanceof ThisExpression) {

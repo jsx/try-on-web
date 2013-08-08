@@ -223,6 +223,10 @@ class _Util {
 	static function getECMA262ReservedWords() : string[] {
 		return _Util._ecma262reserved.keys();
 	}
+
+	static function isArrayType(type : Type) : boolean {
+		return type.getClassDef() instanceof InstantiatedClassDefinition && (type.getClassDef() as InstantiatedClassDefinition).getTemplateClassName() == "Array";
+	}
 }
 
 class _Mangler {
@@ -900,7 +904,11 @@ class _ConstructorInvocationStatementEmitter extends _StatementEmitter {
 		var argTypes = ctorType != null ? ctorType.getArgumentTypes() : new Type[];
 		var ctorName = this._emitter.getNamer().getNameOfConstructor(this._statement.getConstructingClassDef(), argTypes);
 		var token = this._statement.getToken();
-		if (ctorName == "Error" && this._statement.getArguments().length == 1) {
+
+		this._emitter._emitCallArguments(token, ctorName + ".call(this", this._statement.getArguments(), argTypes);
+		this._emitter._emit(";\n", token);
+
+		if (ctorName == "Error") {
 			/*
 				At least v8 does not support "Error.call(this, message)"; it not only does not setup the stacktrace but also does
 				not set the message property.  So we set the message property.
@@ -909,13 +917,21 @@ class _ConstructorInvocationStatementEmitter extends _StatementEmitter {
 
 				FIXME check that doing  "Error.call(this);" does not have any negative effect on other platforms
 			*/
-			this._emitter._emit("Error.call(this);\n", token);
-			this._emitter._emit("this.message = ", token);
-			this._emitter._getExpressionEmitterFor(this._statement.getArguments()[0]).emit(_AssignmentExpressionEmitter._operatorPrecedence["="]);
-			this._emitter._emit(";\n", token);
-		} else {
-			this._emitter._emitCallArguments(token, ctorName + ".call(this", this._statement.getArguments(), argTypes);
-			this._emitter._emit(";\n", token);
+			if (this._statement.getArguments().length == 1) {
+				this._emitter._emit("this.message = ", token);
+				this._emitter._getExpressionEmitterFor(this._statement.getArguments()[0]).emit(_AssignmentExpressionEmitter._operatorPrecedence["="]);
+				this._emitter._emit(";\n", token);
+			}
+
+			// Althought it's not in the standard, the name property is used as the prefix of the error message,
+			// so we set it for convinience.
+			this._emitter._emit("this.name = \"" + this._emitter._emittingFunction.getClassDef().classFullName() + "\";\n", token);
+
+			// V8 has an API to set up stacktrace, so call it for convinience if available.
+			// https://code.google.com/p/v8/wiki/JavaScriptStackTraceApi
+			this._emitter._emit("if (Error.captureStackTrace) Error.captureStackTrace(this, ", null);
+			this._emitter._emit(this._emitter.getNamer().getNameOfClass(this._emitter._emittingFunction.getClassDef()) , null);
+			this._emitter._emit(");\n", null);
 		}
 	}
 
@@ -1087,7 +1103,14 @@ class _ForInStatementEmitter extends _StatementEmitter {
 		this._emitter._getExpressionEmitterFor(this._statement.getLHSExpr()).emit(0);
 		this._emitter._emit(" in ", null);
 		this._emitter._getExpressionEmitterFor(this._statement.getListExpr()).emit(0);
-		this._emitter._emit(") {\n", null);
+		this._emitter._emit(") {", null);
+		if (_Util.isArrayType(this._statement.getListExpr().getType())) {
+			// force numify because it's a string
+			this._emitter._emit(" ", null);
+			this._emitter._getExpressionEmitterFor(this._statement.getLHSExpr()).emit(0);
+			this._emitter._emit(" |= 0;", null);
+		}
+		this._emitter._emit("\n", null);
 		this._emitter._emitStatements(this._statement.getStatements());
 		this._emitter._emit("}\n", null);
 	}
@@ -1139,11 +1162,19 @@ class _IfStatementEmitter extends _StatementEmitter {
 		this._emitter._emit(") {\n", null);
 		this._emitter._emitStatements(this._statement.getOnTrueStatements());
 		var ifFalseStatements = this._statement.getOnFalseStatements();
-		if (ifFalseStatements.length != 0) {
-			this._emitter._emit("} else {\n", null);
-			this._emitter._emitStatements(ifFalseStatements);
+
+		if (ifFalseStatements.length == 1 && ifFalseStatements[0] instanceof IfStatement) {
+			this._emitter._emit("} else ", null);
+			this._emitter._emitStatement(ifFalseStatements[0]);
+			ifFalseStatements = (ifFalseStatements[0] as IfStatement).getOnTrueStatements();
 		}
-		this._emitter._emit("}\n", null);
+		else {
+			if (ifFalseStatements.length != 0) {
+				this._emitter._emit("} else {\n", null);
+				this._emitter._emitStatements(ifFalseStatements);
+			}
+			this._emitter._emit("}\n", null);
+		}
 	}
 
 }
@@ -1814,7 +1845,7 @@ class _AsNoConvertExpressionEmitter extends _ExpressionEmitter {
 				var destClassDef = destType.getClassDef();
 				if ((destClassDef.flags() & ClassDefinition.IS_FAKE) != 0) {
 					// skip
-				} else if (destClassDef instanceof InstantiatedClassDefinition && (destClassDef as InstantiatedClassDefinition).getTemplateClassName() == "Array") {
+				} else if (_Util.isArrayType(destType)) {
 					emitWithAssertion(function () {
 						this._emitter._emit("$v == null || $v instanceof Array", this._expr.getToken());
 					}, "detected invalid cast, value is not an Array or null");
@@ -1932,7 +1963,7 @@ class _InstanceofExpressionEmitter extends _ExpressionEmitter {
 	override function emit (outerOpPrecedence : number) : void {
 		var expectedType = this._expr.getExpectedType();
 		assert expectedType.getClassDef() != null;
-		if (expectedType.getClassDef() instanceof InstantiatedClassDefinition && (expectedType.getClassDef() as InstantiatedClassDefinition).getTemplateClassName() == "Array") {
+		if (_Util.isArrayType(expectedType)) {
 			this.emitWithPrecedence(outerOpPrecedence, _InstanceofExpressionEmitter._operatorPrecedence, function () {
 				this._emitter._getExpressionEmitterFor(this._expr.getExpr()).emit(_InstanceofExpressionEmitter._operatorPrecedence);
 				this._emitter._emit(" instanceof Array", this._expr.getToken());
@@ -2629,9 +2660,7 @@ class _NewExpressionEmitter extends _OperatorExpressionEmitter {
 		var inliner = getInliner(callingFuncDef);
 		if (inliner) {
 			this._emitAsObjectLiteral(classDef, inliner(this._expr));
-		} else if (
-			classDef instanceof InstantiatedClassDefinition
-			&& (classDef as InstantiatedClassDefinition).getTemplateClassName() == "Array"
+		} else if (_Util.isArrayType(this._expr.getType())
 			&& argTypes.length == 0) {
 			this._emitter._emit("[]", this._expr.getToken());
 		} else if (

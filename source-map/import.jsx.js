@@ -1,4 +1,4 @@
-// generatedy by JSX compiler 0.9.58 (2013-07-26 17:15:06 -0700; c65bb37c18bf34b2a4bdd2df22234b2833827eba)
+// generatedy by JSX compiler 0.9.59 (2013-08-08 21:45:23 +0900; 45c866115f50499f6899410900427d146fd1f06e)
 var JSX = {};
 (function (JSX) {
 /**
@@ -103,6 +103,8 @@ JSX.resetProfileResults = function () {
 JSX.DEBUG = true;
 function StopIteration() {
 	Error.call(this);
+	this.name = "StopIteration";
+	if (Error.captureStackTrace) Error.captureStackTrace(this, StopIteration);
 };
 
 $__jsx_extend([StopIteration], Error);
@@ -743,54 +745,46 @@ function Timer$_getRequestAnimationFrameImpl$B(useNativeImpl) {
 					return $v;
 				}(js$0.global.requestAnimationFrame))(callback);
 			});
-		} else {
-			if (js$0.global.webkitRequestAnimationFrame) {
-				return (function (callback) {
-					return (function ($v) {
-						if (! ($v == null || typeof $v === "function")) {
-							debugger;
-							throw new Error("[/Users/gfx/repo/try-on-web/JSX/lib/js/timer.jsx:78:69] detected invalid cast, value is not a function or null\n                    return (js.global[\"webkitRequestAnimationFrame\"] as __noconvert__\n                                                                     ^^\n");
-						}
-						return $v;
-					}(js$0.global.webkitRequestAnimationFrame))(callback);
-				});
-			} else {
-				if (js$0.global.mozRequestAnimationFrame) {
-					return (function (callback) {
-						return (function ($v) {
-							if (! ($v == null || typeof $v === "function")) {
-								debugger;
-								throw new Error("[/Users/gfx/repo/try-on-web/JSX/lib/js/timer.jsx:84:66] detected invalid cast, value is not a function or null\n                    return (js.global[\"mozRequestAnimationFrame\"] as __noconvert__\n                                                                  ^^\n");
-							}
-							return $v;
-						}(js$0.global.mozRequestAnimationFrame))(callback);
-					});
-				} else {
-					if (js$0.global.oRequestAnimationFrame) {
-						return (function (callback) {
-							return (function ($v) {
-								if (! ($v == null || typeof $v === "function")) {
-									debugger;
-									throw new Error("[/Users/gfx/repo/try-on-web/JSX/lib/js/timer.jsx:90:64] detected invalid cast, value is not a function or null\n                    return (js.global[\"oRequestAnimationFrame\"] as __noconvert__\n                                                                ^^\n");
-								}
-								return $v;
-							}(js$0.global.oRequestAnimationFrame))(callback);
-						});
-					} else {
-						if (js$0.global.msRequestAnimationFrame) {
-							return (function (callback) {
-								return (function ($v) {
-									if (! ($v == null || typeof $v === "function")) {
-										debugger;
-										throw new Error("[/Users/gfx/repo/try-on-web/JSX/lib/js/timer.jsx:96:65] detected invalid cast, value is not a function or null\n                    return (js.global[\"msRequestAnimationFrame\"] as __noconvert__\n                                                                 ^^\n");
-									}
-									return $v;
-								}(js$0.global.msRequestAnimationFrame))(callback);
-							});
-						}
+		} else if (js$0.global.webkitRequestAnimationFrame) {
+			return (function (callback) {
+				return (function ($v) {
+					if (! ($v == null || typeof $v === "function")) {
+						debugger;
+						throw new Error("[/Users/gfx/repo/try-on-web/JSX/lib/js/timer.jsx:78:69] detected invalid cast, value is not a function or null\n                    return (js.global[\"webkitRequestAnimationFrame\"] as __noconvert__\n                                                                     ^^\n");
 					}
-				}
-			}
+					return $v;
+				}(js$0.global.webkitRequestAnimationFrame))(callback);
+			});
+		} else if (js$0.global.mozRequestAnimationFrame) {
+			return (function (callback) {
+				return (function ($v) {
+					if (! ($v == null || typeof $v === "function")) {
+						debugger;
+						throw new Error("[/Users/gfx/repo/try-on-web/JSX/lib/js/timer.jsx:84:66] detected invalid cast, value is not a function or null\n                    return (js.global[\"mozRequestAnimationFrame\"] as __noconvert__\n                                                                  ^^\n");
+					}
+					return $v;
+				}(js$0.global.mozRequestAnimationFrame))(callback);
+			});
+		} else if (js$0.global.oRequestAnimationFrame) {
+			return (function (callback) {
+				return (function ($v) {
+					if (! ($v == null || typeof $v === "function")) {
+						debugger;
+						throw new Error("[/Users/gfx/repo/try-on-web/JSX/lib/js/timer.jsx:90:64] detected invalid cast, value is not a function or null\n                    return (js.global[\"oRequestAnimationFrame\"] as __noconvert__\n                                                                ^^\n");
+					}
+					return $v;
+				}(js$0.global.oRequestAnimationFrame))(callback);
+			});
+		} else if (js$0.global.msRequestAnimationFrame) {
+			return (function (callback) {
+				return (function ($v) {
+					if (! ($v == null || typeof $v === "function")) {
+						debugger;
+						throw new Error("[/Users/gfx/repo/try-on-web/JSX/lib/js/timer.jsx:96:65] detected invalid cast, value is not a function or null\n                    return (js.global[\"msRequestAnimationFrame\"] as __noconvert__\n                                                                 ^^\n");
+					}
+					return $v;
+				}(js$0.global.msRequestAnimationFrame))(callback);
+			});
 		}
 	}
 	lastTime = 0;
@@ -820,54 +814,46 @@ function Timer$_getCancelAnimationFrameImpl$B(useNativeImpl) {
 					return $v;
 				}(js$0.global.cancelAnimationFrame))(timer);
 			});
-		} else {
-			if (js$0.global.webkitCancelAnimationFrame) {
-				return (function (timer) {
-					(function ($v) {
-						if (! ($v == null || typeof $v === "function")) {
-							debugger;
-							throw new Error("[/Users/gfx/repo/try-on-web/JSX/lib/js/timer.jsx:125:61] detected invalid cast, value is not a function or null\n                    (js.global[\"webkitCancelAnimationFrame\"] as __noconvert__\n                                                             ^^\n");
-						}
-						return $v;
-					}(js$0.global.webkitCancelAnimationFrame))(timer);
-				});
-			} else {
-				if (js$0.global.mozCancelAnimationFrame) {
-					return (function (timer) {
-						(function ($v) {
-							if (! ($v == null || typeof $v === "function")) {
-								debugger;
-								throw new Error("[/Users/gfx/repo/try-on-web/JSX/lib/js/timer.jsx:131:58] detected invalid cast, value is not a function or null\n                    (js.global[\"mozCancelAnimationFrame\"] as __noconvert__\n                                                          ^^\n");
-							}
-							return $v;
-						}(js$0.global.mozCancelAnimationFrame))(timer);
-					});
-				} else {
-					if (js$0.global.oCancelAnimationFrame) {
-						return (function (timer) {
-							(function ($v) {
-								if (! ($v == null || typeof $v === "function")) {
-									debugger;
-									throw new Error("[/Users/gfx/repo/try-on-web/JSX/lib/js/timer.jsx:137:56] detected invalid cast, value is not a function or null\n                    (js.global[\"oCancelAnimationFrame\"] as __noconvert__\n                                                        ^^\n");
-								}
-								return $v;
-							}(js$0.global.oCancelAnimationFrame))(timer);
-						});
-					} else {
-						if (js$0.global.msCancelAnimationFrame) {
-							return (function (timer) {
-								(function ($v) {
-									if (! ($v == null || typeof $v === "function")) {
-										debugger;
-										throw new Error("[/Users/gfx/repo/try-on-web/JSX/lib/js/timer.jsx:143:57] detected invalid cast, value is not a function or null\n                    (js.global[\"msCancelAnimationFrame\"] as __noconvert__\n                                                         ^^\n");
-									}
-									return $v;
-								}(js$0.global.msCancelAnimationFrame))(timer);
-							});
-						}
+		} else if (js$0.global.webkitCancelAnimationFrame) {
+			return (function (timer) {
+				(function ($v) {
+					if (! ($v == null || typeof $v === "function")) {
+						debugger;
+						throw new Error("[/Users/gfx/repo/try-on-web/JSX/lib/js/timer.jsx:125:61] detected invalid cast, value is not a function or null\n                    (js.global[\"webkitCancelAnimationFrame\"] as __noconvert__\n                                                             ^^\n");
 					}
-				}
-			}
+					return $v;
+				}(js$0.global.webkitCancelAnimationFrame))(timer);
+			});
+		} else if (js$0.global.mozCancelAnimationFrame) {
+			return (function (timer) {
+				(function ($v) {
+					if (! ($v == null || typeof $v === "function")) {
+						debugger;
+						throw new Error("[/Users/gfx/repo/try-on-web/JSX/lib/js/timer.jsx:131:58] detected invalid cast, value is not a function or null\n                    (js.global[\"mozCancelAnimationFrame\"] as __noconvert__\n                                                          ^^\n");
+					}
+					return $v;
+				}(js$0.global.mozCancelAnimationFrame))(timer);
+			});
+		} else if (js$0.global.oCancelAnimationFrame) {
+			return (function (timer) {
+				(function ($v) {
+					if (! ($v == null || typeof $v === "function")) {
+						debugger;
+						throw new Error("[/Users/gfx/repo/try-on-web/JSX/lib/js/timer.jsx:137:56] detected invalid cast, value is not a function or null\n                    (js.global[\"oCancelAnimationFrame\"] as __noconvert__\n                                                        ^^\n");
+					}
+					return $v;
+				}(js$0.global.oCancelAnimationFrame))(timer);
+			});
+		} else if (js$0.global.msCancelAnimationFrame) {
+			return (function (timer) {
+				(function ($v) {
+					if (! ($v == null || typeof $v === "function")) {
+						debugger;
+						throw new Error("[/Users/gfx/repo/try-on-web/JSX/lib/js/timer.jsx:143:57] detected invalid cast, value is not a function or null\n                    (js.global[\"msCancelAnimationFrame\"] as __noconvert__\n                                                         ^^\n");
+					}
+					return $v;
+				}(js$0.global.msCancelAnimationFrame))(timer);
+			});
 		}
 	}
 	return Timer$clearTimeout$LTimerHandle$;
@@ -1011,8 +997,10 @@ TestCase$x2EMatcher.prototype._match$BXXS = function (value, got, expected, op) 
 
 
 function TestCase$x2EFailure(reason) {
-	Error.call(this);
+	Error.call(this, reason);
 	this.message = reason;
+	this.name = "TestCase.Failure";
+	if (Error.captureStackTrace) Error.captureStackTrace(this, TestCase$x2EFailure);
 };
 
 $__jsx_extend([TestCase$x2EFailure], Error);

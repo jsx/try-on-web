@@ -121,11 +121,11 @@ class ClassDefinition implements Stashable {
 			"token"      : this._token,
 			"name"       : this._className,
 			"flags"      : this._flags,
-			"extends"    : Serializer.<ParsedObjectType>.serializeNullable(this._extendType),
-			"implements" : Serializer.<ParsedObjectType>.serializeArray(this._implementTypes),
-			"members"    : Serializer.<MemberDefinition>.serializeArray(this._members),
-			"inners"    : Serializer.<ClassDefinition>.serializeArray(this._inners),
-			"templateInners"    : Serializer.<TemplateClassDefinition>.serializeArray(this._templateInners)
+			"extends"    : Util.serializeNullable(this._extendType),
+			"implements" : Util.serializeArray(this._implementTypes),
+			"members"    : Util.serializeArray(this._members),
+			"inners"    : Util.serializeArray(this._inners),
+			"templateInners"    : Util.serializeArray(this._templateInners)
 		} : Map.<variant>;
 	}
 
@@ -1136,11 +1136,11 @@ class MemberVariableDefinition extends MemberDefinition {
 
 	override function serialize () : variant {
 		return {
-			"token"      : Serializer.<Token>.serializeNullable(this._token),
-			"nameToken"  : Serializer.<Token>.serializeNullable(this._nameToken),
+			"token"      : Util.serializeNullable(this._token),
+			"nameToken"  : Util.serializeNullable(this._nameToken),
 			"flags"        : this.flags(),
-			"type"         : Serializer.<Type>.serializeNullable(this._type),
-			"initialValue" : Serializer.<Expression>.serializeNullable(this._initialValue)
+			"type"         : Util.serializeNullable(this._type),
+			"initialValue" : Util.serializeNullable(this._initialValue)
 		} : Map.<variant>;
 	}
 
@@ -1305,7 +1305,7 @@ class MemberFunctionDefinition extends MemberDefinition implements Block {
 		function cloneFuncDef (funcDef : MemberFunctionDefinition) : MemberFunctionDefinition {
 
 			// at this moment, all locals and closures are not cloned yet
-			var statements = Cloner.<Statement>.cloneArray(funcDef.getStatements());
+			var statements = Util.cloneArray(funcDef.getStatements());
 
 			var closures = funcDef.getClosures().map.<MemberFunctionDefinition>((funcDef) -> {
 				var newFuncDef = cloneFuncDef(funcDef);
@@ -1527,17 +1527,24 @@ class MemberFunctionDefinition extends MemberDefinition implements Block {
 
 	override function serialize () : variant {
 		return {
-			"token"      : Serializer.<Token>.serializeNullable(this._token),
-			"nameToken"  : Serializer.<Token>.serializeNullable(this._nameToken),
+			"token"      : Util.serializeNullable(this._token),
+			"nameToken"  : Util.serializeNullable(this._nameToken),
 			"flags"      : this.flags(),
-			"returnType" : Serializer.<Type>.serializeNullable(this._returnType),
-			"args"       : Serializer.<ArgumentDeclaration>.serializeArray(this._args),
-			"locals"     : Serializer.<LocalVariable>.serializeArray(this._locals),
-			"statements" : Serializer.<Statement>.serializeArray(this._statements)
+			"returnType" : Util.serializeNullable(this._returnType),
+			"args"       : Util.serializeArray(this._args),
+			"locals"     : Util.serializeArray(this._locals),
+			"statements" : Util.serializeArray(this._statements)
 		} : Map.<variant>;
 	}
 
+	var _analyzed = false;
+
 	function analyze (outerContext : AnalysisContext) : void {
+		if (this._analyzed == true) {
+			return;
+		}
+		this._analyzed = true;
+
 		// validate jsxdoc comments
 		if ((this.flags() & ClassDefinition.IS_GENERATED) == 0) {
 			var docComment = this.getDocComment();
@@ -1606,6 +1613,11 @@ class MemberFunctionDefinition extends MemberDefinition implements Block {
 			this._funcLocal.setTypeForced(this.getType());
 		}
 
+		this.getLocals().forEach((local) -> {
+			if (! local.isUsedAsRHS()) {
+				context.errors.push(new UnusedWarning(local.getName(), "unused variable " + local.getName().getValue()));
+			}
+		});
 	}
 
 	function generateWrappersForDefaultParameters() : void {
@@ -1845,6 +1857,10 @@ class MemberFunctionDefinition extends MemberDefinition implements Block {
 		return this._statements;
 	}
 
+	function setStatements (statements : Statement[]) : void {
+		this._statements = statements;
+	}
+
 	// return an argument or a local variable
 	function getLocal (context : AnalysisContext, name : string) : LocalVariable {
 		// for the current function, check the caught variables
@@ -1898,22 +1914,26 @@ class MemberFunctionDefinition extends MemberDefinition implements Block {
 			return false;
 		}
 		for (var i = 0; i < this._args.length; ++i) {
-			if (this._args[i].getType() != null) {
-				if (! this._args[i].getType().equals(type.getArgumentTypes()[i])) {
-					context.errors.push(new CompileError(this.getToken(), "detected type conflict for argument '" + this._args[i].getName().getValue() + "' (expected '" + type.getArgumentTypes()[i].toString() + "' but found '" + this._args[i].getType().toString() + "'"));
+			if (type.getArgumentTypes()[i] != null) {
+				if (this._args[i].getType() != null) {
+					if (! this._args[i].getType().equals(type.getArgumentTypes()[i])) {
+						context.errors.push(new CompileError(this.getToken(), "detected type conflict for argument '" + this._args[i].getName().getValue() + "' (expected '" + type.getArgumentTypes()[i].toString() + "' but found '" + this._args[i].getType().toString() + "'"));
+						return false;
+					}
+				} else {
+					this._args[i].setTypeForced(type.getArgumentTypes()[i]);
+				}
+			}
+		}
+		if (type.getReturnType() != null) {
+			if (this._returnType != null) {
+				if (! this._returnType.equals(type.getReturnType())) {
+					context.errors.push(new CompileError(this.getToken(), "detected return type conflict, expected '" + type.getReturnType().toString() + "' but found '" + this._returnType.toString() + "'"));
 					return false;
 				}
 			} else {
-				this._args[i].setTypeForced(type.getArgumentTypes()[i]);
+				this._returnType = type.getReturnType();
 			}
-		}
-		if (this._returnType != null) {
-			if (! this._returnType.equals(type.getReturnType())) {
-				context.errors.push(new CompileError(this.getToken(), "detected return type conflict, expected '" + type.getReturnType().toString() + "' but found '" + this._returnType.toString() + "'"));
-				return false;
-			}
-		} else {
-			this._returnType = type.getReturnType();
 		}
 		if (this._funcLocal != null)
 			this._funcLocal.setTypeForced(this.getType());
@@ -1958,6 +1978,10 @@ class TemplateFunctionDefinition extends MemberFunctionDefinition implements Tem
 		return new TemplateFunctionType(this._token, this);
 	}
 
+	function getResolvedTypemap () : Map.<Type> {
+		return this._resolvedTypemap;
+	}
+
 	function getTypeArguments () : Token[] {
 		return this._typeArgs;
 	}
@@ -1975,8 +1999,7 @@ class TemplateFunctionDefinition extends MemberFunctionDefinition implements Tem
 		return instantiated;
 	}
 
-	function instantiateByArgumentTypes (errors : CompileError[], token : Token, actualArgTypes : Type[], exact : boolean) : MemberFunctionDefinition {
-		// The TODOs must be done by when user template functions are introduced: report compile errors, inner classes, parameterized classes
+	function instantiateByArgumentTypes (errors : CompileError[], notes : CompileNote[], token : Token, actualArgTypes : Type[], exact : boolean) : MemberFunctionDefinition { // notes is for reporting compiler notes when instantiaiton fails, errors is delegated to semantic analysis in instantiated funcDef
 		var typemap = new Map.<Type>;
 		for (var i = 0; i < this._typeArgs.length; ++i) {
 			typemap[this._typeArgs[i].getValue()] = null;
@@ -1986,26 +2009,62 @@ class TemplateFunctionDefinition extends MemberFunctionDefinition implements Tem
 		}
 
 		function unify (formal : Type, actual : Type) : boolean {
-			if (formal instanceof ParsedObjectType) {
-				// TODO enclosing types
-
-				// formal is a type parameter
-				if ((formal as ParsedObjectType).getTypeArguments().length == 0 && typemap.hasOwnProperty((formal as ParsedObjectType).getToken().getValue())) {
-					var expectedType = typemap[(formal as ParsedObjectType).getToken().getValue()];
-					if (expectedType != null) { // already unified, check if arg type is the expected one
-						if (exact && ! expectedType.equals(actual)) {
-							// no need to throw a compile error when exact matching
-							return false;
-						}
-						if (! actual.isConvertibleTo(expectedType)) {
-							errors.push(new CompileError(token, "expected " + expectedType.toString() + ", but got " + actual.toString()));
-							return false;
-						}
-					} else {
-						typemap[(formal as ParsedObjectType).getToken().getValue()] = actual;
+			// formal is a type parameter
+			if (formal instanceof ParsedObjectType
+					&& (formal as ParsedObjectType).getTypeArguments().length == 0
+					&& (formal as ParsedObjectType).getQualifiedName().getImport() == null
+					&& (formal as ParsedObjectType).getQualifiedName().getEnclosingType() == null
+					&& typemap.hasOwnProperty((formal as ParsedObjectType).getToken().getValue())) {
+				var expectedType = typemap[(formal as ParsedObjectType).getToken().getValue()];
+				if (expectedType != null) { // already unified, check if arg type is the expected one
+					if (exact && ! expectedType.equals(actual)) {
+						// no need to report a compile note when exact matching
+						return false;
+					}
+					if (! actual.isConvertibleTo(expectedType)) {
+						notes.push(new CompileNote(token, "expected " + expectedType.toString() + ", but got " + actual.toString()));
+						return false;
 					}
 				} else {
-					// TODO support arbitrary parameterized class
+					typemap[(formal as ParsedObjectType).getToken().getValue()] = actual;
+				}
+			} else if (formal instanceof ParsedObjectType) {
+				if (! (actual instanceof ObjectType)) {
+					notes.push(new CompileNote(token, "expected " + formal.toString() + ", but got " + actual.toString()));
+					return false;
+				}
+				// TODO import
+				// TODO enclosing types
+				assert (formal as ParsedObjectType).getQualifiedName().getImport() == null;
+				assert (formal as ParsedObjectType).getQualifiedName().getEnclosingType() == null;
+				var parser = this._classDef.getParser();
+				if ((formal as ParsedObjectType).getTypeArguments().length == 0) {
+					(formal as ParsedObjectType).resolveType(new AnalysisContext(errors, parser, null));
+					if (! actual.isConvertibleTo(formal)) {
+						notes.push(new CompileNote(token, "expected " + formal.toString() + ", but got " + actual.toString()));
+						return false;
+					}
+				} else {
+					var formalClassDef = (formal as ParsedObjectType).getQualifiedName().getTemplateClass(parser);
+					assert (! (actual instanceof ParsedObjectType)) || (actual as ParsedObjectType)._classDef != null;
+					var actualClassDef = (actual as ObjectType).getClassDef();
+					if (formalClassDef == null) {
+						notes.push(new CompileNote(token, "not matching class definition " + formal.toString()));
+						return false;
+					}
+					assert actualClassDef != null;
+					if (! (actualClassDef instanceof InstantiatedClassDefinition && formalClassDef == (actualClassDef as InstantiatedClassDefinition).getTemplateClass())) {
+						notes.push(new CompileNote(token, "expected " + formal.toString() + ", but got " + actual.toString()));
+						return false;
+					}
+					var formalTypeArgs = (formal as ParsedObjectType).getTypeArguments();
+					var actualTypeArgs = (actualClassDef as InstantiatedClassDefinition).getTypeArguments();
+					assert formalTypeArgs.length == actualTypeArgs.length;
+					for (var i = 0; i < formalTypeArgs.length; ++i) {
+						if (! unify(formalTypeArgs[i], actualTypeArgs[i])) {
+							return false;
+						}
+					}
 				}
 			} else if (formal instanceof NullableType) {
 				if (! unify((formal as NullableType).getBaseType(), actual)) {
@@ -2013,13 +2072,13 @@ class TemplateFunctionDefinition extends MemberFunctionDefinition implements Tem
 				}
 			} else if (formal instanceof StaticFunctionType) {
 				if (! (actual instanceof StaticFunctionType)) {
-					errors.push(new CompileError(token, "expected " + formal.toString() + ", but got " + actual.toString()));
+					notes.push(new CompileNote(token, "expected " + formal.toString() + ", but got " + actual.toString()));
 					return false;
 				}
 				var formalFuncType = formal as StaticFunctionType;
 				var actualFuncType = actual as StaticFunctionType;
 				if (formalFuncType.getArgumentTypes().length != actualFuncType.getArgumentTypes().length) {
-					errors.push(new CompileError(token, "expected " + formal.toString() + ", but got " + actual.toString()));
+					notes.push(new CompileNote(token, "expected " + formal.toString() + ", but got " + actual.toString()));
 					return false;
 				}
 				// unify recursively
@@ -2031,11 +2090,11 @@ class TemplateFunctionDefinition extends MemberFunctionDefinition implements Tem
 					return false;
 			} else { // formal is a primitive type
 				if (exact && ! formal.equals(actual)) {
-					// no need to throw a compile error when exact matching
+					// no need to report a compile note when exact matching
 					return false;
 				}
 				if (! actual.isConvertibleTo(formal)) {
-					errors.push(new CompileError(token, "expected " + formal.toString() + ", but got " + actual.toString()));
+					notes.push(new CompileNote(token, "expected " + formal.toString() + ", but got " + actual.toString()));
 					return false;
 				}
 			}
@@ -2058,7 +2117,13 @@ class TemplateFunctionDefinition extends MemberFunctionDefinition implements Tem
 				break;
 		}
 		if (i != this._typeArgs.length) {
-			errors.push(new CompileError(token, "cannot decide type parameters from given argument expressions"));
+			var remains = new string[];
+			this._typeArgs.forEach((typeArg) -> {
+				if (typemap[typeArg.getValue()] == null) {
+					remains.push(typeArg.getValue());
+				}
+			});
+			notes.push(new CompileNote(token, "cannot decide type parameter(s) from given argument expressions: " + remains.join(", ")));
 			return null;
 		} else {
 			return this.instantiateTemplateFunction(errors, token, typeArgs);
@@ -2090,7 +2155,6 @@ class TemplateFunctionDefinition extends MemberFunctionDefinition implements Tem
 		}
 		instantiated.setClassDef(this._classDef);
 		this._classDef._members.push(instantiated);
-		// analyze
 		var analysisContext = new AnalysisContext(errors, this._classDef.getParser(), function (parser, classDef) { throw new Error("not implemented"); });
 		for (var i = 0; i < instantiationContext.objectTypesUsed.length; ++i)
 			instantiationContext.objectTypesUsed[i].resolveType(analysisContext);

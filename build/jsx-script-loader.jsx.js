@@ -1,4 +1,4 @@
-// generatedy by JSX compiler 0.9.62 (2013-08-25 08:34:23 +0900; 4cad8ce0cffd745d74d7a71a6fade7810bb7fd20)
+// generatedy by JSX compiler 0.9.63 (2013-08-31 12:05:12 +0900; 2ec017d883d4d01af3d13db10eb1dfa291034b54)
 var JSX = {};
 (function (JSX) {
 /**
@@ -2068,6 +2068,7 @@ function Optimizer$setup$LOptimizer$AS($this, cmds) {
 		} else if (cmd === "return-if") {
 			$this._commands.push(new _ReturnIfOptimizeCommand());
 		} else if (cmd === "lcse") {
+			determineCallee();
 			$this._commands.push(new _LCSEOptimizeCommand());
 		} else if (cmd === "unbox") {
 			determineCallee();
@@ -3390,11 +3391,11 @@ _DetermineCalleeCommand.prototype.optimizeFunction$LMemberFunctionDefinition$ = 
 				newExpr = expr;
 				if (! (newExpr.getType$().getClassDef$() != null)) {
 					debugger;
-					throw new Error("[/Users/gfx/repo/try-on-web/JSX/src/optimizer.jsx:1068:59] assertion failure\n                    assert newExpr.getType().getClassDef() != null;\n                                                           ^^\n");
+					throw new Error("[/Users/gfx/repo/try-on-web/JSX/src/optimizer.jsx:1069:59] assertion failure\n                    assert newExpr.getType().getClassDef() != null;\n                                                           ^^\n");
 				}
 				if (! (NewExpression$getConstructor$LNewExpression$(newExpr) != null)) {
 					debugger;
-					throw new Error("[/Users/gfx/repo/try-on-web/JSX/src/optimizer.jsx:1069:52] assertion failure\n                    assert newExpr.getConstructor() != null;\n                                                    ^^\n");
+					throw new Error("[/Users/gfx/repo/try-on-web/JSX/src/optimizer.jsx:1070:52] assertion failure\n                    assert newExpr.getConstructor() != null;\n                                                    ^^\n");
 				}
 				callingFuncDef = _DetermineCalleeCommand$findCallingFunctionInClass$LClassDefinition$SALType$B(newExpr.getType$().getClassDef$(), "constructor", ResolvedFunctionType$getArgumentTypes$LResolvedFunctionType$(NewExpression$getConstructor$LNewExpression$(newExpr)), false);
 				if (callingFuncDef == null) {
@@ -3924,7 +3925,7 @@ _UnclassifyOptimizationCommand.prototype._getClassesToUnclassify$ = function () 
 			var foundClassDefIndex;
 			if (! (expr != null)) {
 				debugger;
-				throw new Error("[/Users/gfx/repo/try-on-web/JSX/src/optimizer.jsx:1434:28] assertion failure\n                assert expr != null;\n                            ^^\n");
+				throw new Error("[/Users/gfx/repo/try-on-web/JSX/src/optimizer.jsx:1435:28] assertion failure\n                assert expr != null;\n                            ^^\n");
 			}
 			if (expr instanceof InstanceofExpression) {
 				foundClassDefIndex = candidates.indexOf(InstanceofExpression$getExpectedType$LInstanceofExpression$(expr).getClassDef$());
@@ -4018,7 +4019,7 @@ function _UnclassifyOptimizationCommand$_getClassesToUnclassify$L_UnclassifyOpti
 			var foundClassDefIndex;
 			if (! (expr != null)) {
 				debugger;
-				throw new Error("[/Users/gfx/repo/try-on-web/JSX/src/optimizer.jsx:1434:28] assertion failure\n                assert expr != null;\n                            ^^\n");
+				throw new Error("[/Users/gfx/repo/try-on-web/JSX/src/optimizer.jsx:1435:28] assertion failure\n                assert expr != null;\n                            ^^\n");
 			}
 			if (expr instanceof InstanceofExpression) {
 				foundClassDefIndex = candidates.indexOf(InstanceofExpression$getExpectedType$LInstanceofExpression$(expr).getClassDef$());
@@ -7169,7 +7170,11 @@ _InlineOptimizeCommand.prototype._handleStatement$LMemberFunctionDefinition$ALSt
 			var this$0;
 			var this$1;
 			statements.splice(stmtIndex, 1);
-			statements[stmtIndex - 1] = new ReturnStatement(statement.getToken$(), statements[stmtIndex - 1] instanceof ReturnStatement ? (this$0 = statements[stmtIndex - 1], this$0._expr) : (this$1 = statements[stmtIndex - 1], this$1._expr));
+			if (statements[stmtIndex - 1] instanceof ReturnStatement) {
+				statements[stmtIndex - 1] = new ReturnStatement(statement.getToken$(), (this$0 = statements[stmtIndex - 1], this$0._expr));
+			} else if (statements[stmtIndex - 1] instanceof ExpressionStatement) {
+				statements[stmtIndex - 1] = new ReturnStatement(statement.getToken$(), (this$1 = statements[stmtIndex - 1], this$1._expr));
+			}
 		}))) {
 			altered = true;
 		}
@@ -7245,7 +7250,11 @@ function _InlineOptimizeCommand$_handleStatement$L_InlineOptimizeCommand$LMember
 			var this$0;
 			var this$1;
 			statements.splice(stmtIndex, 1);
-			statements[stmtIndex - 1] = new ReturnStatement(statement.getToken$(), statements[stmtIndex - 1] instanceof ReturnStatement ? (this$0 = statements[stmtIndex - 1], this$0._expr) : (this$1 = statements[stmtIndex - 1], this$1._expr));
+			if (statements[stmtIndex - 1] instanceof ReturnStatement) {
+				statements[stmtIndex - 1] = new ReturnStatement(statement.getToken$(), (this$0 = statements[stmtIndex - 1], this$0._expr));
+			} else if (statements[stmtIndex - 1] instanceof ExpressionStatement) {
+				statements[stmtIndex - 1] = new ReturnStatement(statement.getToken$(), (this$1 = statements[stmtIndex - 1], this$1._expr));
+			}
 		}))) {
 			altered = true;
 		}
@@ -8583,8 +8592,12 @@ _LCSEOptimizeCommand.prototype._optimizeExpressions$LMemberFunctionDefinition$AL
 			clearCache();
 			return true;
 		} else if (expr instanceof LogicalExpression) {
-			clearCache();
-			return true;
+			if (! Expression$forEachExpression$LExpression$F$LExpression$B$(expr, (function (expr) {
+				return ! _Util$exprHasSideEffects$LExpression$(expr);
+			}))) {
+				clearCache();
+				return true;
+			}
 		} else if (expr instanceof FunctionExpression) {
 			clearCache();
 			return true;
@@ -8805,8 +8818,12 @@ function _LCSEOptimizeCommand$_optimizeExpressions$L_LCSEOptimizeCommand$LMember
 			clearCache();
 			return true;
 		} else if (expr instanceof LogicalExpression) {
-			clearCache();
-			return true;
+			if (! Expression$forEachExpression$LExpression$F$LExpression$B$(expr, (function (expr) {
+				return ! _Util$exprHasSideEffects$LExpression$(expr);
+			}))) {
+				clearCache();
+				return true;
+			}
 		} else if (expr instanceof FunctionExpression) {
 			clearCache();
 			return true;
@@ -9775,7 +9792,8 @@ _TailRecursionOptimizeCommand.prototype.optimizeFunction$LMemberFunctionDefiniti
 	var this$0$0;
 	var message$0$0;
 	var statements$0;
-	if ((funcDef._flags & 50) !== 0 || (funcDef._flags & 12) === 0) {
+	var _flags$0;
+	if (((_flags$0 = funcDef._flags) & 50) !== 0 || (_flags$0 & 12) === 0) {
 		return false;
 	}
 	altered = false;
@@ -9806,9 +9824,10 @@ _TailRecursionOptimizeCommand.prototype.optimizeFunction$LMemberFunctionDefiniti
 
 _TailRecursionOptimizeCommand.prototype._isTailCall$LMemberFunctionDefinition$LStatement$ = function (funcDef, statement) {
 	var returnStatement;
+	var _expr$0;
 	if (statement instanceof ReturnStatement) {
 		returnStatement = statement;
-		if (returnStatement._expr != null && returnStatement._expr instanceof CallExpression) {
+		if ((_expr$0 = returnStatement._expr) != null && _expr$0 instanceof CallExpression) {
 			return funcDef == _DetermineCalleeCommand$getCallingFuncDef$LStashable$(returnStatement._expr);
 		}
 	}
@@ -9818,9 +9837,10 @@ _TailRecursionOptimizeCommand.prototype._isTailCall$LMemberFunctionDefinition$LS
 
 function _TailRecursionOptimizeCommand$_isTailCall$L_TailRecursionOptimizeCommand$LMemberFunctionDefinition$LStatement$($this, funcDef, statement) {
 	var returnStatement;
+	var _expr$0;
 	if (statement instanceof ReturnStatement) {
 		returnStatement = statement;
-		if (returnStatement._expr != null && returnStatement._expr instanceof CallExpression) {
+		if ((_expr$0 = returnStatement._expr) != null && _expr$0 instanceof CallExpression) {
 			return funcDef == _DetermineCalleeCommand$getCallingFuncDef$LStashable$(returnStatement._expr);
 		}
 	}
@@ -19709,15 +19729,17 @@ function Parser$_parseDocCommentAdvanceWhiteSpace$LParser$($this) {
 Parser._parseDocCommentAdvanceWhiteSpace$LParser$ = Parser$_parseDocCommentAdvanceWhiteSpace$LParser$;
 
 function Parser$_isEOF$LParser$($this) {
+	var _lines$0;
 	Parser$_advanceToken$LParser$($this);
-	return $this._lineNumber === $this._lines.length && $this._columnOffset === $this._lines[$this._lines.length - 1].length;
+	return $this._lineNumber === (_lines$0 = $this._lines).length && $this._columnOffset === _lines$0[_lines$0.length - 1].length;
 };
 
 Parser._isEOF$LParser$ = Parser$_isEOF$LParser$;
 
 function Parser$_expectIsNotEOF$LParser$($this) {
+	var _lines$0;
 	Parser$_advanceToken$LParser$($this);
-	if ($this._lineNumber === $this._lines.length && $this._columnOffset === $this._lines[$this._lines.length - 1].length) {
+	if ($this._lineNumber === (_lines$0 = $this._lines).length && $this._columnOffset === _lines$0[_lines$0.length - 1].length) {
 		$this._errors.push(new CompileError$0($this._filename, $this._lineNumber, $this._columnOffset, "unexpected EOF"));
 		return false;
 	}
@@ -20060,6 +20082,7 @@ Parser._importStatement$LParser$LToken$ = Parser$_importStatement$LParser$LToken
 function Parser$_expectClassDefOpt$LParser$($this) {
 	var state;
 	var token;
+	var _value$0;
 	state = ({lineNumber: $this._lineNumber, columnOffset: $this._columnOffset, docComment: $this._docComment, tokenLength: $this._tokenLength, isGenerator: $this._isGenerator, numErrors: $this._errors.length, numClosures: ($this._closures != null ? $this._closures.length : 0), numObjectTypesUsed: $this._objectTypesUsed.length, numTemplateInstantiationRequests: $this._templateInstantiationRequests.length});
 	try {
 		while (true) {
@@ -20067,7 +20090,7 @@ function Parser$_expectClassDefOpt$LParser$($this) {
 			if (token == null) {
 				return false;
 			}
-			if (token._value === "class" || token._value === "interface" || token._value === "mixin") {
+			if ((_value$0 = token._value) === "class" || _value$0 === "interface" || _value$0 === "mixin") {
 				return true;
 			}
 		}
@@ -20314,6 +20337,7 @@ function Parser$_memberDefinition$LParser$($this) {
 	var type;
 	var initialValue;
 	var closures;
+	var _value$0;
 	flags = 0;
 	isNoExport = false;
 	docComment = null;
@@ -20332,7 +20356,7 @@ function Parser$_memberDefinition$LParser$($this) {
 			}
 			flags |= 1;
 			break;
-		} else if (token._value === "function" || token._value === "var") {
+		} else if ((_value$0 = token._value) === "function" || _value$0 === "var") {
 			break;
 		} else if (token._value === "__noexport__") {
 			if (isNoExport) {
@@ -20746,6 +20770,7 @@ function Parser$_objectTypeDeclaration$LParser$LToken$BF$LClassDefinition$B$($th
 	var typeArgs;
 	var objectType;
 	var enclosingType;
+	var _value$0;
 	if (firstToken == null) {
 		if ((token = Parser$_expectIdentifier$LParser$F$LParser$LCompletionCandidates$$($this, (function (self) {
 			return new CompletionCandidatesOfTopLevel(self, autoCompleteMatchCb);
@@ -20758,7 +20783,7 @@ function Parser$_objectTypeDeclaration$LParser$LToken$BF$LClassDefinition$B$($th
 	if (token._value === "variant") {
 		$this._errors.push(new CompileError(token, "cannot use 'variant' as a class name"));
 		return null;
-	} else if (token._value === "Nullable" || token._value === "MayBeUndefined") {
+	} else if ((_value$0 = token._value) === "Nullable" || _value$0 === "MayBeUndefined") {
 		$this._errors.push(new CompileError(token, "cannot use 'Nullable' (or MayBeUndefined) as a class name"));
 		return null;
 	}
@@ -22623,7 +22648,7 @@ function ClassDefinition(token, className, flags, extendType, implementTypes, me
 	this._objectTypesUsed = objectTypesUsed;
 	this._docComment = docComment;
 	ClassDefinition$_resetMembersClassDef$LClassDefinition$(this);
-	if (! (this instanceof TemplateClassDefinition)) {
+	if (! (this instanceof TemplateClassDefinition || this instanceof InstantiatedClassDefinition)) {
 		ClassDefinition$_generateWrapperFunctions$LClassDefinition$(this);
 	}
 };
@@ -23164,9 +23189,11 @@ ClassDefinition.prototype.getMemberTypeByName$ALCompileError$LToken$SBALType$N =
 		var j;
 		var this$0;
 		var this$1;
-		var this$0$0;
 		var this$2;
+		var this$0$0;
 		var this$3;
+		var this$4;
+		var _nameToken$0;
 		if (mode !== 2) {
 			for (i = 0; i < classDef._members.length; ++ i) {
 				member = classDef._members[i];
@@ -23174,7 +23201,18 @@ ClassDefinition.prototype.getMemberTypeByName$ALCompileError$LToken$SBALType$N =
 				} else if (((member._flags & 8) !== 0) === isStatic && name === (this$0$0 = member._nameToken, this$0$0._value)) {
 					if (member instanceof MemberVariableDefinition) {
 						if ((member._flags & 32) === 0) {
-							type = member.getType$();
+							this$0 = member;
+							switch (this$0._analyzeState) {
+							case 0:
+								MemberVariableDefinition$_lazyAnalyze$LMemberVariableDefinition$(this$0);
+								break;
+							case 1:
+								this$0._analysisContext.errors.push(new CompileError(_nameToken$0 = this$0._nameToken, "please declare type of variable '" + (_nameToken$0, _nameToken$0._value) + "' (detected recursion while trying to reduce type)"));
+								break;
+							default:
+								break;
+							}
+							type = this$0._type;
 							if (type != null && types.length === 0) {
 								types[0] = type;
 							}
@@ -23187,9 +23225,9 @@ ClassDefinition.prototype.getMemberTypeByName$ALCompileError$LToken$SBALType$N =
 									return;
 								}
 							}
-							if ((this$1 = member, this$1._statements) != null || mode !== 3 || (member._flags & 18) === 16) {
+							if ((this$2 = member, this$2._statements) != null || mode !== 3 || (member._flags & 18) === 16) {
 								for (j = 0; j < types.length; ++ j) {
-									if (Util$typesAreEqual$ALType$ALType$(MemberFunctionDefinition$getArgumentTypes$LMemberFunctionDefinition$(member), (this$0 = types[j], this$0._argTypes))) {
+									if (Util$typesAreEqual$ALType$ALType$(MemberFunctionDefinition$getArgumentTypes$LMemberFunctionDefinition$(member), (this$1 = types[j], this$1._argTypes))) {
 										break;
 									}
 								}
@@ -23208,10 +23246,10 @@ ClassDefinition.prototype.getMemberTypeByName$ALCompileError$LToken$SBALType$N =
 		}
 		if (mode !== 1) {
 			if (classDef._extendType != null) {
-				pushMatchingMember((this$2 = classDef._extendType, this$2._classDef));
+				pushMatchingMember((this$3 = classDef._extendType, this$3._classDef));
 			}
 			for (i = 0; i < classDef._implementTypes.length; ++ i) {
-				pushMatchingMember((this$3 = classDef._implementTypes[i], this$3._classDef));
+				pushMatchingMember((this$4 = classDef._implementTypes[i], this$4._classDef));
 			}
 		}
 	}
@@ -23240,9 +23278,11 @@ function ClassDefinition$getMemberTypeByName$LClassDefinition$ALCompileError$LTo
 		var j;
 		var this$0;
 		var this$1;
-		var this$0$0;
 		var this$2;
+		var this$0$0;
 		var this$3;
+		var this$4;
+		var _nameToken$0;
 		if (mode !== 2) {
 			for (i = 0; i < classDef._members.length; ++ i) {
 				member = classDef._members[i];
@@ -23250,7 +23290,18 @@ function ClassDefinition$getMemberTypeByName$LClassDefinition$ALCompileError$LTo
 				} else if (((member._flags & 8) !== 0) === isStatic && name === (this$0$0 = member._nameToken, this$0$0._value)) {
 					if (member instanceof MemberVariableDefinition) {
 						if ((member._flags & 32) === 0) {
-							type = member.getType$();
+							this$0 = member;
+							switch (this$0._analyzeState) {
+							case 0:
+								MemberVariableDefinition$_lazyAnalyze$LMemberVariableDefinition$(this$0);
+								break;
+							case 1:
+								this$0._analysisContext.errors.push(new CompileError(_nameToken$0 = this$0._nameToken, "please declare type of variable '" + (_nameToken$0, _nameToken$0._value) + "' (detected recursion while trying to reduce type)"));
+								break;
+							default:
+								break;
+							}
+							type = this$0._type;
 							if (type != null && types.length === 0) {
 								types[0] = type;
 							}
@@ -23263,9 +23314,9 @@ function ClassDefinition$getMemberTypeByName$LClassDefinition$ALCompileError$LTo
 									return;
 								}
 							}
-							if ((this$1 = member, this$1._statements) != null || mode !== 3 || (member._flags & 18) === 16) {
+							if ((this$2 = member, this$2._statements) != null || mode !== 3 || (member._flags & 18) === 16) {
 								for (j = 0; j < types.length; ++ j) {
-									if (Util$typesAreEqual$ALType$ALType$(MemberFunctionDefinition$getArgumentTypes$LMemberFunctionDefinition$(member), (this$0 = types[j], this$0._argTypes))) {
+									if (Util$typesAreEqual$ALType$ALType$(MemberFunctionDefinition$getArgumentTypes$LMemberFunctionDefinition$(member), (this$1 = types[j], this$1._argTypes))) {
 										break;
 									}
 								}
@@ -23284,10 +23335,10 @@ function ClassDefinition$getMemberTypeByName$LClassDefinition$ALCompileError$LTo
 		}
 		if (mode !== 1) {
 			if (classDef._extendType != null) {
-				pushMatchingMember((this$2 = classDef._extendType, this$2._classDef));
+				pushMatchingMember((this$3 = classDef._extendType, this$3._classDef));
 			}
 			for (i = 0; i < classDef._implementTypes.length; ++ i) {
-				pushMatchingMember((this$3 = classDef._implementTypes[i], this$3._classDef));
+				pushMatchingMember((this$4 = classDef._implementTypes[i], this$4._classDef));
 			}
 		}
 	}
@@ -23511,11 +23562,12 @@ ClassDefinition.prototype.normalizeClassDefs$ALCompileError$ = function (errors)
 	var this$0$1;
 	var this$5;
 	var this$6;
+	var _members$0;
 	for (x = 0; x < this._members.length; ++ x) {
 		for (y = 0; y < x; ++ y) {
 			if ((this$3 = this._members[x], this$0$0 = this$3._nameToken, this$0$0._value) === (this$4 = this._members[y], this$0$1 = this$4._nameToken, this$0$1._value) && ((this$5 = this._members[x], this$5._flags) & 8) === ((this$6 = this._members[y], this$6._flags) & 8)) {
 				errorMsg = null;
-				if (this._members[x] instanceof MemberFunctionDefinition && this._members[y] instanceof MemberFunctionDefinition) {
+				if ((_members$0 = this._members)[x] instanceof MemberFunctionDefinition && _members$0[y] instanceof MemberFunctionDefinition) {
 					if (Util$typesAreEqual$ALType$ALType$(MemberFunctionDefinition$getArgumentTypes$LMemberFunctionDefinition$(this._members[x]), MemberFunctionDefinition$getArgumentTypes$LMemberFunctionDefinition$(this._members[y]))) {
 						errorMsg = "a " + (((this$0 = this._members[x], this$0._flags) & 8) !== 0 ? "static" : "member") + " function with same name and arguments is already defined";
 						errorMsg += ":" + (x + "") + ":" + (MemberFunctionDefinition$getArgumentTypes$LMemberFunctionDefinition$(this._members[x]).length + "");
@@ -23552,11 +23604,12 @@ function ClassDefinition$normalizeClassDefs$LClassDefinition$ALCompileError$($th
 	var this$0$1;
 	var this$5;
 	var this$6;
+	var _members$0;
 	for (x = 0; x < $this._members.length; ++ x) {
 		for (y = 0; y < x; ++ y) {
 			if ((this$3 = $this._members[x], this$0$0 = this$3._nameToken, this$0$0._value) === (this$4 = $this._members[y], this$0$1 = this$4._nameToken, this$0$1._value) && ((this$5 = $this._members[x], this$5._flags) & 8) === ((this$6 = $this._members[y], this$6._flags) & 8)) {
 				errorMsg = null;
-				if ($this._members[x] instanceof MemberFunctionDefinition && $this._members[y] instanceof MemberFunctionDefinition) {
+				if ((_members$0 = $this._members)[x] instanceof MemberFunctionDefinition && _members$0[y] instanceof MemberFunctionDefinition) {
 					if (Util$typesAreEqual$ALType$ALType$(MemberFunctionDefinition$getArgumentTypes$LMemberFunctionDefinition$($this._members[x]), MemberFunctionDefinition$getArgumentTypes$LMemberFunctionDefinition$($this._members[y]))) {
 						errorMsg = "a " + (((this$0 = $this._members[x], this$0._flags) & 8) !== 0 ? "static" : "member") + " function with same name and arguments is already defined";
 						errorMsg += ":" + (x + "") + ":" + (MemberFunctionDefinition$getArgumentTypes$LMemberFunctionDefinition$($this._members[x]).length + "");
@@ -24229,8 +24282,6 @@ ClassDefinition._analyzeClassDef$LClassDefinition$LAnalysisContext$ = ClassDefin
 ClassDefinition.prototype._analyzeMembers$LAnalysisContext$ = function (context) {
 	var i;
 	var member;
-	var varDef;
-	var initialValue$0;
 	for (i = 0; i < this._members.length; ++ i) {
 		member = this._members[i];
 		if (member instanceof MemberFunctionDefinition) {
@@ -24238,11 +24289,7 @@ ClassDefinition.prototype._analyzeMembers$LAnalysisContext$ = function (context)
 				MemberFunctionDefinition$analyze$LMemberFunctionDefinition$LAnalysisContext$(member, context);
 			}
 		} else {
-			varDef = member;
-			if (varDef._initialValue == null && (this.flags$() & 16) !== 16) {
-				initialValue$0 = Expression$getDefaultValueExpressionOf$LType$(varDef.getType$());
-				varDef._initialValue = initialValue$0;
-			}
+			MemberVariableDefinition$analyze$LMemberVariableDefinition$LAnalysisContext$(member, context);
 		}
 	}
 };
@@ -24251,8 +24298,6 @@ ClassDefinition.prototype._analyzeMembers$LAnalysisContext$ = function (context)
 function ClassDefinition$_analyzeMembers$LClassDefinition$LAnalysisContext$($this, context) {
 	var i;
 	var member;
-	var varDef;
-	var initialValue$0;
 	for (i = 0; i < $this._members.length; ++ i) {
 		member = $this._members[i];
 		if (member instanceof MemberFunctionDefinition) {
@@ -24260,11 +24305,7 @@ function ClassDefinition$_analyzeMembers$LClassDefinition$LAnalysisContext$($thi
 				MemberFunctionDefinition$analyze$LMemberFunctionDefinition$LAnalysisContext$(member, context);
 			}
 		} else {
-			varDef = member;
-			if (varDef._initialValue == null && ($this.flags$() & 16) !== 16) {
-				initialValue$0 = Expression$getDefaultValueExpressionOf$LType$(varDef.getType$());
-				varDef._initialValue = initialValue$0;
-			}
+			MemberVariableDefinition$analyze$LMemberVariableDefinition$LAnalysisContext$(member, context);
 		}
 	}
 };
@@ -24274,7 +24315,17 @@ ClassDefinition._analyzeMembers$LClassDefinition$LAnalysisContext$ = ClassDefini
 ClassDefinition.prototype.analyzeUnusedVariables$ = function () {
 	var $this = this;
 	ClassDefinition$forEachMemberVariable$LClassDefinition$F$LMemberVariableDefinition$B$(this, (function (member) {
-		member.getType$();
+		var _nameToken$0;
+		switch (member._analyzeState) {
+		case 0:
+			MemberVariableDefinition$_lazyAnalyze$LMemberVariableDefinition$(member);
+			break;
+		case 1:
+			member._analysisContext.errors.push(new CompileError(_nameToken$0 = member._nameToken, "please declare type of variable '" + (_nameToken$0, _nameToken$0._value) + "' (detected recursion while trying to reduce type)"));
+			break;
+		default:
+			break;
+		}
 		return true;
 	}));
 };
@@ -24282,7 +24333,17 @@ ClassDefinition.prototype.analyzeUnusedVariables$ = function () {
 
 function ClassDefinition$analyzeUnusedVariables$LClassDefinition$($this) {
 	ClassDefinition$forEachMemberVariable$LClassDefinition$F$LMemberVariableDefinition$B$($this, (function (member) {
-		member.getType$();
+		var _nameToken$0;
+		switch (member._analyzeState) {
+		case 0:
+			MemberVariableDefinition$_lazyAnalyze$LMemberVariableDefinition$(member);
+			break;
+		case 1:
+			member._analysisContext.errors.push(new CompileError(_nameToken$0 = member._nameToken, "please declare type of variable '" + (_nameToken$0, _nameToken$0._value) + "' (detected recursion while trying to reduce type)"));
+			break;
+		default:
+			break;
+		}
 		return true;
 	}));
 };
@@ -25129,6 +25190,47 @@ MemberVariableDefinition.prototype.serialize$ = function () {
 };
 
 
+MemberVariableDefinition.prototype.analyze$LAnalysisContext$ = function (context) {
+	var rhs;
+	var initialValue$0;
+	var this$0;
+	var this$1;
+	if (this._initialValue == null && (this._classDef.flags$() & 16) !== 16) {
+		initialValue$0 = Expression$getDefaultValueExpressionOf$LType$(this.getType$());
+		this._initialValue = initialValue$0;
+	}
+	if (this._initialValue != null) {
+		rhs = this._initialValue;
+		if ((rhs instanceof ArrayLiteralExpression && (this$0 = rhs, this$0._exprs).length === 0 || rhs instanceof MapLiteralExpression && (this$1 = rhs, this$1._elements).length === 0) && rhs.getType$() == null) {
+			if (! AssignmentExpression$analyzeEmptyLiteralAssignment$LAnalysisContext$LToken$LType$LExpression$(context, rhs._token, this._type, rhs)) {
+				return;
+			}
+		}
+	}
+};
+
+
+function MemberVariableDefinition$analyze$LMemberVariableDefinition$LAnalysisContext$($this, context) {
+	var rhs;
+	var initialValue$0;
+	var this$0;
+	var this$1;
+	if ($this._initialValue == null && ($this._classDef.flags$() & 16) !== 16) {
+		initialValue$0 = Expression$getDefaultValueExpressionOf$LType$($this.getType$());
+		$this._initialValue = initialValue$0;
+	}
+	if ($this._initialValue != null) {
+		rhs = $this._initialValue;
+		if ((rhs instanceof ArrayLiteralExpression && (this$0 = rhs, this$0._exprs).length === 0 || rhs instanceof MapLiteralExpression && (this$1 = rhs, this$1._elements).length === 0) && rhs.getType$() == null) {
+			if (! AssignmentExpression$analyzeEmptyLiteralAssignment$LAnalysisContext$LToken$LType$LExpression$(context, rhs._token, $this._type, rhs)) {
+				return;
+			}
+		}
+	}
+};
+
+MemberVariableDefinition.analyze$LMemberVariableDefinition$LAnalysisContext$ = MemberVariableDefinition$analyze$LMemberVariableDefinition$LAnalysisContext$;
+
 MemberVariableDefinition.prototype.setAnalysisContext$LAnalysisContext$ = function (context) {
 	var this$0$0;
 	var funcDef$0$0;
@@ -25151,43 +25253,10 @@ function MemberVariableDefinition$setAnalysisContext$LMemberVariableDefinition$L
 MemberVariableDefinition.setAnalysisContext$LMemberVariableDefinition$LAnalysisContext$ = MemberVariableDefinition$setAnalysisContext$LMemberVariableDefinition$LAnalysisContext$;
 
 MemberVariableDefinition.prototype.getType$ = function () {
-	var ivType;
-	var this$0;
-	var this$1;
 	var _nameToken$0;
 	switch (this._analyzeState) {
 	case 0:
-		try {
-			this._analyzeState = 1;
-			if (this._initialValue != null) {
-				if (! this._initialValue.analyze$LAnalysisContext$LExpression$(this._analysisContext, null)) {
-					return null;
-				}
-				if (this._initialValue.isClassSpecifier$()) {
-					this._analysisContext.errors.push(new CompileError(this._initialValue._token, "cannot assign a class"));
-					return null;
-				}
-				ivType = this._initialValue.getType$();
-				if (this._type == null) {
-					if (ivType.equals$LType$(Type.nullType)) {
-						this._analysisContext.errors.push(new CompileError((this$0 = this._initialValue, this$0._token), "cannot assign null to an unknown type"));
-						return null;
-					}
-					if (ivType.equals$LType$(Type.voidType)) {
-						this._analysisContext.errors.push(new CompileError((this$1 = this._initialValue, this$1._token), "cannot assign void"));
-						return null;
-					}
-					this._type = ivType.asAssignableType$();
-				} else if (! ivType.isConvertibleTo$LType$(this._type)) {
-					this._analysisContext.errors.push(new CompileError(this._nameToken, "the variable is declared as '" + this._type.toString() + "' but initial value is '" + ivType.toString() + "'"));
-				}
-			}
-			this._analyzeState = 2;
-		} finally {
-			if (this._analyzeState !== 2) {
-				this._analyzeState = 3;
-			}
-		}
+		MemberVariableDefinition$_lazyAnalyze$LMemberVariableDefinition$(this);
 		break;
 	case 1:
 		this._analysisContext.errors.push(new CompileError(_nameToken$0 = this._nameToken, "please declare type of variable '" + (_nameToken$0, _nameToken$0._value) + "' (detected recursion while trying to reduce type)"));
@@ -25198,6 +25267,83 @@ MemberVariableDefinition.prototype.getType$ = function () {
 	return this._type;
 };
 
+
+MemberVariableDefinition.prototype._lazyAnalyze$ = function () {
+	var rhs;
+	var ivType;
+	try {
+		this._analyzeState = 1;
+		rhs = this._initialValue;
+		if (rhs != null) {
+			if (! rhs.analyze$LAnalysisContext$LExpression$(this._analysisContext, null)) {
+				return;
+			}
+			if (rhs.isClassSpecifier$()) {
+				this._analysisContext.errors.push(new CompileError(rhs._token, "cannot assign a class"));
+				return;
+			}
+			ivType = rhs.getType$();
+			if (this._type == null) {
+				if (ivType.equals$LType$(Type.nullType)) {
+					this._analysisContext.errors.push(new CompileError(rhs._token, "cannot assign null to an unknown type"));
+					return;
+				}
+				if (ivType.equals$LType$(Type.voidType)) {
+					this._analysisContext.errors.push(new CompileError(rhs._token, "cannot assign void"));
+					return;
+				}
+				this._type = ivType.asAssignableType$();
+			} else if (! ivType.isConvertibleTo$LType$(this._type)) {
+				this._analysisContext.errors.push(new CompileError(this._nameToken, "the variable is declared as '" + this._type.toString() + "' but initial value is '" + ivType.toString() + "'"));
+			}
+		}
+		this._analyzeState = 2;
+	} finally {
+		if (this._analyzeState !== 2) {
+			this._analyzeState = 3;
+		}
+	}
+};
+
+
+function MemberVariableDefinition$_lazyAnalyze$LMemberVariableDefinition$($this) {
+	var rhs;
+	var ivType;
+	try {
+		$this._analyzeState = 1;
+		rhs = $this._initialValue;
+		if (rhs != null) {
+			if (! rhs.analyze$LAnalysisContext$LExpression$($this._analysisContext, null)) {
+				return;
+			}
+			if (rhs.isClassSpecifier$()) {
+				$this._analysisContext.errors.push(new CompileError(rhs._token, "cannot assign a class"));
+				return;
+			}
+			ivType = rhs.getType$();
+			if ($this._type == null) {
+				if (ivType.equals$LType$(Type.nullType)) {
+					$this._analysisContext.errors.push(new CompileError(rhs._token, "cannot assign null to an unknown type"));
+					return;
+				}
+				if (ivType.equals$LType$(Type.voidType)) {
+					$this._analysisContext.errors.push(new CompileError(rhs._token, "cannot assign void"));
+					return;
+				}
+				$this._type = ivType.asAssignableType$();
+			} else if (! ivType.isConvertibleTo$LType$($this._type)) {
+				$this._analysisContext.errors.push(new CompileError($this._nameToken, "the variable is declared as '" + $this._type.toString() + "' but initial value is '" + ivType.toString() + "'"));
+			}
+		}
+		$this._analyzeState = 2;
+	} finally {
+		if ($this._analyzeState !== 2) {
+			$this._analyzeState = 3;
+		}
+	}
+};
+
+MemberVariableDefinition._lazyAnalyze$LMemberVariableDefinition$ = MemberVariableDefinition$_lazyAnalyze$LMemberVariableDefinition$;
 
 MemberVariableDefinition.prototype.getInitialValue$ = function () {
 	return this._initialValue;
@@ -26091,11 +26237,7 @@ MemberFunctionDefinition.prototype.generateWrappersForDefaultParameters$ = funct
 			invocant = ((this._flags & 8) === 0 ? new ThisExpression(new Token$1("this", false), this._classDef) : new ClassExpression(new Token$1(this._classDef.className$(), true), createObjectType(this._classDef)));
 			methodRef = new PropertyExpression(new Token$1(".", false), invocant, this._nameToken, MemberFunctionDefinition$getArgumentTypes$LMemberFunctionDefinition$(this));
 			callExpression = new CallExpression(new Token$1("(", false), methodRef, argExprs);
-			if (this._returnType != Type.voidType) {
-				statement = new ReturnStatement(new Token$1("return", false), callExpression);
-			} else {
-				statement = new ExpressionStatement(callExpression);
-			}
+			statement = new ReturnStatement(new Token$1("return", false), callExpression);
 		}
 		if (! (this instanceof TemplateFunctionDefinition)) {
 			wrapper = new MemberFunctionDefinition(this._token, this._nameToken, this._flags | 1024 | 32768, this._returnType, formalArgs, [], [ statement ], this._closures.slice(0), this._lastTokenOfBody, this._docComment);
@@ -26161,11 +26303,7 @@ function MemberFunctionDefinition$generateWrappersForDefaultParameters$LMemberFu
 			invocant = (($this._flags & 8) === 0 ? new ThisExpression(new Token$1("this", false), $this._classDef) : new ClassExpression(new Token$1($this._classDef.className$(), true), createObjectType($this._classDef)));
 			methodRef = new PropertyExpression(new Token$1(".", false), invocant, $this._nameToken, MemberFunctionDefinition$getArgumentTypes$LMemberFunctionDefinition$($this));
 			callExpression = new CallExpression(new Token$1("(", false), methodRef, argExprs);
-			if ($this._returnType != Type.voidType) {
-				statement = new ReturnStatement(new Token$1("return", false), callExpression);
-			} else {
-				statement = new ExpressionStatement(callExpression);
-			}
+			statement = new ReturnStatement(new Token$1("return", false), callExpression);
 		}
 		if (! ($this instanceof TemplateFunctionDefinition)) {
 			wrapper = new MemberFunctionDefinition($this._token, $this._nameToken, $this._flags | 1024 | 32768, $this._returnType, formalArgs, [], [ statement ], $this._closures.slice(0), $this._lastTokenOfBody, $this._docComment);
@@ -26653,6 +26791,7 @@ MemberFunctionDefinition.prototype.deductTypeIfUnknown$LAnalysisContext$LResolve
 	var this$9;
 	var this$10;
 	var type$4;
+	var _args$0;
 	for (i = 0; i < this._args.length; ++ i) {
 		if ((this$0 = this._args[i], this$0._type) == null) {
 			break;
@@ -26669,7 +26808,7 @@ MemberFunctionDefinition.prototype.deductTypeIfUnknown$LAnalysisContext$LResolve
 	if (type._argTypes.length !== this._args.length) {
 		context.errors.push(new CompileError(this._token, "expected the function to have " + (type._argTypes.length + "") + " arguments, but found " + (this._args.length + "")));
 		return false;
-	} else if (this._args.length !== 0 && type._argTypes[this._args.length - 1] instanceof VariableLengthArgumentType) {
+	} else if ((_args$0 = this._args).length !== 0 && type._argTypes[_args$0.length - 1] instanceof VariableLengthArgumentType) {
 		context.errors.push(new CompileError(this._token, "could not deduct function argument (left hand expression is a function with an variable-length argument)"));
 		return false;
 	}
@@ -26720,6 +26859,7 @@ function MemberFunctionDefinition$deductTypeIfUnknown$LMemberFunctionDefinition$
 	var this$9;
 	var this$10;
 	var type$4;
+	var _args$0;
 	for (i = 0; i < $this._args.length; ++ i) {
 		if ((this$0 = $this._args[i], this$0._type) == null) {
 			break;
@@ -26736,7 +26876,7 @@ function MemberFunctionDefinition$deductTypeIfUnknown$LMemberFunctionDefinition$
 	if (type._argTypes.length !== $this._args.length) {
 		context.errors.push(new CompileError($this._token, "expected the function to have " + (type._argTypes.length + "") + " arguments, but found " + ($this._args.length + "")));
 		return false;
-	} else if ($this._args.length !== 0 && type._argTypes[$this._args.length - 1] instanceof VariableLengthArgumentType) {
+	} else if ((_args$0 = $this._args).length !== 0 && type._argTypes[_args$0.length - 1] instanceof VariableLengthArgumentType) {
 		context.errors.push(new CompileError($this._token, "could not deduct function argument (left hand expression is a function with an variable-length argument)"));
 		return false;
 	}
@@ -28231,7 +28371,7 @@ ObjectType.prototype.toString = function () {
 
 
 ObjectType.prototype.forEachType$F$LType$B$ = function (cb) {
-	throw new Error("logic flaw");
+	return true;
 };
 
 
@@ -28564,6 +28704,7 @@ ResolvedFunctionType.prototype._deduceByArgumentTypes$LToken$ALType$BBALCompileN
 	var this$2;
 	var this$3;
 	var _argTypes$0;
+	var _argTypes$1;
 	compareArg = (function (formal, actual) {
 		return (formal.equals$LType$(actual) ? true : ! exact && actual.isConvertibleTo$LType$(formal) ? true : false);
 	});
@@ -28575,7 +28716,7 @@ ResolvedFunctionType.prototype._deduceByArgumentTypes$LToken$ALType$BBALCompileN
 		}
 		return null;
 	}
-	if (this._argTypes.length !== 0 && this._argTypes[this._argTypes.length - 1] instanceof VariableLengthArgumentType) {
+	if ((_argTypes$1 = this._argTypes).length !== 0 && _argTypes$1[_argTypes$1.length - 1] instanceof VariableLengthArgumentType) {
 		vargType = (_argTypes$0 = this._argTypes)[_argTypes$0.length - 1];
 		if (argTypes.length < _argTypes$0.length - 1) {
 			notes.push(new CompileNote(token, 'candidate function not viable: wrong number of arguments'));
@@ -28632,11 +28773,12 @@ ResolvedFunctionType.prototype._getExpectedTypes$ALUtil$x2EArgumentTypeRequest$N
 	var callbackArgTypes;
 	var this$0;
 	var _argTypes$0;
+	var _argTypes$1;
 	if (this instanceof StaticFunctionType !== isStatic) {
 		return;
 	}
 	argTypes = [];
-	if (this._argTypes.length > 0 && numberOfArgs >= this._argTypes.length && this._argTypes[this._argTypes.length - 1] instanceof VariableLengthArgumentType) {
+	if ((_argTypes$1 = this._argTypes).length > 0 && numberOfArgs >= _argTypes$1.length && _argTypes$1[_argTypes$1.length - 1] instanceof VariableLengthArgumentType) {
 		for (i = 0; i < numberOfArgs; ++ i) {
 			if (i < this._argTypes.length - 1) {
 				argTypes[i] = this._argTypes[i];
@@ -28825,6 +28967,7 @@ TemplateFunctionType.prototype._deduceByArgumentTypes$LToken$ALType$BBALCompileN
 	var member;
 	var i;
 	var this$0;
+	var _argTypes$0;
 	errors = [];
 	if ((((this$0 = this._funcDef, this$0._flags) & 8) === 8) !== isStatic) {
 		if (isStatic) {
@@ -28834,7 +28977,7 @@ TemplateFunctionType.prototype._deduceByArgumentTypes$LToken$ALType$BBALCompileN
 		}
 		return null;
 	}
-	if (this._argTypes.length !== 0 && this._argTypes[this._argTypes.length - 1] instanceof VariableLengthArgumentType) {
+	if ((_argTypes$0 = this._argTypes).length !== 0 && _argTypes$0[_argTypes$0.length - 1] instanceof VariableLengthArgumentType) {
 		notes.push(new CompileNote(token, "template functions with variable-length arguments cannot be instantiated by the arguments: please specify the type arguments by hand"));
 		return null;
 	} else {
@@ -28866,11 +29009,12 @@ TemplateFunctionType.prototype._getExpectedTypes$ALUtil$x2EArgumentTypeRequest$N
 	var this$3;
 	var this$4;
 	var _argTypes$0;
+	var _argTypes$1;
 	if ((((this$0 = this._funcDef, this$0._flags) & 8) !== 0) !== isStatic) {
 		return;
 	}
 	argTypes = [];
-	if (this._argTypes.length > 0 && numberOfArgs >= this._argTypes.length && this._argTypes[this._argTypes.length - 1] instanceof VariableLengthArgumentType) {
+	if ((_argTypes$1 = this._argTypes).length > 0 && numberOfArgs >= _argTypes$1.length && _argTypes$1[_argTypes$1.length - 1] instanceof VariableLengthArgumentType) {
 		for (i = 0; i < numberOfArgs; ++ i) {
 			if (i < this._argTypes.length - 1) {
 				argTypes[i] = this._argTypes[i];
@@ -31390,6 +31534,8 @@ MapLiteralExpression.prototype.analyze$LAnalysisContext$LExpression$ = function 
 	var this$0$1;
 	var token$0;
 	var typeArguments$0;
+	var _type$0;
+	var _type$1;
 	succeeded = true;
 	for (i = 0; i < this._elements.length; ++ i) {
 		if (! (this$1 = this._elements[i], this$1._expr).analyze$LAnalysisContext$LExpression$(context, this)) {
@@ -31402,8 +31548,8 @@ MapLiteralExpression.prototype.analyze$LAnalysisContext$LExpression$ = function 
 	if (! succeeded) {
 		return false;
 	}
-	if (this._type != null && this._type == Type.variantType) {
-	} else if (this._type != null && this._type instanceof ObjectType) {
+	if ((_type$1 = this._type) != null && _type$1 == Type.variantType) {
+	} else if ((_type$0 = this._type) != null && _type$0 instanceof ObjectType) {
 		classDef = this._type.getClassDef$();
 		if (! (classDef instanceof InstantiatedClassDefinition && (this$2 = classDef, this$0$0 = this$2._templateClassDef, this$0$0._className) === "Map")) {
 			context.errors.push(new CompileError(this._token, "specified type is not a map type"));
@@ -31818,6 +31964,7 @@ AsExpression.prototype.analyze$LAnalysisContext$LExpression$ = function (context
 	var this$0$0;
 	var this$2;
 	var this$3;
+	var _type$0;
 	if (! UnaryExpression$_analyze$LUnaryExpression$LAnalysisContext$(this, context)) {
 		return false;
 	}
@@ -31832,7 +31979,7 @@ AsExpression.prototype.analyze$LAnalysisContext$LExpression$ = function (context
 	exprType = (this$0 instanceof NullableType ? (this$0$0 = this$0, this$0$0._baseType) : this$0);
 	success = false;
 	if (exprType.equals$LType$(Type.nullType)) {
-		if (this._type instanceof ObjectType || this._type instanceof FunctionType) {
+		if ((_type$0 = this._type) instanceof ObjectType || _type$0 instanceof FunctionType) {
 			success = true;
 		}
 	} else if (exprType instanceof PrimitiveType) {
@@ -32621,7 +32768,19 @@ AssignmentExpression.prototype.analyze$LAnalysisContext$LExpression$ = function 
 		return AssignmentExpression$_analyzeFunctionExpressionAssignment$LAssignmentExpression$LAnalysisContext$LExpression$(this, context, parentExpr);
 	}
 	if (this._expr2 instanceof ArrayLiteralExpression && (this$0 = this._expr2, this$0._exprs).length === 0 && this._expr2.getType$() == null || this._expr2 instanceof MapLiteralExpression && (this$1 = this._expr2, this$1._elements).length === 0 && this._expr2.getType$() == null) {
-		return AssignmentExpression$_analyzeEmptyLiteralAssignment$LAssignmentExpression$LAnalysisContext$LExpression$(this, context, parentExpr);
+		if (! this._expr1.analyze$LAnalysisContext$LExpression$(context, this)) {
+			return false;
+		}
+		if (! AssignmentExpression$analyzeEmptyLiteralAssignment$LAnalysisContext$LToken$LType$LExpression$(context, this._token, this._expr1.getType$(), this._expr2)) {
+			return false;
+		}
+		if (! this._expr1.assertIsAssignable$LAnalysisContext$LToken$LType$(context, this._token, this._expr2.getType$())) {
+			return false;
+		}
+		if (! this._expr2.analyze$LAnalysisContext$LExpression$(context, this)) {
+			return false;
+		}
+		return true;
 	}
 	if (! (! this._expr1.analyze$LAnalysisContext$LExpression$(context, this) ? false : ! this._expr2.analyze$LAnalysisContext$LExpression$(context, this) ? false : true)) {
 		return false;
@@ -32723,80 +32882,37 @@ function AssignmentExpression$_analyzeFusedAssignment$LAssignmentExpression$LAna
 
 AssignmentExpression._analyzeFusedAssignment$LAssignmentExpression$LAnalysisContext$ = AssignmentExpression$_analyzeFusedAssignment$LAssignmentExpression$LAnalysisContext$;
 
-AssignmentExpression.prototype._analyzeEmptyLiteralAssignment$LAnalysisContext$LExpression$ = function (context, parentExpr) {
+function AssignmentExpression$analyzeEmptyLiteralAssignment$LAnalysisContext$LToken$LType$LExpression$(context, token, lhsType, rhs) {
 	var classDef;
 	var this$0;
 	var this$0$0;
 	var this$1;
-	var type$0;
 	var this$3;
 	var this$0$1;
 	var this$4;
-	var type$2;
-	if (! this._expr1.analyze$LAnalysisContext$LExpression$(context, this)) {
+	if (lhsType == null) {
+		context.errors.push(new CompileError(token, "either side of the operator should be fully type-qualified"));
 		return false;
 	}
-	if (this._expr1.getType$() == null) {
-		context.errors.push(new CompileError(this._token, "either side of the operator should be fully type-qualified"));
-	}
-	if (this._expr2 instanceof ArrayLiteralExpression) {
-		if (! (this._expr1.getType$() instanceof ObjectType && (classDef = this._expr1.getType$().getClassDef$()) instanceof InstantiatedClassDefinition && (this$0 = classDef, this$0$0 = this$0._templateClassDef, this$0$0._className) === "Array")) {
-			context.errors.push(new CompileError(this._token, "cannot deduce the type of [] because left-hand-side expression is not of Array type"));
+	if (rhs instanceof ArrayLiteralExpression) {
+		if (! (lhsType instanceof ObjectType && (classDef = lhsType.getClassDef$()) instanceof InstantiatedClassDefinition && (this$0 = classDef, this$0$0 = this$0._templateClassDef, this$0$0._className) === "Array")) {
+			context.errors.push(new CompileError(token, "cannot deduce the type of [] because left-hand-side expression is not of Array type"));
 			return false;
 		}
-		this$1 = this._expr2;
-		type$0 = this._expr1.getType$();
-		this$1._type = type$0;
+		this$1 = rhs;
+		this$1._type = lhsType;
 	} else {
-		if (! (this._expr1.getType$() instanceof ObjectType && (classDef = this._expr1.getType$().getClassDef$()) instanceof InstantiatedClassDefinition && (this$3 = classDef, this$0$1 = this$3._templateClassDef, this$0$1._className) === "Map")) {
-			context.errors.push(new CompileError(this._token, "cannot deduce the type of {} because left-hand-side expression is not of Map type"));
+		if (! (lhsType instanceof ObjectType && (classDef = lhsType.getClassDef$()) instanceof InstantiatedClassDefinition && (this$3 = classDef, this$0$1 = this$3._templateClassDef, this$0$1._className) === "Map")) {
+			context.errors.push(new CompileError(token, "cannot deduce the type of {} because left-hand-side expression is not of Map type"));
 			return false;
 		}
-		this$4 = this._expr2;
-		type$2 = this._expr1.getType$();
-		this$4._type = type$2;
+		this$4 = rhs;
+		this$4._type = lhsType;
 	}
-	return (! this._expr1.assertIsAssignable$LAnalysisContext$LToken$LType$(context, this._token, this._expr2.getType$()) ? false : ! this._expr2.analyze$LAnalysisContext$LExpression$(context, this) ? false : true);
+	return true;
 };
 
-
-function AssignmentExpression$_analyzeEmptyLiteralAssignment$LAssignmentExpression$LAnalysisContext$LExpression$($this, context, parentExpr) {
-	var classDef;
-	var this$0;
-	var this$0$0;
-	var this$1;
-	var type$0;
-	var this$3;
-	var this$0$1;
-	var this$4;
-	var type$2;
-	if (! $this._expr1.analyze$LAnalysisContext$LExpression$(context, $this)) {
-		return false;
-	}
-	if ($this._expr1.getType$() == null) {
-		context.errors.push(new CompileError($this._token, "either side of the operator should be fully type-qualified"));
-	}
-	if ($this._expr2 instanceof ArrayLiteralExpression) {
-		if (! ($this._expr1.getType$() instanceof ObjectType && (classDef = $this._expr1.getType$().getClassDef$()) instanceof InstantiatedClassDefinition && (this$0 = classDef, this$0$0 = this$0._templateClassDef, this$0$0._className) === "Array")) {
-			context.errors.push(new CompileError($this._token, "cannot deduce the type of [] because left-hand-side expression is not of Array type"));
-			return false;
-		}
-		this$1 = $this._expr2;
-		type$0 = $this._expr1.getType$();
-		this$1._type = type$0;
-	} else {
-		if (! ($this._expr1.getType$() instanceof ObjectType && (classDef = $this._expr1.getType$().getClassDef$()) instanceof InstantiatedClassDefinition && (this$3 = classDef, this$0$1 = this$3._templateClassDef, this$0$1._className) === "Map")) {
-			context.errors.push(new CompileError($this._token, "cannot deduce the type of {} because left-hand-side expression is not of Map type"));
-			return false;
-		}
-		this$4 = $this._expr2;
-		type$2 = $this._expr1.getType$();
-		this$4._type = type$2;
-	}
-	return (! $this._expr1.assertIsAssignable$LAnalysisContext$LToken$LType$(context, $this._token, $this._expr2.getType$()) ? false : ! $this._expr2.analyze$LAnalysisContext$LExpression$(context, $this) ? false : true);
-};
-
-AssignmentExpression._analyzeEmptyLiteralAssignment$LAssignmentExpression$LAnalysisContext$LExpression$ = AssignmentExpression$_analyzeEmptyLiteralAssignment$LAssignmentExpression$LAnalysisContext$LExpression$;
+AssignmentExpression.analyzeEmptyLiteralAssignment$LAnalysisContext$LToken$LType$LExpression$ = AssignmentExpression$analyzeEmptyLiteralAssignment$LAnalysisContext$LToken$LType$LExpression$;
 
 AssignmentExpression.prototype._analyzeFunctionExpressionAssignment$LAnalysisContext$LExpression$ = function (context, parentExpr) {
 	var this$0;
@@ -34146,8 +34262,17 @@ ReturnStatement.prototype.doAnalyze$LAnalysisContext$ = function (context) {
 		}
 	} else if (returnType.equals$LType$(Type.voidType)) {
 		if (this._expr != null) {
-			context.errors.push(new CompileError(this._token, "cannot return a value from a void function"));
-			return true;
+			if (! Statement$_analyzeExpr$LStatement$LAnalysisContext$LExpression$(this, context, this._expr)) {
+				return true;
+			}
+			exprType = this._expr.getType$();
+			if (exprType == null) {
+				return true;
+			}
+			if (! exprType.equals$LType$(Type.voidType)) {
+				context.errors.push(new CompileError(this._token, "unmatched return type, expected a void expression"));
+				return true;
+			}
 		}
 	} else {
 		if (this._expr == null) {
@@ -36718,7 +36843,7 @@ DocumentGenerator.prototype._buildFooterOfFile$LParser$ = function (parser) {
 		}
 	}
 	_ += "<p class=\"jsxdoc-notice\">This document was automatically generated by <a href=\"http://jsx.github.io/\">JSX</a> ";
-	_ += "0.9.62".replace(/\n$/, "");
+	_ += "0.9.63".replace(/\n$/, "");
 	_ += "<br />\n";
 	_ += "at ";
 	_ += DocumentGenerator$_escape$LDocumentGenerator$S(this, new Date().toISOString()).replace(/\n$/, "");
@@ -36755,7 +36880,7 @@ function DocumentGenerator$_buildFooterOfFile$LDocumentGenerator$LParser$($this,
 		}
 	}
 	_ += "<p class=\"jsxdoc-notice\">This document was automatically generated by <a href=\"http://jsx.github.io/\">JSX</a> ";
-	_ += "0.9.62".replace(/\n$/, "");
+	_ += "0.9.63".replace(/\n$/, "");
 	_ += "<br />\n";
 	_ += "at ";
 	_ += DocumentGenerator$_escape$LDocumentGenerator$S($this, new Date().toISOString()).replace(/\n$/, "");
@@ -38383,11 +38508,11 @@ $__jsx_lazy_init(_StatementTransformer, "_statementCountMap", function () {
 });
 CodeTransformer.stopIterationType = null;
 CodeTransformer.jsxGeneratorClassDef = null;
-Meta.VERSION_STRING = "0.9.62";
-Meta.VERSION_NUMBER = 0.009062;
-Meta.LAST_COMMIT_HASH = "4cad8ce0cffd745d74d7a71a6fade7810bb7fd20";
-Meta.LAST_COMMIT_DATE = "2013-08-25 08:34:23 +0900";
-Meta.IDENTIFIER = "0.9.62 (2013-08-25 08:34:23 +0900; 4cad8ce0cffd745d74d7a71a6fade7810bb7fd20)";
+Meta.VERSION_STRING = "0.9.63";
+Meta.VERSION_NUMBER = 0.009063;
+Meta.LAST_COMMIT_HASH = "2ec017d883d4d01af3d13db10eb1dfa291034b54";
+Meta.LAST_COMMIT_DATE = "2013-08-31 12:05:12 +0900";
+Meta.IDENTIFIER = "0.9.63 (2013-08-31 12:05:12 +0900; 2ec017d883d4d01af3d13db10eb1dfa291034b54)";
 SourceMapper.NODE_SOURCE_MAP_HEADER = "require('source-map-support').install();\n\n";
 SourceMapper.WEB_SOURCE_MAP_HEADER = "";
 $__jsx_lazy_init(node, "__dirname", function () {

@@ -99,7 +99,7 @@ class ClassDefinition implements Stashable {
 
 		this._resetMembersClassDef();
 
-		if (! (this instanceof TemplateClassDefinition)) {
+		if (! (this instanceof TemplateClassDefinition || this instanceof InstantiatedClassDefinition)) {
 			this._generateWrapperFunctions();
 		}
 	}
@@ -786,11 +786,7 @@ class ClassDefinition implements Stashable {
 					(member as MemberFunctionDefinition).analyze(context);
 				}
 			} else {
-				// Just sets the initial values; analysis of member variables is performed lazily (and those that where never analyzed will be removed by dead code elimination)
-				var varDef = member as MemberVariableDefinition;
-				if (varDef.getInitialValue() == null && (this.flags() & ClassDefinition.IS_NATIVE) != ClassDefinition.IS_NATIVE) {
-					varDef.setInitialValue(Expression.getDefaultValueExpressionOf(varDef.getType()));
-				}
+				(member as MemberVariableDefinition).analyze(context);
 			}
 		}
 	}
@@ -1144,6 +1140,25 @@ class MemberVariableDefinition extends MemberDefinition {
 		} : Map.<variant>;
 	}
 
+	function analyze (context : AnalysisContext) : void {
+		// Just sets the initial values and simple left-to-right type deduction; analysis of member variables is performed lazily (and those that where never analyzed will be removed by dead code elimination)
+		if (this.getInitialValue() == null && (this.getClassDef().flags() & ClassDefinition.IS_NATIVE) != ClassDefinition.IS_NATIVE) {
+			this.setInitialValue(Expression.getDefaultValueExpressionOf(this.getType()));
+		}
+
+		// left-to-right type deduction
+		if (this.getInitialValue() != null) {
+			var rhs = this.getInitialValue();
+			// handles v = [] or v = {}
+			if (((rhs instanceof ArrayLiteralExpression && (rhs as ArrayLiteralExpression).getExprs().length == 0) || (rhs instanceof MapLiteralExpression && (rhs as MapLiteralExpression).getElements().length == 0)) && rhs.getType() == null) {
+				if (! AssignmentExpression.analyzeEmptyLiteralAssignment(context, rhs.getToken(), this._type, rhs)) {
+					return;
+				}
+				// ok
+			}
+		}
+	}
+
 	function setAnalysisContext (context : AnalysisContext) : void {
 		this._analysisContext = context.clone();
 	}
@@ -1151,36 +1166,7 @@ class MemberVariableDefinition extends MemberDefinition {
 	override function getType () : Type {
 		switch (this._analyzeState) {
 		case MemberVariableDefinition.NOT_ANALYZED:
-			try {
-				this._analyzeState = MemberVariableDefinition.IS_ANALYZING;
-				if (this._initialValue != null) {
-					if (! this._initialValue.analyze(this._analysisContext, null))
-						return null;
-					if (this._initialValue.isClassSpecifier()) {
-						this._analysisContext.errors.push(new CompileError(this._initialValue._token, "cannot assign a class"));
-						return null;
-					}
-					var ivType = this._initialValue.getType();
-					if (this._type == null) {
-						if (ivType.equals(Type.nullType)) {
-							this._analysisContext.errors.push(new CompileError(this._initialValue.getToken(), "cannot assign null to an unknown type"));
-							return null;
-						}
-						if (ivType.equals(Type.voidType)) {
-							this._analysisContext.errors.push(new CompileError(this._initialValue.getToken(), "cannot assign void"));
-							return null;
-						}
-						this._type = ivType.asAssignableType();
-					} else if (! ivType.isConvertibleTo(this._type)) {
-						this._analysisContext.errors.push(new CompileError(this._nameToken,
-							"the variable is declared as '" + this._type.toString() + "' but initial value is '" + ivType.toString() + "'"));
-					}
-				}
-				this._analyzeState = MemberVariableDefinition.ANALYZE_SUCEEDED;
-			} finally {
-				if (this._analyzeState != MemberVariableDefinition.ANALYZE_SUCEEDED)
-					this._analyzeState = MemberVariableDefinition.ANALYZE_FAILED;
-			}
+			this._lazyAnalyze();
 			break;
 		case MemberVariableDefinition.IS_ANALYZING:
 			this._analysisContext.errors.push(new CompileError(this.getNameToken(),
@@ -1190,6 +1176,40 @@ class MemberVariableDefinition extends MemberDefinition {
 			break;
 		}
 		return this._type;
+	}
+
+	function _lazyAnalyze() : void {
+		try {
+			this._analyzeState = MemberVariableDefinition.IS_ANALYZING;
+			var rhs = this._initialValue;
+			if (rhs != null) {
+				if (! rhs.analyze(this._analysisContext, null))
+					return;
+				if (rhs.isClassSpecifier()) {
+					this._analysisContext.errors.push(new CompileError(rhs._token, "cannot assign a class"));
+					return;
+				}
+				var ivType = rhs.getType();
+				if (this._type == null) {
+					if (ivType.equals(Type.nullType)) {
+						this._analysisContext.errors.push(new CompileError(rhs.getToken(), "cannot assign null to an unknown type"));
+						return;
+					}
+					if (ivType.equals(Type.voidType)) {
+						this._analysisContext.errors.push(new CompileError(rhs.getToken(), "cannot assign void"));
+						return;
+					}
+					this._type = ivType.asAssignableType();
+				} else if (! ivType.isConvertibleTo(this._type)) {
+					this._analysisContext.errors.push(new CompileError(this._nameToken,
+						"the variable is declared as '" + this._type.toString() + "' but initial value is '" + ivType.toString() + "'"));
+				}
+			}
+			this._analyzeState = MemberVariableDefinition.ANALYZE_SUCEEDED;
+		} finally {
+			if (this._analyzeState != MemberVariableDefinition.ANALYZE_SUCEEDED)
+				this._analyzeState = MemberVariableDefinition.ANALYZE_FAILED;
+		}
 	}
 
 	function getInitialValue () : Expression {
@@ -1667,12 +1687,7 @@ class MemberFunctionDefinition extends MemberDefinition implements Block {
 
 				var methodRef = new PropertyExpression(new Token(".", false), invocant, this.getNameToken(), this.getArgumentTypes());
 				var callExpression = new CallExpression(new Token("(", false), methodRef, argExprs);
-				if (this.getReturnType() != Type.voidType) {
-					statement = new ReturnStatement(new Token("return", false), callExpression);
-				}
-				else {
-					statement = new ExpressionStatement(callExpression);
-				}
+				statement = new ReturnStatement(new Token("return", false), callExpression);
 			}
 			// build function
 			if (!(this instanceof TemplateFunctionDefinition)) {

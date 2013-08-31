@@ -1,4 +1,4 @@
-// generatedy by JSX compiler 0.9.62 (2013-08-25 08:34:23 +0900; 4cad8ce0cffd745d74d7a71a6fade7810bb7fd20)
+// generatedy by JSX compiler 0.9.63 (2013-08-31 12:05:12 +0900; 2ec017d883d4d01af3d13db10eb1dfa291034b54)
 var JSX = {};
 (function (JSX) {
 /**
@@ -119,12 +119,12 @@ Base.prototype.f$NN = function (a, b) {
 
 
 Base.prototype.f$ = function () {
-	this.f$NN(10, 20);
+	return this.f$NN(10, 20);
 };
 
 
 Base.prototype.f$N = function (a) {
-	this.f$NN(a, 20);
+	return this.f$NN(a, 20);
 };
 
 
@@ -140,12 +140,12 @@ Derived.prototype.f$NN = function (a, b) {
 
 
 Derived.prototype.f$ = function () {
-	this.f$NN(100, 200);
+	return this.f$NN(100, 200);
 };
 
 
 Derived.prototype.f$N = function (a) {
-	this.f$NN(a, 200);
+	return this.f$NN(a, 200);
 };
 
 

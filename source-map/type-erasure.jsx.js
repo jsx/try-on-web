@@ -108,27 +108,97 @@ function StopIteration() {
 };
 
 $__jsx_extend([StopIteration], Error);
+function AnimalConcept() {
+};
+
+$__jsx_extend([AnimalConcept], Object);
+AnimalConcept.prototype.$__jsx_implements_AnimalConcept = true;
+
+function Duck() {
+};
+
+$__jsx_extend([Duck], Object);
+Duck.prototype.say$ = function () {
+	console.log("quack!");
+};
+
+
+function Dog() {
+};
+
+$__jsx_extend([Dog], Object);
+Dog.prototype.say$ = function () {
+	console.log("bow!");
+};
+
+
+function Human(animal) {
+	this._animal = animal;
+};
+
+$__jsx_extend([Human], Object);
+Human.prototype.touch$ = function () {
+	this._animal.say$();
+};
+
+
+function Human$make$LDuck$(target) {
+	return new Human(new Human$x2E_AnimalHolder$x2E$x3CDuck$x3E(target));
+};
+
+Human.make$LDuck$ = Human$make$LDuck$;
+
+function Human$make$LDog$(target) {
+	return new Human(new Human$x2E_AnimalHolder$x2E$x3CDog$x3E(target));
+};
+
+Human.make$LDog$ = Human$make$LDog$;
+
 function _Main() {
 };
 
 $__jsx_extend([_Main], Object);
 function _Main$main$AS(args) {
-	var i;
-	for (i = 1; i <= 100; ++ i) {
-		if (i % 15 === 0) {
-			console.log("FizzBuzz");
-		} else if (i % 3 === 0) {
-			console.log("Fizz");
-		} else if (i % 5 === 0) {
-			console.log("Buzz");
-		} else {
-			console.log(i);
-		}
-	}
+	var duck;
+	var dog;
+	var human1;
+	var human2;
+	duck = new Duck();
+	dog = new Dog();
+	human1 = Human$make$LDuck$(duck);
+	human1.touch$();
+	human2 = Human$make$LDog$(dog);
+	human2.touch$();
 };
 
 _Main.main = _Main$main$AS;
 _Main.main$AS = _Main$main$AS;
+
+function Human$x2E_AnimalHolder$x2E$x3CDuck$x3E(target) {
+	AnimalConcept.call(this);
+	this._target = target;
+};
+
+$__jsx_extend([Human$x2E_AnimalHolder$x2E$x3CDuck$x3E], Object);
+$__jsx_merge_interface(Human$x2E_AnimalHolder$x2E$x3CDuck$x3E, AnimalConcept);
+
+Human$x2E_AnimalHolder$x2E$x3CDuck$x3E.prototype.say$ = function () {
+	this._target.say$();
+};
+
+
+function Human$x2E_AnimalHolder$x2E$x3CDog$x3E(target) {
+	AnimalConcept.call(this);
+	this._target = target;
+};
+
+$__jsx_extend([Human$x2E_AnimalHolder$x2E$x3CDog$x3E], Object);
+$__jsx_merge_interface(Human$x2E_AnimalHolder$x2E$x3CDog$x3E, AnimalConcept);
+
+Human$x2E_AnimalHolder$x2E$x3CDog$x3E.prototype.say$ = function () {
+	this._target.say$();
+};
+
 
 
 var $__jsx_classMap = {
@@ -136,7 +206,15 @@ var $__jsx_classMap = {
 		StopIteration: StopIteration,
 		StopIteration$: StopIteration
 	},
-	"system:example/fizzbuzz.jsx": {
+	"system:example/type-erasure.jsx": {
+		AnimalConcept: AnimalConcept,
+		AnimalConcept$: AnimalConcept,
+		Duck: Duck,
+		Duck$: Duck,
+		Dog: Dog,
+		Dog$: Dog,
+		Human: Human,
+		Human$LAnimalConcept$: Human,
 		_Main: _Main,
 		_Main$: _Main
 	}
@@ -205,7 +283,7 @@ JSX.runTests = function (sourceFile, tests) {
 function $__jsx_onload (event) {
 	window.removeEventListener("load", $__jsx_onload);
 	document.removeEventListener("DOMContentLoaded", $__jsx_onload);
-	JSX.runMain("system:example/fizzbuzz.jsx", []);
+	JSX.runMain("system:example/type-erasure.jsx", []);
 }
 
 window.addEventListener("load", $__jsx_onload);
@@ -213,4 +291,4 @@ document.addEventListener("DOMContentLoaded", $__jsx_onload);
 
 })(JSX);
 
-//# sourceMappingURL=fizzbuzz.jsx.js.mapping
+//# sourceMappingURL=type-erasure.jsx.js.mapping

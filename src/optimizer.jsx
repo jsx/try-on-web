@@ -298,6 +298,7 @@ class Optimizer {
 			} else if (cmd == "return-if") {
 				this._commands.push(new _ReturnIfOptimizeCommand());
 			} else if (cmd == "lcse") {
+				determineCallee();
 				this._commands.push(new _LCSEOptimizeCommand());
 			} else if (cmd == "unbox") {
 				determineCallee();
@@ -2693,10 +2694,11 @@ class _InlineOptimizeCommand extends _FunctionOptimizeCommand {
 
 			if (this._expandStatementExpression(funcDef, statements, stmtIndex, (statement as ReturnStatement).getExpr(), function (stmtIndex) {
 				statements.splice(stmtIndex, 1);
-				statements[stmtIndex - 1] = new ReturnStatement(statement.getToken(),
-					(statements[stmtIndex - 1] instanceof ReturnStatement)
-					? (statements[stmtIndex - 1] as ReturnStatement).getExpr()
-					: (statements[stmtIndex - 1] as ExpressionStatement).getExpr());
+				if (statements[stmtIndex - 1] instanceof ReturnStatement) {
+					statements[stmtIndex - 1] = new ReturnStatement(statement.getToken(), (statements[stmtIndex - 1] as ReturnStatement).getExpr());
+				} else if (statements[stmtIndex - 1] instanceof ExpressionStatement) {
+					statements[stmtIndex - 1] = new ReturnStatement(statement.getToken(), (statements[stmtIndex - 1] as ExpressionStatement).getExpr());
+				}
 			})) {
 				altered = true;
 			}
@@ -3436,9 +3438,11 @@ class _LCSEOptimizeCommand extends _FunctionOptimizeCommand {
 				clearCache();
 				return true;
 			} else if (expr instanceof LogicalExpression) {
-				// give up further optimization
-				clearCache();
-				return true;
+				if (! expr.forEachExpression((expr) -> ! _Util.exprHasSideEffects(expr))) {
+					// give up further optimization
+					clearCache();
+					return true;
+				}
 			} else if (expr instanceof FunctionExpression) {
 				clearCache();
 				return true;

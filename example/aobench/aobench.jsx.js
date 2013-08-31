@@ -1,4 +1,4 @@
-// generatedy by JSX compiler 0.9.62 (2013-08-25 08:34:23 +0900; 4cad8ce0cffd745d74d7a71a6fade7810bb7fd20)
+// generatedy by JSX compiler 0.9.63 (2013-08-31 12:05:12 +0900; 2ec017d883d4d01af3d13db10eb1dfa291034b54)
 var JSX = {};
 (function (JSX) {
 /**
@@ -305,13 +305,16 @@ function AOBench$clamp$N(f) {
 AOBench.clamp$N = AOBench$clamp$N;
 
 function AOBench$orthoBasis$LAOBench$ALvec3$Lvec3$($this, basis, n) {
+	var z$0;
+	var y$0;
+	var x$0;
 	basis[2] = n;
 	basis[1] = ({x: 0.0, y: 0.0, z: 0.0});
-	if (n.x < 0.6 && n.x > -0.6) {
+	if ((x$0 = n.x) < 0.6 && x$0 > -0.6) {
 		basis[1].x = 1.0;
-	} else if (n.y < 0.6 && n.y > -0.6) {
+	} else if ((y$0 = n.y) < 0.6 && y$0 > -0.6) {
 		basis[1].y = 1.0;
-	} else if (n.z < 0.6 && n.z > -0.6) {
+	} else if ((z$0 = n.z) < 0.6 && z$0 > -0.6) {
 		basis[1].z = 1.0;
 	} else {
 		basis[1].x = 1.0;

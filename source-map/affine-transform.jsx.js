@@ -1,4 +1,4 @@
-// generatedy by JSX compiler 0.9.63 (2013-08-31 12:05:12 +0900; 2ec017d883d4d01af3d13db10eb1dfa291034b54)
+// generatedy by JSX compiler 0.9.78 (2014-02-20 16:35:31 +0900; da141e9a5ca211f770bca3f618109d2c443a1b72)
 var JSX = {};
 (function (JSX) {
 /**
@@ -44,11 +44,44 @@ function $__jsx_lazy_init(obj, prop, func) {
 	});
 }
 
+var $__jsx_imul = Math.imul;
+if (typeof $__jsx_imul === "undefined") {
+	$__jsx_imul = function (a, b) {
+		var ah  = (a >>> 16) & 0xffff;
+		var al = a & 0xffff;
+		var bh  = (b >>> 16) & 0xffff;
+		var bl = b & 0xffff;
+		return ((al * bl) + (((ah * bl + al * bh) << 16) >>> 0)|0);
+	};
+}
+
 /**
- * sideeffect().a /= b
+ * fused int-ops with side-effects
  */
-function $__jsx_div_assign(obj, prop, divisor) {
-	return obj[prop] = (obj[prop] / divisor) | 0;
+function $__jsx_ipadd(o, p, r) {
+	return o[p] = (o[p] + r) | 0;
+}
+function $__jsx_ipsub(o, p, r) {
+	return o[p] = (o[p] - r) | 0;
+}
+function $__jsx_ipmul(o, p, r) {
+	return o[p] = $__jsx_imul(o[p], r);
+}
+function $__jsx_ipdiv(o, p, r) {
+	return o[p] = (o[p] / r) | 0;
+}
+function $__jsx_ipmod(o, p, r) {
+	return o[p] = (o[p] % r) | 0;
+}
+function $__jsx_ippostinc(o, p) {
+	var v = o[p];
+	o[p] = (v + 1) | 0;
+	return v;
+}
+function $__jsx_ippostdec(o, p) {
+	var v = o[p];
+	o[p] = (v - 1) | 0;
+	return v;
 }
 
 /*
@@ -101,13 +134,51 @@ JSX.resetProfileResults = function () {
 	return $__jsx_profiler.resetResults();
 };
 JSX.DEBUG = true;
-function StopIteration() {
-	Error.call(this);
-	this.name = "StopIteration";
-	if (Error.captureStackTrace) Error.captureStackTrace(this, StopIteration);
-};
+var GeneratorFunction$0 = 
+(function () {
+  try {
+    eval('import {GeneratorFunction} from "std:iteration"');
+    return GeneratorFunction;
+  } catch (e) {
+    return function GeneratorFunction () {};
+  }
+})();
+var __jsx_generator_object$0 = 
+(function () {
+  function __jsx_generator_object() {
+  	this.__next = 0;
+  	this.__loop = null;
+  	this.__value = undefined;
+  	this.__status = 0;	// SUSPENDED: 0, ACTIVE: 1, DEAD: 2
+  }
 
-$__jsx_extend([StopIteration], Error);
+  __jsx_generator_object.prototype.next = function () {
+  	switch (this.__status) {
+  	case 0:
+  		this.__status = 1;
+
+  		// go next!
+  		this.__loop(this.__next);
+
+  		var done = false;
+  		if (this.__next != -1) {
+  			this.__status = 0;
+  		} else {
+  			this.__status = 2;
+  			done = true;
+  		}
+  		return { value: this.__value, done: done };
+  	case 1:
+  		throw new Error("Generator is already running");
+  	case 2:
+  		throw new Error("Generator is already finished");
+  	default:
+  		throw new Error("Unexpected generator internal state");
+  	}
+  };
+
+  return __jsx_generator_object;
+}());
 function Point(x, y) {
 	this.x = x;
 	this.y = y;
@@ -146,10 +217,6 @@ _Main.main$AS = _Main$main$AS;
 
 
 var $__jsx_classMap = {
-	"system:lib/built-in.jsx": {
-		StopIteration: StopIteration,
-		StopIteration$: StopIteration
-	},
 	"system:example/affine-transform.jsx": {
 		Point: Point,
 		Point$NN: Point,

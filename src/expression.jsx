@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012 DeNA Co., Ltd.
+ * Copyright (c) 2012,2013 DeNA Co., Ltd. et al.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to
@@ -236,8 +236,7 @@ class LocalExpression extends LeafExpression {
 	override function analyze (context : AnalysisContext, parentExpr : Expression) : boolean {
 		// check that the variable is readable
 		if ((parentExpr instanceof AssignmentExpression
-		     && (parentExpr as AssignmentExpression).getFirstExpr() == this
-			&& (parentExpr as AssignmentExpression).getToken().getValue() == "=")
+		     && (parentExpr as AssignmentExpression).getFirstExpr() == this)
 			|| (parentExpr == null
 				&& context.statement instanceof ForInStatement
 				&& (context.statement as ForInStatement).getLHSExpr() == this)) {
@@ -349,7 +348,18 @@ class NullExpression extends LeafExpression {
 	}
 }
 
-class BooleanLiteralExpression extends LeafExpression {
+abstract class PrimitiveLiteralExpression extends LeafExpression {
+
+	function constructor(token : Token) {
+		super(token);
+	}
+
+	// equiv. to the JSX notation of: ```value as string```
+	abstract function toNormalizedString() : string;
+
+}
+
+class BooleanLiteralExpression extends PrimitiveLiteralExpression {
 
 	function constructor (token : Token) {
 		super(token);
@@ -374,9 +384,17 @@ class BooleanLiteralExpression extends LeafExpression {
 		return Type.booleanType;
 	}
 
+	override function toNormalizedString() : string {
+		return this._token.getValue();
+	}
+
+	function getDecoded() : boolean {
+		return this._token.getValue() != "false";
+	}
+
 }
 
-class IntegerLiteralExpression extends LeafExpression {
+class IntegerLiteralExpression extends PrimitiveLiteralExpression {
 
 	function constructor (token : Token) {
 		super(token);
@@ -401,10 +419,18 @@ class IntegerLiteralExpression extends LeafExpression {
 		return Type.integerType;
 	}
 
+	override function toNormalizedString() : string {
+		return this.getDecoded() as string;
+	}
+
+	function getDecoded() : int {
+		return this._token.getValue() as int;
+	}
+
 }
 
 
-class NumberLiteralExpression extends LeafExpression {
+class NumberLiteralExpression extends PrimitiveLiteralExpression {
 
 	function constructor (token : Token) {
 		super(token);
@@ -429,9 +455,47 @@ class NumberLiteralExpression extends LeafExpression {
 		return Type.numberType;
 	}
 
+	override function toNormalizedString() : string {
+		return this.getDecoded() as string;
+	}
+
+	function tokenIsECMA262Conformant() : boolean {
+		return true;
+	}
+
+	function getDecoded() : number {
+		return this._token.getValue() as number;
+	}
+
 }
 
-class StringLiteralExpression extends LeafExpression {
+class LineMacroExpression extends NumberLiteralExpression {
+
+	function constructor(token : Token) {
+		super(token);
+	}
+
+	override function clone() : LineMacroExpression {
+		return new LineMacroExpression(this._token);
+	}
+
+	override function serialize() : variant {
+		var json = super.serialize();
+		json[0] = "LineMacroExpression";
+		return json;
+	}
+
+	override function tokenIsECMA262Conformant() : boolean {
+		return false;
+	}
+
+	override function getDecoded() : number {
+		return this._token.getLineNumber();
+	}
+
+}
+
+class StringLiteralExpression extends PrimitiveLiteralExpression {
 
 	function constructor (token : Token) {
 		super(token);
@@ -454,6 +518,44 @@ class StringLiteralExpression extends LeafExpression {
 
 	override function getType () : Type {
 		return Type.stringType;
+	}
+
+	override function toNormalizedString() : string {
+		return this.getDecoded() as string;
+	}
+
+	function tokenIsECMA262Conformant() : boolean {
+		return this._token.getValue().match(/^(?:"""|''')/) == null;
+	}
+
+	function getDecoded() : string {
+		return Util.decodeStringLiteral(this._token.getValue());
+	}
+
+}
+
+class FileMacroExpression extends StringLiteralExpression {
+
+	function constructor(token : Token) {
+		super(token);
+	}
+
+	override function clone() : FileMacroExpression {
+		return new FileMacroExpression(this._token);
+	}
+
+	override function serialize() : variant {
+		var json = super.serialize();
+		json[0] = "FileMacroExpression";
+		return json;
+	}
+
+	override function tokenIsECMA262Conformant() : boolean {
+		return false;
+	}
+
+	override function getDecoded() : string {
+		return this._token.getFilename();
 	}
 
 }
@@ -679,7 +781,7 @@ class MapLiteralExpression extends Expression {
 				context.errors.push(new CompileError(this._token, "specified type is not a map type"));
 				return false;
 			}
-			var expectedType = (this._type as ParsedObjectType).getTypeArguments()[0];
+			var expectedType = (this._type as ParsedObjectType).getTypeArguments()[0].toNullableType();
 			// check type of the elements (expect when expectedType == null, meaning that it is a variant)
 			for (var i = 0; i < this._elements.length; ++i) {
 				var elementType = this._elements[i].getExpr().getType();
@@ -1398,6 +1500,10 @@ class SignExpression extends UnaryExpression {
 	}
 
 	override function getType () : Type {
+		if (this._token.getValue() == "-") {
+			// -(0x80000000 as int) should return 0x80000000
+			return Type.numberType;
+		}
 		var type = this._expr.getType();
 		if (type.resolveIfNullable().equals(Type.numberType))
 			return Type.numberType;
@@ -1622,8 +1728,6 @@ class AssignmentExpression extends BinaryExpression {
 		// normal handling
 		if (! this._analyze(context))
 			return false;
-		if (this._token.getValue() != "=")
-			return this._analyzeFusedAssignment(context);
 		var rhsType = this._expr2.getType();
 		if (rhsType == null)
 			return false;
@@ -1661,20 +1765,6 @@ class AssignmentExpression extends BinaryExpression {
 		if (! this._expr1.assertIsAssignable(context, this._token, rhsType))
 			return false;
 		return true;
-	}
-
-	function _analyzeFusedAssignment (context : AnalysisContext) : boolean {
-		var lhsType = this._expr1.getType().resolveIfNullable();
-		var rhsType = this._expr2.getType().resolveIfNullable();
-		if (! this._expr1.assertIsAssignable(context, this._token, lhsType)) {
-			return false;
-		}
-		if (this._token.getValue() == "+=" && lhsType.equals(Type.stringType) && rhsType.equals(Type.stringType))
-			return true;
-		if (Type.isIntegerOrNumber(lhsType) && Type.isIntegerOrNumber(rhsType))
-			return true;
-		context.errors.push(new CompileError(this._token, "cannot apply operator '" + this._token.getValue() + "' against '" + this._expr1.getType().toString() + "' and '" + this._expr2.getType().toString() + "'"));
-		return false;
 	}
 
 	static function analyzeEmptyLiteralAssignment (context : AnalysisContext, token : Token, lhsType : Type, rhs : Expression) : boolean {
@@ -1740,6 +1830,39 @@ class AssignmentExpression extends BinaryExpression {
 
 }
 
+class FusedAssignmentExpression extends BinaryExpression {
+
+	function constructor (operatorToken : Token, expr1 : Expression, expr2 : Expression) {
+		super(operatorToken, expr1, expr2);
+	}
+
+	override function clone () : FusedAssignmentExpression {
+		return new FusedAssignmentExpression(this._token, this._expr1.clone(), this._expr2.clone());
+	}
+
+	override function analyze (context : AnalysisContext, parentExpr : Expression) : boolean {
+		if (! this._analyze(context))
+			return false;
+
+		var lhsType = this._expr1.getType().resolveIfNullable();
+		var rhsType = this._expr2.getType().resolveIfNullable();
+		if (! this._expr1.assertIsAssignable(context, this._token, lhsType)) {
+			return false;
+		}
+		if (this._token.getValue() == "+=" && lhsType.equals(Type.stringType) && rhsType.equals(Type.stringType))
+			return true;
+		if (Type.isIntegerOrNumber(lhsType) && Type.isIntegerOrNumber(rhsType))
+			return true;
+		context.errors.push(new CompileError(this._token, "cannot apply operator '" + this._token.getValue() + "' against '" + this._expr1.getType().toString() + "' and '" + this._expr2.getType().toString() + "'"));
+		return false;
+	}
+
+	override function getType () : Type {
+		return this._expr1.getType();
+	}
+
+}
+
 // + - * / % < <= > >= & | ^
 class BinaryNumberExpression extends BinaryExpression {
 
@@ -1781,6 +1904,8 @@ class BinaryNumberExpression extends BinaryExpression {
 		assert this._expr2.getType() != null, this._token.getNotation();
 
 		switch (this._token.getValue()) {
+
+			// these ops may return int or number, depending on the operands
 		case "+":
 		case "-":
 		case "*":
@@ -1788,18 +1913,25 @@ class BinaryNumberExpression extends BinaryExpression {
 				return Type.numberType;
 			else
 				return Type.integerType;
+
+			// these ops returns a number even if both the arguments are int, since the result might include fractional part or become NaN  (note: even ```int % int``` may return NaN which is out of the bounds of ```int``` in case rhs is 0)
 		case "/":
 		case "%":
 			return Type.numberType;
+
+			// these ops always return a boolean
 		case "<":
 		case "<=":
 		case ">":
 		case ">=":
 			return Type.booleanType;
+
+			// these ops always return an int
 		case "&":
 		case "|":
 		case "^":
 			return Type.integerType;
+
 		default:
 			throw new Error("unexpected operator:" + this._token.getValue());
 		}

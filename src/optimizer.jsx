@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012 DeNA Co., Ltd.
+ * Copyright (c) 2012,2013 DeNA Co., Ltd. et al.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to
@@ -58,13 +58,18 @@ class _Util {
 		return ret;
 	}
 
+	static function exprIsAssignment(expr : Expression) : boolean {
+		return   expr instanceof AssignmentExpression
+			    || expr instanceof FusedAssignmentExpression
+			    || expr instanceof PreIncrementExpression
+			    || expr instanceof PostIncrementExpression;
+	}
+
 	static function exprHasSideEffects (expr : Expression) : boolean {
 		return !(function onExpr (expr : Expression) : boolean {
-			if (   expr instanceof NewExpression
-			    || expr instanceof AssignmentExpression
-			    || expr instanceof PreIncrementExpression
-			    || expr instanceof PostIncrementExpression
-			    || expr instanceof SuperExpression) {
+			if ( _Util.exprIsAssignment(expr)
+					|| expr instanceof NewExpression
+					|| expr instanceof SuperExpression) {
 				return false;
 			}
 			else if (expr instanceof CallExpression) {
@@ -128,11 +133,13 @@ class _Util {
 			if (expr instanceof NullExpression) {
 				return false;
 			} else if (expr instanceof BooleanLiteralExpression) {
-				return expr.getToken().getValue() == "true";
+				return (expr as BooleanLiteralExpression).getDecoded();
 			} else if (expr instanceof StringLiteralExpression) {
-				return expr.getToken().getValue().length > 2;
-			} else if (expr instanceof NumberLiteralExpression || expr instanceof IntegerLiteralExpression) {
-				return (expr.getToken().getValue() as number) as boolean;
+				return (expr as StringLiteralExpression).getDecoded() as boolean;
+			} else if (expr instanceof NumberLiteralExpression) {
+				return (expr as NumberLiteralExpression).getDecoded() as boolean;
+			} else if (expr instanceof IntegerLiteralExpression) {
+				return (expr as IntegerLiteralExpression).getDecoded() as boolean;
 			} else if (expr instanceof MapLiteralExpression || expr instanceof ArrayLiteralExpression) {
 				return true;
 			}
@@ -151,6 +158,15 @@ class _Util {
 			}
 		}
 		return null;
+	}
+
+	static function decodeNumericLiteral(expr : Expression) : number {
+		assert expr instanceof NumberLiteralExpression || expr instanceof IntegerLiteralExpression;
+		if (expr instanceof NumberLiteralExpression) {
+			return (expr as NumberLiteralExpression).getDecoded();
+		} else {
+			return (expr as IntegerLiteralExpression).getDecoded();
+		}
 	}
 
 	static function optimizeBasicBlock (funcDef : MemberFunctionDefinition, optimizeExpressions : function(:Expression[]):void) : void {
@@ -637,6 +653,13 @@ class _StripOptimizeCommand extends _OptimizeCommand {
 				}
 			}
 		}
+		// TODO do not emit member variables that are not used
+		classDef.forEachMemberVariable(function (varDef) {
+			if ((varDef.flags() & ClassDefinition.IS_STATIC) == 0) {
+				this._membersToWalk.push(varDef);
+			}
+			return true;
+		});
 		if (classDef.extendType() != null) {
 			this._touchInstance(classDef.extendType().getClassDef());
 		}
@@ -775,6 +798,7 @@ class _StripOptimizeCommand extends _OptimizeCommand {
 					return false;
 				}
 			}
+			// for now, all member variables are preserved, see _touchInstance
 			return true;
 		}
 		this.getCompiler().forEachClassDef(function (parser, classDef) {
@@ -1156,8 +1180,33 @@ class _StaticizeOptimizeCommand extends _OptimizeCommand {
 	override function performOptimization () : void {
 
 		function memberCanBeStaticized(funcDef : MemberFunctionDefinition) : boolean {
-			return (funcDef.flags() & (ClassDefinition.IS_OVERRIDE | ClassDefinition.IS_ABSTRACT | ClassDefinition.IS_FINAL | ClassDefinition.IS_STATIC | ClassDefinition.IS_NATIVE)) == ClassDefinition.IS_FINAL
-				&& funcDef.name() != "constructor";
+			// only allow non-override final methods
+			if ((funcDef.flags() & (ClassDefinition.IS_OVERRIDE | ClassDefinition.IS_ABSTRACT | ClassDefinition.IS_FINAL | ClassDefinition.IS_STATIC | ClassDefinition.IS_NATIVE)) != ClassDefinition.IS_FINAL) {
+				return false;
+			}
+			// and not constructors
+			if (funcDef.name() == "constructor") {
+				return false;
+			}
+			// and not methods using "super"
+			function onStatement(statement : Statement) : boolean {
+				if (statement instanceof FunctionStatement) {
+					return (statement as FunctionStatement).getFuncDef().forEachStatement(onStatement);
+				}
+				return statement.forEachExpression(function onExpression(expr) {
+					if (expr instanceof FunctionExpression) {
+						return (expr as FunctionExpression).getFuncDef().forEachStatement(onStatement);
+					} else if (expr instanceof SuperExpression) {
+						return false;
+					}
+					return expr.forEachExpression(onExpression);
+				}) && statement.forEachStatement(onStatement);
+			}
+			if (! funcDef.forEachStatement(onStatement)) {
+				return false;
+			}
+			// and the rest can be staticized
+			return true;
 		}
 
 		this.getCompiler().forEachClassDef(function (parser, classDef) {
@@ -1208,9 +1257,6 @@ class _StaticizeOptimizeCommand extends _OptimizeCommand {
 		var staticFuncDef = funcDef.clone();
 
 		var classDef = staticFuncDef.getClassDef();
-
-		// register to the classDef
-		classDef.members().splice(classDef.members().indexOf(funcDef)+1, 0, staticFuncDef); // insert right after the original function
 
 		// rename
 		var newName = this._newStaticFunctionName(classDef, funcDef.name(), ([ new ObjectType(classDef) ] : Type[]).concat((funcDef.getType() as ResolvedFunctionType).getArgumentTypes()), true);
@@ -1297,6 +1343,7 @@ class _StaticizeOptimizeCommand extends _OptimizeCommand {
 					if ((rewritingFuncDef.flags() & ClassDefinition.IS_STATIC) != 0) {
 						// super expression in static function means that the function has been staticized
 						var thisArg = rewritingFuncDef.getArguments()[0];
+						assert thisArg != null, rewritingFuncDef.getNotation();
 						thisVar = new LocalExpression(thisArg.getName(), thisArg);
 					} else {
 						thisVar = new ThisExpression(new Token("this", false), funcDef.getClassDef());
@@ -1526,10 +1573,8 @@ class _UnclassifyOptimizationCommand extends _OptimizeCommand {
 			if (! (lhsExpr instanceof PropertyExpression && (lhsExpr as PropertyExpression).getExpr() instanceof ThisExpression)) {
 				return null;
 			}
-			var onRHSExpr = function (expr : Expression) : boolean {
-				if (expr instanceof AssignmentExpression
-				    || expr instanceof PreIncrementExpression
-				    || expr instanceof PostIncrementExpression) {
+			function onRHSExpr(expr : Expression) : boolean {
+				if (_Util.exprIsAssignment(expr)) {
 					// has side effects
 					return false;
 				} else if (expr instanceof FunctionExpression) {
@@ -1713,12 +1758,6 @@ class _FoldConstantCommand extends _FunctionOptimizeCommand {
 		expr.forEachExpression(function(expr, replaceCb) { return this._optimizeExpression(expr, replaceCb); });
 
 		// propagate const
-
-		function exprAsNumber(expr : Expression) : number {
-			assert this._isIntegerOrNumberLiteralExpression(expr);
-			return expr.getToken().getValue() as number;
-		}
-
 		if (expr instanceof PropertyExpression) {
 			var propertyExpr = expr as PropertyExpression;
 			var holderType = propertyExpr.getHolderType();
@@ -1734,7 +1773,7 @@ class _FoldConstantCommand extends _FunctionOptimizeCommand {
 					var foldedExpr = this._toFoldedExpr(member.getInitialValue(), member.getType());
 					if (foldedExpr != null) {
 						foldedExpr = this._toFoldedExpr(foldedExpr, propertyExpr.getType());
-						if (foldedExpr != null && !(foldedExpr instanceof StringLiteralExpression && Util.decodeStringLiteral((foldedExpr as StringLiteralExpression).getToken().getValue()).length > _FoldConstantCommand.LONG_STRING_LITERAL)) {
+						if (foldedExpr != null && !(foldedExpr instanceof StringLiteralExpression && (foldedExpr as StringLiteralExpression).getDecoded().length > _FoldConstantCommand.LONG_STRING_LITERAL)) {
 							this.log("folding property " + member.getNotation() + " at " + propertyExpr.getToken().getFilename() + ":" + propertyExpr.getToken().getLineNumber() as string);
 							replaceCb(foldedExpr);
 						}
@@ -1745,7 +1784,7 @@ class _FoldConstantCommand extends _FunctionOptimizeCommand {
 				if (propertyExpr.getExpr() instanceof StringLiteralExpression) {
 					if (propertyExpr.getIdentifierToken().getValue() == "length") {
 						replaceCb(new NumberLiteralExpression(new Token(
-							Util.decodeStringLiteral(propertyExpr.getExpr().getToken().getValue()).length as string
+							(propertyExpr.getExpr() as StringLiteralExpression).getDecoded().length as string
 						)));
 					}
 				}
@@ -1764,12 +1803,12 @@ class _FoldConstantCommand extends _FunctionOptimizeCommand {
 			if (baseExpr instanceof IntegerLiteralExpression) {
 				this.log("folding operator (number) " + expr.getToken().getNotation());
 				replaceCb(new IntegerLiteralExpression(new Token(
-					calculateCb(exprAsNumber(baseExpr)) as string
+					calculateCb(_Util.decodeNumericLiteral(baseExpr)) as string
 				)));
 			} else if (baseExpr instanceof NumberLiteralExpression) {
 				this.log("folding operator (number) " + expr.getToken().getNotation());
 				replaceCb(new NumberLiteralExpression(new Token(
-					calculateCb(exprAsNumber(baseExpr)) as string
+					calculateCb(_Util.decodeNumericLiteral(baseExpr)) as string
 				)));
 			}
 
@@ -1779,7 +1818,7 @@ class _FoldConstantCommand extends _FunctionOptimizeCommand {
 			if (this._isIntegerOrNumberLiteralExpression(baseExpr)) {
 				this.log("folding operator " + expr.getToken().getNotation());
 				replaceCb(new IntegerLiteralExpression(new Token(
-					(~ exprAsNumber(baseExpr)) as string
+					(~ _Util.decodeNumericLiteral(baseExpr)) as string
 				)));
 			}
 		} else if (expr instanceof AdditiveExpression) {
@@ -1794,8 +1833,8 @@ class _FoldConstantCommand extends _FunctionOptimizeCommand {
 					new StringLiteralExpression(
 						new Token(
 							Util.encodeStringLiteral(
-								Util.decodeStringLiteral((firstExpr as StringLiteralExpression).getToken().getValue()) +
-								Util.decodeStringLiteral((secondExpr as StringLiteralExpression).getToken().getValue())),
+								(firstExpr as StringLiteralExpression).getDecoded() +
+								(secondExpr as StringLiteralExpression).getDecoded()),
 							false)));
 			}
 
@@ -1886,10 +1925,7 @@ class _FoldConstantCommand extends _FunctionOptimizeCommand {
 			return;
 		}
 
-		function argAsNumber(index : number) : number {
-			assert this._isIntegerOrNumberLiteralExpression(callExpr.getArguments()[index]);
-			return callExpr.getArguments()[index].getToken().getValue() as number;
-		}
+		var argExprs = callExpr.getArguments();
 
 		var member = null : MemberFunctionDefinition;
 		holderType.getClassDef().forEachMemberFunction(function (m) {
@@ -1911,27 +1947,27 @@ class _FoldConstantCommand extends _FunctionOptimizeCommand {
 				case "sqrt":
 					this.log("folding " + member.getNotation());
 					replaceCb(new NumberLiteralExpression(new Token(
-						Math.sqrt(argAsNumber(0)) as string)));
+						Math.sqrt(_Util.decodeNumericLiteral(argExprs[0])) as string)));
 					break;
 				case "log":
 					this.log("folding " + member.getNotation());
 					replaceCb(new NumberLiteralExpression(new Token(
-						Math.log(argAsNumber(0)) as string)));
+						Math.log(_Util.decodeNumericLiteral(argExprs[0])) as string)));
 					break;
 				case "pow":
 					this.log("folding " + member.getNotation());
 					replaceCb(new NumberLiteralExpression(new Token(
-						Math.pow(argAsNumber(0), argAsNumber(1)) as string)));
+						Math.pow(_Util.decodeNumericLiteral(argExprs[0]), _Util.decodeNumericLiteral(argExprs[1])) as string)));
 					break;
 				case "sin":
 					this.log("folding " + member.getNotation());
 					replaceCb(new NumberLiteralExpression(new Token(
-						Math.sin(argAsNumber(0)) as string)));
+						Math.sin(_Util.decodeNumericLiteral(argExprs[0])) as string)));
 					break;
 				case "cos":
 					this.log("folding " + member.getNotation());
 					replaceCb(new NumberLiteralExpression(new Token(
-						Math.cos(argAsNumber(0)) as string)));
+						Math.cos(_Util.decodeNumericLiteral(argExprs[0])) as string)));
 					break;
 				}
 			}
@@ -1940,8 +1976,8 @@ class _FoldConstantCommand extends _FunctionOptimizeCommand {
 				case "fromCharCode":
 					this.log("folding " + member.getNotation());
 					var s = "";
-					callExpr.getArguments().forEach((arg) -> {
-						s += String.fromCharCode(arg.getToken().getValue() as number);
+					argExprs.forEach((arg) -> {
+						s += String.fromCharCode(_Util.decodeNumericLiteral(arg));
 					});
 					replaceCb(new StringLiteralExpression(new Token(
 						Util.encodeStringLiteral(s))));
@@ -1954,9 +1990,9 @@ class _FoldConstantCommand extends _FunctionOptimizeCommand {
 			switch(propertyExpr.getIdentifierToken().getValue()) {
 			case "charCodeAt":
 				this.log("folding " + member.getNotation());
-				var recvStr = Util.decodeStringLiteral(propertyExpr.getExpr().getToken().getValue());
+				var recvStr = (propertyExpr.getExpr() as StringLiteralExpression).getDecoded();
 				replaceCb(new NumberLiteralExpression(new Token(
-					recvStr.charCodeAt(argAsNumber(0)) as string)));
+					recvStr.charCodeAt(_Util.decodeNumericLiteral(argExprs[0])) as string)));
 				break;
 			}
 		}
@@ -1967,9 +2003,9 @@ class _FoldConstantCommand extends _FunctionOptimizeCommand {
 		var secondExpr = expr.getSecondExpr();
 		var isEqual = null : Nullable.<boolean>; // tri-state
 		if (firstExpr instanceof StringLiteralExpression && secondExpr instanceof StringLiteralExpression) {
-			isEqual = Util.decodeStringLiteral(firstExpr.getToken().getValue()) == Util.decodeStringLiteral(secondExpr.getToken().getValue());
+			isEqual = (firstExpr as StringLiteralExpression).getDecoded() == (secondExpr as StringLiteralExpression).getDecoded();
 		} else if (this._isIntegerOrNumberLiteralExpression(firstExpr) && this._isIntegerOrNumberLiteralExpression(secondExpr)) {
-			isEqual = firstExpr.getToken().getValue() as number == secondExpr.getToken().getValue() as number;
+			isEqual = _Util.decodeNumericLiteral(firstExpr) == _Util.decodeNumericLiteral(secondExpr);
 		}
 		if (isEqual != null) {
 			var result = expr.getToken().getValue() == "==" ? isEqual as boolean : ! isEqual;
@@ -1988,10 +2024,10 @@ class _FoldConstantCommand extends _FunctionOptimizeCommand {
 
 		// if either operand is zero or one, then...
 		function exprIsZero(expr : Expression) : boolean {
-			return expr instanceof NumberLiteralExpression && expr.getToken().getValue() as number == 0;
+			return expr instanceof NumberLiteralExpression && (expr as NumberLiteralExpression).getDecoded() == 0;
 		}
 		function exprIsOne(expr : Expression) : boolean {
-			return expr instanceof NumberLiteralExpression && expr.getToken().getValue() as number == 1;
+			return expr instanceof NumberLiteralExpression && (expr as NumberLiteralExpression).getDecoded() == 1;
 		}
 		switch (expr.getToken().getValue()) {
 		case "+":
@@ -2037,13 +2073,13 @@ class _FoldConstantCommand extends _FunctionOptimizeCommand {
 		switch (expr.getToken().getValue()) {
 
 			// expressions that return number or integer depending on their types
-		case "*": this._foldNumericBinaryExpressionAsNumeric(expr, replaceCb, function (x, y) { return x * y; }); break;
-		case "+": this._foldNumericBinaryExpressionAsNumeric(expr, replaceCb, function (x, y) { return x + y; }); break;
-		case "-": this._foldNumericBinaryExpressionAsNumeric(expr, replaceCb, function (x, y) { return x - y; }); break;
-		case "%": this._foldNumericBinaryExpressionAsNumeric(expr, replaceCb, function (x, y) { return x % y; }); break;
+		case "+": this._foldNumericBinaryExpressionAsNumeric(expr, replaceCb, ((x, y) -> x + y), ((x, y) -> x + y)); break;
+		case "-": this._foldNumericBinaryExpressionAsNumeric(expr, replaceCb, ((x, y) -> x - y), ((x, y) -> x - y)); break;
+		case "*": this._foldNumericBinaryExpressionAsNumeric(expr, replaceCb, ((x, y) -> x * y), ((x, y) -> x * y)); break;
 
 			// expressions that always return number
 		case "/": this._foldNumericBinaryExpressionAsNumber(expr, replaceCb, function (x, y) { return x / y; }); break;
+		case "%": this._foldNumericBinaryExpressionAsNumber(expr, replaceCb, ((x, y) -> x % y)); break;
 
 			// expressions that always return integer
 		case ">>>": this._foldNumericBinaryExpressionAsInteger(expr, replaceCb, function (x, y) { return x >>> y; }); break;
@@ -2064,26 +2100,26 @@ class _FoldConstantCommand extends _FunctionOptimizeCommand {
 		return true;
 	}
 
-	function _foldNumericBinaryExpressionAsNumeric (expr : BinaryExpression, replaceCb : function(:Expression):void, calcCb : function(:number,:number):number) : void {
+	function _foldNumericBinaryExpressionAsNumeric (expr : BinaryExpression, replaceCb : function(:Expression):void, calcCbInt : function (:int, :int):int, calcCbNumber : function(:number,:number):number) : void {
 		if (expr.getFirstExpr() instanceof IntegerLiteralExpression && expr.getSecondExpr() instanceof IntegerLiteralExpression) {
-			this._foldNumericBinaryExpressionAsInteger(expr, replaceCb, calcCb);
+			this._foldNumericBinaryExpressionAsInteger(expr, replaceCb, calcCbInt);
 		} else {
-			this._foldNumericBinaryExpressionAsNumber(expr, replaceCb, calcCb);
+			this._foldNumericBinaryExpressionAsNumber(expr, replaceCb, calcCbNumber);
 		}
 	}
 
-	function _foldNumericBinaryExpressionAsInteger (expr : BinaryExpression, replaceCb : function(:Expression):void, calcCb : function(:number,:number):number) : void {
-		var value = calcCb(expr.getFirstExpr().getToken().getValue() as number, expr.getSecondExpr().getToken().getValue() as number);
+	function _foldNumericBinaryExpressionAsInteger (expr : BinaryExpression, replaceCb : function(:Expression):void, calcCb : function(:int,:int):int) : void {
+		var value : number = calcCb(_Util.decodeNumericLiteral(expr.getFirstExpr()), _Util.decodeNumericLiteral(expr.getSecondExpr()));
 		this.log(
 			"folding operator " + expr.getToken().getNotation() +
 			" to int: " + value as string);
-		if (value % 1 != 0)
+		if (value != (value | 0))
 			throw new Error("value is not an integer");
 		replaceCb(new IntegerLiteralExpression(new Token(value as string)));
 	}
 
 	function _foldNumericBinaryExpressionAsNumber (expr : BinaryExpression, replaceCb : function(:Expression):void, calcCb : function(:number,:number):number) : void {
-		var value = calcCb(expr.getFirstExpr().getToken().getValue() as number, expr.getSecondExpr().getToken().getValue() as number);
+		var value = calcCb(_Util.decodeNumericLiteral(expr.getFirstExpr()), _Util.decodeNumericLiteral(expr.getSecondExpr()));
 		this.log(
 			"folding operator " + expr.getToken().getNotation() +
 			" to number: " + value as string);
@@ -2091,7 +2127,7 @@ class _FoldConstantCommand extends _FunctionOptimizeCommand {
 	}
 
 	function _foldNumericBinaryExpressionAsBoolean (expr : BinaryExpression, replaceCb : function(:Expression):void, calcCb : function(:number,:number):boolean) : void {
-		var value = calcCb(expr.getFirstExpr().getToken().getValue() as number, expr.getSecondExpr().getToken().getValue() as number);
+		var value = calcCb(_Util.decodeNumericLiteral(expr.getFirstExpr()), _Util.decodeNumericLiteral(expr.getSecondExpr()));
 		this.log(
 			"folding operator " + expr.getToken().getNotation() +
 			" to boolean: " + value as string);
@@ -2124,7 +2160,7 @@ class _FoldConstantCommand extends _FunctionOptimizeCommand {
 		} else if (expr instanceof NumberLiteralExpression) {
 			if (type.resolveIfNullable().equals(Type.integerType)) {
 				// cast to integer
-				return new IntegerLiteralExpression(new Token((expr.getToken().getValue() as int) as string));
+				return new IntegerLiteralExpression(new Token(((expr as NumberLiteralExpression).getDecoded() as int) as string));
 			}
 			return expr;
 		} else if (expr instanceof StringLiteralExpression) {
@@ -2140,11 +2176,11 @@ class _FoldConstantCommand extends _FunctionOptimizeCommand {
 				this.log("folding type cast: string as string");
 				replaceCb(baseExpr);
 			}
-			else if (baseExpr instanceof BooleanLiteralExpression || baseExpr instanceof NumberLiteralExpression || baseExpr instanceof IntegerLiteralExpression) {
+			else if (baseExpr instanceof PrimitiveLiteralExpression) {
 				this.log("folding type cast: primitive literal as string");
 				replaceCb(
 					new StringLiteralExpression(
-						new Token(Util.encodeStringLiteral(baseExpr.getToken().getValue()), false)));
+						new Token(Util.encodeStringLiteral((baseExpr as PrimitiveLiteralExpression).toNormalizedString()), false)));
 			}
 		}
 		else if (expr.getType().equals(Type.numberType)) { // as number
@@ -2156,13 +2192,13 @@ class _FoldConstantCommand extends _FunctionOptimizeCommand {
 				this.log("folding type cast: string literal as number");
 				replaceCb(
 					new NumberLiteralExpression(
-						new Token(Util.decodeStringLiteral(baseExpr.getToken().getValue()) as number as string, false)));
+						new Token((baseExpr as StringLiteralExpression).getDecoded() as number as string, false)));
 			}
 			else if (baseExpr instanceof IntegerLiteralExpression) {
 				this.log("folding type cast: int literal as number");
 				replaceCb(
 					new NumberLiteralExpression(
-						new Token(baseExpr.getToken().getValue() as number as string, false)));
+						new Token((baseExpr as StringLiteralExpression).getDecoded() as number as string, false)));
 			}
 		}
 		else if (expr.getType().equals(Type.integerType)) { // as int
@@ -2174,13 +2210,13 @@ class _FoldConstantCommand extends _FunctionOptimizeCommand {
 				this.log("folding type cast: string literal as int");
 				replaceCb(
 					new IntegerLiteralExpression(
-						new Token(Util.decodeStringLiteral(baseExpr.getToken().getValue()) as int as string, false)));
+						new Token((baseExpr as StringLiteralExpression).getDecoded() as int as string, false)));
 			}
 			else if (baseExpr instanceof NumberLiteralExpression) {
 				this.log("folding type cast: number literal as int");
 				replaceCb(
 					new IntegerLiteralExpression(
-						new Token(baseExpr.getToken().getValue() as int as string, false)));
+						new Token((baseExpr as NumberLiteralExpression).getDecoded() as int as string, false)));
 			}
 		}
 		else if (expr.getType().equals(Type.booleanType)) { // as boolean
@@ -2192,19 +2228,19 @@ class _FoldConstantCommand extends _FunctionOptimizeCommand {
 				this.log("folding type cast: string literal as boolean");
 				replaceCb(
 					new BooleanLiteralExpression(
-						new Token(Util.decodeStringLiteral(baseExpr.getToken().getValue()) as boolean as string, false)));
+						new Token((baseExpr as StringLiteralExpression).getDecoded() as boolean as string, false)));
 			}
 			else if (baseExpr instanceof NumberLiteralExpression) {
 				this.log("folding type cast: number literal as boolean");
 				replaceCb(
 					new BooleanLiteralExpression(
-						new Token(baseExpr.getToken().getValue() as number ? "true" : "false", false)));
+						new Token((baseExpr as NumberLiteralExpression).getDecoded() ? "true" : "false", false)));
 			}
 			else if (baseExpr instanceof IntegerLiteralExpression) {
 				this.log("folding type cast: integer literal as boolean");
 				replaceCb(
 					new BooleanLiteralExpression(
-						new Token(baseExpr.getToken().getValue() as int ? "true" : "false", false)));
+						new Token((baseExpr as IntegerLiteralExpression).getDecoded() ? "true" : "false", false)));
 			}
 		}
 	}
@@ -2381,11 +2417,10 @@ class _DeadCodeEliminationOptimizeCommand extends _FunctionOptimizeCommand {
 		var locals = new TypedMap.<LocalVariable,Expression>;
 		// mark the locals that uses op= (cannot be eliminated by the algorithm applied laterwards)
 		Util.forEachExpression(function onExpr(expr : Expression) : boolean {
-			if (expr instanceof AssignmentExpression
-			    && (expr as AssignmentExpression).getToken().getValue() != "="
-				&& (expr as AssignmentExpression).getFirstExpr() instanceof LocalExpression) {
-					var local = ((expr as AssignmentExpression).getFirstExpr() as LocalExpression).getLocal();
-					this.log("local variable " + local.getName().getValue() + " cannot be rewritten (has fused op)");
+			if (expr instanceof FusedAssignmentExpression
+				&& (expr as FusedAssignmentExpression).getFirstExpr() instanceof LocalExpression) {
+					var local = ((expr as FusedAssignmentExpression).getFirstExpr() as LocalExpression).getLocal();
+					this.log("local variable " + local.getName().getValue() + " cannot be rewritten (has fused assignment)");
 					localsUntouchable.set(local, true);
 				} else if (expr instanceof IncrementExpression
 					&& (expr as IncrementExpression).getExpr() instanceof LocalExpression) {
@@ -2464,7 +2499,7 @@ class _DeadCodeEliminationOptimizeCommand extends _FunctionOptimizeCommand {
 		function onExpr(expr : Expression, rewriteCb : function(:Expression):void) : boolean {
 			if (expr instanceof AssignmentExpression) {
 				var assignExpr = expr as AssignmentExpression;
-				if (assignExpr.getToken().getValue() == "=" && assignExpr.getFirstExpr() instanceof LocalExpression) {
+				if (assignExpr.getFirstExpr() instanceof LocalExpression) {
 					onExpr(assignExpr.getSecondExpr(), function (assignExpr : AssignmentExpression) : function(:Expression):void {
 						return function (expr) {
 							assignExpr.setSecondExpr(expr);
@@ -2527,8 +2562,7 @@ class _DeadCodeEliminationOptimizeCommand extends _FunctionOptimizeCommand {
 			if (expr instanceof AssignmentExpression) {
 				var assignmentExpr = expr as AssignmentExpression;
 				var firstExpr      = assignmentExpr.getFirstExpr();
-				if (expr.getToken().getValue() == "="
-					&& isFirstLevelPropertyAccess(firstExpr)
+				if (isFirstLevelPropertyAccess(firstExpr)
 					&& ! Util.isNativeClass((firstExpr as PropertyExpression).getExpr().getType())) {
 					var propertyName = (firstExpr as PropertyExpression).getIdentifierToken().getValue();
 					onExpr(assignmentExpr.getSecondExpr(), null);
@@ -2676,6 +2710,7 @@ class _InlineOptimizeCommand extends _FunctionOptimizeCommand {
 		if (statement instanceof ConstructorInvocationStatement) {
 
 			var callingFuncDef = _DetermineCalleeCommand.getCallingFuncDef(statement);
+			this.log("optimizing calling constructor " + callingFuncDef.getNotation());
 			this.optimizeFunction(callingFuncDef);
 			if (this._functionIsInlineable(callingFuncDef) && this._argsAreInlineable(callingFuncDef, (statement as ConstructorInvocationStatement).getArguments())) {
 				statements.splice(stmtIndex, 1);
@@ -2724,19 +2759,21 @@ class _InlineOptimizeCommand extends _FunctionOptimizeCommand {
 		}
 
 		// expand single-statement functions as an expression
-		statement.forEachExpression(function onExpr(expr : Expression, replaceCb : function(:Expression):void) : boolean {
-			expr.forEachExpression(onExpr);
-			if (expr instanceof CallExpression) {
-				var callExpr = expr as CallExpression;
-				var argsAndThis = this._getArgsAndThisIfCallExprIsInlineable(callExpr);
-				if (argsAndThis != null) {
-					if (this._expandCallAsExpression(funcDef, expr, argsAndThis, replaceCb)) {
-						altered = true;
+		if (! altered) {
+			statement.forEachExpression(function onExpr(expr : Expression, replaceCb : function(:Expression):void) : boolean {
+				expr.forEachExpression(onExpr);
+				if (expr instanceof CallExpression) {
+					var callExpr = expr as CallExpression;
+					var argsAndThis = this._getArgsAndThisIfCallExprIsInlineable(callExpr);
+					if (argsAndThis != null) {
+						if (this._expandCallAsExpression(funcDef, expr, argsAndThis, replaceCb)) {
+							altered = true;
+						}
 					}
 				}
-			}
-			return true;
-		});
+				return true;
+			});
+		}
 
 		return altered;
 	}
@@ -2789,7 +2826,7 @@ class _InlineOptimizeCommand extends _FunctionOptimizeCommand {
 			}
 
 		} else if (expr instanceof AssignmentExpression
-			   && Util.lhsHasNoSideEffects((expr as AssignmentExpression).getFirstExpr())
+			   && ! Util.lhsHasSideEffects((expr as AssignmentExpression).getFirstExpr())
 			&& (expr as AssignmentExpression).getSecondExpr() instanceof CallExpression) {
 
 			// inline if the statement is an assignment of a single call expression into a local variable
@@ -2823,6 +2860,7 @@ class _InlineOptimizeCommand extends _FunctionOptimizeCommand {
 		if (callingFuncDef == null)
 			return null;
 		// optimize the calling function prior to testing the conditions
+		this.log("optimizing calling function " + callingFuncDef.getNotation());
 		this.optimizeFunction(callingFuncDef);
 		// obtain receiver expression
 		var receiverExpr = null : Expression;
@@ -2973,7 +3011,7 @@ class _InlineOptimizeCommand extends _FunctionOptimizeCommand {
 	function _expandCallingFunction (callerFuncDef : MemberFunctionDefinition, statements : Statement[], stmtIndex : number, calleeFuncDef : MemberFunctionDefinition, argsAndThis : Expression[]) : number {
 		// clone statements of the calling function, while rewriting the identifiers with actual arguments
 		this.log("expanding " + calleeFuncDef.getNotation());
-		var argsAndThisAndLocals = argsAndThis.concat(new Expression[]);
+		var argsAndThisAndLocals = argsAndThis.concat([]);
 		this._createVarsAndInit(callerFuncDef, calleeFuncDef, argsAndThisAndLocals, (expr) -> {
 			// insert a statement that initializes the temporary var
 			statements.splice(stmtIndex++, 0, new ExpressionStatement(expr));
@@ -2995,7 +3033,7 @@ class _InlineOptimizeCommand extends _FunctionOptimizeCommand {
 			}
 			// replace the arguments with actual arguments
 			function onExpr(expr : Expression, replaceCb : function(:Expression):void) : boolean {
-				return this._rewriteExpression(expr, replaceCb, argsAndThisAndLocals, calleeFuncDef);
+				return this._rewriteExpression(expr, null, replaceCb, argsAndThisAndLocals, calleeFuncDef);
 			}
 			statement.forEachExpression(onExpr);
 			statement.forEachStatement(function onStatement(statement : Statement) : boolean {
@@ -3077,6 +3115,7 @@ class _InlineOptimizeCommand extends _FunctionOptimizeCommand {
 		var clonedExpr = expr.clone();
 		this._rewriteExpression(
 			clonedExpr,
+			null,
 			function (expr) { clonedExpr = expr; },
 			argsAndThisAndLocals,
 			callingFuncDef);
@@ -3126,11 +3165,12 @@ class _InlineOptimizeCommand extends _FunctionOptimizeCommand {
 		});
 	}
 
-	function _rewriteExpression (expr : Expression, replaceCb : function(:Expression):void, argsAndThisAndLocals : Expression[], calleeFuncDef : MemberFunctionDefinition) : boolean {
+	function _rewriteExpression (expr : Expression, parentExpr : Expression, replaceCb : function(:Expression):void, argsAndThisAndLocals : Expression[], calleeFuncDef : MemberFunctionDefinition) : boolean {
 		var formalArgs = calleeFuncDef.getArguments();
 		if (expr instanceof LocalExpression) {
+			var localExpr = expr as LocalExpression;
 			for (var j = 0; j < formalArgs.length; ++j) {
-				if (formalArgs[j].getName().getValue() == expr.getToken().getValue())
+				if (formalArgs[j].getName().getValue() == localExpr.getLocal().getName().getValue())
 					break;
 			}
 			if (j == formalArgs.length) {
@@ -3138,7 +3178,7 @@ class _InlineOptimizeCommand extends _FunctionOptimizeCommand {
 				var locals = calleeFuncDef.getLocals();
 				assert locals.length == argsAndThisAndLocals.length - j, locals.length as string + " vs " + (argsAndThisAndLocals.length as string + " - " + j as string) as string + " for " + calleeFuncDef.getNotation();
 				for (var k = 0; k < locals.length; ++k, ++j) {
-					if (locals[k].getName().getValue() == expr.getToken().getValue())
+					if (locals[k].getName().getValue() == localExpr.getLocal().getName().getValue())
 						break;
 				}
 			}
@@ -3148,6 +3188,18 @@ class _InlineOptimizeCommand extends _FunctionOptimizeCommand {
 					replaceCb(argsAndThisAndLocals[j]);
 					argsAndThisAndLocals[j] = null; // just in case
 				} else {
+					// the condition means expr is an assignee value against an argument declaration in callee function.
+					/*
+					 * function foo (n : number) : void {
+					 *     n = 1;     // n declared here must not be inline-expanded
+					 * }
+					 */
+					if (parentExpr != null
+						&& parentExpr instanceof AssignmentExpression
+						&& (parentExpr as AssignmentExpression).getFirstExpr() == expr
+						&& ! (argsAndThisAndLocals[j] instanceof LocalExpression)) {
+							return true;
+					}
 					replaceCb(argsAndThisAndLocals[j].clone());
 				}
 			} else {
@@ -3157,8 +3209,8 @@ class _InlineOptimizeCommand extends _FunctionOptimizeCommand {
 			assert argsAndThisAndLocals[formalArgs.length] != null;
 			replaceCb(argsAndThisAndLocals[formalArgs.length].clone());
 		}
-		expr.forEachExpression(function (expr, replaceCb) {
-			return this._rewriteExpression(expr, replaceCb, argsAndThisAndLocals, calleeFuncDef);
+		expr.forEachExpression(function (childExpr, replaceCb) {
+			return this._rewriteExpression(childExpr, expr, replaceCb, argsAndThisAndLocals, calleeFuncDef);
 		});
 		return true;
 	}
@@ -3324,7 +3376,7 @@ class _LCSEOptimizeCommand extends _FunctionOptimizeCommand {
 
 		var getCacheKey = function (expr : Expression) : Nullable.<string> {
 			if (expr instanceof PropertyExpression) {
-                var propertyExpr = expr as PropertyExpression;
+				var propertyExpr = expr as PropertyExpression;
 				var receiverType = propertyExpr.getExpr().getType();
 				if (Util.isNativeClass(receiverType)) {
 					return null;
@@ -3388,8 +3440,8 @@ class _LCSEOptimizeCommand extends _FunctionOptimizeCommand {
 		// add an expression to cache
 		Util.forEachExpression(function onExpr (expr : Expression, replaceCb : function(:Expression):void) : boolean {
 			// handle special cases first
-			if (expr instanceof AssignmentExpression) {
-				var assignmentExpr = expr as AssignmentExpression;
+			if (expr instanceof AssignmentExpression || expr instanceof FusedAssignmentExpression) {
+				var assignmentExpr = expr as BinaryExpression;
 				var lhsExpr = assignmentExpr.getFirstExpr();
 				if (lhsExpr instanceof LocalExpression) {
 					onExpr(assignmentExpr.getSecondExpr(), function (expr) {

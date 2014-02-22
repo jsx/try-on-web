@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012 DeNA Co., Ltd.
+ * Copyright (c) 2012,2013 DeNA Co., Ltd. et al.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to
@@ -56,19 +56,15 @@ class _Util {
 		return stash.outputName;
 	}
 
-	static function getOutputConstructorName(ctor : MemberFunctionDefinition) : string {
-		if ((ctor.getClassDef().flags() & ClassDefinition.IS_NATIVE) != 0) {
-			return _Util.getNameOfNativeConstructor(ctor.getClassDef());
+	static function getOutputConstructorName(classDef : ClassDefinition, argTypes : Type[]) : string {
+		if ((classDef.flags() & ClassDefinition.IS_NATIVE) != 0) {
+			return _Util.getNameOfNativeConstructor(classDef);
 		}
+		var ctor = Util.findFunctionInClass(classDef, "constructor", argTypes, false);
+		assert ctor, "could not find constructor for class: " + classDef.className();
 		var stash = ctor.getStash(_Util.OUTPUTNAME_IDENTIFIER) as _Util.OutputNameStash;
 		assert stash != null, ctor.getNotation();
 		return stash.outputName;
-	}
-
-	static function getOutputConstructorName(classDef : ClassDefinition, argTypes : Type[]) : string {
-		var ctor = Util.findFunctionInClass(classDef, "constructor", argTypes, false);
-		assert ctor;
-		return _Util.getOutputConstructorName(ctor);
 	}
 
 	static function getNameOfNativeConstructor(classDef : ClassDefinition) : string {
@@ -224,9 +220,106 @@ class _Util {
 		return _Util._ecma262reserved.keys();
 	}
 
+	static function getECMA262NumberLiteral(expr : NumberLiteralExpression) : string {
+		if (expr.tokenIsECMA262Conformant()) {
+			// path for preserving the original representation (do not decode => encode)
+			return expr.getToken().getValue();
+		} else {
+			return expr.getDecoded() as string;
+		}
+	}
+
+	static function getECMA262StringLiteral(expr : StringLiteralExpression) : string {
+		if (expr.tokenIsECMA262Conformant()) {
+			// path for preserving the original representation (do not decode => encode)
+			return expr.getToken().getValue();
+		} else {
+			return Util.encodeStringLiteral(expr.getDecoded());
+		}
+	}
+
 	static function isArrayType(type : Type) : boolean {
 		return type.getClassDef() instanceof InstantiatedClassDefinition && (type.getClassDef() as InstantiatedClassDefinition).getTemplateClassName() == "Array";
 	}
+
+	static function emitWithPrecedence(emitter : JavaScriptEmitter, outerOpPrecedence : number, precedence : number, callback : function():void) : void {
+		if (precedence > outerOpPrecedence) {
+			emitter._emit("(", null);
+			callback();
+			emitter._emit(")", null);
+		} else {
+			callback();
+		}
+	}
+
+	static function emitFusedIntOpWithSideEffects(emitter : JavaScriptEmitter, helperFunc : string, expr : Expression, otherExprEmitter : function (outerOpPrecedence : number) : void, outerOpPrecedence : number) : void {
+		emitter._emit(helperFunc + "(", expr.getToken());
+		if (expr instanceof PropertyExpression) {
+			var propertyExpr = expr as PropertyExpression;
+			emitter._getExpressionEmitterFor(propertyExpr.getExpr()).emit(0);
+			emitter._emit(", ", expr.getToken());
+			var name : string;
+			if (propertyExpr.getExpr().isClassSpecifier()) {
+				var classDef = propertyExpr.getHolderType().getClassDef();
+				name = emitter.getNamer().getNameOfStaticVariable(classDef, propertyExpr.getIdentifierToken().getValue());
+			} else {
+				name = emitter.getNamer().getNameOfProperty(propertyExpr.getHolderType().getClassDef(), propertyExpr.getIdentifierToken().getValue());
+			}
+			emitter._emit(Util.encodeStringLiteral(name), propertyExpr.getIdentifierToken());
+		} else {
+			emitter._getExpressionEmitterFor((expr as ArrayExpression).getFirstExpr()).emit(0);
+			emitter._emit(", ", expr.getToken());
+			emitter._getExpressionEmitterFor((expr as ArrayExpression).getSecondExpr()).emit(0);
+		}
+		if (otherExprEmitter != null) {
+			emitter._emit(", ", expr.getToken());
+			otherExprEmitter(0);
+		}
+		emitter._emit(")", expr.getToken());
+	}
+
+}
+
+class _TempVarLister {
+
+	var _varNameMap = new Map.<boolean>;
+
+	function finalize() : Array.<string> {
+		var varNames = new string[];
+		for (var k in this._varNameMap) {
+			varNames.push(k);
+		}
+		return varNames;
+	}
+
+	function update(funcDef : MemberFunctionDefinition) : _TempVarLister {
+		function onStmt(stmt : Statement) : boolean {
+			stmt.forEachExpression(function (expr) {
+				this.update(expr);
+				return true;
+			});
+			stmt.forEachStatement(onStmt);
+			return true;
+		}
+		Util.forEachStatement(onStmt, funcDef.getStatements());
+		return this;
+	}
+
+	function update(expr : Expression) : _TempVarLister {
+		function onExpr(expr : Expression) : boolean {
+			expr.forEachExpression(onExpr);
+			if (expr instanceof PostIncrementExpression) {
+				if (this._varNameMap[_PostIncrementExpressionEmitter.TEMP_VAR_NAME] == null
+					&& _PostIncrementExpressionEmitter.needsTempVarFor(expr as PostIncrementExpression)) {
+					this._varNameMap[_PostIncrementExpressionEmitter.TEMP_VAR_NAME] = true;
+				}
+			}
+			return true;
+		}
+		onExpr(expr);
+		return this;
+	}
+
 }
 
 class _Mangler {
@@ -847,9 +940,9 @@ class _Minifier {
 					compact: true,
 					semicolons: false,
 					parentheses: false
-				} : Map.<variant>,
+				},
 				directive: true
-			} : Map.<variant>);
+			});
 	}
 
 }
@@ -904,8 +997,9 @@ class _ConstructorInvocationStatementEmitter extends _StatementEmitter {
 		var argTypes = ctorType != null ? ctorType.getArgumentTypes() : new Type[];
 		var ctorName = this._emitter.getNamer().getNameOfConstructor(this._statement.getConstructingClassDef(), argTypes);
 		var token = this._statement.getToken();
+		var thisVar = this._emitter._emittingFunction.getParent() != null ?  "$this" : "this";
 
-		this._emitter._emitCallArguments(token, ctorName + ".call(this", this._statement.getArguments(), argTypes);
+		this._emitter._emitCallArguments(token, ctorName + ".call(" + thisVar, this._statement.getArguments(), argTypes);
 		this._emitter._emit(";\n", token);
 
 		if (ctorName == "Error") {
@@ -965,7 +1059,7 @@ class _FunctionStatementEmitter extends _StatementEmitter {
 	override function emit () : void {
 		var funcDef = this._statement.getFuncDef();
 		assert funcDef.getFuncLocal() != null;
-		this._emitter._emit("function " + this._emitter.getNamer().getNameOfLocalVariable(funcDef.getFuncLocal()) + "(", funcDef.getToken());
+		this._emitter._emit("function " + (funcDef.isGenerator() ? "* " : "") + this._emitter.getNamer().getNameOfLocalVariable(funcDef.getFuncLocal()) + "(", funcDef.getToken());
 		this._emitter.getNamer().enterFunction(funcDef, function () {
 			var args = funcDef.getArguments();
 			for (var i = 0; i < args.length; ++i) {
@@ -1009,6 +1103,38 @@ class _ReturnStatementEmitter extends _StatementEmitter {
 				this._emitter._emit("return $__jsx_profiler.exit();\n", this._statement.getToken());
 			} else {
 				this._emitter._emit("return;\n", this._statement.getToken());
+			}
+		}
+	}
+
+}
+
+class _YieldStatementEmitter extends _StatementEmitter {
+
+	var _statement : YieldStatement;
+
+	function constructor (emitter : JavaScriptEmitter, statement : YieldStatement) {
+		super(emitter);
+		this._statement = statement;
+	}
+
+	override function emit () : void {
+		var expr = this._statement.getExpr();
+		if (expr != null) {
+			this._emitter._emit("yield ", null);
+			if (this._emitter._enableProfiler) {
+				this._emitter._emit("$__jsx_profiler.exit(", null);
+			}
+			this._emitter._emitRHSOfAssignment(this._statement.getExpr(), this._emitter._emittingFunction.getReturnType());
+			if (this._emitter._enableProfiler) {
+				this._emitter._emit(")", null);
+			}
+			this._emitter._emit(";\n", null);
+		} else {
+			if (this._emitter._enableProfiler) {
+				this._emitter._emit("yield $__jsx_profiler.exit();\n", this._statement.getToken());
+			} else {
+				this._emitter._emit("yield;\n", this._statement.getToken());
 			}
 		}
 	}
@@ -1416,13 +1542,7 @@ abstract class _ExpressionEmitter {
 	abstract function emit (outerOpPrecedence : number) : void;
 
 	function emitWithPrecedence (outerOpPrecedence : number, precedence : number, callback : function():void) : void {
-		if (precedence > outerOpPrecedence) {
-			this._emitter._emit("(", null);
-			callback();
-			this._emitter._emit(")", null);
-		} else {
-			callback();
-		}
+		_Util.emitWithPrecedence(this._emitter, outerOpPrecedence, precedence, callback);
 	}
 
 }
@@ -1507,6 +1627,7 @@ class _IntegerLiteralExpressionEmitter extends _ExpressionEmitter {
 
 }
 
+// also emits LineMacroExpression
 class _NumberLiteralExpressionEmitter extends _ExpressionEmitter {
 
 	var _expr : NumberLiteralExpression;
@@ -1517,17 +1638,17 @@ class _NumberLiteralExpressionEmitter extends _ExpressionEmitter {
 	}
 
 	override function emit (outerOpPrecedence : number) : void {
-		var token = this._expr.getToken();
-		var str = token.getValue();
+		var str = _Util.getECMA262NumberLiteral(this._expr);
 		if (outerOpPrecedence == _PropertyExpressionEmitter._operatorPrecedence && str.indexOf(".") == -1) {
-			this._emitter._emit("(" + str + ")", token);
+			this._emitter._emit("(" + str + ")", this._expr.getToken());
 		} else {
-			this._emitter._emit("" + str, token);
+			this._emitter._emit("" + str, this._expr.getToken());
 		}
 	}
 
 }
 
+// also emits FileMacroExpression
 class _StringLiteralExpressionEmitter extends _ExpressionEmitter {
 
 	var _expr : StringLiteralExpression;
@@ -1539,7 +1660,7 @@ class _StringLiteralExpressionEmitter extends _ExpressionEmitter {
 
 	override function emit (outerOpPrecedence : number) : void {
 		var token = this._expr.getToken();
-		this._emitter._emit(Util.normalizeHeredoc(token.getValue()), token);
+		this._emitter._emit(_Util.getECMA262StringLiteral(this._expr), token);
 	}
 
 }
@@ -1618,7 +1739,7 @@ class _ThisExpressionEmitter extends _ExpressionEmitter {
 
 	override function emit (outerOpPrecedence : number) : void {
 		var emittingFunction = this._emitter._emittingFunction;
-		if ((emittingFunction.flags() & ClassDefinition.IS_STATIC) != 0)
+		if (emittingFunction.getParent() != null)
 			this._emitter._emit("$this", this._expr.getToken());
 		else
 			this._emitter._emit("this", this._expr.getToken());
@@ -1926,26 +2047,90 @@ class _UnaryExpressionEmitter extends _OperatorExpressionEmitter {
 
 }
 
-class _PostfixExpressionEmitter extends _UnaryExpressionEmitter {
+class _PreIncrementExpressionEmitter extends _UnaryExpressionEmitter {
 
-	function constructor (emitter : JavaScriptEmitter, expr : UnaryExpression) {
+	function constructor(emitter : JavaScriptEmitter, expr : PreIncrementExpression) {
 		super(emitter, expr);
 	}
 
-	override function _emit () : void {
+	override function emit(outerOpPrecedence : number) : void {
 		var opToken = this._expr.getToken();
-		this._emitter._getExpressionEmitterFor(this._expr.getExpr()).emit(this._getPrecedence());
-		this._emitter._emit(opToken.getValue(), opToken);
+		if (this._expr.getType().resolveIfNullable().equals(Type.integerType)) {
+			if (Util.lhsHasSideEffects(this._expr.getExpr())) {
+				_Util.emitFusedIntOpWithSideEffects(this._emitter, opToken.getValue() == "++" ? "$__jsx_ipadd" : "$__jsx_ipdec", this._expr.getExpr(), function (outerPred) {
+					this._emitter._emit("1", opToken);
+				}, 0);
+			} else {
+				this.emitWithPrecedence(outerOpPrecedence, _AssignmentExpressionEmitter._operatorPrecedence["="], function () {
+					this._emitter._getExpressionEmitterFor(this._expr.getExpr()).emit(_AssignmentExpressionEmitter._operatorPrecedence["="]);
+					this._emitter._emit(" = (", this._expr.getToken());
+					this._emitter._getExpressionEmitterFor(this._expr.getExpr()).emit(_AdditiveExpressionEmitter._operatorPrecedence);
+					this._emitter._emit(" " + opToken.getValue().charAt(0) + " 1) | 0", this._expr.getToken());
+				});
+			}
+		} else {
+			this.emitWithPrecedence(outerOpPrecedence, this._getPrecedence(), function () {
+				this._emitter._emit(opToken.getValue(), opToken);
+				this._emitter._getExpressionEmitterFor(this._expr.getExpr()).emit(this._getPrecedence());
+			});
+		}
+	}
+
+	override function _getPrecedence() : number {
+		return _PreIncrementExpressionEmitter._operatorPrecedence[this._expr.getToken().getValue()];
+	}
+
+	static const _operatorPrecedence = new Map.<number>;
+
+	static function _setOperatorPrecedence(op : string, precedence : number) : void {
+		_PreIncrementExpressionEmitter._operatorPrecedence[op] = precedence;
+	}
+
+}
+
+class _PostIncrementExpressionEmitter extends _UnaryExpressionEmitter {
+
+	function constructor (emitter : JavaScriptEmitter, expr : PostIncrementExpression) {
+		super(emitter, expr);
+	}
+
+	override function emit (outerOpPrecedence : number) : void {
+		var opToken = this._expr.getToken();
+		if (this._expr.getType().resolveIfNullable().equals(Type.integerType)) {
+			if (Util.lhsHasSideEffects(this._expr.getExpr())) {
+				_Util.emitFusedIntOpWithSideEffects(this._emitter, opToken.getValue() == "++" ? "$__jsx_ippostinc" : "$__jsx_ippostdec", this._expr.getExpr(), function (outerPred) {
+					this._emitter._emit("1", opToken);
+				}, 0);
+			} else {
+				this._emitter._emit("(" + _PostIncrementExpressionEmitter.TEMP_VAR_NAME + " = ", this._expr.getToken());
+				this._emitter._getExpressionEmitterFor(this._expr.getExpr()).emit(_AssignmentExpressionEmitter._operatorPrecedence["="]);
+				this._emitter._emit(", ", this._expr.getToken());
+				this._emitter._getExpressionEmitterFor(this._expr.getExpr()).emit(_AssignmentExpressionEmitter._operatorPrecedence["="]);
+				this._emitter._emit(" = (" + _PostIncrementExpressionEmitter.TEMP_VAR_NAME + " " + opToken.getValue().charAt(0) + " 1) | 0, " + _PostIncrementExpressionEmitter.TEMP_VAR_NAME + ")", this._expr.getToken());
+			}
+		} else {
+			this.emitWithPrecedence(outerOpPrecedence, this._getPrecedence(), function () {
+				this._emitter._getExpressionEmitterFor(this._expr.getExpr()).emit(this._getPrecedence());
+				this._emitter._emit(opToken.getValue(), opToken);
+			});
+		}
 	}
 
 	override function _getPrecedence () : number {
-		return _PostfixExpressionEmitter._operatorPrecedence[this._expr.getToken().getValue()];
+		return _PostIncrementExpressionEmitter._operatorPrecedence[this._expr.getToken().getValue()];
 	}
 
 	static const _operatorPrecedence = new Map.<number>;
 
 	static function _setOperatorPrecedence (op : string, precedence : number) : void {
-		_PostfixExpressionEmitter._operatorPrecedence[op] = precedence;
+		_PostIncrementExpressionEmitter._operatorPrecedence[op] = precedence;
+	}
+
+	static const TEMP_VAR_NAME = "$__jsx_postinc_t";
+
+	static function needsTempVarFor(expr : PostIncrementExpression) : boolean {
+		return expr.getType().resolveIfNullable().equals(Type.integerType)
+			&& ! Util.lhsHasSideEffects(expr.getExpr());
 	}
 
 }
@@ -2090,7 +2275,7 @@ class _FunctionExpressionEmitter extends _OperatorExpressionEmitter {
 		this._emitter._emit("(", funcDef.getToken());
 		var funcLocal = funcDef.getFuncLocal();
 		this._emitter.getNamer().enterScope(funcLocal, function () {
-			this._emitter._emit("function " + (funcLocal != null ? this._emitter.getNamer().getNameOfLocalVariable(funcLocal) : "") + "(", funcDef.getToken());
+			this._emitter._emit("function " + (funcDef.isGenerator() ? "* " : "") + (funcLocal != null ? this._emitter.getNamer().getNameOfLocalVariable(funcLocal) : "") + "(", funcDef.getToken());
 			this._emitter.getNamer().enterFunction(funcDef, function () {
 				var args = funcDef.getArguments();
 				for (var i = 0; i < args.length; ++i) {
@@ -2130,9 +2315,16 @@ class _AdditiveExpressionEmitter extends _OperatorExpressionEmitter {
 	}
 
 	override function _emit () : void {
+		var isInt = this._expr.getType().resolveIfNullable().equals(Type.integerType);
+		if (isInt) {
+			this._emitter._emit("((", this._expr.getToken());
+		}
 		this._emitter._emitWithNullableGuard(this._expr.getFirstExpr(), _AdditiveExpressionEmitter._operatorPrecedence);
 		this._emitter._emit(" + ", this._expr.getToken());
 		this._emitter._emitWithNullableGuard(this._expr.getSecondExpr(), _AdditiveExpressionEmitter._operatorPrecedence - 1);
+		if (isInt) {
+			this._emitter._emit(") | 0)", this._expr.getToken());
+		}
 	}
 
 	override function _getPrecedence () : number {
@@ -2156,58 +2348,11 @@ class _AssignmentExpressionEmitter extends _OperatorExpressionEmitter {
 		this._expr = expr;
 	}
 
-	override function emit (outerOpPrecedence : number) : void {
-		if (this._expr.getToken().getValue() == "/="
-			&& this._expr.getFirstExpr().getType().resolveIfNullable().equals(Type.integerType)) {
-			this._emitDivAssignToInt(outerOpPrecedence);
-			return;
-		}
-		// normal handling
-		super.emit(outerOpPrecedence);
-	}
-
 	override function _emit () : void {
 		var op = this._expr.getToken().getValue();
-		this._emitter._getExpressionEmitterFor(this._expr.getFirstExpr()).emit(_AssignmentExpressionEmitter._operatorPrecedence[op]);
+		this._emitter._getExpressionEmitterFor(this._expr.getFirstExpr()).emit(this._getPrecedence());
 		this._emitter._emit(" " + op + " ", this._expr.getToken());
 		this._emitter._emitRHSOfAssignment(this._expr.getSecondExpr(), this._expr.getFirstExpr().getType());
-	}
-
-	function _emitDivAssignToInt (outerOpPrecedence : number) : void {
-		var firstExpr = this._expr.getFirstExpr();
-		var secondExpr = this._expr.getSecondExpr();
-		if (! Util.lhsHasNoSideEffects(firstExpr)) {
-			this._emitter._emit("$__jsx_div_assign(", this._expr.getToken());
-			if (firstExpr instanceof PropertyExpression) {
-				var propertyExpr = firstExpr as PropertyExpression;
-				this._emitter._getExpressionEmitterFor(propertyExpr.getExpr()).emit(0);
-				this._emitter._emit(", ", this._expr.getToken());
-				var name : string;
-				if (propertyExpr.getExpr().isClassSpecifier()) {
-					var classDef = propertyExpr.getHolderType().getClassDef();
-					name = this._emitter.getNamer().getNameOfStaticVariable(classDef, propertyExpr.getIdentifierToken().getValue());
-				} else {
-					name = this._emitter.getNamer().getNameOfProperty(propertyExpr.getHolderType().getClassDef(), propertyExpr.getIdentifierToken().getValue());
-				}
-				this._emitter._emit(Util.encodeStringLiteral(name), propertyExpr.getIdentifierToken());
-			} else {
-				this._emitter._getExpressionEmitterFor((firstExpr as ArrayExpression).getFirstExpr()).emit(0);
-				this._emitter._emit(", ", this._expr.getToken());
-				this._emitter._getExpressionEmitterFor((firstExpr as ArrayExpression).getSecondExpr()).emit(0);
-			}
-			this._emitter._emit(", ", this._expr.getToken());
-			this._emitter._emitWithNullableGuard(secondExpr, 0);
-			this._emitter._emit(")", this._expr.getToken());
-		} else {
-			this.emitWithPrecedence(outerOpPrecedence, _AssignmentExpressionEmitter._operatorPrecedence["="], function () {
-				this._emitter._getExpressionEmitterFor(firstExpr).emit(_AssignmentExpressionEmitter._operatorPrecedence["="]);
-				this._emitter._emit(" = (", this._expr.getToken());
-				this._emitter._emitWithNullableGuard(firstExpr, _BinaryNumberExpressionEmitter._operatorPrecedence["/"]);
-				this._emitter._emit(" / ", this._expr.getToken());
-				this._emitter._emitWithNullableGuard(secondExpr, _BinaryNumberExpressionEmitter._operatorPrecedence["/"] - 1);
-				this._emitter._emit(") | 0", this._expr.getToken());
-			});
-		}
 	}
 
 	override function _getPrecedence () : number {
@@ -2218,6 +2363,76 @@ class _AssignmentExpressionEmitter extends _OperatorExpressionEmitter {
 
 	static function _setOperatorPrecedence (op : string, precedence : number) : void {
 		_AssignmentExpressionEmitter._operatorPrecedence[op] = precedence;
+	}
+
+}
+
+class _FusedAssignmentExpressionEmitter extends _OperatorExpressionEmitter {
+
+	static const _fusedIntHelpers = {
+		"+": "$__jsx_ipadd",
+		"-": "$__jsx_ipsub",
+		"*": "$__jsx_ipmul",
+		"/": "$__jsx_ipdiv",
+		"%": "$__jsx_ipmod"
+	};
+
+	var _expr : FusedAssignmentExpression;
+
+	function constructor (emitter : JavaScriptEmitter, expr : FusedAssignmentExpression) {
+		super(emitter);
+		this._expr = expr;
+	}
+
+	override function emit (outerOpPrecedence : number) : void {
+		var coreOp = this._expr.getToken().getValue().charAt(0);
+		if (_FusedAssignmentExpressionEmitter._fusedIntHelpers[coreOp] != null
+			&& this._expr.getFirstExpr().getType().resolveIfNullable().equals(Type.integerType)) {
+			if (Util.lhsHasSideEffects(this._expr.getFirstExpr())) {
+				_Util.emitFusedIntOpWithSideEffects(this._emitter, _FusedAssignmentExpressionEmitter._fusedIntHelpers[coreOp], this._expr.getFirstExpr(), function (outerPred) {
+					this._emitter._emitWithNullableGuard(this._expr.getSecondExpr(), outerPred);
+				}, outerOpPrecedence);
+			} else {
+				// dealt as l = (l op r) | 0, or use imul
+				_Util.emitWithPrecedence(this._emitter, outerOpPrecedence, _AssignmentExpressionEmitter._operatorPrecedence["="], function () {
+					this._emitter._getExpressionEmitterFor(this._expr.getFirstExpr()).emit(_AssignmentExpressionEmitter._operatorPrecedence["="]);
+					if (coreOp == "*") {
+						this._emitter._emit(" = $__jsx_imul(", this._expr.getToken());
+						this._emitter._emitWithNullableGuard(this._expr.getFirstExpr(), 0);
+						this._emitter._emit(", ", this._expr.getToken());
+						this._emitter._emitWithNullableGuard(this._expr.getSecondExpr(), 0);
+						this._emitter._emit(")", this._expr.getToken());
+					} else {
+						var coreOpPrecedence = coreOp == "+" ? _AdditiveExpressionEmitter._operatorPrecedence : _BinaryNumberExpressionEmitter._operatorPrecedence[coreOp];
+						this._emitter._emit(" = (", this._expr.getToken());
+						this._emitter._emitWithNullableGuard(this._expr.getFirstExpr(), coreOpPrecedence);
+						this._emitter._emit(" " + coreOp + " ", this._expr.getToken());
+						this._emitter._emitWithNullableGuard(this._expr.getSecondExpr(), coreOpPrecedence - 1);
+						this._emitter._emit(") | 0", this._expr.getToken());
+					}
+				});
+			}
+			return;
+		}
+		// normal handling
+		super.emit(outerOpPrecedence);
+	}
+
+	override function _emit () : void {
+		var op = this._expr.getToken().getValue();
+		this._emitter._getExpressionEmitterFor(this._expr.getFirstExpr()).emit(this._getPrecedence());
+		this._emitter._emit(" " + op + " ", this._expr.getToken());
+		this._emitter._emitRHSOfAssignment(this._expr.getSecondExpr(), this._expr.getFirstExpr().getType());
+	}
+
+	override function _getPrecedence () : number {
+		return _FusedAssignmentExpressionEmitter._operatorPrecedence[this._expr.getToken().getValue()];
+	}
+
+	static const _operatorPrecedence = new Map.<number>;
+
+	static function _setOperatorPrecedence (op : string, precedence : number) : void {
+		_FusedAssignmentExpressionEmitter._operatorPrecedence[op] = precedence;
 	}
 
 }
@@ -2358,6 +2573,12 @@ class _ShiftExpressionEmitter extends _OperatorExpressionEmitter {
 
 class _BinaryNumberExpressionEmitter extends _OperatorExpressionEmitter {
 
+	static const _OPS_RETURNING_INT = {
+		'&' : true,
+		'|' : true,
+		'^' : true
+	};
+
 	var _expr : BinaryNumberExpression;
 
 	function constructor (emitter : JavaScriptEmitter, expr : BinaryNumberExpression) {
@@ -2367,9 +2588,27 @@ class _BinaryNumberExpressionEmitter extends _OperatorExpressionEmitter {
 
 	override function _emit () : void {
 		var op = this._expr.getToken().getValue();
+		var isInt = this._expr.getType().resolveIfNullable().equals(Type.integerType);
+		// int*int requires special handling
+		if (isInt && op == "*") {
+			this._emitter._emit("$__jsx_imul(", this._expr.getToken());
+			this._emitter._emitWithNullableGuard(this._expr.getFirstExpr(), 0);
+			this._emitter._emit(", ", this._expr.getToken());
+			this._emitter._emitWithNullableGuard(this._expr.getSecondExpr(), 0);
+			this._emitter._emit(")", this._expr.getToken());
+			return;
+		}
+		// normal handling
+		var needsBitOr = isInt && ! _BinaryNumberExpressionEmitter._OPS_RETURNING_INT[op];
+		if (needsBitOr) {
+			this._emitter._emit("((", this._expr.getToken());
+		}
 		this._emitter._emitWithNullableGuard(this._expr.getFirstExpr(), _BinaryNumberExpressionEmitter._operatorPrecedence[op]);
 		this._emitter._emit(" " + op + " ", this._expr.getToken());
 		this._emitter._emitWithNullableGuard(this._expr.getSecondExpr(), _BinaryNumberExpressionEmitter._operatorPrecedence[op] - 1);
+		if (needsBitOr) {
+			this._emitter._emit(") | 0)", this._expr.getToken());
+		}
 	}
 
 	function _emitIfEitherIs (outerOpPrecedence : number, cb : function(:Expression,:Expression):Expression) : boolean {
@@ -2410,7 +2649,7 @@ class _ArrayExpressionEmitter extends _OperatorExpressionEmitter {
 		// property access using . is 4x faster on safari than using [], see http://jsperf.com/access-using-dot-vs-array
 		var emitted = false;
 		if (secondExpr instanceof StringLiteralExpression) {
-			var propertyName = Util.decodeStringLiteral(secondExpr.getToken().getValue());
+			var propertyName = (secondExpr as StringLiteralExpression).getDecoded();
 			if (_Util.nameIsValidAsProperty(propertyName)) {
 				this._emitter._emit(".", this._expr.getToken());
 				this._emitter._emit(propertyName, secondExpr.getToken());
@@ -2548,10 +2787,9 @@ class _CallExpressionEmitter extends _OperatorExpressionEmitter {
 		var args = this._expr.getArguments();
 		if (args[2] instanceof ArrayLiteralExpression) {
 			this._emitter._getExpressionEmitterFor(args[0]).emit(_PropertyExpressionEmitter._operatorPrecedence);
-			if (args[1] instanceof StringLiteralExpression && _Util.nameIsValidAsProperty(Util.decodeStringLiteral(args[1].getToken().getValue()))) {
-
+			if (args[1] instanceof StringLiteralExpression && _Util.nameIsValidAsProperty((args[1] as StringLiteralExpression).getDecoded())) {
 				this._emitter._emit(".", calleeExpr.getToken());
-				this._emitter._emit(Util.decodeStringLiteral(args[1].getToken().getValue()), args[1].getToken());
+				this._emitter._emit((args[1] as StringLiteralExpression).getDecoded(), args[1].getToken());
 			}
 			else {
 				this._emitter._emit("[", calleeExpr.getToken());
@@ -2619,7 +2857,8 @@ class _SuperExpressionEmitter extends _OperatorExpressionEmitter {
 		var methodName = this._expr.getName().getValue();
 		var argTypes = funcType.getArgumentTypes();
 		var mangledFuncName = this._emitter.getNamer().getNameOfMethod(classDef, methodName, argTypes);
-		this._emitter._emitCallArguments(this._expr.getToken(), this._emitter.getNamer().getNameOfClass(classDef) + ".prototype." + mangledFuncName + ".call(this", this._expr.getArguments(), argTypes);
+		var thisVar = this._emitter._emittingFunction.getParent() != null ? "$this" : "this";
+		this._emitter._emitCallArguments(this._expr.getToken(), this._emitter.getNamer().getNameOfClass(classDef) + ".prototype." + mangledFuncName + ".call(" + thisVar, this._expr.getArguments(), argTypes);
 	}
 
 	override function _getPrecedence () : number {
@@ -2840,9 +3079,57 @@ class JavaScriptEmitter implements Emitter {
 		this._platform = platform;
 	}
 
+	override function isSpecialCall (callExpr : CallExpression) : boolean {
+		var calleeExpr = callExpr.getExpr();
+		if (! (calleeExpr instanceof PropertyExpression))
+			return false;
+		var propExpr = calleeExpr as PropertyExpression;
+		return this._isJsEval(propExpr) || this._isJsInvoke(propExpr) || this._isCallToMap(propExpr);
+	}
+
 	function isJsModule(classDef : ClassDefinition) : boolean {
 		return classDef.className() == "js"
 			&& classDef.getToken().getFilename() == Util.resolvePath(this._platform.getRoot() + "/lib/js/js.jsx");
+	}
+
+	function _isJsEval (calleeExpr : PropertyExpression) : boolean {
+		if (! (calleeExpr.getType() instanceof StaticFunctionType))
+			return false;
+		if (calleeExpr.getIdentifierToken().getValue() != "eval")
+			return false;
+		var classDef = calleeExpr.getExpr().getType().getClassDef();
+		if (! this.isJsModule(classDef))
+			return false;
+		return true;
+	}
+
+	function _isJsInvoke (calleeExpr : PropertyExpression) : boolean {
+		if (! (calleeExpr.getType() instanceof StaticFunctionType))
+			return false;
+		if (calleeExpr.getIdentifierToken().getValue() != "invoke")
+			return false;
+		var classDef = calleeExpr.getExpr().getType().getClassDef();
+		if (! this.isJsModule(classDef))
+			return false;
+		return true;
+	}
+
+	function _isCallToMap (calleeExpr : PropertyExpression) : boolean {
+		if (calleeExpr.getType() instanceof StaticFunctionType)
+			return false;
+		var classDef = calleeExpr.getExpr().getType().getClassDef();
+		if (! (classDef instanceof InstantiatedClassDefinition))
+			return false;
+		if ((classDef as InstantiatedClassDefinition).getTemplateClassName() != "Map")
+			return false;
+		switch (calleeExpr.getIdentifierToken().getValue()) {
+		case "toString":
+		case "hasOwnProperty":
+		case "keys":
+			return true;
+		default:
+			return false;
+		}
 	}
 
 	override function setRunEnv (runenv : string) : void {
@@ -3133,17 +3420,21 @@ class JavaScriptEmitter implements Emitter {
 			var pushClass = (function (classDef : ClassDefinition) : void {
 				var ctors = _Util.findFunctions(classDef, "constructor", false);
 				if ((classDef.flags() & ClassDefinition.IS_EXPORT) != 0) {
-					var exportedCtor = null : MemberFunctionDefinition;
-					for (var i = 0; i < ctors.length; ++i) {
-						if ((ctors[i].flags() & ClassDefinition.IS_EXPORT) != 0) {
-							assert exportedCtor == null;
-							exportedCtor = ctors[i];
+					if (ctors.length != 0) {
+						var exportedCtor = null : MemberFunctionDefinition;
+						for (var i = 0; i < ctors.length; ++i) {
+							if ((ctors[i].flags() & ClassDefinition.IS_EXPORT) != 0) {
+								assert exportedCtor == null;
+								exportedCtor = ctors[i];
+							}
 						}
+						if (exportedCtor == null) {
+							exportedCtor = ctors[0]; // any ctor will do
+						}
+						list.push([ classDef.classFullName(), this._namer.getNameOfConstructor(classDef, exportedCtor.getArgumentTypes()) ]);
+					} else {
+						list.push([ classDef.classFullName(), this._namer.getNameOfClass(classDef) ]);
 					}
-					if (exportedCtor == null) {
-						exportedCtor = ctors[0]; // any ctor will do
-					}
-					list.push([ classDef.classFullName(), this._namer.getNameOfConstructor(classDef, exportedCtor.getArgumentTypes()) ]);
 				}
 				if (! this._enableMinifier) {
 					if ((classDef.flags() & ClassDefinition.IS_EXPORT) == 0) {
@@ -3152,12 +3443,8 @@ class JavaScriptEmitter implements Emitter {
 					var push = function (argTypes : Type[]) : void {
 						list.push([ classDef.classFullName() + this._mangler.mangleFunctionArguments(argTypes), this._namer.getNameOfConstructor(classDef, argTypes) ]);
 					};
-					if (ctors.length == 0) {
-						push(new Type[]);
-					} else {
-						for (var i = 0; i < ctors.length; ++i)
-							push(ctors[i].getArgumentTypes());
-					}
+					for (var i = 0; i < ctors.length; ++i)
+						push(ctors[i].getArgumentTypes());
 				}
 			});
 			var filename = classDefs[0].getToken().getFilename();
@@ -3385,7 +3672,7 @@ class JavaScriptEmitter implements Emitter {
 
 			// emit reference to this for closures
 			// if funDef is NOT in another closure
-			if (funcDef.getClosures().length != 0 && (funcDef.flags() & ClassDefinition.IS_STATIC) == 0)
+			if (funcDef.getParent() == null && (funcDef.flags() & ClassDefinition.IS_STATIC) == 0 && funcDef.getClosures().length != 0)
 				this._emit("var $this = this;\n", null);
 			// emit local variable declarations
 			var locals = funcDef.getLocals();
@@ -3397,6 +3684,13 @@ class JavaScriptEmitter implements Emitter {
 				// do not pass the token for declaration
 				this._emit("var " + this._namer.getNameOfLocalVariable(locals[i]) + ";\n", null);
 			}
+
+			// emit definition of $__jsx_t if it is to be used
+			var tempVars = new _TempVarLister().update(funcDef).finalize();
+			for (var i = 0; i != tempVars.length; ++i) {
+				this._emit("var " + tempVars[i] + ";\n", null);
+			}
+
 			// emit code
 			var statements = funcDef.getStatements();
 			for (var i = 0; i < statements.length; ++i)
@@ -3426,6 +3720,10 @@ class JavaScriptEmitter implements Emitter {
 			this._emit("$__jsx_lazy_init(", variable.getNameToken());
 			this._emit(this._namer.getNameOfClass(variable.getClassDef()) + ", \"" + this._namer.getNameOfStaticVariable(variable.getClassDef(), variable.name()) + "\", function () {\n", variable.getNameToken());
 			this._advanceIndent();
+			var tempVars = new _TempVarLister().update(initialValue).finalize();
+			for (var i = 0; i != tempVars.length; ++i) {
+				this._emit("var " + tempVars[i] + ";\n", variable.getNameToken());
+			}
 			this._emit("return ", variable.getNameToken());
 			this._emitRHSOfAssignment(initialValue, variable.getType());
 			this._emit(";\n", variable.getNameToken());
@@ -3499,6 +3797,8 @@ class JavaScriptEmitter implements Emitter {
 			return new _FunctionStatementEmitter(this, statement as FunctionStatement);
 		else if (statement instanceof ReturnStatement)
 			return new _ReturnStatementEmitter(this, statement as ReturnStatement);
+		else if (statement instanceof YieldStatement)
+			return new _YieldStatementEmitter(this, statement as YieldStatement);
 		else if (statement instanceof DeleteStatement)
 			return new _DeleteStatementEmitter(this, statement as DeleteStatement);
 		else if (statement instanceof BreakStatement)
@@ -3572,9 +3872,9 @@ class JavaScriptEmitter implements Emitter {
 		else if (expr instanceof TypeofExpression)
 			return new _UnaryExpressionEmitter(this, expr as TypeofExpression);
 		else if (expr instanceof PostIncrementExpression)
-			return new _PostfixExpressionEmitter(this, expr as PostIncrementExpression);
+			return new _PostIncrementExpressionEmitter(this, expr as PostIncrementExpression);
 		else if (expr instanceof PreIncrementExpression)
-			return new _UnaryExpressionEmitter(this, expr as PreIncrementExpression);
+			return new _PreIncrementExpressionEmitter(this, expr as PreIncrementExpression);
 		else if (expr instanceof PropertyExpression)
 			return new _PropertyExpressionEmitter(this, expr as PropertyExpression);
 		else if (expr instanceof SignExpression)
@@ -3585,6 +3885,8 @@ class JavaScriptEmitter implements Emitter {
 			return new _ArrayExpressionEmitter(this, expr as ArrayExpression);
 		else if (expr instanceof AssignmentExpression)
 			return new _AssignmentExpressionEmitter(this, expr as AssignmentExpression);
+		else if (expr instanceof FusedAssignmentExpression)
+			return new _FusedAssignmentExpressionEmitter(this, expr as FusedAssignmentExpression);
 		else if (expr instanceof BinaryNumberExpression)
 			return new _BinaryNumberExpressionEmitter(this, expr as BinaryNumberExpression);
 		else if (expr instanceof EqualityExpression)
@@ -3687,9 +3989,10 @@ class JavaScriptEmitter implements Emitter {
 		var exprType = expr.getType();
 		// FIXME what happens if the op is /= or %= ?
 		if (lhsType.resolveIfNullable().equals(Type.integerType) && exprType.equals(Type.numberType)) {
-			if (expr instanceof NumberLiteralExpression
-				|| expr instanceof IntegerLiteralExpression) {
-				this._emit((expr.getToken().getValue() as int).toString(), expr.getToken());
+			if (expr instanceof NumberLiteralExpression) {
+				this._emit((expr as NumberLiteralExpression).getDecoded() as int as string, expr.getToken());
+			} else if (expr instanceof IntegerLiteralExpression) {
+				this._emit((expr as IntegerLiteralExpression).getDecoded() as string, expr.getToken());
 			} else {
 				this._emit("(", expr.getToken());
 				this._getExpressionEmitterFor(expr).emit(_BinaryNumberExpressionEmitter._operatorPrecedence["|"]);
@@ -3735,14 +4038,14 @@ class JavaScriptEmitter implements Emitter {
 				{ "super":      _SuperExpressionEmitter._setOperatorPrecedence },
 				{ "function":   _FunctionExpressionEmitter._setOperatorPrecedence }
 			], [
-				{ "++":         _PostfixExpressionEmitter._setOperatorPrecedence },
-				{ "--":         _PostfixExpressionEmitter._setOperatorPrecedence }
+				{ "++":         _PostIncrementExpressionEmitter._setOperatorPrecedence },
+				{ "--":         _PostIncrementExpressionEmitter._setOperatorPrecedence }
 			], [
 				// delete is not used by JSX
 				{ "void":       _UnaryExpressionEmitter._setOperatorPrecedence },
 				{ "typeof":     _UnaryExpressionEmitter._setOperatorPrecedence },
-				{ "++":         _UnaryExpressionEmitter._setOperatorPrecedence },
-				{ "--":         _UnaryExpressionEmitter._setOperatorPrecedence },
+				{ "++":         _PreIncrementExpressionEmitter._setOperatorPrecedence },
+				{ "--":         _PreIncrementExpressionEmitter._setOperatorPrecedence },
 				{ "+":          _UnaryExpressionEmitter._setOperatorPrecedence },
 				{ "-":          _UnaryExpressionEmitter._setOperatorPrecedence },
 				{ "~":          _UnaryExpressionEmitter._setOperatorPrecedence },
@@ -3780,17 +4083,17 @@ class JavaScriptEmitter implements Emitter {
 				{ "||":         _LogicalExpressionEmitter._setOperatorPrecedence }
 			], [
 				{ "=":          _AssignmentExpressionEmitter._setOperatorPrecedence },
-				{ "*=":         _AssignmentExpressionEmitter._setOperatorPrecedence },
-				{ "/=":         _AssignmentExpressionEmitter._setOperatorPrecedence },
-				{ "%=":         _AssignmentExpressionEmitter._setOperatorPrecedence },
-				{ "+=":         _AssignmentExpressionEmitter._setOperatorPrecedence },
-				{ "-=":         _AssignmentExpressionEmitter._setOperatorPrecedence },
-				{ "<<=":        _AssignmentExpressionEmitter._setOperatorPrecedence },
-				{ ">>=":        _AssignmentExpressionEmitter._setOperatorPrecedence },
-				{ ">>>=":       _AssignmentExpressionEmitter._setOperatorPrecedence },
-				{ "&=":         _AssignmentExpressionEmitter._setOperatorPrecedence },
-				{ "^=":         _AssignmentExpressionEmitter._setOperatorPrecedence },
-				{ "|=":         _AssignmentExpressionEmitter._setOperatorPrecedence }
+				{ "*=":         _FusedAssignmentExpressionEmitter._setOperatorPrecedence },
+				{ "/=":         _FusedAssignmentExpressionEmitter._setOperatorPrecedence },
+				{ "%=":         _FusedAssignmentExpressionEmitter._setOperatorPrecedence },
+				{ "+=":         _FusedAssignmentExpressionEmitter._setOperatorPrecedence },
+				{ "-=":         _FusedAssignmentExpressionEmitter._setOperatorPrecedence },
+				{ "<<=":        _FusedAssignmentExpressionEmitter._setOperatorPrecedence },
+				{ ">>=":        _FusedAssignmentExpressionEmitter._setOperatorPrecedence },
+				{ ">>>=":       _FusedAssignmentExpressionEmitter._setOperatorPrecedence },
+				{ "&=":         _FusedAssignmentExpressionEmitter._setOperatorPrecedence },
+				{ "^=":         _FusedAssignmentExpressionEmitter._setOperatorPrecedence },
+				{ "|=":         _FusedAssignmentExpressionEmitter._setOperatorPrecedence }
 			], [
 				{ "?":          _ConditionalExpressionEmitter._setOperatorPrecedence }
 			], [

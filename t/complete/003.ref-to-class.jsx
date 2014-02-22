@@ -10,10 +10,10 @@ class A {
       "word" : "super"
    },
    {
-      "word" : "("
+      "word" : "function"
    },
    {
-      "word" : "function"
+      "word" : "("
    },
    {
       "word" : "this"
@@ -82,7 +82,7 @@ class A {
       "word" : "TypeError"
    },
    {
-      "word" : "StopIteration"
+      "word" : "GeneratorFunction"
    },
    {
       "word" : "JSON"
@@ -136,7 +136,13 @@ class A {
       "word" : "Array"
    },
    {
-      "word" : "Enumerable"
+      "word" : "IteratorResult"
+   },
+   {
+      "word" : "Generator"
+   },
+   {
+      "word" : "Promise"
    },
    {
       "word" : "++"

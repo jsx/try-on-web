@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012 DeNA Co., Ltd.
+ * Copyright (c) 2012,2013 DeNA Co., Ltd. et al.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to
@@ -134,7 +134,9 @@ class _Lexer {
 		// keywords shared with ECMA 262
 		"break",    "do",       "instanceof", "typeof",
 		"case",     "else",     "new",        "var",
-		"catch",    "finally",  "return",     "void",
+		/*"catch",*/ // contextual
+		"finally",  "return",     "void",
+		"const",
 		/*"continue",*/ // contextual
 		"for",      "switch",     "while",
 		"function", "this",
@@ -155,7 +157,7 @@ class _Lexer {
 		// literals of ECMA 262 but not used by JSX
 		"debugger", "with",
 		// future reserved words of ECMA 262
-		"const", "export",
+		"export",
 		// future reserved words within strict mode of ECMA 262
 		"let",   "private",   "public", "yield",
 		"protected",
@@ -618,7 +620,7 @@ class Parser {
 	var _filename : string;
 	var _completionRequest : CompletionRequest;
 
-	var _input : string;
+	var _content : Nullable.<string>;
 	var _lines : string[];
 	var _tokenLength : number;
 	var _lineNumber : number; // one origin
@@ -655,10 +657,10 @@ class Parser {
 		this._completionRequest = completionRequest;
 	}
 
-	function parse (input : string, errors : CompileError[]) : boolean {
+	function parse (content : string, errors : CompileError[]) : boolean {
 		// lexer properties
-		this._input = input;
-		this._lines = this._input.split(_Lexer.rxNewline);
+		this._content = content;
+		this._lines = this._content.split(_Lexer.rxNewline);
 		this._tokenLength = 0;
 		this._lineNumber = 1; // one origin
 		this._columnOffset = 0; // zero origin
@@ -707,6 +709,10 @@ class Parser {
 			return false;
 
 		return true;
+	}
+
+	function getContent() : string {
+		return this._content;
 	}
 
 	function _getInput () : string {
@@ -890,11 +896,13 @@ class Parser {
 		this._prevScope = this._prevScope.prev;
 	}
 
-	function _registerLocal (identifierToken : Token, type : Type, isFunctionStmt : boolean = false) : LocalVariable {
+	function _registerLocal (identifierToken : Token, type : Type, isConst : boolean, isFunctionStmt : boolean = false) : LocalVariable {
 		function isEqualTo (local : LocalVariable) : boolean {
 			if (local.getName().getValue() == identifierToken.getValue()) {
 				if ((type != null && local.getType() != null && ! local.getType().equals(type)) || isFunctionStmt)
 					this._newError("conflicting types for variable " + identifierToken.getValue(), identifierToken);
+				if (local.isConstant() != isConst)
+					this._newError("const attribute conflict for variable " + identifierToken.getValue(), identifierToken);
 				return true;
 			}
 			return false;
@@ -920,7 +928,7 @@ class Parser {
 				return this._locals[i];
 			}
 		}
-		var newLocal = new LocalVariable(identifierToken, type);
+		var newLocal = new LocalVariable(identifierToken, type, isConst);
 		this._locals.push(newLocal);
 		return newLocal;
 	}
@@ -1850,11 +1858,12 @@ class Parser {
 					: new MemberFunctionDefinition(token, name, flags, returnType, args, locals, statements, closures, lastToken, docComment);
 			}
 			// take care of abstract function
-			if ((this._classFlags & (ClassDefinition.IS_INTERFACE | ClassDefinition.IS_DELETE)) != 0) {
+			if ((this._classFlags & ClassDefinition.IS_INTERFACE) != 0) {
 				if (this._expect(";") == null)
 					return null;
 				return createDefinition(null, null, new MemberFunctionDefinition[], null);
-			} else if ((flags & (ClassDefinition.IS_ABSTRACT | ClassDefinition.IS_NATIVE)) != 0) {
+			} else if ((flags & (ClassDefinition.IS_ABSTRACT | ClassDefinition.IS_NATIVE | ClassDefinition.IS_DELETE)) != 0) {
+				// "delete function constructor() {} is permitted for backwards compatibility
 				var endDeclToken = this._expect([ ";", "{" ]);
 				if (endDeclToken == null)
 					return null;
@@ -1870,10 +1879,6 @@ class Parser {
 				var lastToken = this._initializeBlock();
 			else
 				lastToken = this._block();
-			// done
-			if (this._isGenerator) {
-				flags |= ClassDefinition.IS_GENERATOR;
-			}
 			var funcDef = createDefinition(this._locals, this._statements, this._closures, lastToken);
 			return funcDef;
 		} finally {
@@ -2025,7 +2030,9 @@ class Parser {
 	function _objectTypeDeclaration (firstToken : Token, allowInner : boolean, autoCompleteMatchCb : function(:ClassDefinition):boolean) : ParsedObjectType {
 		var token;
 		if (firstToken == null) {
-			if ((token = this._expectIdentifier(function (self) { return self._getCompletionCandidatesOfTopLevel(autoCompleteMatchCb); })) == null)
+			if (this._classType != null && (token = this._expectOpt("__CLASS__")) != null) {
+				// ok
+			} else if ((token = this._expectIdentifier(function (self) { return self._getCompletionCandidatesOfTopLevel(autoCompleteMatchCb); })) == null)
 				return null;
 		} else {
 			token = firstToken;
@@ -2036,6 +2043,8 @@ class Parser {
 		} else if (token.getValue() == "Nullable" || token.getValue() == "MayBeUndefined") {
 			this._errors.push(new CompileError(token, "cannot use 'Nullable' (or MayBeUndefined) as a class name"));
 			return null;
+		} else if (token.getValue() == "__CLASS__") {
+			return this._classType;
 		}
 		// import part
 		var imprt = this.lookupImportAlias(token.getValue());
@@ -2120,7 +2129,7 @@ class Parser {
 			} while (token.getValue() == ",");
 		}
 		// parse return type
-		if (this._expect("->") == null)
+		if (this._expect(["->", "=>"]) == null)
 			return null;
 		var returnType = this._typeDeclaration(true);
 		if (returnType == null)
@@ -2178,6 +2187,12 @@ class Parser {
 		return arrayType;
 	}
 
+	function _registerGenObjTypeOf (elementType : Type) : ParsedObjectType {
+		var genObjType = new ParsedObjectType(new QualifiedName(new Token("Generator", true)), [ elementType ]);
+		this._objectTypesUsed.push(genObjType);
+		return genObjType;
+	}
+
 	function _initializeBlock () : Token {
 		var token;
 		while ((token = this._expectOpt("}")) == null) {
@@ -2213,7 +2228,7 @@ class Parser {
 		}
 		// parse the statement
 		var token = this._expectOpt([
-			"{", "var", ";", "if", "do", "while", "for", "continue", "break", "return", "yield", "switch", "throw", "try", "assert", "log", "delete", "debugger", "function", "void"
+			"{", "var", ";", "if", "do", "while", "for", "continue", "break", "return", "yield", "switch", "throw", "try", "assert", "log", "delete", "debugger", "function", "void", "const"
 		]);
 		if (label != null) {
 			if (! (token != null && token.getValue().match(/^(?:do|while|for|switch)$/) != null)) {
@@ -2226,7 +2241,9 @@ class Parser {
 			case "{":
 				return this._block() != null;
 			case "var":
-				return this._variableStatement();
+				return this._variableStatement(false);
+			case "const":
+				return this._variableStatement(true);
 			case ";":
 				return true;
 			case "if":
@@ -2318,9 +2335,9 @@ class Parser {
 		return true;
 	}
 
-	function _variableStatement () : boolean {
+	function _variableStatement (isConst : boolean) : boolean {
 		var succeeded = [ false ];
-		var expr = this._variableDeclarations(false, succeeded);
+		var expr = this._variableDeclarations(false, isConst, succeeded);
 		if (! succeeded[0])
 			return false;
 		if (this._expect(";") == null)
@@ -2331,6 +2348,9 @@ class Parser {
 	}
 
 	function _functionStatement (token : Token) : boolean {
+		var isGenerator = false;
+		if (this._expectOpt("*") != null)
+			isGenerator = true;
 		var name = this._expectIdentifier();
 		if (name == null)
 			return false;
@@ -2345,12 +2365,15 @@ class Parser {
 		if (returnType == null) {
 			return false;
 		}
+		if (isGenerator) {
+			returnType = this._registerGenObjTypeOf(returnType);
+		}
 		if (this._expect("{") == null)
 			return false;
 
-		var funcLocal = this._registerLocal(name, new StaticFunctionType(token, returnType, args.map.<Type>((arg) -> arg.getType()), false), true);
+		var funcLocal = this._registerLocal(name, new StaticFunctionType(token, returnType, args.map.<Type>((arg) -> arg.getType()), false), false, true);
 
-		var funcDef = this._functionBody(token, name, funcLocal, args, returnType, true);
+		var funcDef = this._functionBody(token, name, funcLocal, args, returnType, true, isGenerator);
 		if (funcDef == null) {
 			return false;
 		}
@@ -2425,7 +2448,7 @@ class Parser {
 			// empty expression
 		} else if (this._expectOpt("var") != null) {
 			var succeeded = [ false ];
-			initExpr = this._variableDeclarations(true, succeeded);
+			initExpr = this._variableDeclarations(true, false, succeeded);
 			if (! succeeded[0])
 				return false;
 			if (this._expect(";") == null)
@@ -2467,7 +2490,7 @@ class Parser {
 			return 0; // failure
 		var lhsExpr;
 		if (this._expectOpt("var") != null) {
-			if ((lhsExpr = this._variableDeclaration(true)) == null)
+			if ((lhsExpr = this._variableDeclaration(true, false)) == null)
 				return -1; // retry the other
 		} else {
 			if ((lhsExpr = this._lhsExpr()) == null)
@@ -2517,13 +2540,16 @@ class Parser {
 
 	function _yieldStatement (token : Token) : boolean {
 		this._newExperimentalWarning(token);
+		if (! this._isGenerator) {
+			this._newError("invalid use of 'yield' keyword in non-generator function");
+			return false;
+		}
 		var expr = this._expr(false);
 		if (expr == null)
 			return false;
 		this._statements.push(new YieldStatement(token, expr));
 		if (this._expect(";") == null)
 			return false;
-		this._isGenerator = true;
 		return true;
 	}
 
@@ -2703,12 +2729,12 @@ class Parser {
 		return this._statements.splice(statementIndex, this._statements.length - statementIndex);
 	}
 
-	function _variableDeclarations (noIn : boolean, isSuccess : boolean[]) : Expression {
+	function _variableDeclarations (noIn : boolean, isConst : boolean, isSuccess : boolean[]) : Expression {
 		isSuccess[0] = false;
 		var expr = null : Expression;
 		var commaToken = null : Token;
 		do {
-			var declExpr = this._variableDeclaration(noIn);
+			var declExpr = this._variableDeclaration(noIn, isConst);
 			if (declExpr == null)
 				return null;
 			// do not push variable declarations wo. assignment
@@ -2719,7 +2745,7 @@ class Parser {
 		return expr;
 	}
 
-	function _variableDeclaration (noIn : boolean) : Expression {
+	function _variableDeclaration (noIn : boolean, isConst : boolean) : Expression {
 		var identifier = this._expectIdentifier();
 		if (identifier == null)
 			return null;
@@ -2728,13 +2754,19 @@ class Parser {
 			if ((type = this._typeDeclaration(false)) == null)
 				return null;
 		// FIXME value should be registered after parsing the initialization expression, but that prevents: var f = function () : void { f(); };
-		var local = this._registerLocal(identifier, type);
+		var local = this._registerLocal(identifier, type, isConst);
 		// parse initial value (optional)
 		var initialValue = null : Expression;
 		var assignToken;
-		if ((assignToken = this._expectOpt("=")) != null)
+		if ((assignToken = this._expectOpt("=")) == null) {
+			if (isConst) {
+				this._newError("initializer expression is mandatory for constant declaration");
+				return null;
+			}
+		} else {
 			if ((initialValue = this._assignExpr(noIn)) == null)
 				return null;
+		}
 		var expr : Expression = new LocalExpression(identifier, local);
 		if (initialValue != null)
 			expr = new AssignmentExpression(assignToken, expr, initialValue);
@@ -2774,7 +2806,12 @@ class Parser {
 				var assignExpr = this._assignExpr(noIn);
 				if (assignExpr == null)
 					return null;
-				return new AssignmentExpression(op, lhsExpr, assignExpr);
+				if (op.getValue() == "=") {
+					return new AssignmentExpression(op, lhsExpr, assignExpr);
+				}
+				else {
+					return new FusedAssignmentExpression(op, lhsExpr, assignExpr);
+				}
 			}
 		}
 		// failed to parse as lhs op assignExpr, try condExpr
@@ -2968,22 +3005,12 @@ class Parser {
 	}
 
 	function _lhsExpr () : Expression {
-		var state = this._preserveState();
 		var expr;
-		var token = this._expectOpt([ "new", "super", "(", "function" ]);
+		var token = this._expectOpt([ "new", "super", "function" ]);
 		if (token != null) {
 			switch (token.getValue()) {
 			case "super":
 				return this._superExpr();
-			case "(":
-				expr = this._lambdaExpr(token);
-				if (expr == null) {
-					this._restoreState(state);
-					expr = this._primaryExpr();
-					if (expr == null)
-						return null;
-				}
-				break;
 			case "function":
 				expr = this._functionExpr(token);
 				break;
@@ -2994,7 +3021,9 @@ class Parser {
 				throw new Error("logic flaw");
 			}
 		} else {
-			expr = this._primaryExpr();
+			expr = this._arrowFunctionOpt();
+			if (expr == null)
+				expr = this._primaryExpr();
 		}
 		if (expr == null)
 			return null;
@@ -3078,29 +3107,57 @@ class Parser {
 		return new SuperExpression(token, identifier, args);
 	}
 
-	function _lambdaExpr (token : Token) : Expression {
-		var args = this._functionArgumentsExpr(false, false, false);
-		if (args == null)
+	function _arrowFunctionOpt () : FunctionExpression {
+		var state = this._preserveState();
+		var expr;
+		if ((expr = this._arrowFunction()) == null) {
+			this._restoreState(state);
 			return null;
+		}
+		return expr;
+	}
+
+	function _arrowFunction () : FunctionExpression {
+		if (this._expectOpt("(") != null) {
+			var args = this._functionArgumentsExpr(false, false, false);
+			if (args == null)
+				return null;
+		}
+		else {
+			var argName = this._expectIdentifier();
+			if (argName == null)
+				return null;
+			var argType : Type = null;
+			if (this._expectOpt(":") != null) {
+				if ((argType = this._typeDeclaration(false)) == null)
+					return null;
+			}
+			args = [ new ArgumentDeclaration(argName, argType, null) ];
+		}
 		var returnType = null : Type;
 		if (this._expectOpt(":") != null) {
 			if ((returnType = this._typeDeclaration(true)) == null)
 				return null;
 		}
-		if (this._expect("->") == null)
+		var token = this._expect(["->", "=>"]);
+		if (token == null)
 			return null;
-		var funcDef = this._functionBody(token, null, null, args, returnType, this._expectOpt("{") != null);
+		var funcDef = this._functionBody(token, null, null, args, returnType, this._expectOpt("{") != null, false);
 		if (funcDef == null)
 			return null;
 		this._closures.push(funcDef);
 		return new FunctionExpression(token, funcDef);
 	}
 
-	function _functionBody(token : Token, name : Token, funcLocal : LocalVariable, args : ArgumentDeclaration[], returnType : Type, withBlock : boolean) : MemberFunctionDefinition {
+	function _functionBody(token : Token, name : Token, funcLocal : LocalVariable, args : ArgumentDeclaration[], returnType : Type, withBlock : boolean, isGenerator : boolean) : MemberFunctionDefinition {
 		this._pushScope(funcLocal, args);
 		try {
 			// parse lambda body
 			var flags = ClassDefinition.IS_STATIC;
+			if (isGenerator) {
+				this._isGenerator = isGenerator;
+				flags |= ClassDefinition.IS_GENERATOR;
+			}
 			var lastToken : Token;
 			if (! withBlock) {
 				lastToken = null;
@@ -3110,9 +3167,6 @@ class Parser {
 				var lastToken = this._block();
 				if (lastToken == null)
 					return null;
-				if (this._isGenerator) {
-					flags |= ClassDefinition.IS_GENERATOR;
-				}
 			}
 			var funcDef = new MemberFunctionDefinition(
 				token, name , flags, returnType, args, this._locals, this._statements, this._closures, lastToken, null);
@@ -3126,6 +3180,9 @@ class Parser {
 	}
 
 	function _functionExpr (token : Token) : Expression {
+		var isGenerator = false;
+		if (this._expectOpt("*") != null)
+			isGenerator = true;
 		var name = this._expectIdentifierOpt();
 		if (this._expect("(") == null)
 			return null;
@@ -3153,7 +3210,7 @@ class Parser {
 			funcLocal = new LocalVariable(name, type);
 		}
 
-		var funcDef = this._functionBody(token, name, funcLocal, args, returnType, true);
+		var funcDef = this._functionBody(token, name, funcLocal, args, returnType, true, isGenerator);
 		if (funcDef == null) {
 			return null;
 		}
@@ -3203,7 +3260,7 @@ class Parser {
 
 	function _primaryExpr () : Expression {
 		var token;
-		if ((token = this._expectOpt([ "this", "undefined", "null", "false", "true", "[", "{", "(" ])) != null) {
+		if ((token = this._expectOpt([ "this", "undefined", "null", "false", "true", "[", "{", "(", "__FILE__", "__LINE__", "__CLASS__" ])) != null) {
 			switch (token.getValue()) {
 			case "this":
 				return new ThisExpression(token, null);
@@ -3225,6 +3282,12 @@ class Parser {
 				if (this._expect(")") == null)
 					return null;
 				return expr;
+			case "__FILE__":
+				return new FileMacroExpression(token);
+			case "__LINE__":
+				return new LineMacroExpression(token);
+			case "__CLASS__":
+				return new ClassExpression(token, this._classType);
 			default:
 				throw new Error("logic flaw");
 			}
@@ -3363,8 +3426,15 @@ class Parser {
 				var defaultValue : Expression = null;
 				var assignToken = this._expectOpt("=");
 				if (assignToken != null)  {
-					if ((defaultValue = this._assignExpr(true)) == null) {
-						return null;
+					var state = this._preserveState();
+					try {
+						if ((defaultValue = this._assignExpr(true)) == null) {
+							return null;
+						}
+					} finally {
+						// do not create a between the parent method and the children funcDefs stored in defVal
+						if (this._closures != null)
+							this._closures.splice(state.numClosures, this._closures.length - state.numClosures);
 					}
 					if (! allowDefaultValues) {
 						this._errors.push(new CompileError(assignToken, "default parameters are only allowed for member functions"));

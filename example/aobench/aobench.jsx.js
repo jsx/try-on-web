@@ -1,4 +1,4 @@
-// generatedy by JSX compiler 0.9.63 (2013-08-31 12:05:12 +0900; 2ec017d883d4d01af3d13db10eb1dfa291034b54)
+// generatedy by JSX compiler 0.9.78 (2014-02-20 16:35:31 +0900; da141e9a5ca211f770bca3f618109d2c443a1b72)
 var JSX = {};
 (function (JSX) {
 /**
@@ -44,11 +44,44 @@ function $__jsx_lazy_init(obj, prop, func) {
 	});
 }
 
+var $__jsx_imul = Math.imul;
+if (typeof $__jsx_imul === "undefined") {
+	$__jsx_imul = function (a, b) {
+		var ah  = (a >>> 16) & 0xffff;
+		var al = a & 0xffff;
+		var bh  = (b >>> 16) & 0xffff;
+		var bl = b & 0xffff;
+		return ((al * bl) + (((ah * bl + al * bh) << 16) >>> 0)|0);
+	};
+}
+
 /**
- * sideeffect().a /= b
+ * fused int-ops with side-effects
  */
-function $__jsx_div_assign(obj, prop, divisor) {
-	return obj[prop] = (obj[prop] / divisor) | 0;
+function $__jsx_ipadd(o, p, r) {
+	return o[p] = (o[p] + r) | 0;
+}
+function $__jsx_ipsub(o, p, r) {
+	return o[p] = (o[p] - r) | 0;
+}
+function $__jsx_ipmul(o, p, r) {
+	return o[p] = $__jsx_imul(o[p], r);
+}
+function $__jsx_ipdiv(o, p, r) {
+	return o[p] = (o[p] / r) | 0;
+}
+function $__jsx_ipmod(o, p, r) {
+	return o[p] = (o[p] % r) | 0;
+}
+function $__jsx_ippostinc(o, p) {
+	var v = o[p];
+	o[p] = (v + 1) | 0;
+	return v;
+}
+function $__jsx_ippostdec(o, p) {
+	var v = o[p];
+	o[p] = (v - 1) | 0;
+	return v;
 }
 
 /*
@@ -101,13 +134,51 @@ JSX.resetProfileResults = function () {
 	return $__jsx_profiler.resetResults();
 };
 JSX.DEBUG = false;
-function StopIteration() {
-	Error.call(this);
-	this.name = "StopIteration";
-	if (Error.captureStackTrace) Error.captureStackTrace(this, StopIteration);
-};
+var GeneratorFunction$0 = 
+(function () {
+  try {
+    eval('import {GeneratorFunction} from "std:iteration"');
+    return GeneratorFunction;
+  } catch (e) {
+    return function GeneratorFunction () {};
+  }
+})();
+var __jsx_generator_object$0 = 
+(function () {
+  function __jsx_generator_object() {
+  	this.__next = 0;
+  	this.__loop = null;
+  	this.__value = undefined;
+  	this.__status = 0;	// SUSPENDED: 0, ACTIVE: 1, DEAD: 2
+  }
 
-$__jsx_extend([StopIteration], Error);
+  __jsx_generator_object.prototype.next = function () {
+  	switch (this.__status) {
+  	case 0:
+  		this.__status = 1;
+
+  		// go next!
+  		this.__loop(this.__next);
+
+  		var done = false;
+  		if (this.__next != -1) {
+  			this.__status = 0;
+  		} else {
+  			this.__status = 2;
+  			done = true;
+  		}
+  		return { value: this.__value, done: done };
+  	case 1:
+  		throw new Error("Generator is already running");
+  	case 2:
+  		throw new Error("Generator is already finished");
+  	default:
+  		throw new Error("Unexpected generator internal state");
+  	}
+  };
+
+  return __jsx_generator_object;
+}());
 function Config() {
 };
 
@@ -204,8 +275,8 @@ function Sphere$intersect$LSphere$LRay$LIsect$($this, ray, isect) {
 	var n;
 	var a$0;
 	var b$0;
+	var b$1;
 	var b$2;
-	var b$4;
 	var rs$x$0;
 	var rs$y$0;
 	var rs$z$0;
@@ -218,8 +289,8 @@ function Sphere$intersect$LSphere$LRay$LIsect$($this, ray, isect) {
 	rs$x$0 = a$0.x - b$0.x;
 	rs$y$0 = a$0.y - b$0.y;
 	rs$z$0 = a$0.z - b$0.z;
-	b$2 = ray.dir;
-	B = rs$x$0 * b$2.x + rs$y$0 * b$2.y + rs$z$0 * b$2.z;
+	b$1 = ray.dir;
+	B = rs$x$0 * b$1.x + rs$y$0 * b$1.y + rs$z$0 * b$1.z;
 	C = rs$x$0 * rs$x$0 + rs$y$0 * rs$y$0 + rs$z$0 * rs$z$0 - (radius$0 = $this.radius) * radius$0;
 	D = B * B - C;
 	if (D > 0.0) {
@@ -228,8 +299,8 @@ function Sphere$intersect$LSphere$LRay$LIsect$($this, ray, isect) {
 			isect.t = t;
 			isect.hit = true;
 			p$0 = isect.p = ({x: (org$0 = ray.org).x + (dir$0 = ray.dir).x * t, y: org$0.y + dir$0.y * t, z: org$0.z + dir$0.z * t});
-			b$4 = $this.center;
-			n = ({x: p$0.x - b$4.x, y: p$0.y - b$4.y, z: p$0.z - b$4.z});
+			b$2 = $this.center;
+			n = ({x: p$0.x - b$2.x, y: p$0.y - b$2.y, z: p$0.z - b$2.z});
 			isect.n = vec3$vnormalize$Lvec3$(n);
 		}
 	}
@@ -250,8 +321,8 @@ function Plane$intersect$LPlane$LRay$LIsect$($this, ray, isect) {
 	var a$0;
 	var b$0;
 	var a$1;
-	var a$3;
-	var b$3;
+	var a$2;
+	var b$2;
 	var n$0;
 	var org$0;
 	var dir$0;
@@ -261,7 +332,7 @@ function Plane$intersect$LPlane$LRay$LIsect$($this, ray, isect) {
 	if ((v >= 0 ? v : - v) < 1.0e-17) {
 		return;
 	}
-	t = - ((a$3 = ray.org, b$3 = $this.n, a$3.x * b$3.x + a$3.y * b$3.y + a$3.z * b$3.z) + d) / v;
+	t = - ((a$2 = ray.org, b$2 = $this.n, a$2.x * b$2.x + a$2.y * b$2.y + a$2.z * b$2.z) + d) / v;
 	if (t > 0.0 && t < isect.t) {
 		isect.hit = true;
 		isect.t = t;
@@ -347,6 +418,7 @@ function AOBench$ambient_occlusion$LAOBench$LIsect$($this, isect) {
 	var occ_f;
 	var p$0;
 	var n$0;
+	var $__jsx_postinc_t;
 	basis = new Array(3);
 	AOBench$orthoBasis$LAOBench$ALvec3$Lvec3$($this, basis, isect.n);
 	p = ({x: (p$0 = isect.p).x + 0.0001 * (n$0 = isect.n).x, y: p$0.y + 0.0001 * n$0.y, z: p$0.z + 0.0001 * n$0.z});
@@ -371,7 +443,7 @@ function AOBench$ambient_occlusion$LAOBench$LIsect$($this, isect) {
 			Sphere$intersect$LSphere$LRay$LIsect$($this.spheres[2], ray, occIsect);
 			Plane$intersect$LPlane$LRay$LIsect$($this.plane, ray, occIsect);
 			if (occIsect.hit) {
-				occlusion++;
+				($__jsx_postinc_t = occlusion, occlusion = ($__jsx_postinc_t + 1) | 0, $__jsx_postinc_t);
 			}
 		}
 	}
@@ -479,9 +551,7 @@ function _Main$main$AS(args) {
 _Main.main = _Main$main$AS;
 _Main.main$AS = _Main$main$AS;
 
-function dom() {
-};
-
+function dom() {}
 $__jsx_extend([dom], Object);
 function dom$id$S(id) {
 	return dom.document.getElementById(id);
@@ -590,7 +660,6 @@ function KeyboardEventInit() {
 	this.cancelable = false;
 	this.view = null;
 	this.detail = 0;
-	this.char = "";
 	this.key = "";
 	this.location = 0;
 	this.ctrlKey = false;
@@ -598,7 +667,6 @@ function KeyboardEventInit() {
 	this.altKey = false;
 	this.metaKey = false;
 	this.repeat = false;
-	this.locale = "";
 	this.charCode = 0;
 	this.keyCode = 0;
 	this.which = 0;
@@ -611,7 +679,6 @@ function CompositionEventInit() {
 	this.view = null;
 	this.detail = 0;
 	this.data = null;
-	this.locale = "";
 };
 
 $__jsx_extend([CompositionEventInit], Object);
@@ -630,12 +697,34 @@ function XMLHttpRequestOptions() {
 
 $__jsx_extend([XMLHttpRequestOptions], Object);
 function ScrollOptions() {
-	this.x = 0;
-	this.y = 0;
 	this.behavior = "";
 };
 
 $__jsx_extend([ScrollOptions], Object);
+function ScrollOptionsHorizontal() {
+	this.behavior = "";
+	this.x = 0;
+};
+
+$__jsx_extend([ScrollOptionsHorizontal], ScrollOptions);
+function ScrollOptionsVertical() {
+	this.behavior = "";
+	this.y = 0;
+};
+
+$__jsx_extend([ScrollOptionsVertical], ScrollOptions);
+function BoxQuadOptions() {
+	this.box = "";
+	this.relativeTo = null;
+};
+
+$__jsx_extend([BoxQuadOptions], Object);
+function ConvertCoordinateOptions() {
+	this.fromBox = "";
+	this.toBox = "";
+};
+
+$__jsx_extend([ConvertCoordinateOptions], Object);
 function TrackEventInit() {
 	this.bubbles = false;
 	this.cancelable = false;
@@ -746,56 +835,63 @@ function NotificationOptions() {
 };
 
 $__jsx_extend([NotificationOptions], Object);
-function RTCSessionDescriptionInit() {
-	this.type = "";
-	this.sdp = "";
+function DOMPointInit() {
+	this.x = 0;
+	this.y = 0;
+	this.z = 0;
+	this.w = 0;
 };
 
-$__jsx_extend([RTCSessionDescriptionInit], Object);
-function RTCIceCandidateInit() {
-	this.candidate = "";
-	this.sdpMid = "";
-	this.sdpMLineIndex = 0;
+$__jsx_extend([DOMPointInit], Object);
+function SourceInfo() {
+	this.sourceId = "";
+	this.kind = "";
+	this.label = "";
 };
 
-$__jsx_extend([RTCIceCandidateInit], Object);
-function RTCIceServer() {
-	this.url = "";
-	this.credential = null;
-};
-
-$__jsx_extend([RTCIceServer], Object);
-function RTCConfiguration() {
-	this.iceServers = null;
-};
-
-$__jsx_extend([RTCConfiguration], Object);
-function DataChannelInit() {
-	this.reliable = false;
-};
-
-$__jsx_extend([DataChannelInit], Object);
-function RTCPeerConnectionIceEventInit() {
+$__jsx_extend([SourceInfo], Object);
+function MediaStreamTrackEventInit() {
 	this.bubbles = false;
 	this.cancelable = false;
-	this.candidate = null;
+	this.track = null;
 };
 
-$__jsx_extend([RTCPeerConnectionIceEventInit], EventInit);
-function MediaStreamEventInit() {
-	this.bubbles = false;
-	this.cancelable = false;
-	this.stream = null;
+$__jsx_extend([MediaStreamTrackEventInit], EventInit);
+function MediaSourceStates() {
+	this.sourceType = "";
+	this.sourceId = "";
+	this.width = null;
+	this.height = null;
+	this.frameRate = null;
+	this.aspectRatio = null;
+	this.facingMode = null;
+	this.volume = null;
 };
 
-$__jsx_extend([MediaStreamEventInit], EventInit);
-function DataChannelEventInit() {
-	this.bubbles = false;
-	this.cancelable = false;
-	this.channel = null;
+$__jsx_extend([MediaSourceStates], Object);
+function CapabilityRange() {
+	this.max = null;
+	this.min = null;
+	this.supported = false;
 };
 
-$__jsx_extend([DataChannelEventInit], EventInit);
+$__jsx_extend([CapabilityRange], Object);
+function AllVideoCapabilities() {
+	this.sourceType = null;
+	this.sourceId = null;
+	this.width = null;
+	this.height = null;
+	this.frameRate = null;
+	this.aspectRatio = null;
+	this.facingMode = null;
+};
+
+$__jsx_extend([AllVideoCapabilities], Object);
+function AllAudioCapabilities() {
+	this.volume = null;
+};
+
+$__jsx_extend([AllAudioCapabilities], Object);
 function MediaStreamConstraints() {
 	this.video = null;
 	this.audio = null;
@@ -804,10 +900,16 @@ function MediaStreamConstraints() {
 $__jsx_extend([MediaStreamConstraints], Object);
 function MediaTrackConstraints() {
 	this.mandatory = null;
-	this.optional = null;
+	this._optional = null;
 };
 
 $__jsx_extend([MediaTrackConstraints], Object);
+function MinMaxConstraint() {
+	this.max = null;
+	this.min = null;
+};
+
+$__jsx_extend([MinMaxConstraint], Object);
 function HitRegionOptions() {
 	this.path = null;
 	this.id = "";
@@ -856,7 +958,17 @@ function DeviceMotionEventInit() {
 };
 
 $__jsx_extend([DeviceMotionEventInit], EventInit);
-var js$0 = (function () { var global = (function () { return this; }()); return { global: global, eval: global.eval, invoke: function(invocant, methodName, args) { return invocant[methodName].apply(invocant, args); } }; }());
+var js$0 = (function () {
+	var global = (function () { return this; }());
+	return {
+		global: global,
+		eval: global.eval,
+		invoke: function(invocant, methodName, args) {
+			return invocant[methodName].apply(invocant, args);
+		},
+		newFunction: Function
+	};
+}());
 Config.canvasId = "world";
 Config.statusId = "status";
 Random._x = 0;
@@ -874,10 +986,6 @@ $__jsx_lazy_init(dom, "document", function () {
 });
 
 var $__jsx_classMap = {
-	"system:lib/built-in.jsx": {
-		StopIteration: StopIteration,
-		StopIteration$: StopIteration
-	},
 	"system:web/example/aobench/aobench.jsx": {
 		Config: Config,
 		Config$: Config,
@@ -900,7 +1008,6 @@ var $__jsx_classMap = {
 	},
 	"system:lib/js/js/web.jsx": {
 		dom: dom,
-		dom$: dom,
 		EventInit: EventInit,
 		EventInit$: EventInit,
 		CustomEventInit: CustomEventInit,
@@ -925,6 +1032,14 @@ var $__jsx_classMap = {
 		XMLHttpRequestOptions$: XMLHttpRequestOptions,
 		ScrollOptions: ScrollOptions,
 		ScrollOptions$: ScrollOptions,
+		ScrollOptionsHorizontal: ScrollOptionsHorizontal,
+		ScrollOptionsHorizontal$: ScrollOptionsHorizontal,
+		ScrollOptionsVertical: ScrollOptionsVertical,
+		ScrollOptionsVertical$: ScrollOptionsVertical,
+		BoxQuadOptions: BoxQuadOptions,
+		BoxQuadOptions$: BoxQuadOptions,
+		ConvertCoordinateOptions: ConvertCoordinateOptions,
+		ConvertCoordinateOptions$: ConvertCoordinateOptions,
 		TrackEventInit: TrackEventInit,
 		TrackEventInit$: TrackEventInit,
 		PopStateEventInit: PopStateEventInit,
@@ -953,26 +1068,26 @@ var $__jsx_classMap = {
 		IDBVersionChangeEventInit$: IDBVersionChangeEventInit,
 		NotificationOptions: NotificationOptions,
 		NotificationOptions$: NotificationOptions,
-		RTCSessionDescriptionInit: RTCSessionDescriptionInit,
-		RTCSessionDescriptionInit$: RTCSessionDescriptionInit,
-		RTCIceCandidateInit: RTCIceCandidateInit,
-		RTCIceCandidateInit$: RTCIceCandidateInit,
-		RTCIceServer: RTCIceServer,
-		RTCIceServer$: RTCIceServer,
-		RTCConfiguration: RTCConfiguration,
-		RTCConfiguration$: RTCConfiguration,
-		DataChannelInit: DataChannelInit,
-		DataChannelInit$: DataChannelInit,
-		RTCPeerConnectionIceEventInit: RTCPeerConnectionIceEventInit,
-		RTCPeerConnectionIceEventInit$: RTCPeerConnectionIceEventInit,
-		MediaStreamEventInit: MediaStreamEventInit,
-		MediaStreamEventInit$: MediaStreamEventInit,
-		DataChannelEventInit: DataChannelEventInit,
-		DataChannelEventInit$: DataChannelEventInit,
+		DOMPointInit: DOMPointInit,
+		DOMPointInit$: DOMPointInit,
+		SourceInfo: SourceInfo,
+		SourceInfo$: SourceInfo,
+		MediaStreamTrackEventInit: MediaStreamTrackEventInit,
+		MediaStreamTrackEventInit$: MediaStreamTrackEventInit,
+		MediaSourceStates: MediaSourceStates,
+		MediaSourceStates$: MediaSourceStates,
+		CapabilityRange: CapabilityRange,
+		CapabilityRange$: CapabilityRange,
+		AllVideoCapabilities: AllVideoCapabilities,
+		AllVideoCapabilities$: AllVideoCapabilities,
+		AllAudioCapabilities: AllAudioCapabilities,
+		AllAudioCapabilities$: AllAudioCapabilities,
 		MediaStreamConstraints: MediaStreamConstraints,
 		MediaStreamConstraints$: MediaStreamConstraints,
 		MediaTrackConstraints: MediaTrackConstraints,
 		MediaTrackConstraints$: MediaTrackConstraints,
+		MinMaxConstraint: MinMaxConstraint,
+		MinMaxConstraint$: MinMaxConstraint,
 		HitRegionOptions: HitRegionOptions,
 		HitRegionOptions$: HitRegionOptions,
 		WebGLContextAttributes: WebGLContextAttributes,

@@ -1,4 +1,4 @@
-// generatedy by JSX compiler 0.9.63 (2013-08-31 12:05:12 +0900; 2ec017d883d4d01af3d13db10eb1dfa291034b54)
+// generatedy by JSX compiler 0.9.78 (2014-02-20 16:35:31 +0900; da141e9a5ca211f770bca3f618109d2c443a1b72)
 var JSX = {};
 (function (JSX) {
 /**
@@ -44,11 +44,44 @@ function $__jsx_lazy_init(obj, prop, func) {
 	});
 }
 
+var $__jsx_imul = Math.imul;
+if (typeof $__jsx_imul === "undefined") {
+	$__jsx_imul = function (a, b) {
+		var ah  = (a >>> 16) & 0xffff;
+		var al = a & 0xffff;
+		var bh  = (b >>> 16) & 0xffff;
+		var bl = b & 0xffff;
+		return ((al * bl) + (((ah * bl + al * bh) << 16) >>> 0)|0);
+	};
+}
+
 /**
- * sideeffect().a /= b
+ * fused int-ops with side-effects
  */
-function $__jsx_div_assign(obj, prop, divisor) {
-	return obj[prop] = (obj[prop] / divisor) | 0;
+function $__jsx_ipadd(o, p, r) {
+	return o[p] = (o[p] + r) | 0;
+}
+function $__jsx_ipsub(o, p, r) {
+	return o[p] = (o[p] - r) | 0;
+}
+function $__jsx_ipmul(o, p, r) {
+	return o[p] = $__jsx_imul(o[p], r);
+}
+function $__jsx_ipdiv(o, p, r) {
+	return o[p] = (o[p] / r) | 0;
+}
+function $__jsx_ipmod(o, p, r) {
+	return o[p] = (o[p] % r) | 0;
+}
+function $__jsx_ippostinc(o, p) {
+	var v = o[p];
+	o[p] = (v + 1) | 0;
+	return v;
+}
+function $__jsx_ippostdec(o, p) {
+	var v = o[p];
+	o[p] = (v - 1) | 0;
+	return v;
 }
 
 /*
@@ -101,48 +134,51 @@ JSX.resetProfileResults = function () {
 	return $__jsx_profiler.resetResults();
 };
 JSX.DEBUG = true;
-function StopIteration() {
-	Error.call(this);
-	this.name = "StopIteration";
-	if (Error.captureStackTrace) Error.captureStackTrace(this, StopIteration);
-};
+var GeneratorFunction$0 = 
+(function () {
+  try {
+    eval('import {GeneratorFunction} from "std:iteration"');
+    return GeneratorFunction;
+  } catch (e) {
+    return function GeneratorFunction () {};
+  }
+})();
+var __jsx_generator_object$0 = 
+(function () {
+  function __jsx_generator_object() {
+  	this.__next = 0;
+  	this.__loop = null;
+  	this.__value = undefined;
+  	this.__status = 0;	// SUSPENDED: 0, ACTIVE: 1, DEAD: 2
+  }
 
-$__jsx_extend([StopIteration], Error);
-function Enumerable$x2E$x3Cfunction$x20$x28$x3A$x20variant$x29$x20$x3A$x20void$x3E() {
-};
+  __jsx_generator_object.prototype.next = function () {
+  	switch (this.__status) {
+  	case 0:
+  		this.__status = 1;
 
-$__jsx_extend([Enumerable$x2E$x3Cfunction$x20$x28$x3A$x20variant$x29$x20$x3A$x20void$x3E], Object);
-Enumerable$x2E$x3Cfunction$x20$x28$x3A$x20variant$x29$x20$x3A$x20void$x3E.prototype.$__jsx_implements_Enumerable$x2E$x3Cfunction$x20$x28$x3A$x20variant$x29$x20$x3A$x20void$x3E = true;
+  		// go next!
+  		this.__loop(this.__next);
 
-function __jsx_generator$x2E$x3Cfunction$x20$x28$x3A$x20variant$x29$x20$x3A$x20void$x3E() {
-	Enumerable$x2E$x3Cfunction$x20$x28$x3A$x20variant$x29$x20$x3A$x20void$x3E.call(this);
-	this.__next = null;
-	this.__value = null;
-	this.__end = false;
-};
+  		var done = false;
+  		if (this.__next != -1) {
+  			this.__status = 0;
+  		} else {
+  			this.__status = 2;
+  			done = true;
+  		}
+  		return { value: this.__value, done: done };
+  	case 1:
+  		throw new Error("Generator is already running");
+  	case 2:
+  		throw new Error("Generator is already finished");
+  	default:
+  		throw new Error("Unexpected generator internal state");
+  	}
+  };
 
-$__jsx_extend([__jsx_generator$x2E$x3Cfunction$x20$x28$x3A$x20variant$x29$x20$x3A$x20void$x3E], Object);
-$__jsx_merge_interface(__jsx_generator$x2E$x3Cfunction$x20$x28$x3A$x20variant$x29$x20$x3A$x20void$x3E, Enumerable$x2E$x3Cfunction$x20$x28$x3A$x20variant$x29$x20$x3A$x20void$x3E);
-
-__jsx_generator$x2E$x3Cfunction$x20$x28$x3A$x20variant$x29$x20$x3A$x20void$x3E.prototype.next$ = function () {
-	if (! this.__end) {
-		try {
-			this.__next();
-		} catch ($__jsx_catch_0) {
-			if ($__jsx_catch_0 instanceof StopIteration) {
-				this.__end = true;
-				throw $__jsx_catch_0;
-			} else {
-				throw $__jsx_catch_0;
-			}
-		}
-		return this.__value;
-	} else {
-		throw new StopIteration();
-	}
-};
-
-
+  return __jsx_generator_object;
+}());
 function Async() {
 };
 
@@ -157,31 +193,21 @@ function Async$sleep$N(durationMS) {
 
 Async.sleep$N = Async$sleep$N;
 
-function Async$run$F$LEnumerable$x2E$x3Cfunction$x20$x28$x3A$x20variant$x29$x20$x3A$x20void$x3E$$(coro) {
+function Async$run$F$LGenerator$x2E$x3Cfunction$x20$x28$x3A$x20variant$x29$x20$x3A$x20void$x3E$$(coro) {
 	Async$go$X(coro());
 };
 
-Async.run$F$LEnumerable$x2E$x3Cfunction$x20$x28$x3A$x20variant$x29$x20$x3A$x20void$x3E$$ = Async$run$F$LEnumerable$x2E$x3Cfunction$x20$x28$x3A$x20variant$x29$x20$x3A$x20void$x3E$$;
+Async.run$F$LGenerator$x2E$x3Cfunction$x20$x28$x3A$x20variant$x29$x20$x3A$x20void$x3E$$ = Async$run$F$LGenerator$x2E$x3Cfunction$x20$x28$x3A$x20variant$x29$x20$x3A$x20void$x3E$$;
 
 function Async$go$X(v) {
 	var g;
-	var cb;
-	g = (function ($v) {
-		if (! ($v == null || $v.$__jsx_implements_Enumerable$x2E$x3Cfunction$x20$x28$x3A$x20variant$x29$x20$x3A$x20void$x3E)) {
-			debugger;
-			throw new Error("[/Users/gfx/repo/try-on-web/JSX/example/yield.jsx:21:14] detected invalid cast, value is not an instance of the designated type or null\n    var g = v as Enumerable.<(variant)->void>;\n              ^^\n");
-		}
-		return $v;
-	}(v));
-	try {
-		cb = g.next$();
-		cb(g);
-	} catch ($__jsx_catch_0) {
-		if ($__jsx_catch_0 instanceof StopIteration) {
-			return;
-		} else {
-			throw $__jsx_catch_0;
-		}
+	var data;
+	g = v;
+	data = g.next();
+	if (data.done) {
+		return;
+	} else {
+		data.value(g);
 	}
 };
 
@@ -192,44 +218,16 @@ function _Main() {
 
 $__jsx_extend([_Main], Object);
 function _Main$main$AS(args) {
-	Async$run$F$LEnumerable$x2E$x3Cfunction$x20$x28$x3A$x20variant$x29$x20$x3A$x20void$x3E$$((function () {
-		var $START;
-		var $YIELD_0;
-		var $YIELD_1;
-		var $YIELD_2;
-		var $YIELD_3;
-		var $END;
-		var $generator0;
-		$generator0 = new __jsx_generator$x2E$x3Cfunction$x20$x28$x3A$x20variant$x29$x20$x3A$x20void$x3E();
-		$START = (function () {
-			console.log("H");
-			$generator0.__value = Async$sleep$N(100);
-			$generator0.__next = $YIELD_0;
-		});
-		$YIELD_0 = (function () {
-			console.log("e");
-			$generator0.__value = Async$sleep$N(100);
-			$generator0.__next = $YIELD_1;
-		});
-		$YIELD_1 = (function () {
-			console.log("l");
-			$generator0.__value = Async$sleep$N(100);
-			$generator0.__next = $YIELD_2;
-		});
-		$YIELD_2 = (function () {
-			console.log("l");
-			$generator0.__value = Async$sleep$N(100);
-			$generator0.__next = $YIELD_3;
-		});
-		$YIELD_3 = (function () {
-			console.log("o");
-			throw new StopIteration();
-			$END();
-		});
-		$END = (function () {
-		});
-		$generator0.__next = $START;
-		return $generator0;
+	Async$run$F$LGenerator$x2E$x3Cfunction$x20$x28$x3A$x20variant$x29$x20$x3A$x20void$x3E$$((function * () {
+		console.log("H");
+		yield Async$sleep$N(100);
+		console.log("e");
+		yield Async$sleep$N(100);
+		console.log("l");
+		yield Async$sleep$N(100);
+		console.log("l");
+		yield Async$sleep$N(100);
+		console.log("o");
 	}));
 };
 
@@ -314,7 +312,7 @@ function Timer$_getRequestAnimationFrameImpl$B(useNativeImpl) {
 	var lastTime;
 	if (useNativeImpl) {
 		prefixes = [ "r", "webkitR", "mozR", "oR", "msR" ];
-		for (i = 0; i < prefixes.length; ++ i) {
+		for (i = 0; i < prefixes.length; ++i) {
 			name = (function (v) {
 				if (! (v != null)) {
 					debugger;
@@ -356,7 +354,7 @@ function Timer$_getCancelAnimationFrameImpl$B(useNativeImpl) {
 	var name;
 	if (useNativeImpl) {
 		prefixes = [ "c", "webkitC", "mozC", "oC", "msC" ];
-		for (i = 0; i < prefixes.length; ++ i) {
+		for (i = 0; i < prefixes.length; ++i) {
 			name = (function (v) {
 				if (! (v != null)) {
 					debugger;
@@ -382,11 +380,19 @@ function Timer$_getCancelAnimationFrameImpl$B(useNativeImpl) {
 
 Timer._getCancelAnimationFrameImpl$B = Timer$_getCancelAnimationFrameImpl$B;
 
-function TimerHandle() {
-};
-
+function TimerHandle() {}
 $__jsx_extend([TimerHandle], Object);
-var js$0 = (function () { var global = (function () { return this; }()); return { global: global, eval: global.eval, invoke: function(invocant, methodName, args) { return invocant[methodName].apply(invocant, args); } }; }());
+var js$0 = (function () {
+	var global = (function () { return this; }());
+	return {
+		global: global,
+		eval: global.eval,
+		invoke: function(invocant, methodName, args) {
+			return invocant[methodName].apply(invocant, args);
+		},
+		newFunction: Function
+	};
+}());
 $__jsx_lazy_init(Timer, "_requestAnimationFrame", function () {
 	return Timer$_getRequestAnimationFrameImpl$B(true);
 });
@@ -395,10 +401,6 @@ $__jsx_lazy_init(Timer, "_cancelAnimationFrame", function () {
 });
 
 var $__jsx_classMap = {
-	"system:lib/built-in.jsx": {
-		StopIteration: StopIteration,
-		StopIteration$: StopIteration
-	},
 	"system:example/yield.jsx": {
 		Async: Async,
 		Async$: Async,
@@ -408,8 +410,7 @@ var $__jsx_classMap = {
 	"system:lib/js/timer.jsx": {
 		Timer: Timer,
 		Timer$: Timer,
-		TimerHandle: TimerHandle,
-		TimerHandle$: TimerHandle
+		TimerHandle: TimerHandle
 	}
 };
 

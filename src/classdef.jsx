@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012 DeNA Co., Ltd.
+ * Copyright (c) 2012,2013 DeNA Co., Ltd. et al.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to
@@ -577,6 +577,15 @@ class ClassDefinition implements Stashable {
 			func.setClassDef(this);
 			this._members.push(func);
 		}
+		// remove the deleted constructor
+		for (var i = 0; i != this._members.length; ++i) {
+			if (this._members[i] instanceof MemberFunctionDefinition
+				&& this._members[i].name() == "constructor"
+				&& (this._members[i].flags() & (ClassDefinition.IS_STATIC | ClassDefinition.IS_DELETE)) == ClassDefinition.IS_DELETE) {
+				this._members.splice(i, 1);
+				break;
+			}
+		}
 	}
 
 	function setAnalysisContextOfVariables (context : AnalysisContext) : void {
@@ -755,7 +764,8 @@ class ClassDefinition implements Stashable {
 			if (! (member instanceof MemberFunctionDefinition)) {
 				return false;
 			}
-			if ((member.flags() & (ClassDefinition.IS_STATIC | ClassDefinition.IS_EXPORT)) != ClassDefinition.IS_EXPORT) {
+			if ((member.flags() & (ClassDefinition.IS_STATIC | ClassDefinition.IS_EXPORT)) != ClassDefinition.IS_EXPORT
+				|| member.name() == "constructor") {
 				return false;
 			}
 			if (! usedNames.hasOwnProperty(member.name())) {
@@ -766,15 +776,25 @@ class ClassDefinition implements Stashable {
 			if (existingDef.getType().equals(member.getType())) {
 				return false;
 			}
-			if ((this._flags & ClassDefinition.IS_EXPORT) != 0 && member.name() == "constructor") {
-				var errMsg = "only one constructor is exportable, please mark others using the __noexport__ attribute";
-			} else {
-				errMsg = "methods with __export__ attribute cannot be overloaded";
-			}
 			context.errors.push(
-				new CompileError(member.getToken(), errMsg)
+				new CompileError(member.getToken(), "methods with __export__ attribute cannot be overloaded")
 				.addCompileNote(new CompileNote(usedNames[member.name()].getToken(), "previously defined here")));
 			return false;
+		});
+		// check constructor conflicts
+		var existingExportedCtor = null : MemberFunctionDefinition;
+		this.forEachMemberFunction(function (funcDef) {
+			if ((funcDef.flags() & (ClassDefinition.IS_EXPORT | ClassDefinition.IS_STATIC)) == ClassDefinition.IS_EXPORT
+				&& funcDef.name() == "constructor") {
+				if (existingExportedCtor != null) {
+					context.errors.push(
+						new CompileError(funcDef.getToken(), "only one constructor is exportable per class (or interface or mixin), pleaose mark others using the __noexport__ attribute")
+						.addCompileNote(new CompileNote(existingExportedCtor.getToken(), "previously defined here")));
+				} else {
+					existingExportedCtor = funcDef;
+				}
+			}
+			return true;
 		});
 	}
 
@@ -873,7 +893,7 @@ class ClassDefinition implements Stashable {
 			}
 			if (! Util.typesAreEqual((this._members[i] as MemberFunctionDefinition).getArgumentTypes(), member.getArgumentTypes()))
 				continue;
-			if ((! isCheckingInterface) && (member.flags() & ClassDefinition.IS_OVERRIDE) == 0) {
+			if ((! isCheckingInterface) && ((member.flags() | this._members[i].flags()) & ClassDefinition.IS_STATIC) == 0 && (member.flags() & ClassDefinition.IS_OVERRIDE) == 0) {
 				var error = new CompileError(member.getNameToken(), "overriding functions must have 'override' attribute set");
 				error.addCompileNote(new CompileNote(this._members[i].getNameToken(), Util.format("defined in base class '%1'", [this.classFullName()])));
 				context.errors.push(error);
@@ -1261,7 +1281,6 @@ class MemberFunctionDefinition extends MemberDefinition implements Block {
 		return (this._flags & ClassDefinition.IS_GENERATOR) != 0;
 	}
 
-
 	/**
 	 * Returns a simple notation of the function like "Class.classMethod(:string):void" or "Class.instanceMethod(:string):void".
 	 */
@@ -1269,7 +1288,7 @@ class MemberFunctionDefinition extends MemberDefinition implements Block {
 		var classDef = this.getClassDef();
 		var s = (classDef != null ? classDef.classFullName(): "<<unknown:"+(this._token.getFilename() ?: "?")+">>");
 		s += (this.flags() & ClassDefinition.IS_STATIC) != 0 ? "." : "#";
-		s += this.getNameToken() != null ? this.name() : "$" +  this.getToken().getLineNumber()  as string + "_" + this.getToken().getColumnNumber() as string;
+		s += this.getNameToken() != null ? this.name() : "$" +  this.getToken().getLineNumber() + "_" + this.getToken().getColumnNumber();
 		s += "(";
 		s += this._args.map.<string>(function (arg) {
 				return ":" + (arg.getType() ? arg.getType().toString() : "null");
@@ -1429,6 +1448,7 @@ class MemberFunctionDefinition extends MemberDefinition implements Block {
 				null
 			);
 			clonedFuncDef.setFuncLocal(funcLocal);
+			clonedFuncDef.setClassDef(this.getClassDef());
 
 			return clonedFuncDef;
 		}
@@ -1442,7 +1462,20 @@ class MemberFunctionDefinition extends MemberDefinition implements Block {
 			stash.newFuncDef = null;
 		}
 
-		clonedFuncDef.setClassDef(this.getClassDef());
+		if (this._parent == null) {
+			var classDef = this._classDef;
+			if (classDef == null) {
+				// an orphan funcDef
+			}
+			else {
+				// register to the classDef
+				classDef.members().splice(classDef.members().indexOf(this)+1, 0, clonedFuncDef); // insert right after the original function
+			}
+		} else {
+			this._parent.getClosures().push(clonedFuncDef);
+			clonedFuncDef.setParent(this._parent);
+		}
+
 		return clonedFuncDef;
 	}
 
@@ -1708,7 +1741,18 @@ class MemberFunctionDefinition extends MemberDefinition implements Block {
 			}
 			wrapper.setClassDef(this.getClassDef());
 			// register
-			this.getClassDef().members().push(wrapper);
+			this.getClassDef().members().splice(this.getClassDef().members().indexOf(this)+1, 0, wrapper); // insert right after the original function
+			// fix up function links inside defVal
+			Util.forEachExpression(function onExpr(expr) {
+				if (expr instanceof FunctionExpression) {
+					var newFuncDef = (expr as FunctionExpression).getFuncDef().clone();
+					Util.unlinkFunction(newFuncDef, this);
+					Util.linkFunction(newFuncDef, wrapper);
+					(expr as FunctionExpression).setFuncDef(newFuncDef);
+					return true;
+				}
+				return expr.forEachExpression(onExpr);;
+			}, argExprs);
 		}
 	}
 
@@ -1789,17 +1833,21 @@ class MemberFunctionDefinition extends MemberDefinition implements Block {
 			if (! (this._statements[i] instanceof ExpressionStatement))
 				break;
 			function onExpr(expr : Expression) : boolean {
-				var lhsExpr;
 				/*
 					FIXME if the class is extending a native class and the expression is setting a property of the native class,
 					then we should break, since it might have side effects (e.g. the property might be defined as a setter)
 				*/
-				if (expr instanceof AssignmentExpression
-					&& expr.getToken().getValue() == "="
-					&& (lhsExpr = (expr as AssignmentExpression).getFirstExpr()) instanceof PropertyExpression
-					&& (lhsExpr as PropertyExpression).getExpr() instanceof ThisExpression) {
+				if (expr instanceof AssignmentExpression) {
+					var assignExpr = expr as AssignmentExpression;
+					if (! onExpr(assignExpr.getSecondExpr())) {
+						return false;
+					}
+					var lhsExpr = assignExpr.getFirstExpr();
+					if (lhsExpr instanceof PropertyExpression
+						&& (lhsExpr as PropertyExpression).getExpr() instanceof ThisExpression) {
 						initProperties[(lhsExpr as PropertyExpression).getIdentifierToken().getValue()] = false;
 						return true;
+					}
 				} else if (expr instanceof ThisExpression
 					   || expr instanceof FunctionExpression) {
 					return false;

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012 DeNA Co., Ltd.
+ * Copyright (c) 2012,2013 DeNA Co., Ltd. et al.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to
@@ -41,7 +41,7 @@ abstract class Statement implements Stashable {
 			return this.doAnalyze(context);
 		} catch (e : Error) {
 			var token = this.getToken();
-			var srcPos = token != null ? Util.format(" at file %1, line %2", [token.getFilename(), token.getLineNumber() as string]) : "";
+			var srcPos = token != null ? Util.format(" at file %1, line %2, near %3", [token.getFilename(), token.getLineNumber() as string, token.getValue()]) : "";
 			e.message = Util.format("fatal error while compiling statement%1\n%2", [srcPos, e.message]);
 
 			throw e;
@@ -150,6 +150,7 @@ class ConstructorInvocationStatement extends Statement {
 	}
 
 	override function doAnalyze (context : AnalysisContext) : boolean {
+		assert this.getConstructingClassDef(), this._ctorClassType.toString();
 		var ctorType = this.getConstructingClassDef().getMemberTypeByName(context.errors, this._token, "constructor", false, new Type[], ClassDefinition.GET_MEMBER_MODE_CLASS_ONLY) as FunctionType;
 		if (ctorType == null) {
 			if (this._args.length != 0) {
@@ -443,15 +444,15 @@ class YieldStatement extends Statement {
 		var returnType = context.funcDef.getReturnType();
 		if (returnType == null) {
 			var yieldType = this._expr.getType();
-			context.funcDef.setReturnType(new ObjectType(Util.instantiateTemplate(context, this._token, "Enumerable", [ yieldType ])));
+			context.funcDef.setReturnType(new ObjectType(Util.instantiateTemplate(context, this._token, "Generator", [ yieldType ])));
 		} else {
 			if (returnType instanceof ObjectType
 				&& returnType.getClassDef() instanceof InstantiatedClassDefinition
-				&& (returnType.getClassDef() as InstantiatedClassDefinition).getTemplateClassName() == "Enumerable") {
+				&& (returnType.getClassDef() as InstantiatedClassDefinition).getTemplateClassName() == "Generator") {
 					yieldType = (returnType.getClassDef() as InstantiatedClassDefinition).getTypeArguments()[0];
 			} else {
 				// return type is not an instance of Enumerable. the error will be reported by MemberFuncitonDefinition#analyze.
-				context.errors.push(new CompileError(this._token, "cannot convert 'Enumerable.<" + this._expr.getType().toString() + ">' to return type '" + returnType.toString() + "'"));
+				context.errors.push(new CompileError(this._token, "cannot convert 'Generator.<" + this._expr.getType().toString() + ">' to return type '" + returnType.toString() + "'"));
 				return false;
 			}
 		}
@@ -1144,27 +1145,24 @@ class SwitchStatement extends LabellableStatement {
 				}
 				else if (statement instanceof CaseStatement) {
 					var caseExpr = (statement as CaseStatement).getExpr();
-					if (   caseExpr instanceof IntegerLiteralExpression
-						|| caseExpr instanceof NumberLiteralExpression
-						|| caseExpr instanceof BooleanLiteralExpression ) {
-						if (caseMap.hasOwnProperty(caseExpr.getToken().getValue())) {
-							context.errors.push(new CompileError(caseExpr.getToken(), "duplicate case value " + caseExpr.getToken().getValue()));
-							return false;
-						}
-						else {
-							caseMap[caseExpr.getToken().getValue()] = true;
-						}
+					var caseStr : Nullable.<string>;
+					if (caseExpr instanceof IntegerLiteralExpression) {
+						caseStr = (caseExpr as IntegerLiteralExpression).getDecoded() as string;
+					} else if (caseExpr instanceof NumberLiteralExpression) {
+						caseStr = (caseExpr as NumberLiteralExpression).getDecoded() as string;
+					} else if (caseExpr instanceof BooleanLiteralExpression) {
+						caseStr = (caseExpr as BooleanLiteralExpression).getDecoded() as string;
+					} else if (caseExpr instanceof StringLiteralExpression) {
+						caseStr = (caseExpr as StringLiteralExpression).getDecoded() as string;
+					} else {
+						// might not be a constant, so the duplicates are not checked
+						caseStr = null;
 					}
-					else if (caseExpr instanceof StringLiteralExpression) {
-						var caseStr = Util.decodeStringLiteral(caseExpr.getToken().getValue());
-						if (caseMap.hasOwnProperty(caseStr)) {
-							context.errors.push(new CompileError(caseExpr.getToken(), "duplicate case value " + caseExpr.getToken().getValue()));
-							return false;
-						}
-						else {
-							caseMap[caseStr] = true;
-						}
+					if (caseStr != null && caseMap.hasOwnProperty(caseStr)) {
+						context.errors.push(new CompileError(caseExpr.getToken(), "duplicate case value " + caseExpr.getToken().getValue()));
+						return false;
 					}
+					caseMap[caseStr] = true;
 				}
 			}
 			if (context.getTopBlock().localVariableStatuses.isReachable())

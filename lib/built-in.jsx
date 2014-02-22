@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012 DeNA Co., Ltd.
+ * Copyright (c) 2012,2013 DeNA Co., Ltd. et al.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to
@@ -275,7 +275,13 @@ native final class Array.<T> {
 	function reduce.<U>(callbackfn : function(previousValue : Nullable.<U>, currentValue : Nullable.<T>, currentIndex : number) : U) : U;
 	function reduce.<U>(callbackfn : function(previousValue : Nullable.<U>, currentValue : Nullable.<T>, currentIndex : number, array : Array.<T>) : U) : U;
 	/* with initial value; won't throw exception. */
-	function reduce.<U>(callbackfn : function(previousValue : Nullable.<U>, currentValue : Nullable.<T>) : U, initialValue : U) : U;
+	function reduce.<U>(callbackfn : function(previousValue : Nullable.<U>, currentValue : Nullable.<T>) : U, initialValue : U) : U {
+		var value = initialValue;
+		for (var i = 0; i < this.length; ++i) {
+			value = callbackfn(value, this[i]);
+		}
+		return value;
+	}
 	function reduce.<U>(callbackfn : function(previousValue : Nullable.<U>, currentValue : Nullable.<T>, currentIndex : number) : U, initialValue : U) : U;
 	function reduce.<U>(callbackfn : function(previousValue : Nullable.<U>, currentValue : Nullable.<T>, currentIndex : number, array : Array.<T>) : U, initialValue : U) : U;
 
@@ -981,45 +987,88 @@ native class TypeError extends Error {
 	function constructor(message : string);
 }
 
-/**
- * Provides classes and interfaces related to generator.
- * @private EXPERIMENTAL
- */
-class StopIteration extends Error {
-	function constructor() { }
+native __fake__ class IteratorResult.<T> {
+	var done : boolean;
+	var value : Nullable.<T>;
 }
 
-/**
- * @private EXPERIMENTAL
- */
-interface Enumerable.<T> {
-	function next () : T;
+native final class GeneratorFunction {
+	delete function constructor ();
+} = """
+(function () {
+  try {
+    eval('import {GeneratorFunction} from "std:iteration"');
+    return GeneratorFunction;
+  } catch (e) {
+    return function GeneratorFunction () {};
+  }
+})()""";
+
+native __fake__ class Generator.<T> {
+	function next () : IteratorResult.<T>;
 }
 
-// only used by JSX compiler
-class __jsx_generator.<T> implements Enumerable.<T> {
+native class __jsx_generator_object.<T> extends Generator.<T> {
+	var __next : int;
+	var __loop : (int) -> void;
+	var __value : Nullable.<T>;
+} = """
+(function () {
+  function __jsx_generator_object() {
+  	this.__next = 0;
+  	this.__loop = null;
+  	this.__value = undefined;
+  	this.__status = 0;	// SUSPENDED: 0, ACTIVE: 1, DEAD: 2
+  }
 
-	var __next : () -> void;
-	var __value : T;
-	var __end : boolean = false;
+  __jsx_generator_object.prototype.next = function () {
+  	switch (this.__status) {
+  	case 0:
+  		this.__status = 1;
 
-	function constructor () { }
+  		// go next!
+  		this.__loop(this.__next);
 
-	override function next () : T {
-		// FIXME: wasabiz
-		// stop propagation of StopIteration from inner generator to outer one
-		if (! this.__end) {
-			try {
-				this.__next();
-			} catch (e : StopIteration) {
-				this.__end = true;
-				throw e;
-			}
-			return this.__value;
-		} else {
-			throw new StopIteration;
-		}
-	}
+  		var done = false;
+  		if (this.__next != -1) {
+  			this.__status = 0;
+  		} else {
+  			this.__status = 2;
+  			done = true;
+  		}
+  		return { value: this.__value, done: done };
+  	case 1:
+  		throw new Error("Generator is already running");
+  	case 2:
+  		throw new Error("Generator is already finished");
+  	default:
+  		throw new Error("Unexpected generator internal state");
+  	}
+  };
+
+  return __jsx_generator_object;
+}())""";
+
+/** @see http://wiki.ecmascript.org/doku.php?id=harmony:specification_drafts */
+native final class Promise.<T> {
+
+	static function all (promises : Array.<Promise.<T>>) : Promise.<Array.<T>>;
+	static function race (promises : Array.<Promise.<T>>) : Promise.<T>;
+
+	/**
+	 * <p>If given value is a promse, then return the value. Otherwise, make a new promise that is fulfilled with the value.</p>
+	 */
+	static function cast (x : Promise.<T>) : Promise.<T>;
+	static function cast (x : T) : Promise.<T>;
+
+	static function reject (reason : variant) : Promise.<T>;
+	static function resolve (result : T) : Promise.<T>;
+
+	function constructor (executor : function(resolve :function(result:T):void, reject :function(reason:variant):void):void);
+
+	function then.<U> (onFulfilled : function(result:T):U) : Promise.<U>;
+	function then.<U> (onFulfilled : function(result:T):U, onRejected : function(reason:variant):void) : Promise.<U>;
+	function catch (onRejected : function(reason:variant):void) : void;
 
 }
 

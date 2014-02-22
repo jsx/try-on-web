@@ -3,7 +3,7 @@
  */
 
 /*
- * Copyright (c) 2012 DeNA Co., Ltd.
+ * Copyright (c) 2012,2013 DeNA Co., Ltd. et al.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to
@@ -33,6 +33,7 @@ import "./emitter.jsx";
 import "./jsemitter.jsx";
 import "./optimizer.jsx";
 import "./analysis.jsx";
+import "./instruments.jsx";
 
 class JSXCommand {
 
@@ -49,7 +50,7 @@ class JSXCommand {
 			"  --run                      runs _Main.main(:string[]):void after compiling\n" +
 			"  --test                     runs _Test#test*():void after compiling\n" +
 			"  --output file              output file (default:stdout)\n" +
-			"  --input-filename file      names input filename\n" +
+			"  --input-filename file      specifies the root path for searching imports (used when the source-file is \"-\" (stdin))\n" +
 			"  --mode (compile|parse|doc) specifies compilation mode (default:compile)\n" +
 			"  --target (javascript|c++)  specifies target language (default:javascript)\n" +
 			"  --release                  disables run-time type checking and enables optimizations (" + Optimizer.getReleaseOptimizationCommands().join(",")  + ")\n" +
@@ -97,15 +98,17 @@ class JSXCommand {
 
 		var tasks = new Array.<() -> void>;
 
-		var optimizer = null : Optimizer;
-		var completionRequest = null : CompletionRequest;
-		var emitter = null : Emitter;
-		var outputFile = null : Nullable.<string>;
-		var inputFilename = null : Nullable.<string>;
-		var executable = null : Nullable.<string>;
+		var optimizer : Optimizer = null;
+		var transformer : CodeTransformer = null;
+		var completionRequest : CompletionRequest = null;
+		var emitter : Emitter = null;
+		var outputFile : Nullable.<string> = null;
+		var inputFilename : Nullable.<string> = null;
+		var executable : Nullable.<string> = null;
 		var setBootstrapMode = function (sourceFile : string) : void {};
 		var runImmediately = false;
 		var optimizeCommands = new string[];
+		var transformCommands = new string[];
 		var opt, optarg;
 		while ((opt = getopt()) != null) {
 		NEXTOPT:
@@ -187,11 +190,26 @@ class JSXCommand {
 				if ((optarg = getoptarg()) == null) {
 					return 1;
 				}
-				if (optarg == "release") {
-					optimizeCommands = Optimizer.getReleaseOptimizationCommands();
-				} else {
-					optimizeCommands = optimizeCommands.concat(optarg.split(","));
+				optarg.split(",").forEach((command) -> {
+					if (command == "release") {
+						optimizeCommands = Optimizer.getReleaseOptimizationCommands();
+					} else if (command.charAt(0) == "-") {
+						command = command.slice(1);
+						optimizeCommands = optimizeCommands.filter((item) -> {
+							return command != item;
+						});
+					} else {
+						optimizeCommands.push(command);
+					}
+				});
+				break;
+			case "--transform":
+				if ((optarg = getoptarg()) == null) {
+					return 1;
 				}
+				optarg.split(",").forEach((command) -> {
+					transformCommands.push(command);
+				});
 				break;
 			case "--disable-optimize":
 				if ((optarg = getoptarg()) == null) {
@@ -331,6 +349,24 @@ class JSXCommand {
 							};
 						}(mode));
 						break NEXTOPT;
+					case "generator-emulation":
+						if (mode) {
+							transformCommands.push("generator");
+						} else {
+							transformCommands = transformCommands.filter((cmd) -> {
+								return cmd != "generator";
+							});
+						}
+						break NEXTOPT;
+					case "cps-transform":
+						if (mode) {
+							transformCommands.push("cps");
+						} else {
+							transformCommands = transformCommands.filter((cmd) -> {
+								return cmd != "cps";
+							});
+						}
+						break NEXTOPT;
 					default:
 						break;
 					}
@@ -403,6 +439,8 @@ class JSXCommand {
 			}
 		}
 
+		transformer = new CodeTransformer();
+
 		optimizer = new Optimizer();
 
 		tasks.forEach(function(proc) { proc(); });
@@ -412,12 +450,19 @@ class JSXCommand {
 			return 1;
 		}
 
-		var err = optimizer.setup(optimizeCommands);
+		var err = transformer.setup(transformCommands);
 		if (err != null) {
 			platform.error(err);
 			return 1;
 		}
 
+		compiler.setTransformer(transformer);
+
+		err = optimizer.setup(optimizeCommands);
+		if (err != null) {
+			platform.error(err);
+			return 1;
+		}
 
 		compiler.setOptimizer(optimizer);
 

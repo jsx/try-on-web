@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012 DeNA Co., Ltd.
+ * Copyright (c) 2012,2013 DeNA Co., Ltd. et al.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to
@@ -22,6 +22,7 @@
 
 import "./analysis.jsx";
 import "./classdef.jsx";
+import "./expression.jsx";
 
 interface Emitter implements Stashable {
 
@@ -48,5 +49,7 @@ interface Emitter implements Stashable {
 	function getEnableMinifier() : boolean;
 
 	function setEnableMinifier(enable : boolean) : void;
+
+	function isSpecialCall(callExpr : CallExpression) : boolean;
 
 }

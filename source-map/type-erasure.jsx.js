@@ -1,4 +1,4 @@
-// generatedy by JSX compiler 0.9.63 (2013-08-31 12:05:12 +0900; 2ec017d883d4d01af3d13db10eb1dfa291034b54)
+// generatedy by JSX compiler 0.9.78 (2014-02-20 16:35:31 +0900; da141e9a5ca211f770bca3f618109d2c443a1b72)
 var JSX = {};
 (function (JSX) {
 /**
@@ -44,11 +44,44 @@ function $__jsx_lazy_init(obj, prop, func) {
 	});
 }
 
+var $__jsx_imul = Math.imul;
+if (typeof $__jsx_imul === "undefined") {
+	$__jsx_imul = function (a, b) {
+		var ah  = (a >>> 16) & 0xffff;
+		var al = a & 0xffff;
+		var bh  = (b >>> 16) & 0xffff;
+		var bl = b & 0xffff;
+		return ((al * bl) + (((ah * bl + al * bh) << 16) >>> 0)|0);
+	};
+}
+
 /**
- * sideeffect().a /= b
+ * fused int-ops with side-effects
  */
-function $__jsx_div_assign(obj, prop, divisor) {
-	return obj[prop] = (obj[prop] / divisor) | 0;
+function $__jsx_ipadd(o, p, r) {
+	return o[p] = (o[p] + r) | 0;
+}
+function $__jsx_ipsub(o, p, r) {
+	return o[p] = (o[p] - r) | 0;
+}
+function $__jsx_ipmul(o, p, r) {
+	return o[p] = $__jsx_imul(o[p], r);
+}
+function $__jsx_ipdiv(o, p, r) {
+	return o[p] = (o[p] / r) | 0;
+}
+function $__jsx_ipmod(o, p, r) {
+	return o[p] = (o[p] % r) | 0;
+}
+function $__jsx_ippostinc(o, p) {
+	var v = o[p];
+	o[p] = (v + 1) | 0;
+	return v;
+}
+function $__jsx_ippostdec(o, p) {
+	var v = o[p];
+	o[p] = (v - 1) | 0;
+	return v;
 }
 
 /*
@@ -101,18 +134,56 @@ JSX.resetProfileResults = function () {
 	return $__jsx_profiler.resetResults();
 };
 JSX.DEBUG = true;
-function StopIteration() {
-	Error.call(this);
-	this.name = "StopIteration";
-	if (Error.captureStackTrace) Error.captureStackTrace(this, StopIteration);
+var GeneratorFunction$0 = 
+(function () {
+  try {
+    eval('import {GeneratorFunction} from "std:iteration"');
+    return GeneratorFunction;
+  } catch (e) {
+    return function GeneratorFunction () {};
+  }
+})();
+var __jsx_generator_object$0 = 
+(function () {
+  function __jsx_generator_object() {
+  	this.__next = 0;
+  	this.__loop = null;
+  	this.__value = undefined;
+  	this.__status = 0;	// SUSPENDED: 0, ACTIVE: 1, DEAD: 2
+  }
+
+  __jsx_generator_object.prototype.next = function () {
+  	switch (this.__status) {
+  	case 0:
+  		this.__status = 1;
+
+  		// go next!
+  		this.__loop(this.__next);
+
+  		var done = false;
+  		if (this.__next != -1) {
+  			this.__status = 0;
+  		} else {
+  			this.__status = 2;
+  			done = true;
+  		}
+  		return { value: this.__value, done: done };
+  	case 1:
+  		throw new Error("Generator is already running");
+  	case 2:
+  		throw new Error("Generator is already finished");
+  	default:
+  		throw new Error("Unexpected generator internal state");
+  	}
+  };
+
+  return __jsx_generator_object;
+}());
+function Animal() {
 };
 
-$__jsx_extend([StopIteration], Error);
-function AnimalConcept() {
-};
-
-$__jsx_extend([AnimalConcept], Object);
-AnimalConcept.prototype.$__jsx_implements_AnimalConcept = true;
+$__jsx_extend([Animal], Object);
+Animal.prototype.$__jsx_implements_Animal = true;
 
 function Duck() {
 };
@@ -132,8 +203,8 @@ Dog.prototype.say$ = function () {
 };
 
 
-function Human(animal) {
-	this._animal = animal;
+function Human() {
+	this._animal = null;
 };
 
 $__jsx_extend([Human], Object);
@@ -142,79 +213,69 @@ Human.prototype.touch$ = function () {
 };
 
 
-function Human$make$LDuck$(target) {
-	return new Human(new Human$x2E_AnimalHolder$x2E$x3CDuck$x3E(target));
+Human.prototype.hold$LDuck$ = function (animal) {
+	this._animal = new _AnimalHolder$x2E$x3CDuck$x3E(animal);
 };
 
-Human.make$LDuck$ = Human$make$LDuck$;
 
-function Human$make$LDog$(target) {
-	return new Human(new Human$x2E_AnimalHolder$x2E$x3CDog$x3E(target));
+Human.prototype.hold$LDog$ = function (animal) {
+	this._animal = new _AnimalHolder$x2E$x3CDog$x3E(animal);
 };
 
-Human.make$LDog$ = Human$make$LDog$;
 
 function _Main() {
 };
 
 $__jsx_extend([_Main], Object);
 function _Main$main$AS(args) {
-	var duck;
-	var dog;
-	var human1;
-	var human2;
-	duck = new Duck();
-	dog = new Dog();
-	human1 = Human$make$LDuck$(duck);
-	human1.touch$();
-	human2 = Human$make$LDog$(dog);
-	human2.touch$();
+	var human;
+	human = new Human();
+	human.hold$LDuck$(new Duck());
+	human.touch$();
+	human.hold$LDog$(new Dog());
+	human.touch$();
 };
 
 _Main.main = _Main$main$AS;
 _Main.main$AS = _Main$main$AS;
 
-function Human$x2E_AnimalHolder$x2E$x3CDuck$x3E(target) {
-	AnimalConcept.call(this);
+function _AnimalHolder$x2E$x3CDuck$x3E(target) {
+	Animal.call(this);
 	this._target = target;
 };
 
-$__jsx_extend([Human$x2E_AnimalHolder$x2E$x3CDuck$x3E], Object);
-$__jsx_merge_interface(Human$x2E_AnimalHolder$x2E$x3CDuck$x3E, AnimalConcept);
+$__jsx_extend([_AnimalHolder$x2E$x3CDuck$x3E], Object);
+$__jsx_merge_interface(_AnimalHolder$x2E$x3CDuck$x3E, Animal);
 
-Human$x2E_AnimalHolder$x2E$x3CDuck$x3E.prototype.say$ = function () {
+_AnimalHolder$x2E$x3CDuck$x3E.prototype.say$ = function () {
 	this._target.say$();
 };
 
 
-function Human$x2E_AnimalHolder$x2E$x3CDog$x3E(target) {
-	AnimalConcept.call(this);
+function _AnimalHolder$x2E$x3CDog$x3E(target) {
+	Animal.call(this);
 	this._target = target;
 };
 
-$__jsx_extend([Human$x2E_AnimalHolder$x2E$x3CDog$x3E], Object);
-$__jsx_merge_interface(Human$x2E_AnimalHolder$x2E$x3CDog$x3E, AnimalConcept);
+$__jsx_extend([_AnimalHolder$x2E$x3CDog$x3E], Object);
+$__jsx_merge_interface(_AnimalHolder$x2E$x3CDog$x3E, Animal);
 
-Human$x2E_AnimalHolder$x2E$x3CDog$x3E.prototype.say$ = function () {
+_AnimalHolder$x2E$x3CDog$x3E.prototype.say$ = function () {
 	this._target.say$();
 };
 
 
 
 var $__jsx_classMap = {
-	"system:lib/built-in.jsx": {
-		StopIteration: StopIteration,
-		StopIteration$: StopIteration
-	},
 	"system:example/type-erasure.jsx": {
-		AnimalConcept: AnimalConcept,
-		AnimalConcept$: AnimalConcept,
+		Animal: Animal,
+		Animal$: Animal,
 		Duck: Duck,
 		Duck$: Duck,
 		Dog: Dog,
 		Dog$: Dog,
 		Human: Human,
-		Human$LAnimalConcept$: Human,
+		Human$: Human,
 		_Main: _Main,
 		_Main$: _Main
 	}

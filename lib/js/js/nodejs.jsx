@@ -7,7 +7,7 @@
  */
 
 /*
- * Copyright (c) 2012 DeNA Co., Ltd.
+ * Copyright (c) 2012,2013 DeNA Co., Ltd. et al.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to
@@ -31,7 +31,7 @@
 import "js.jsx";
 
 final class node {
-	delete function constructor () { }
+	delete function constructor ();
 
 	static function require(source : string) : variant {
 		var src = 'require(' + JSON.stringify(source) + ')';

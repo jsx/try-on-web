@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012 DeNA Co., Ltd.
+ * Copyright (c) 2012,2013 DeNA Co., Ltd. et al.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to
@@ -167,30 +167,30 @@ class Util {
 		return false;
 	}
 
-	static function lhsHasNoSideEffects (lhsExpr : Expression) : boolean {
+	static function lhsHasSideEffects (lhsExpr : Expression) : boolean {
 		if (lhsExpr instanceof LocalExpression)
-			return true;
+			return false;
 		if (lhsExpr instanceof PropertyExpression) {
 			var holderExpr = (lhsExpr as PropertyExpression).getExpr();
 			if (Util.isNativeClass(holderExpr.getType()) && !Util.isBuiltInClass(holderExpr.getType())) {
-				return false;
+				return true;
 			}
 			if (holderExpr instanceof ThisExpression
 				|| holderExpr instanceof LocalExpression
 				|| holderExpr.isClassSpecifier()) {
-				return true;
+				return false;
 			}
 		} else if (lhsExpr instanceof ArrayExpression) {
 			var arrayExpr = lhsExpr as ArrayExpression;
 			if (Util.isNativeClass(arrayExpr.getFirstExpr().getType()) && !Util.isBuiltInClass(arrayExpr.getFirstExpr().getType())) {
-				return false;
+				return true;
 			}
 			if (arrayExpr.getFirstExpr() instanceof LocalExpression
 				&& arrayExpr.getSecondExpr() instanceof LeafExpression) {
-				return true;
+				return false;
 			}
 		}
-		return false;
+		return true;
 	}
 
 	static function instantiateTemplate (context : AnalysisContext, token : Token, className : string, typeArguments : Type[]) : ClassDefinition {
@@ -259,7 +259,7 @@ class Util {
 					if (! (args[i] as FunctionExpression).deductTypeIfUnknown(context, expectedCallbackType))
 						return null;
 				}
-			} else if (args[i] instanceof ArrayLiteralExpression && (args[i] as ArrayLiteralExpression).getExprs().length == 0 && (args[i] as ArrayLiteralExpression).getType() == null) {
+			} else if (args[i] instanceof ArrayLiteralExpression) {
 				var arrayExpr = args[i] as ArrayLiteralExpression;
 				var expectedArrayType = null : Type;
 				for (var j = 0; j < expectedTypes.length; ++j) {
@@ -281,7 +281,7 @@ class Util {
 				} else if (expectedArrayType != null) {
 					arrayExpr.setType(expectedArrayType);
 				}
-			} else if (args[i] instanceof MapLiteralExpression && (args[i] as MapLiteralExpression).getElements().length == 0 && (args[i] as MapLiteralExpression).getType() == null) {
+			} else if (args[i] instanceof MapLiteralExpression) {
 				var mapExpr = args[i] as MapLiteralExpression;
 				var expectedMapType = null : Type;
 				for (var j = 0; j < expectedTypes.length; ++j) {
@@ -483,7 +483,9 @@ class Util {
 	 * @see ECMA-262 5th, 7.8.4 String Literals
 	 */
 	static function decodeStringLiteral (literal : string) : string {
-		literal = Util.normalizeHeredoc(literal);
+		// FIXME decoding of multiline string literal should better not be 2-pass
+		literal = Util._normalizeHeredoc(literal);
+
 		var matched = literal.match(/^([\'\"]).*([\'\"])$/);
 		if (matched == null || matched[1] != matched[2])
 			throw new Error("input string is not quoted properly: " + literal);
@@ -539,7 +541,7 @@ class Util {
 	}
 
 	// converts """heredoc""" to an ordinary "string literal"
-	static function normalizeHeredoc(literal : string) : string {
+	static function _normalizeHeredoc(literal : string) : string {
 		if (! literal.match(/^(?:"""|''')/)) {
 			return literal;
 		}
@@ -675,6 +677,45 @@ class Util {
 			set[array[i]] = true;
 		}
 		return set;
+	}
+
+	static function rebaseClosures (srcParent : MemberFunctionDefinition, dstParent : MemberFunctionDefinition) : void {
+		var closures = new MemberFunctionDefinition[];
+
+		// find funcDefs in dstParent
+		dstParent.forEachStatement(function (statement) {
+			if (statement instanceof FunctionStatement) {
+				closures.push((statement as FunctionStatement).getFuncDef());
+			}
+			return statement.forEachExpression(function onExpr(expr) {
+				if (expr instanceof FunctionExpression) {
+					closures.push((expr as FunctionExpression).getFuncDef());
+					// does not search for funcDefs deeper than the first level
+					return true;
+				}
+				return expr.forEachExpression(onExpr);
+			});
+		});
+
+		// rebase!
+		for (var i = 0; i < closures.length; ++i) {
+			Util.unlinkFunction(closures[i], srcParent);
+			Util.linkFunction(closures[i], dstParent);
+		}
+	}
+
+	static function unlinkFunction (funcDef : MemberFunctionDefinition, oldParent : MemberFunctionDefinition) : void {
+		var j;
+		if ((j = oldParent.getClosures().indexOf(funcDef)) != -1) {
+			oldParent.getClosures().splice(j, 1);
+		}
+		funcDef.setParent(null);
+	}
+
+	static function linkFunction (funcDef : MemberFunctionDefinition, newParent : MemberFunctionDefinition) : void {
+		newParent.getClosures().push(funcDef);
+		funcDef.setParent(newParent);
+		funcDef.setClassDef(newParent.getClassDef());
 	}
 
 }

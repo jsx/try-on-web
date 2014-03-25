@@ -1,4 +1,4 @@
-// generatedy by JSX compiler 0.9.78 (2014-02-20 16:35:31 +0900; da141e9a5ca211f770bca3f618109d2c443a1b72)
+// generatedy by JSX compiler 0.9.84 (2014-03-25 11:22:27 +0900; 1e07252cc54a2d7c6b4ab95268995c6656833a80)
 var JSX = {};
 (function (JSX) {
 /**
@@ -84,6 +84,15 @@ function $__jsx_ippostdec(o, p) {
 	return v;
 }
 
+/**
+ * non-inlined version of Array#each
+ */
+function $__jsx_forEach(o, f) {
+	var l = o.length;
+	for (var i = 0; i < l; ++i)
+		f(o[i]);
+}
+
 /*
  * global functions, renamed to avoid conflict with local variable names
  */
@@ -137,8 +146,7 @@ JSX.DEBUG = false;
 var GeneratorFunction$0 = 
 (function () {
   try {
-    eval('import {GeneratorFunction} from "std:iteration"');
-    return GeneratorFunction;
+    return Function('import {GeneratorFunction} from "std:iteration"; return GeneratorFunction')();
   } catch (e) {
     return function GeneratorFunction () {};
   }

@@ -304,6 +304,19 @@ native final class Array.<T> {
 	 * <p>You can set the length property to truncate an array at any time. When you extend an array by changing its length property, the created elements are initialized to null.</p>
 	 */
 	var length : number;
+
+	/**
+	 * Calls callbackfn once for every element (from [0] to [length - 1])
+	 * in the array, in ascending order.
+	 *
+	 * @param callbackfn A function to call for each element.
+	 */
+	inline function _forEach(callbackfn : function (value : Nullable.<T>) : void) : void {
+		var l = this.length;
+		for (var i = 0; i < l; ++i)
+			callbackfn(this[i]);
+	}
+
 }
 
 /**
@@ -997,8 +1010,7 @@ native final class GeneratorFunction {
 } = """
 (function () {
   try {
-    eval('import {GeneratorFunction} from "std:iteration"');
-    return GeneratorFunction;
+    return Function('import {GeneratorFunction} from "std:iteration"; return GeneratorFunction')();
   } catch (e) {
     return function GeneratorFunction () {};
   }
@@ -1442,6 +1454,11 @@ native final class JSX {
 	 * This is intended to remove debugging statements on release build.
 	 */
 	static const DEBUG = true;
+
+	/**
+	 * List of compile-time constants passed in by <code>jsx --define name=var</code>
+	 */
+	static const ENV : Map.<string>;
 
 	/**
 	 * Returns whether or not the profiler is running.

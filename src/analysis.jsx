@@ -173,7 +173,7 @@ class LocalVariable implements Stashable {
 	var _isUsedAsRHS = false;
 	var _isConstant : boolean;
 
-	function constructor (name : Token, type : Type, isConst : boolean = false) {
+	function constructor (name : Token, type : Type, isConst : boolean) {
 		this._name = name;
 		this._type = type;
 		this._isConstant = isConst;
@@ -282,8 +282,8 @@ class LocalVariable implements Stashable {
 	}
 
 	function _instantiate (instantiationContext : InstantiationContext) : LocalVariable {
-		var type = this._type != null ? this._type.instantiate(instantiationContext) : null;
-		return new LocalVariable(this._name, type);
+		var type = this._type != null ? this._type.instantiate(instantiationContext, false) : null;
+		return new LocalVariable(this._name, type, this._isConstant);
 	}
 
 }
@@ -291,7 +291,7 @@ class LocalVariable implements Stashable {
 class CaughtVariable extends LocalVariable {
 
 	function constructor (name : Token, type : Type) {
-		super(name, type);
+		super(name, type, false);
 	}
 
 	function clone () : CaughtVariable {
@@ -303,7 +303,7 @@ class CaughtVariable extends LocalVariable {
 	}
 
 	override function _instantiate (instantiationContext : InstantiationContext) : CaughtVariable {
-		return new CaughtVariable(this._name, this._type.instantiate(instantiationContext));
+		return new CaughtVariable(this._name, this._type.instantiate(instantiationContext, false));
 	}
 
 	override function instantiateAndPush (instantiationContext : InstantiationContext) : CaughtVariable {
@@ -316,11 +316,11 @@ class ArgumentDeclaration extends LocalVariable {
 	var _defaultValue : Expression = null;
 
 	function constructor (name : Token, type : Type) {
-		super(name, type);
+		super(name, type, false);
 	}
 
 	function constructor (name : Token, type : Type, defaultValue : Expression) {
-		super(name, type);
+		super(name, type, false);
 		this._defaultValue = defaultValue;
 	}
 
@@ -333,7 +333,7 @@ class ArgumentDeclaration extends LocalVariable {
 	}
 
 	override function _instantiate (instantiationContext : InstantiationContext) : ArgumentDeclaration {
-		var type = this._type != null ? this._type.instantiate(instantiationContext) : null;
+		var type = this._type != null ? this._type.instantiate(instantiationContext, false) : null;
 		return new ArgumentDeclaration(this._name, type, this._defaultValue);
 	}
 

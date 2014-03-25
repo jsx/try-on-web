@@ -1,4 +1,4 @@
-// generatedy by JSX compiler 0.9.78 (2014-02-20 16:35:31 +0900; da141e9a5ca211f770bca3f618109d2c443a1b72)
+// generatedy by JSX compiler 0.9.84 (2014-03-25 11:22:27 +0900; 1e07252cc54a2d7c6b4ab95268995c6656833a80)
 var JSX = {};
 (function (JSX) {
 /**
@@ -84,6 +84,15 @@ function $__jsx_ippostdec(o, p) {
 	return v;
 }
 
+/**
+ * non-inlined version of Array#each
+ */
+function $__jsx_forEach(o, f) {
+	var l = o.length;
+	for (var i = 0; i < l; ++i)
+		f(o[i]);
+}
+
 /*
  * global functions, renamed to avoid conflict with local variable names
  */
@@ -137,8 +146,7 @@ JSX.DEBUG = false;
 var GeneratorFunction$0 = 
 (function () {
   try {
-    eval('import {GeneratorFunction} from "std:iteration"');
-    return GeneratorFunction;
+    return Function('import {GeneratorFunction} from "std:iteration"; return GeneratorFunction')();
   } catch (e) {
     return function GeneratorFunction () {};
   }
@@ -718,12 +726,13 @@ var _remove_require$0 = (function (exports) { exports.require = function (module
 function Compiler(platform) {
 	this._searchPaths = null;
 	this._builtinParsers = null;
+	this._userEnvironment = null;
 	this._emitter = null;
 	this._npmModulesParsed = {};
 	this._packageJsonCache = {};
 	this._platform = platform;
 	this._mode = 0;
-	this._transformer = null;
+	this._transformCommands = [  ];
 	this._optimizer = null;
 	this._warningFilters = [  ];
 	this._warningAsError = false;
@@ -732,6 +741,7 @@ function Compiler(platform) {
 	this._searchPaths = [ this._platform.getRoot$() + "/lib/common" ];
 	Compiler$addSourceFile$LCompiler$LToken$S(this, null, this._platform.getRoot$() + "/lib/built-in.jsx");
 	this._builtinParsers = this._parsers.concat([]);
+	this._userEnvironment = {};
 };
 
 $__jsx_extend([Compiler], Object);
@@ -803,16 +813,46 @@ function Compiler$setEmitter$LCompiler$LEmitter$($this, emitter) {
 
 Compiler.setEmitter$LCompiler$LEmitter$ = Compiler$setEmitter$LCompiler$LEmitter$;
 
-Compiler.prototype.setTransformer$LCodeTransformer$ = function (transformer) {
-	this._transformer = transformer;
+Compiler.prototype.setTransformCommands$AS = function (cmds) {
+	var i;
+	var cmd;
+	for (i = 0; i < cmds.length; ++i) {
+		cmd = cmds[i];
+		switch (cmd) {
+		case "generator":
+			this._transformCommands.push(new GeneratorTransformCommand(this));
+			break;
+		case "cps":
+			this._transformCommands.push(new CPSTransformCommand(this));
+			break;
+		default:
+			return "unknown transformation command: " + cmd;
+		}
+	}
+	return null;
 };
 
 
-function Compiler$setTransformer$LCompiler$LCodeTransformer$($this, transformer) {
-	$this._transformer = transformer;
+function Compiler$setTransformCommands$LCompiler$AS($this, cmds) {
+	var i;
+	var cmd;
+	for (i = 0; i < cmds.length; ++i) {
+		cmd = cmds[i];
+		switch (cmd) {
+		case "generator":
+			$this._transformCommands.push(new GeneratorTransformCommand($this));
+			break;
+		case "cps":
+			$this._transformCommands.push(new CPSTransformCommand($this));
+			break;
+		default:
+			return "unknown transformation command: " + cmd;
+		}
+	}
+	return null;
 };
 
-Compiler.setTransformer$LCompiler$LCodeTransformer$ = Compiler$setTransformer$LCompiler$LCodeTransformer$;
+Compiler.setTransformCommands$LCompiler$AS = Compiler$setTransformCommands$LCompiler$AS;
 
 Compiler.prototype.setOptimizer$LOptimizer$ = function (optimizer) {
 	this._optimizer = optimizer;
@@ -868,6 +908,17 @@ function Compiler$getBuiltinParsers$LCompiler$($this) {
 };
 
 Compiler.getBuiltinParsers$LCompiler$ = Compiler$getBuiltinParsers$LCompiler$;
+
+Compiler.prototype.getUserEnvironment$ = function () {
+	return this._userEnvironment;
+};
+
+
+function Compiler$getUserEnvironment$LCompiler$($this) {
+	return $this._userEnvironment;
+};
+
+Compiler.getUserEnvironment$LCompiler$ = Compiler$getUserEnvironment$LCompiler$;
 
 Compiler.prototype.addSourceFile$LToken$S = function (token, path) {
 	return Compiler$addSourceFile$LCompiler$LToken$SLCompletionRequest$(this, token, path, null);
@@ -974,8 +1025,9 @@ Compiler.prototype.compile$ = function () {
 	case 3:
 		return true;
 	}
-	if (this._transformer != null) {
-		CodeTransformer$performTransformation$LCodeTransformer$(CodeTransformer$setCompiler$LCodeTransformer$LCompiler$(this._transformer, this));
+	Compiler$_transform$LCompiler$ALCompileError$(this, errors);
+	if (! Compiler$_handleErrors$LCompiler$ALCompileError$(this, errors)) {
+		return false;
 	}
 	if (this._optimizer != null) {
 		Optimizer$performOptimization$LOptimizer$((this$0$0 = this._optimizer, this$0$0._compiler = this, this$0$0));
@@ -1033,8 +1085,9 @@ function Compiler$compile$LCompiler$($this) {
 	case 3:
 		return true;
 	}
-	if ($this._transformer != null) {
-		CodeTransformer$performTransformation$LCodeTransformer$(CodeTransformer$setCompiler$LCodeTransformer$LCompiler$($this._transformer, $this));
+	Compiler$_transform$LCompiler$ALCompileError$($this, errors);
+	if (! Compiler$_handleErrors$LCompiler$ALCompileError$($this, errors)) {
+		return false;
 	}
 	if ($this._optimizer != null) {
 		Optimizer$performOptimization$LOptimizer$((this$0$0 = $this._optimizer, this$0$0._compiler = $this, this$0$0));
@@ -1622,20 +1675,45 @@ function Compiler$_analyze$LCompiler$ALCompileError$($this, errors) {
 
 Compiler._analyze$LCompiler$ALCompileError$ = Compiler$_analyze$LCompiler$ALCompileError$;
 
-Compiler.prototype._transform$ = function () {
-	if (this._transformer != null) {
-		CodeTransformer$performTransformation$LCodeTransformer$(CodeTransformer$setCompiler$LCodeTransformer$LCompiler$(this._transformer, this));
+Compiler.prototype._transform$ALCompileError$ = function (errors) {
+	var $this = this;
+	var doit;
+	var i;
+	function doit(cmd) {
+		cmd.setup$ALCompileError$(errors);
+		cmd.performTransformation$();
+		return errors.length === 0;
+	}
+	for (i = 0; i < this._transformCommands.length; ++i) {
+		if (! doit(this._transformCommands[i])) {
+			return;
+		}
+	}
+	if (! doit(new FixedExpressionTransformCommand(this))) {
+		return;
 	}
 };
 
 
-function Compiler$_transform$LCompiler$($this) {
-	if ($this._transformer != null) {
-		CodeTransformer$performTransformation$LCodeTransformer$(CodeTransformer$setCompiler$LCodeTransformer$LCompiler$($this._transformer, $this));
+function Compiler$_transform$LCompiler$ALCompileError$($this, errors) {
+	var doit;
+	var i;
+	function doit(cmd) {
+		cmd.setup$ALCompileError$(errors);
+		cmd.performTransformation$();
+		return errors.length === 0;
+	}
+	for (i = 0; i < $this._transformCommands.length; ++i) {
+		if (! doit($this._transformCommands[i])) {
+			return;
+		}
+	}
+	if (! doit(new FixedExpressionTransformCommand($this))) {
+		return;
 	}
 };
 
-Compiler._transform$LCompiler$ = Compiler$_transform$LCompiler$;
+Compiler._transform$LCompiler$ALCompileError$ = Compiler$_transform$LCompiler$ALCompileError$;
 
 Compiler.prototype._optimize$ = function () {
 	var this$0;
@@ -2288,50 +2366,30 @@ function _Util$exprIsAssignment$LExpression$(expr) {
 _Util.exprIsAssignment$LExpression$ = _Util$exprIsAssignment$LExpression$;
 
 function _Util$exprHasSideEffects$LExpression$(expr) {
-	return ! (function onExpr(expr) {
+	var preCheckCb$0;
+	var r$0;
+	preCheckCb$0 = (function precheck(expr) {
 		var callingFuncDef;
-		var type;
 		var stash$0;
-		var this$0;
-		var this$1;
-		if (expr instanceof AssignmentExpression || expr instanceof FusedAssignmentExpression || expr instanceof PreIncrementExpression || expr instanceof PostIncrementExpression || expr instanceof NewExpression || expr instanceof SuperExpression) {
-			return false;
-		} else if (expr instanceof CallExpression) {
+		if (expr instanceof CallExpression) {
 			stash$0 = expr.getStash$S("determine-callee");
 			if (stash$0 == null) {
 				throw new Error("callee not searched");
 			}
 			callingFuncDef = stash$0.callingFuncDef;
 			if (callingFuncDef != null && (callingFuncDef._flags & 2048) !== 0) {
-			} else {
-				return false;
-			}
-		} else if (expr instanceof PropertyExpression) {
-			type = (this$0 = expr, this$0._expr).getType$();
-			if (! (Util$_isBuiltInObjectType$LType$HB(type, Util._builtInClass) || ! Util$isNativeClass$LType$(type))) {
-				return false;
-			}
-		} else if (expr instanceof ArrayExpression) {
-			type = (this$1 = expr, this$1._expr1).getType$();
-			if (! (Util$_isBuiltInObjectType$LType$HB(type, Util._builtInClass) || ! Util$isNativeClass$LType$(type))) {
-				return false;
+				return ! Expression$forEachExpression$LExpression$F$LExpression$B$(expr, (function (expr) {
+					return ! Expression$hasSideEffects$LExpression$F$LExpression$UB$(expr, precheck);
+				}));
 			}
 		}
-		return Expression$forEachExpression$LExpression$F$LExpression$B$(expr, onExpr);
-	})(expr);
+		return null;
+	});
+	r$0 = preCheckCb$0(expr);
+	return (r$0 != null ? r$0 : expr._doHasSideEffects$F$LExpression$UB$(preCheckCb$0));
 };
 
 _Util.exprHasSideEffects$LExpression$ = _Util$exprHasSideEffects$LExpression$;
-
-function _Util$exprIsIndependent$LExpression$(expr) {
-	return (function onExpr(expr) {
-		var this$0;
-		var this$1;
-		return (expr instanceof LocalExpression ? false : expr instanceof FunctionExpression ? (this$1 = (this$0 = expr, this$0._funcDef), this$1._locals).length === 0 : expr instanceof LeafExpression || expr instanceof LogicalNotExpression || expr instanceof BitwiseNotExpression || expr instanceof SignExpression || expr instanceof AdditiveExpression || expr instanceof EqualityExpression || expr instanceof ShiftExpression || expr instanceof MapLiteralExpression || expr instanceof ArrayLiteralExpression ? Expression$forEachExpression$LExpression$F$LExpression$B$(expr, onExpr) : false);
-	})(expr);
-};
-
-_Util.exprIsIndependent$LExpression$ = _Util$exprIsIndependent$LExpression$;
 
 function _Util$conditionIsConstant$LExpression$(expr) {
 	var leafIsConstant;
@@ -2651,43 +2709,6 @@ function _OptimizeCommand$getCompiler$L_OptimizeCommand$($this) {
 
 _OptimizeCommand.getCompiler$L_OptimizeCommand$ = _OptimizeCommand$getCompiler$L_OptimizeCommand$;
 
-_OptimizeCommand.prototype.getStash$LStashable$ = function (stashable) {
-	var stash;
-	stash = stashable.getStash$S(this._identifier);
-	if (stash == null) {
-		stash = stashable.setStash$SLStash$(this._identifier, this._createStash$());
-	}
-	return stash;
-};
-
-
-function _OptimizeCommand$getStash$L_OptimizeCommand$LStashable$($this, stashable) {
-	var stash;
-	stash = stashable.getStash$S($this._identifier);
-	if (stash == null) {
-		stash = stashable.setStash$SLStash$($this._identifier, $this._createStash$());
-	}
-	return stash;
-};
-
-_OptimizeCommand.getStash$L_OptimizeCommand$LStashable$ = _OptimizeCommand$getStash$L_OptimizeCommand$LStashable$;
-
-_OptimizeCommand.prototype._createStash$ = function () {
-	throw new Error("if you are going to use the stash, you need to override this function");
-};
-
-
-_OptimizeCommand.prototype.resetStash$LStashable$ = function (stashable) {
-	stashable.setStash$SLStash$(this._identifier, null);
-};
-
-
-function _OptimizeCommand$resetStash$L_OptimizeCommand$LStashable$($this, stashable) {
-	stashable.setStash$SLStash$($this._identifier, null);
-};
-
-_OptimizeCommand.resetStash$L_OptimizeCommand$LStashable$ = _OptimizeCommand$resetStash$L_OptimizeCommand$LStashable$;
-
 _OptimizeCommand.prototype.createVar$LMemberFunctionDefinition$LType$S = function (funcDef, type, baseName) {
 	var $this = this;
 	var locals;
@@ -2713,7 +2734,7 @@ _OptimizeCommand.prototype.createVar$LMemberFunctionDefinition$LType$S = functio
 	}
 	for (i = 0; nameExists(baseName + "$" + (i + "")); ++i) {
 	}
-	newLocal = new LocalVariable$0(new Token$2(baseName + "$" + (i + ""), false), type);
+	newLocal = new LocalVariable(new Token$2(baseName + "$" + (i + ""), false), type, false);
 	locals.push(newLocal);
 	message$0 = "rewriting " + baseName + " to " + (this$0 = newLocal._name, this$0._value);
 	this$0$0 = this._optimizer;
@@ -2747,7 +2768,7 @@ function _OptimizeCommand$createVar$L_OptimizeCommand$LMemberFunctionDefinition$
 	}
 	for (i = 0; nameExists(baseName + "$" + (i + "")); ++i) {
 	}
-	newLocal = new LocalVariable$0(new Token$2(baseName + "$" + (i + ""), false), type);
+	newLocal = new LocalVariable(new Token$2(baseName + "$" + (i + ""), false), type, false);
 	locals.push(newLocal);
 	message$0 = "rewriting " + baseName + " to " + (this$0 = newLocal._name, this$0._value);
 	this$0$0 = $this._optimizer;
@@ -2844,839 +2865,6 @@ _FunctionOptimizeCommand.prototype.performOptimization$ = function () {
 	}));
 };
 
-
-function _LinkTimeOptimizationCommand() {
-	this._identifier = "lto";
-	this._optimizer = null;
-};
-
-$__jsx_extend([_LinkTimeOptimizationCommand], _OptimizeCommand);
-_LinkTimeOptimizationCommand.prototype._createStash$ = function () {
-	return new _LinkTimeOptimizationCommand$x2EStash();
-};
-
-
-_LinkTimeOptimizationCommand.prototype.performOptimization$ = function () {
-	var $this = this;
-	var this$0$0;
-	var this$0$1;
-	Compiler$forEachClassDef$LCompiler$F$LParser$LClassDefinition$B$((this$0$0 = this._optimizer, this$0$0._compiler), (function (parser, classDef) {
-		var i;
-		var this$0;
-		var this$1;
-		if (classDef._extendType != null) {
-			_OptimizeCommand$getStash$L_OptimizeCommand$LStashable$($this, (this$0 = classDef._extendType, this$0._classDef)).extendedBy.push(classDef);
-		}
-		for (i = 0; i < classDef._implementTypes.length; ++i) {
-			_OptimizeCommand$getStash$L_OptimizeCommand$LStashable$($this, (this$1 = classDef._implementTypes[i], this$1._classDef)).extendedBy.push(classDef);
-		}
-		return true;
-	}));
-	Compiler$forEachClassDef$LCompiler$F$LParser$LClassDefinition$B$((this$0$1 = this._optimizer, this$0$1._compiler), (function (parser, classDef) {
-		var message$0;
-		var this$0$0;
-		var message$0$0;
-		if ((classDef.flags$() & 16596) === 0 && _OptimizeCommand$getStash$L_OptimizeCommand$LStashable$($this, classDef).extendedBy.length === 0) {
-			message$0 = "marking class as final: " + classDef.className$();
-			this$0$0 = $this._optimizer;
-			message$0$0 = "[" + $this._identifier + "] " + message$0;
-			this$0$0._log += message$0$0 + "\n";
-			ClassDefinition$setFlags$LClassDefinition$N(classDef, classDef.flags$() | 4);
-			ClassDefinition$forEachMemberFunction$LClassDefinition$F$LMemberFunctionDefinition$B$(classDef, (function (funcDef) {
-				if ((MemberDefinition$flags$LMemberDefinition$(funcDef) & (ClassDefinition.IS_STATIC | ClassDefinition.IS_FINAL)) === 0) {
-					MemberDefinition$setFlags$LMemberDefinition$N(funcDef, MemberDefinition$flags$LMemberDefinition$(funcDef) | ClassDefinition.IS_FINAL);
-				}
-				return true;
-			}));
-		} else if ((classDef.flags$() & 20) === 0) {
-			ClassDefinition$forEachMemberFunction$LClassDefinition$F$LMemberFunctionDefinition$B$(classDef, (function (funcDef) {
-				var overrides;
-				if ((MemberDefinition$flags$LMemberDefinition$(funcDef) & (ClassDefinition.IS_STATIC | ClassDefinition.IS_NATIVE | ClassDefinition.IS_FINAL)) !== 0) {
-				} else if ((MemberDefinition$flags$LMemberDefinition$(funcDef) & ClassDefinition.IS_ABSTRACT) === 0) {
-					if (MemberFunctionDefinition$getStatements$LMemberFunctionDefinition$(funcDef) == null) {
-						throw new Error("a non-native, non-abstract function with out function body?");
-					}
-					overrides = _LinkTimeOptimizationCommand$_getOverrides$L_LinkTimeOptimizationCommand$LClassDefinition$ALClassDefinition$SALType$($this, classDef, _OptimizeCommand$getStash$L_OptimizeCommand$LStashable$($this, classDef).extendedBy, MemberDefinition$name$LMemberDefinition$(funcDef), MemberFunctionDefinition$getArgumentTypes$LMemberFunctionDefinition$(funcDef));
-					if (overrides.length === 0) {
-						_OptimizeCommand$log$L_OptimizeCommand$S($this, "marking function as final: " + funcDef.getNotation$());
-						MemberDefinition$setFlags$LMemberDefinition$N(funcDef, MemberDefinition$flags$LMemberDefinition$(funcDef) | ClassDefinition.IS_FINAL);
-					} else {
-						_OptimizeCommand$log$L_OptimizeCommand$S($this, "function has overrides, not marking as final: " + funcDef.getNotation$());
-					}
-				} else if ((MemberDefinition$flags$LMemberDefinition$(funcDef) & ClassDefinition.IS_ABSTRACT) !== 0) {
-				}
-				return true;
-			}));
-		}
-		return true;
-	}));
-};
-
-
-_LinkTimeOptimizationCommand.prototype._getOverrides$LClassDefinition$ALClassDefinition$SALType$ = function (srcClassDef, classDefs, name, argTypes) {
-	var overrides;
-	var i;
-	overrides = [];
-	for (i = 0; i < classDefs.length; ++i) {
-		overrides = overrides.concat(_LinkTimeOptimizationCommand$_getOverridesByClass$L_LinkTimeOptimizationCommand$LClassDefinition$LClassDefinition$SALType$(this, srcClassDef, classDefs[i], name, argTypes));
-	}
-	return overrides;
-};
-
-
-function _LinkTimeOptimizationCommand$_getOverrides$L_LinkTimeOptimizationCommand$LClassDefinition$ALClassDefinition$SALType$($this, srcClassDef, classDefs, name, argTypes) {
-	var overrides;
-	var i;
-	overrides = [];
-	for (i = 0; i < classDefs.length; ++i) {
-		overrides = overrides.concat(_LinkTimeOptimizationCommand$_getOverridesByClass$L_LinkTimeOptimizationCommand$LClassDefinition$LClassDefinition$SALType$($this, srcClassDef, classDefs[i], name, argTypes));
-	}
-	return overrides;
-};
-
-_LinkTimeOptimizationCommand._getOverrides$L_LinkTimeOptimizationCommand$LClassDefinition$ALClassDefinition$SALType$ = _LinkTimeOptimizationCommand$_getOverrides$L_LinkTimeOptimizationCommand$LClassDefinition$ALClassDefinition$SALType$;
-
-_LinkTimeOptimizationCommand.prototype._getOverridesByClass$LClassDefinition$LClassDefinition$SALType$ = function (srcClassDef, classDef, name, argTypes) {
-	var $this = this;
-	var overrides;
-	var addOverride;
-	var implementClassDefs;
-	var i;
-	var classDefs$0;
-	var overrides$0;
-	var i$0;
-	classDefs$0 = _OptimizeCommand$getStash$L_OptimizeCommand$LStashable$(this, classDef).extendedBy;
-	overrides$0 = [];
-	for (i$0 = 0; i$0 < classDefs$0.length; ++i$0) {
-		overrides$0 = overrides$0.concat(_LinkTimeOptimizationCommand$_getOverridesByClass$L_LinkTimeOptimizationCommand$LClassDefinition$LClassDefinition$SALType$(this, srcClassDef, classDefs$0[i$0], name, argTypes));
-	}
-	overrides = overrides$0;
-	function addOverride(funcDef) {
-		var this$0$0;
-		if ((this$0$0 = funcDef._nameToken, this$0$0._value) === name && (funcDef._flags & 2) === 0 && Util$typesAreEqual$ALType$ALType$(MemberFunctionDefinition$getArgumentTypes$LMemberFunctionDefinition$(funcDef), argTypes)) {
-			overrides.push(funcDef);
-			return false;
-		}
-		return true;
-	}
-	ClassDefinition$forEachMemberFunction$LClassDefinition$F$LMemberFunctionDefinition$B$(classDef, addOverride);
-	implementClassDefs = classDef._implementTypes.map((function (type) {
-		return type._classDef;
-	}));
-	for (i = 0; i < implementClassDefs.length; ++i) {
-		if (srcClassDef != implementClassDefs[i]) {
-			ClassDefinition$forEachClassToBase$LClassDefinition$F$LClassDefinition$B$(implementClassDefs[i], (function (classDef) {
-				return ClassDefinition$forEachMemberFunction$LClassDefinition$F$LMemberFunctionDefinition$B$(classDef, addOverride);
-			}));
-		}
-	}
-	return overrides;
-};
-
-
-function _LinkTimeOptimizationCommand$_getOverridesByClass$L_LinkTimeOptimizationCommand$LClassDefinition$LClassDefinition$SALType$($this, srcClassDef, classDef, name, argTypes) {
-	var overrides;
-	var addOverride;
-	var implementClassDefs;
-	var i;
-	var classDefs$0;
-	var overrides$0;
-	var i$0;
-	classDefs$0 = _OptimizeCommand$getStash$L_OptimizeCommand$LStashable$($this, classDef).extendedBy;
-	overrides$0 = [];
-	for (i$0 = 0; i$0 < classDefs$0.length; ++i$0) {
-		overrides$0 = overrides$0.concat(_LinkTimeOptimizationCommand$_getOverridesByClass$L_LinkTimeOptimizationCommand$LClassDefinition$LClassDefinition$SALType$($this, srcClassDef, classDefs$0[i$0], name, argTypes));
-	}
-	overrides = overrides$0;
-	function addOverride(funcDef) {
-		var this$0$0;
-		if ((this$0$0 = funcDef._nameToken, this$0$0._value) === name && (funcDef._flags & 2) === 0 && Util$typesAreEqual$ALType$ALType$(MemberFunctionDefinition$getArgumentTypes$LMemberFunctionDefinition$(funcDef), argTypes)) {
-			overrides.push(funcDef);
-			return false;
-		}
-		return true;
-	}
-	ClassDefinition$forEachMemberFunction$LClassDefinition$F$LMemberFunctionDefinition$B$(classDef, addOverride);
-	implementClassDefs = classDef._implementTypes.map((function (type) {
-		return type._classDef;
-	}));
-	for (i = 0; i < implementClassDefs.length; ++i) {
-		if (srcClassDef != implementClassDefs[i]) {
-			ClassDefinition$forEachClassToBase$LClassDefinition$F$LClassDefinition$B$(implementClassDefs[i], (function (classDef) {
-				return ClassDefinition$forEachMemberFunction$LClassDefinition$F$LMemberFunctionDefinition$B$(classDef, addOverride);
-			}));
-		}
-	}
-	return overrides;
-};
-
-_LinkTimeOptimizationCommand._getOverridesByClass$L_LinkTimeOptimizationCommand$LClassDefinition$LClassDefinition$SALType$ = _LinkTimeOptimizationCommand$_getOverridesByClass$L_LinkTimeOptimizationCommand$LClassDefinition$LClassDefinition$SALType$;
-
-function _StripOptimizeCommand() {
-	this._identifier = "strip";
-	this._optimizer = null;
-	this._classesInstantiated = [];
-	this._methodsAlive = {};
-	this._membersToWalk = [];
-};
-
-$__jsx_extend([_StripOptimizeCommand], _OptimizeCommand);
-_StripOptimizeCommand.prototype._createStash$ = function () {
-	return new _StripOptimizeCommand$x2E_Stash();
-};
-
-
-_StripOptimizeCommand.prototype._touchStatic$LMemberDefinition$ = function (member) {
-	var stash;
-	var message$0;
-	var this$0$0;
-	var message$0$0;
-	stash = _OptimizeCommand$getStash$L_OptimizeCommand$LStashable$(this, member);
-	if (stash.touched) {
-		return;
-	}
-	message$0 = "touched " + member.getNotation$();
-	this$0$0 = this._optimizer;
-	message$0$0 = "[" + this._identifier + "] " + message$0;
-	this$0$0._log += message$0$0 + "\n";
-	stash.touched = true;
-	this._membersToWalk.push(member);
-};
-
-
-function _StripOptimizeCommand$_touchStatic$L_StripOptimizeCommand$LMemberDefinition$($this, member) {
-	var stash;
-	var message$0;
-	var this$0$0;
-	var message$0$0;
-	stash = _OptimizeCommand$getStash$L_OptimizeCommand$LStashable$($this, member);
-	if (stash.touched) {
-		return;
-	}
-	message$0 = "touched " + member.getNotation$();
-	this$0$0 = $this._optimizer;
-	message$0$0 = "[" + $this._identifier + "] " + message$0;
-	this$0$0._log += message$0$0 + "\n";
-	stash.touched = true;
-	$this._membersToWalk.push(member);
-};
-
-_StripOptimizeCommand._touchStatic$L_StripOptimizeCommand$LMemberDefinition$ = _StripOptimizeCommand$_touchStatic$L_StripOptimizeCommand$LMemberDefinition$;
-
-_StripOptimizeCommand.prototype._touchInstance$LClassDefinition$ = function (classDef) {
-	var $this = this;
-	var stash;
-	var name;
-	var listOfArgTypes;
-	var i;
-	var funcDef;
-	var message$0;
-	var this$0$0;
-	var message$0$0;
-	var this$0;
-	stash = _OptimizeCommand$getStash$L_OptimizeCommand$LStashable$(this, classDef);
-	if (stash.touched) {
-		return;
-	}
-	message$0 = "touched " + classDef.className$();
-	this$0$0 = this._optimizer;
-	message$0$0 = "[" + this._identifier + "] " + message$0;
-	this$0$0._log += message$0$0 + "\n";
-	stash.touched = true;
-	this._classesInstantiated.push(classDef);
-	for (name in this._methodsAlive) {
-		listOfArgTypes = this._methodsAlive[name];
-		for (i = 0; i !== listOfArgTypes.length; ++i) {
-			funcDef = Util$findFunctionInClass$LClassDefinition$SALType$B(classDef, name, listOfArgTypes[i], false);
-			if (funcDef != null) {
-				this._membersToWalk.push(funcDef);
-			}
-		}
-	}
-	ClassDefinition$forEachMemberVariable$LClassDefinition$F$LMemberVariableDefinition$B$(classDef, (function (varDef) {
-		if ((varDef._flags & 8) === 0) {
-			$this._membersToWalk.push(varDef);
-		}
-		return true;
-	}));
-	if (classDef._extendType != null) {
-		_StripOptimizeCommand$_touchInstance$L_StripOptimizeCommand$LClassDefinition$(this, (this$0 = classDef._extendType, this$0._classDef));
-	}
-	classDef._implementTypes.forEach((function (implementType) {
-		_StripOptimizeCommand$_touchInstance$L_StripOptimizeCommand$LClassDefinition$($this, implementType._classDef);
-	}));
-	if (classDef._outerClassDef != null) {
-		_StripOptimizeCommand$_touchInstance$L_StripOptimizeCommand$LClassDefinition$(this, classDef._outerClassDef);
-	}
-};
-
-
-function _StripOptimizeCommand$_touchInstance$L_StripOptimizeCommand$LClassDefinition$($this, classDef) {
-	var stash;
-	var name;
-	var listOfArgTypes;
-	var i;
-	var funcDef;
-	var message$0;
-	var this$0$0;
-	var message$0$0;
-	var this$0;
-	stash = _OptimizeCommand$getStash$L_OptimizeCommand$LStashable$($this, classDef);
-	if (stash.touched) {
-		return;
-	}
-	message$0 = "touched " + classDef.className$();
-	this$0$0 = $this._optimizer;
-	message$0$0 = "[" + $this._identifier + "] " + message$0;
-	this$0$0._log += message$0$0 + "\n";
-	stash.touched = true;
-	$this._classesInstantiated.push(classDef);
-	for (name in $this._methodsAlive) {
-		listOfArgTypes = $this._methodsAlive[name];
-		for (i = 0; i !== listOfArgTypes.length; ++i) {
-			funcDef = Util$findFunctionInClass$LClassDefinition$SALType$B(classDef, name, listOfArgTypes[i], false);
-			if (funcDef != null) {
-				$this._membersToWalk.push(funcDef);
-			}
-		}
-	}
-	ClassDefinition$forEachMemberVariable$LClassDefinition$F$LMemberVariableDefinition$B$(classDef, (function (varDef) {
-		if ((varDef._flags & 8) === 0) {
-			$this._membersToWalk.push(varDef);
-		}
-		return true;
-	}));
-	if (classDef._extendType != null) {
-		_StripOptimizeCommand$_touchInstance$L_StripOptimizeCommand$LClassDefinition$($this, (this$0 = classDef._extendType, this$0._classDef));
-	}
-	classDef._implementTypes.forEach((function (implementType) {
-		_StripOptimizeCommand$_touchInstance$L_StripOptimizeCommand$LClassDefinition$($this, implementType._classDef);
-	}));
-	if (classDef._outerClassDef != null) {
-		_StripOptimizeCommand$_touchInstance$L_StripOptimizeCommand$LClassDefinition$($this, classDef._outerClassDef);
-	}
-};
-
-_StripOptimizeCommand._touchInstance$L_StripOptimizeCommand$LClassDefinition$ = _StripOptimizeCommand$_touchInstance$L_StripOptimizeCommand$LClassDefinition$;
-
-_StripOptimizeCommand.prototype._touchConstructor$LMemberFunctionDefinition$ = function (funcDef) {
-	var stash;
-	var message$0;
-	var this$0$0;
-	var message$0$0;
-	stash = _OptimizeCommand$getStash$L_OptimizeCommand$LStashable$(this, funcDef);
-	if (stash.touched) {
-		return;
-	}
-	message$0 = "touched " + funcDef.getNotation$();
-	this$0$0 = this._optimizer;
-	message$0$0 = "[" + this._identifier + "] " + message$0;
-	this$0$0._log += message$0$0 + "\n";
-	stash.touched = true;
-	this._membersToWalk.push(funcDef);
-	_StripOptimizeCommand$_touchInstance$L_StripOptimizeCommand$LClassDefinition$(this, funcDef._classDef);
-};
-
-
-function _StripOptimizeCommand$_touchConstructor$L_StripOptimizeCommand$LMemberFunctionDefinition$($this, funcDef) {
-	var stash;
-	var message$0;
-	var this$0$0;
-	var message$0$0;
-	stash = _OptimizeCommand$getStash$L_OptimizeCommand$LStashable$($this, funcDef);
-	if (stash.touched) {
-		return;
-	}
-	message$0 = "touched " + funcDef.getNotation$();
-	this$0$0 = $this._optimizer;
-	message$0$0 = "[" + $this._identifier + "] " + message$0;
-	this$0$0._log += message$0$0 + "\n";
-	stash.touched = true;
-	$this._membersToWalk.push(funcDef);
-	_StripOptimizeCommand$_touchInstance$L_StripOptimizeCommand$LClassDefinition$($this, funcDef._classDef);
-};
-
-_StripOptimizeCommand._touchConstructor$L_StripOptimizeCommand$LMemberFunctionDefinition$ = _StripOptimizeCommand$_touchConstructor$L_StripOptimizeCommand$LMemberFunctionDefinition$;
-
-_StripOptimizeCommand.prototype._touchMethod$SALType$ = function (name, argTypes) {
-	var listOfArgTypes;
-	var i;
-	var funcDef;
-	var message$0;
-	var this$0$0;
-	var message$0$0;
-	if ($__jsx_ObjectHasOwnProperty.call(this._methodsAlive, name)) {
-		listOfArgTypes = this._methodsAlive[name];
-	} else {
-		listOfArgTypes = this._methodsAlive[name] = [];
-	}
-	for (i = 0; i < listOfArgTypes.length; ++i) {
-		if (Util$typesAreEqual$ALType$ALType$(listOfArgTypes[i], argTypes)) {
-			return;
-		}
-	}
-	message$0 = "touched #" + name;
-	this$0$0 = this._optimizer;
-	message$0$0 = "[" + this._identifier + "] " + message$0;
-	this$0$0._log += message$0$0 + "\n";
-	listOfArgTypes.push(argTypes.concat());
-	for (i = 0; i < this._classesInstantiated.length; ++i) {
-		funcDef = Util$findFunctionInClass$LClassDefinition$SALType$B(this._classesInstantiated[i], name, argTypes, false);
-		if (funcDef != null) {
-			this._membersToWalk.push(funcDef);
-		}
-	}
-};
-
-
-function _StripOptimizeCommand$_touchMethod$L_StripOptimizeCommand$SALType$($this, name, argTypes) {
-	var listOfArgTypes;
-	var i;
-	var funcDef;
-	var message$0;
-	var this$0$0;
-	var message$0$0;
-	if ($__jsx_ObjectHasOwnProperty.call($this._methodsAlive, name)) {
-		listOfArgTypes = $this._methodsAlive[name];
-	} else {
-		listOfArgTypes = $this._methodsAlive[name] = [];
-	}
-	for (i = 0; i < listOfArgTypes.length; ++i) {
-		if (Util$typesAreEqual$ALType$ALType$(listOfArgTypes[i], argTypes)) {
-			return;
-		}
-	}
-	message$0 = "touched #" + name;
-	this$0$0 = $this._optimizer;
-	message$0$0 = "[" + $this._identifier + "] " + message$0;
-	this$0$0._log += message$0$0 + "\n";
-	listOfArgTypes.push(argTypes.concat());
-	for (i = 0; i < $this._classesInstantiated.length; ++i) {
-		funcDef = Util$findFunctionInClass$LClassDefinition$SALType$B($this._classesInstantiated[i], name, argTypes, false);
-		if (funcDef != null) {
-			$this._membersToWalk.push(funcDef);
-		}
-	}
-};
-
-_StripOptimizeCommand._touchMethod$L_StripOptimizeCommand$SALType$ = _StripOptimizeCommand$_touchMethod$L_StripOptimizeCommand$SALType$;
-
-_StripOptimizeCommand.prototype.performOptimization$ = function () {
-	var $this = this;
-	var isEmittedClass;
-	var member;
-	var memberShouldPreserve;
-	var this$0$0;
-	var this$0$1;
-	var this$0$2;
-	var message$0;
-	var this$0$3;
-	var message$0$0;
-	var this$0$4;
-	var this$0$5;
-	var this$0;
-	function isEmittedClass(classDef) {
-		return (classDef instanceof TemplateClassDefinition ? false : (classDef.flags$() & 16) !== 0 ? false : true);
-	}
-	Compiler$forEachClassDef$LCompiler$F$LParser$LClassDefinition$B$((this$0$0 = this._optimizer, this$0$0._compiler), (function (parser, classDef) {
-		classDef.setStash$SLStash$($this._identifier, null);
-		return ClassDefinition$forEachMember$LClassDefinition$F$LMemberDefinition$B$(classDef, (function (member) {
-			_OptimizeCommand$resetStash$L_OptimizeCommand$LStashable$($this, member);
-			return true;
-		}));
-	}));
-	Compiler$forEachClassDef$LCompiler$F$LParser$LClassDefinition$B$((this$0$1 = this._optimizer, this$0$1._compiler), (function (parser, classDef) {
-		if (! (classDef instanceof TemplateClassDefinition) && (classDef.flags$() & 16) !== 0) {
-			ClassDefinition$forEachMemberFunction$LClassDefinition$F$LMemberFunctionDefinition$B$(classDef, (function (funcDef) {
-				if (MemberDefinition$name$LMemberDefinition$(funcDef) === "constructor") {
-				} else if ((MemberDefinition$flags$LMemberDefinition$(funcDef) & ClassDefinition.IS_FINAL) !== 0) {
-				} else {
-					_StripOptimizeCommand$_touchMethod$L_StripOptimizeCommand$SALType$($this, MemberDefinition$name$LMemberDefinition$(funcDef), MemberFunctionDefinition$getArgumentTypes$LMemberFunctionDefinition$(funcDef));
-				}
-				return true;
-			}));
-		}
-		return true;
-	}));
-	Compiler$forEachClassDef$LCompiler$F$LParser$LClassDefinition$B$((this$0$2 = this._optimizer, this$0$2._compiler), (function (parser, classDef) {
-		if (isEmittedClass(classDef)) {
-			if ((classDef.flags$() & 16384) !== 0) {
-				_StripOptimizeCommand$_touchInstance$L_StripOptimizeCommand$LClassDefinition$($this, classDef);
-			}
-			ClassDefinition$forEachMember$LClassDefinition$F$LMemberDefinition$B$(classDef, (function (member) {
-				var funcDef;
-				if ((MemberDefinition$flags$LMemberDefinition$(member) & ClassDefinition.IS_EXPORT) !== 0) {
-					if ((MemberDefinition$flags$LMemberDefinition$(member) & ClassDefinition.IS_STATIC) !== 0) {
-						_StripOptimizeCommand$_touchStatic$L_StripOptimizeCommand$LMemberDefinition$($this, member);
-					} else if (member instanceof MemberFunctionDefinition) {
-						funcDef = member;
-						if (MemberDefinition$name$LMemberDefinition$(funcDef) === "constructor") {
-							_StripOptimizeCommand$_touchConstructor$L_StripOptimizeCommand$LMemberFunctionDefinition$($this, funcDef);
-						} else {
-							_StripOptimizeCommand$_touchMethod$L_StripOptimizeCommand$SALType$($this, MemberDefinition$name$LMemberDefinition$(funcDef), MemberFunctionDefinition$getArgumentTypes$LMemberFunctionDefinition$(funcDef));
-						}
-					}
-				}
-				return true;
-			}));
-		}
-		return true;
-	}));
-	while (this._membersToWalk.length !== 0) {
-		member = this._membersToWalk.shift();
-		message$0 = "walking " + member.getNotation$();
-		this$0$3 = this._optimizer;
-		message$0$0 = "[" + this._identifier + "] " + message$0;
-		this$0$3._log += message$0$0 + "\n";
-		if (member instanceof MemberFunctionDefinition) {
-			_StripOptimizeCommand$_walkFunctionDefinition$L_StripOptimizeCommand$LMemberFunctionDefinition$(this, member);
-		} else {
-			_StripOptimizeCommand$_walkVariableDefinition$L_StripOptimizeCommand$LMemberVariableDefinition$(this, member);
-		}
-	}
-	function memberShouldPreserve(member) {
-		var isTouched;
-		var listOfArgTypes;
-		var i;
-		var this$0$0;
-		var this$0$1;
-		var this$0$2;
-		if ((member._flags & 16384) !== 0) {
-			return true;
-		}
-		isTouched = _OptimizeCommand$getStash$L_OptimizeCommand$LStashable$($this, member).touched;
-		if ((member._flags & 8) !== 0) {
-			return isTouched;
-		} else if (member instanceof MemberFunctionDefinition) {
-			if ((this$0$2 = member._nameToken, this$0$2._value) === "constructor") {
-				return isTouched;
-			} else {
-				if (_OptimizeCommand$getStash$L_OptimizeCommand$LStashable$($this, member._classDef).touched && $__jsx_ObjectHasOwnProperty.call($this._methodsAlive, (this$0$1 = member._nameToken, this$0$1._value))) {
-					listOfArgTypes = $this._methodsAlive[(this$0$0 = member._nameToken, this$0$0._value)];
-					for (i = 0; i !== listOfArgTypes.length; ++i) {
-						if (Util$typesAreEqual$ALType$ALType$(listOfArgTypes[i], MemberFunctionDefinition$getArgumentTypes$LMemberFunctionDefinition$(member))) {
-							return true;
-						}
-					}
-				}
-				return false;
-			}
-		} else {
-			return true;
-		}
-	}
-	Compiler$forEachClassDef$LCompiler$F$LParser$LClassDefinition$B$((this$0$4 = this._optimizer, this$0$4._compiler), (function (parser, classDef) {
-		var numConstructors;
-		var members;
-		var memberIndex;
-		var member;
-		var ctor;
-		var this$0$0;
-		var message$0;
-		var this$0$1;
-		var message$0$0;
-		var message$1;
-		var this$0$2;
-		var message$0$1;
-		var message$2;
-		var this$0$3;
-		var message$0$2;
-		if (isEmittedClass(classDef)) {
-			numConstructors = 0;
-			members = classDef._members;
-			for (memberIndex = 0; memberIndex !== members.length; ) {
-				member = members[memberIndex];
-				if (memberShouldPreserve(member)) {
-					if (member instanceof MemberFunctionDefinition && (member._flags & 8) === 0 && (this$0$0 = member._nameToken, this$0$0._value) === "constructor") {
-						++numConstructors;
-					}
-					++memberIndex;
-					message$0 = "preserving used: " + member.getNotation$();
-					this$0$1 = $this._optimizer;
-					message$0$0 = "[" + $this._identifier + "] " + message$0;
-					this$0$1._log += message$0$0 + "\n";
-				} else {
-					message$1 = "removing unused: " + member.getNotation$();
-					this$0$2 = $this._optimizer;
-					message$0$1 = "[" + $this._identifier + "] " + message$1;
-					this$0$2._log += message$0$1 + "\n";
-					members.splice(memberIndex, 1);
-				}
-			}
-			if (numConstructors === 0) {
-				message$2 = "substituting fake constructor for class: " + classDef.className$();
-				this$0$3 = $this._optimizer;
-				message$0$2 = "[" + $this._identifier + "] " + message$2;
-				this$0$3._log += message$0$2 + "\n";
-				ctor = new MemberFunctionDefinition(null, new Token$2("constructor", true), 4 | classDef.flags$() & 16384, Type.voidType, [], [], [], [], classDef.getToken$(), null);
-				ctor._classDef = classDef;
-				members.push(ctor);
-			}
-		}
-		return true;
-	}));
-	(this$0 = (this$0$5 = this._optimizer, this$0$5._compiler), this$0._parsers).forEach((function (parser) {
-		var classDefs;
-		var i;
-		var preserve;
-		var this$0;
-		var message$0;
-		var this$0$0;
-		var message$0$0;
-		classDefs = parser._classDefs;
-		for (i = 0; i !== classDefs.length; ) {
-			preserve = true;
-			if ((classDefs[i].flags$() & 16) !== 0 && (this$0 = classDefs[i], this$0._nativeSource) != null && ! _OptimizeCommand$getStash$L_OptimizeCommand$LStashable$($this, classDefs[i]).touched && ClassDefinition$forEachMember$LClassDefinition$F$LMemberDefinition$B$(classDefs[i], (function (member) {
-				if ((MemberDefinition$flags$LMemberDefinition$(member) & ClassDefinition.IS_STATIC) === 0) {
-					return true;
-				}
-				return ! _OptimizeCommand$getStash$L_OptimizeCommand$LStashable$($this, member).touched;
-			}))) {
-				preserve = false;
-			}
-			if (preserve) {
-				++i;
-			} else {
-				message$0 = "removing unused native class: " + classDefs[i].className$();
-				this$0$0 = $this._optimizer;
-				message$0$0 = "[" + $this._identifier + "] " + message$0;
-				this$0$0._log += message$0$0 + "\n";
-				classDefs.splice(i, 1);
-			}
-		}
-	}));
-};
-
-
-_StripOptimizeCommand.prototype._walkExpression$LExpression$ = function (expr) {
-	var $this = this;
-	var onExpr;
-	function onExpr(expr) {
-		var callee;
-		var propertyExpr;
-		var holderClassDef;
-		var name;
-		var member;
-		var superExpr;
-		var this$0;
-		var this$1;
-		var this$2;
-		var this$3;
-		var exprType$0;
-		var this$4;
-		var exprType$1;
-		var this$5;
-		var this$6;
-		var this$7;
-		if (expr instanceof NewExpression) {
-			callee = Util$findFunctionInClass$LClassDefinition$SALType$B(expr.getType$().getClassDef$(), "constructor", (this$1 = (this$0 = expr, this$0._constructor), this$1._argTypes), false);
-			_StripOptimizeCommand$_touchConstructor$L_StripOptimizeCommand$LMemberFunctionDefinition$($this, callee);
-		} else if (expr instanceof InstanceofExpression) {
-			_StripOptimizeCommand$_touchInstance$L_StripOptimizeCommand$LClassDefinition$($this, (this$2 = expr, this$2._expectedType).getClassDef$());
-		} else if (expr instanceof AsExpression) {
-			if (expr.getType$() instanceof ObjectType) {
-				_StripOptimizeCommand$_touchInstance$L_StripOptimizeCommand$LClassDefinition$($this, expr.getType$().getClassDef$());
-			}
-		} else if (expr instanceof AsNoConvertExpression) {
-			if (expr.getType$() instanceof ObjectType) {
-				_StripOptimizeCommand$_touchInstance$L_StripOptimizeCommand$LClassDefinition$($this, expr.getType$().getClassDef$());
-			}
-		} else if (expr instanceof PropertyExpression) {
-			propertyExpr = expr;
-			holderClassDef = propertyExpr.getHolderType$().getClassDef$();
-			if (propertyExpr._isInner) {
-				if ((holderClassDef.flags$() & 16) !== 0) {
-					_StripOptimizeCommand$_touchInstance$L_StripOptimizeCommand$LClassDefinition$($this, holderClassDef);
-				}
-			} else {
-				this$3 = propertyExpr._identifierToken;
-				name = this$3._value;
-				if (propertyExpr._expr.isClassSpecifier$()) {
-					exprType$0 = propertyExpr._type;
-					if (! (exprType$0 instanceof FunctionType) ? false : exprType$0.isAssignable$() ? false : true) {
-						member = Util$findFunctionInClass$LClassDefinition$SALType$B(holderClassDef, name, (this$4 = expr.getType$(), this$4._argTypes), true);
-					} else {
-						member = Util$findVariableInClass$LClassDefinition$SB(holderClassDef, name, true);
-					}
-					_StripOptimizeCommand$_touchStatic$L_StripOptimizeCommand$LMemberDefinition$($this, member);
-				} else {
-					exprType$1 = propertyExpr._type;
-					if (! (exprType$1 instanceof FunctionType) ? false : exprType$1.isAssignable$() ? false : true) {
-						_StripOptimizeCommand$_touchMethod$L_StripOptimizeCommand$SALType$($this, name, (this$5 = expr.getType$(), this$5._argTypes));
-					}
-				}
-			}
-		} else if (expr instanceof SuperExpression) {
-			superExpr = expr;
-			_StripOptimizeCommand$_touchMethod$L_StripOptimizeCommand$SALType$($this, (this$6 = superExpr._name, this$6._value), (this$7 = superExpr._funcType, this$7._argTypes));
-		}
-		return Expression$forEachExpression$LExpression$F$LExpression$B$(expr, onExpr);
-	}
-	return onExpr(expr);
-};
-
-
-function _StripOptimizeCommand$_walkExpression$L_StripOptimizeCommand$LExpression$($this, expr) {
-	var onExpr;
-	function onExpr(expr) {
-		var callee;
-		var propertyExpr;
-		var holderClassDef;
-		var name;
-		var member;
-		var superExpr;
-		var this$0;
-		var this$1;
-		var this$2;
-		var this$3;
-		var exprType$0;
-		var this$4;
-		var exprType$1;
-		var this$5;
-		var this$6;
-		var this$7;
-		if (expr instanceof NewExpression) {
-			callee = Util$findFunctionInClass$LClassDefinition$SALType$B(expr.getType$().getClassDef$(), "constructor", (this$1 = (this$0 = expr, this$0._constructor), this$1._argTypes), false);
-			_StripOptimizeCommand$_touchConstructor$L_StripOptimizeCommand$LMemberFunctionDefinition$($this, callee);
-		} else if (expr instanceof InstanceofExpression) {
-			_StripOptimizeCommand$_touchInstance$L_StripOptimizeCommand$LClassDefinition$($this, (this$2 = expr, this$2._expectedType).getClassDef$());
-		} else if (expr instanceof AsExpression) {
-			if (expr.getType$() instanceof ObjectType) {
-				_StripOptimizeCommand$_touchInstance$L_StripOptimizeCommand$LClassDefinition$($this, expr.getType$().getClassDef$());
-			}
-		} else if (expr instanceof AsNoConvertExpression) {
-			if (expr.getType$() instanceof ObjectType) {
-				_StripOptimizeCommand$_touchInstance$L_StripOptimizeCommand$LClassDefinition$($this, expr.getType$().getClassDef$());
-			}
-		} else if (expr instanceof PropertyExpression) {
-			propertyExpr = expr;
-			holderClassDef = propertyExpr.getHolderType$().getClassDef$();
-			if (propertyExpr._isInner) {
-				if ((holderClassDef.flags$() & 16) !== 0) {
-					_StripOptimizeCommand$_touchInstance$L_StripOptimizeCommand$LClassDefinition$($this, holderClassDef);
-				}
-			} else {
-				this$3 = propertyExpr._identifierToken;
-				name = this$3._value;
-				if (propertyExpr._expr.isClassSpecifier$()) {
-					exprType$0 = propertyExpr._type;
-					if (! (exprType$0 instanceof FunctionType) ? false : exprType$0.isAssignable$() ? false : true) {
-						member = Util$findFunctionInClass$LClassDefinition$SALType$B(holderClassDef, name, (this$4 = expr.getType$(), this$4._argTypes), true);
-					} else {
-						member = Util$findVariableInClass$LClassDefinition$SB(holderClassDef, name, true);
-					}
-					_StripOptimizeCommand$_touchStatic$L_StripOptimizeCommand$LMemberDefinition$($this, member);
-				} else {
-					exprType$1 = propertyExpr._type;
-					if (! (exprType$1 instanceof FunctionType) ? false : exprType$1.isAssignable$() ? false : true) {
-						_StripOptimizeCommand$_touchMethod$L_StripOptimizeCommand$SALType$($this, name, (this$5 = expr.getType$(), this$5._argTypes));
-					}
-				}
-			}
-		} else if (expr instanceof SuperExpression) {
-			superExpr = expr;
-			_StripOptimizeCommand$_touchMethod$L_StripOptimizeCommand$SALType$($this, (this$6 = superExpr._name, this$6._value), (this$7 = superExpr._funcType, this$7._argTypes));
-		}
-		return Expression$forEachExpression$LExpression$F$LExpression$B$(expr, onExpr);
-	}
-	return onExpr(expr);
-};
-
-_StripOptimizeCommand._walkExpression$L_StripOptimizeCommand$LExpression$ = _StripOptimizeCommand$_walkExpression$L_StripOptimizeCommand$LExpression$;
-
-_StripOptimizeCommand.prototype._walkStatement$LStatement$ = function (statement) {
-	var $this = this;
-	var onStatement;
-	function onStatement(statement) {
-		var ctorStatement;
-		var callee;
-		var this$0;
-		if (statement instanceof ConstructorInvocationStatement) {
-			ctorStatement = statement;
-			callee = Util$findFunctionInClass$LClassDefinition$SALType$B(ctorStatement._ctorClassType.getClassDef$(), "constructor", (this$0 = ctorStatement._ctorFunctionType, this$0._argTypes), false);
-			_StripOptimizeCommand$_touchConstructor$L_StripOptimizeCommand$LMemberFunctionDefinition$($this, callee);
-		}
-		Statement$forEachExpression$LStatement$F$LExpression$B$(statement, (function (expr) {
-			return _StripOptimizeCommand$_walkExpression$L_StripOptimizeCommand$LExpression$($this, expr);
-		}));
-		return statement.forEachStatement$F$LStatement$B$(onStatement);
-	}
-	return onStatement(statement);
-};
-
-
-function _StripOptimizeCommand$_walkStatement$L_StripOptimizeCommand$LStatement$($this, statement) {
-	var onStatement;
-	function onStatement(statement) {
-		var ctorStatement;
-		var callee;
-		var this$0;
-		if (statement instanceof ConstructorInvocationStatement) {
-			ctorStatement = statement;
-			callee = Util$findFunctionInClass$LClassDefinition$SALType$B(ctorStatement._ctorClassType.getClassDef$(), "constructor", (this$0 = ctorStatement._ctorFunctionType, this$0._argTypes), false);
-			_StripOptimizeCommand$_touchConstructor$L_StripOptimizeCommand$LMemberFunctionDefinition$($this, callee);
-		}
-		Statement$forEachExpression$LStatement$F$LExpression$B$(statement, (function (expr) {
-			return _StripOptimizeCommand$_walkExpression$L_StripOptimizeCommand$LExpression$($this, expr);
-		}));
-		return statement.forEachStatement$F$LStatement$B$(onStatement);
-	}
-	return onStatement(statement);
-};
-
-_StripOptimizeCommand._walkStatement$L_StripOptimizeCommand$LStatement$ = _StripOptimizeCommand$_walkStatement$L_StripOptimizeCommand$LStatement$;
-
-_StripOptimizeCommand.prototype._walkFunctionDefinition$LMemberFunctionDefinition$ = function (funcDef) {
-	var $this = this;
-	if (funcDef._statements != null) {
-		Util$forEachStatement$F$LStatement$B$ALStatement$((function onStatement(statement) {
-			return _StripOptimizeCommand$_walkStatement$L_StripOptimizeCommand$LStatement$($this, statement);
-		}), funcDef._statements);
-	}
-	return MemberDefinition$forEachClosure$LMemberDefinition$F$LMemberFunctionDefinition$B$(funcDef, (function (funcDef) {
-		return _StripOptimizeCommand$_walkFunctionDefinition$L_StripOptimizeCommand$LMemberFunctionDefinition$($this, funcDef);
-	}));
-};
-
-
-function _StripOptimizeCommand$_walkFunctionDefinition$L_StripOptimizeCommand$LMemberFunctionDefinition$($this, funcDef) {
-	if (funcDef._statements != null) {
-		Util$forEachStatement$F$LStatement$B$ALStatement$((function onStatement(statement) {
-			return _StripOptimizeCommand$_walkStatement$L_StripOptimizeCommand$LStatement$($this, statement);
-		}), funcDef._statements);
-	}
-	return MemberDefinition$forEachClosure$LMemberDefinition$F$LMemberFunctionDefinition$B$(funcDef, (function (funcDef) {
-		return _StripOptimizeCommand$_walkFunctionDefinition$L_StripOptimizeCommand$LMemberFunctionDefinition$($this, funcDef);
-	}));
-};
-
-_StripOptimizeCommand._walkFunctionDefinition$L_StripOptimizeCommand$LMemberFunctionDefinition$ = _StripOptimizeCommand$_walkFunctionDefinition$L_StripOptimizeCommand$LMemberFunctionDefinition$;
-
-_StripOptimizeCommand.prototype._walkVariableDefinition$LMemberVariableDefinition$ = function (varDef) {
-	var $this = this;
-	var initialValue;
-	initialValue = varDef._initialValue;
-	if (initialValue != null) {
-		_StripOptimizeCommand$_walkExpression$L_StripOptimizeCommand$LExpression$(this, initialValue);
-	}
-	return MemberDefinition$forEachClosure$LMemberDefinition$F$LMemberFunctionDefinition$B$(varDef, (function (funcDef) {
-		return _StripOptimizeCommand$_walkFunctionDefinition$L_StripOptimizeCommand$LMemberFunctionDefinition$($this, funcDef);
-	}));
-};
-
-
-function _StripOptimizeCommand$_walkVariableDefinition$L_StripOptimizeCommand$LMemberVariableDefinition$($this, varDef) {
-	var initialValue;
-	initialValue = varDef._initialValue;
-	if (initialValue != null) {
-		_StripOptimizeCommand$_walkExpression$L_StripOptimizeCommand$LExpression$($this, initialValue);
-	}
-	return MemberDefinition$forEachClosure$LMemberDefinition$F$LMemberFunctionDefinition$B$(varDef, (function (funcDef) {
-		return _StripOptimizeCommand$_walkFunctionDefinition$L_StripOptimizeCommand$LMemberFunctionDefinition$($this, funcDef);
-	}));
-};
-
-_StripOptimizeCommand._walkVariableDefinition$L_StripOptimizeCommand$LMemberVariableDefinition$ = _StripOptimizeCommand$_walkVariableDefinition$L_StripOptimizeCommand$LMemberVariableDefinition$;
 
 function _NoAssertCommand() {
 	this._identifier = "no-assert";
@@ -3779,2722 +2967,6 @@ function _NoLogCommand$_optimizeStatements$L_NoLogCommand$ALStatement$($this, st
 };
 
 _NoLogCommand._optimizeStatements$L_NoLogCommand$ALStatement$ = _NoLogCommand$_optimizeStatements$L_NoLogCommand$ALStatement$;
-
-function _DetermineCalleeCommand() {
-	this._identifier = "determine-callee";
-	this._optimizer = null;
-	this._excludeNative = false;
-};
-
-$__jsx_extend([_DetermineCalleeCommand], _FunctionOptimizeCommand);
-_DetermineCalleeCommand.prototype._createStash$ = function () {
-	return new _DetermineCalleeCommand$x2EStash();
-};
-
-
-_DetermineCalleeCommand.prototype.optimizeFunction$LMemberFunctionDefinition$ = function (funcDef) {
-	var $this = this;
-	var cb$0;
-	cb$0 = (function onStatement(statement) {
-		var callingFuncDef;
-		var classDef$0;
-		var argTypes$0;
-		var found$0;
-		var this$0;
-		var this$1;
-		var this$2;
-		var this$3;
-		var this$4;
-		if (statement instanceof ConstructorInvocationStatement) {
-			this$1 = statement;
-			classDef$0 = this$1._ctorClassType.getClassDef$();
-			this$2 = (this$4 = statement, this$4._ctorFunctionType);
-			argTypes$0 = this$2._argTypes;
-			found$0 = Util$findFunctionInClass$LClassDefinition$SALType$B(classDef$0, "constructor", argTypes$0, false);
-			if (found$0 != null) {
-				if ((found$0._flags & 12) === 0) {
-					found$0 = null;
-				}
-			}
-			callingFuncDef = found$0;
-			if (found$0 == null) {
-				throw new Error("could not determine the associated parent ctor");
-			}
-			_OptimizeCommand$getStash$L_OptimizeCommand$LStashable$($this, statement).callingFuncDef = callingFuncDef;
-		} else if (statement instanceof FunctionStatement) {
-			this$3 = statement;
-			this$0 = this$3._funcDef;
-			Util$forEachStatement$F$LStatement$B$ALStatement$(onStatement, this$0._statements);
-		}
-		Statement$forEachExpression$LStatement$F$LExpression$B$(statement, (function onExpr(expr) {
-			var calleeExpr;
-			var propertyExpr;
-			var holderType;
-			var callingFuncDef;
-			var newExpr;
-			if (expr instanceof CallExpression) {
-				calleeExpr = CallExpression$getExpr$LCallExpression$(expr);
-				if (calleeExpr instanceof PropertyExpression && ! calleeExpr.getType$().isAssignable$()) {
-					propertyExpr = calleeExpr;
-					holderType = propertyExpr.getHolderType$();
-					callingFuncDef = _DetermineCalleeCommand$findCallingFunction$LClassDefinition$SALType$B(holderType.getClassDef$(), Token$getValue$LToken$(PropertyExpression$getIdentifierToken$LPropertyExpression$(propertyExpr)), ResolvedFunctionType$getArgumentTypes$LResolvedFunctionType$(propertyExpr.getType$()), UnaryExpression$getExpr$LUnaryExpression$(propertyExpr).isClassSpecifier$());
-					_DetermineCalleeCommand$_setCallingFuncDef$L_DetermineCalleeCommand$LStashable$LMemberFunctionDefinition$($this, expr, callingFuncDef);
-				} else if (calleeExpr instanceof FunctionExpression) {
-					_DetermineCalleeCommand$_setCallingFuncDef$L_DetermineCalleeCommand$LStashable$LMemberFunctionDefinition$($this, expr, FunctionExpression$getFuncDef$LFunctionExpression$(calleeExpr));
-				} else {
-					_DetermineCalleeCommand$_setCallingFuncDef$L_DetermineCalleeCommand$LStashable$LMemberFunctionDefinition$($this, expr, null);
-				}
-			} else if (expr instanceof NewExpression) {
-				newExpr = expr;
-				if (! (newExpr.getType$().getClassDef$() != null)) {
-					debugger;
-					throw new Error("[/Users/gfx/repo/try-on-web/JSX/src/optimizer.jsx:1093:59] assertion failure\n                    assert newExpr.getType().getClassDef() != null;\n                                                           ^^\n");
-				}
-				if (! (NewExpression$getConstructor$LNewExpression$(newExpr) != null)) {
-					debugger;
-					throw new Error("[/Users/gfx/repo/try-on-web/JSX/src/optimizer.jsx:1094:52] assertion failure\n                    assert newExpr.getConstructor() != null;\n                                                    ^^\n");
-				}
-				callingFuncDef = _DetermineCalleeCommand$findCallingFunctionInClass$LClassDefinition$SALType$B(newExpr.getType$().getClassDef$(), "constructor", ResolvedFunctionType$getArgumentTypes$LResolvedFunctionType$(NewExpression$getConstructor$LNewExpression$(newExpr)), false);
-				if (callingFuncDef == null) {
-					throw new Error("could not find matching constructor for " + NewExpression$getConstructor$LNewExpression$(newExpr).toString());
-				}
-				_DetermineCalleeCommand$_setCallingFuncDef$L_DetermineCalleeCommand$LStashable$LMemberFunctionDefinition$($this, newExpr, callingFuncDef);
-			}
-			if (expr instanceof FunctionExpression) {
-				return MemberFunctionDefinition$forEachStatement$LMemberFunctionDefinition$F$LStatement$B$(FunctionExpression$getFuncDef$LFunctionExpression$(expr), onStatement);
-			} else {
-				return Expression$forEachExpression$LExpression$F$LExpression$B$(expr, onExpr);
-			}
-		}));
-		return statement.forEachStatement$F$LStatement$B$(onStatement);
-	});
-	Util$forEachStatement$F$LStatement$B$ALStatement$(cb$0, funcDef._statements);
-	return true;
-};
-
-
-_DetermineCalleeCommand.prototype._setCallingFuncDef$LStashable$LMemberFunctionDefinition$ = function (stashable, funcDef) {
-	_OptimizeCommand$getStash$L_OptimizeCommand$LStashable$(this, stashable).callingFuncDef = funcDef;
-};
-
-
-function _DetermineCalleeCommand$_setCallingFuncDef$L_DetermineCalleeCommand$LStashable$LMemberFunctionDefinition$($this, stashable, funcDef) {
-	_OptimizeCommand$getStash$L_OptimizeCommand$LStashable$($this, stashable).callingFuncDef = funcDef;
-};
-
-_DetermineCalleeCommand._setCallingFuncDef$L_DetermineCalleeCommand$LStashable$LMemberFunctionDefinition$ = _DetermineCalleeCommand$_setCallingFuncDef$L_DetermineCalleeCommand$LStashable$LMemberFunctionDefinition$;
-
-function _DetermineCalleeCommand$findCallingFunctionInClass$LClassDefinition$SALType$B(classDef, funcName, argTypes, isStatic) {
-	var found;
-	found = Util$findFunctionInClass$LClassDefinition$SALType$B(classDef, funcName, argTypes, isStatic);
-	if (found != null) {
-		if ((found._flags & 12) === 0) {
-			found = null;
-		}
-	}
-	return found;
-};
-
-_DetermineCalleeCommand.findCallingFunctionInClass$LClassDefinition$SALType$B = _DetermineCalleeCommand$findCallingFunctionInClass$LClassDefinition$SALType$B;
-
-function _DetermineCalleeCommand$findCallingFunction$LClassDefinition$SALType$B(classDef, funcName, argTypes, isStatic) {
-	var found;
-	found = null;
-	ClassDefinition$forEachClassToBase$LClassDefinition$F$LClassDefinition$B$(classDef, (function (classDef) {
-		return ((found = _DetermineCalleeCommand$findCallingFunctionInClass$LClassDefinition$SALType$B(classDef, funcName, argTypes, isStatic)) != null ? false : true);
-	}));
-	return found;
-};
-
-_DetermineCalleeCommand.findCallingFunction$LClassDefinition$SALType$B = _DetermineCalleeCommand$findCallingFunction$LClassDefinition$SALType$B;
-
-function _DetermineCalleeCommand$getCallingFuncDef$LStashable$(stashable) {
-	var stash;
-	stash = stashable.getStash$S("determine-callee");
-	if (stash == null) {
-		throw new Error("callee not searched");
-	}
-	return stash.callingFuncDef;
-};
-
-_DetermineCalleeCommand.getCallingFuncDef$LStashable$ = _DetermineCalleeCommand$getCallingFuncDef$LStashable$;
-
-function _StaticizeOptimizeCommand() {
-	this._identifier = "staticize";
-	this._optimizer = null;
-};
-
-$__jsx_extend([_StaticizeOptimizeCommand], _OptimizeCommand);
-_StaticizeOptimizeCommand.prototype._createStash$ = function () {
-	return new _StaticizeOptimizeCommand$x2EStash();
-};
-
-
-_StaticizeOptimizeCommand.prototype.performOptimization$ = function () {
-	var $this = this;
-	var memberCanBeStaticized;
-	var this$0$0;
-	var this$0$1;
-	function memberCanBeStaticized(funcDef) {
-		var onStatement;
-		var this$0$0;
-		if ((funcDef._flags & 62) !== 4) {
-			return false;
-		}
-		if ((this$0$0 = funcDef._nameToken, this$0$0._value) === "constructor") {
-			return false;
-		}
-		function onStatement(statement) {
-			if (statement instanceof FunctionStatement) {
-				return MemberFunctionDefinition$forEachStatement$LMemberFunctionDefinition$F$LStatement$B$(FunctionStatement$getFuncDef$LFunctionStatement$(statement), onStatement);
-			}
-			return Statement$forEachExpression$LStatement$F$LExpression$B$(statement, (function onExpression(expr) {
-				if (expr instanceof FunctionExpression) {
-					return MemberFunctionDefinition$forEachStatement$LMemberFunctionDefinition$F$LStatement$B$(FunctionExpression$getFuncDef$LFunctionExpression$(expr), onStatement);
-				} else if (expr instanceof SuperExpression) {
-					return false;
-				}
-				return Expression$forEachExpression$LExpression$F$LExpression$B$(expr, onExpression);
-			})) && statement.forEachStatement$F$LStatement$B$(onStatement);
-		}
-		return (! Util$forEachStatement$F$LStatement$B$ALStatement$(onStatement, funcDef._statements) ? false : true);
-	}
-	Compiler$forEachClassDef$LCompiler$F$LParser$LClassDefinition$B$((this$0$0 = this._optimizer, this$0$0._compiler), (function (parser, classDef) {
-		if ((classDef.flags$() & 192) !== 0) {
-			return true;
-		}
-		ClassDefinition$forEachMemberFunction$LClassDefinition$F$LMemberFunctionDefinition$B$(classDef, (function onFunction(funcDef) {
-			if (memberCanBeStaticized(funcDef)) {
-				_OptimizeCommand$log$L_OptimizeCommand$S($this, "staticizing method: " + MemberDefinition$name$LMemberDefinition$(funcDef));
-				_StaticizeOptimizeCommand$_staticizeMethod$L_StaticizeOptimizeCommand$LMemberFunctionDefinition$($this, funcDef);
-			}
-			return true;
-		}));
-		return true;
-	}));
-	Compiler$forEachClassDef$LCompiler$F$LParser$LClassDefinition$B$((this$0$1 = this._optimizer, this$0$1._compiler), (function (parser, classDef) {
-		var onFunction;
-		var message$0;
-		var this$0$0;
-		var message$0$0;
-		message$0 = "rewriting member method calls in class: " + classDef.className$();
-		this$0$0 = $this._optimizer;
-		message$0$0 = "[" + $this._identifier + "] " + message$0;
-		this$0$0._log += message$0$0 + "\n";
-		ClassDefinition$forEachMemberVariable$LClassDefinition$F$LMemberVariableDefinition$B$(classDef, (function (varDef) {
-			if (MemberVariableDefinition$getInitialValue$LMemberVariableDefinition$(varDef) == null) {
-				return true;
-			}
-			_StaticizeOptimizeCommand$_rewriteMethodCallsToStatic$L_StaticizeOptimizeCommand$LExpression$F$LExpression$V$LMemberFunctionDefinition$($this, MemberVariableDefinition$getInitialValue$LMemberVariableDefinition$(varDef), (function (expr) {
-				MemberVariableDefinition$setInitialValue$LMemberVariableDefinition$LExpression$(varDef, expr);
-			}), null);
-			return true;
-		}));
-		function onFunction(funcDef) {
-			var onStatement;
-			function onStatement(statement) {
-				statement.forEachExpression$F$LExpression$F$LExpression$V$B$((function (expr, replaceCb) {
-					_StaticizeOptimizeCommand$_rewriteMethodCallsToStatic$L_StaticizeOptimizeCommand$LExpression$F$LExpression$V$LMemberFunctionDefinition$($this, expr, replaceCb, funcDef);
-					return true;
-				}));
-				return statement.forEachStatement$F$LStatement$B$(onStatement);
-			}
-			MemberFunctionDefinition$forEachStatement$LMemberFunctionDefinition$F$LStatement$B$(funcDef, onStatement);
-			return MemberDefinition$forEachClosure$LMemberDefinition$F$LMemberFunctionDefinition$B$(funcDef, onFunction);
-		}
-		ClassDefinition$forEachMemberFunction$LClassDefinition$F$LMemberFunctionDefinition$B$(classDef, onFunction);
-		return true;
-	}));
-};
-
-
-_StaticizeOptimizeCommand.prototype._staticizeMethod$LMemberFunctionDefinition$ = function (funcDef) {
-	var $this = this;
-	var staticFuncDef;
-	var classDef;
-	var newName;
-	var thisArg;
-	var baseName$0;
-	var argTypes$0;
-	var index$0;
-	var newName$0;
-	var this$0$0;
-	var this$0;
-	staticFuncDef = MemberFunctionDefinition$clone$LMemberFunctionDefinition$(funcDef);
-	classDef = staticFuncDef._classDef;
-	this$0$0 = funcDef._nameToken;
-	baseName$0 = this$0$0._value;
-	argTypes$0 = [ new ObjectType(classDef) ].concat((this$0 = funcDef.getType$(), this$0._argTypes));
-	index$0 = 0;
-	newName$0 = baseName$0;
-	while (Util$findFunctionInClass$LClassDefinition$SALType$B(classDef, newName$0, argTypes$0, true) != null) {
-		newName$0 = Util$format$SAS("%1_%2", [ baseName$0, index$0 + "" ]);
-		++index$0;
-	}
-	newName = newName$0;
-	_OptimizeCommand$getStash$L_OptimizeCommand$LStashable$(this, funcDef).altName = newName;
-	staticFuncDef._nameToken = new Token$2(newName, true);
-	MemberDefinition$setFlags$LMemberDefinition$N(staticFuncDef, funcDef._flags & -16385 | 8);
-	thisArg = new ArgumentDeclaration(new Token$2("$this", false), new ObjectType(classDef));
-	staticFuncDef._args.unshift(thisArg);
-	Util$forEachStatement$F$LStatement$B$ALStatement$((function onStatement(statement) {
-		var this$0;
-		var this$1;
-		if (statement instanceof FunctionStatement) {
-			this$1 = statement;
-			this$0 = this$1._funcDef;
-			Util$forEachStatement$F$LStatement$B$ALStatement$(onStatement, this$0._statements);
-		}
-		return statement.forEachExpression$F$LExpression$F$LExpression$V$B$((function onExpr(expr, replaceCb) {
-			if (expr instanceof ThisExpression) {
-				replaceCb(new LocalExpression(LocalVariable$getName$LLocalVariable$(thisArg), thisArg));
-			} else if (expr instanceof FunctionExpression) {
-				return MemberFunctionDefinition$forEachStatement$LMemberFunctionDefinition$F$LStatement$B$(FunctionExpression$getFuncDef$LFunctionExpression$(expr), onStatement);
-			}
-			return expr.forEachExpression$F$LExpression$F$LExpression$V$B$(onExpr);
-		})) && statement.forEachStatement$F$LStatement$B$(onStatement);
-	}), staticFuncDef._statements);
-};
-
-
-function _StaticizeOptimizeCommand$_staticizeMethod$L_StaticizeOptimizeCommand$LMemberFunctionDefinition$($this, funcDef) {
-	var staticFuncDef;
-	var classDef;
-	var newName;
-	var thisArg;
-	var baseName$0;
-	var argTypes$0;
-	var index$0;
-	var newName$0;
-	var this$0$0;
-	var this$0;
-	staticFuncDef = MemberFunctionDefinition$clone$LMemberFunctionDefinition$(funcDef);
-	classDef = staticFuncDef._classDef;
-	this$0$0 = funcDef._nameToken;
-	baseName$0 = this$0$0._value;
-	argTypes$0 = [ new ObjectType(classDef) ].concat((this$0 = funcDef.getType$(), this$0._argTypes));
-	index$0 = 0;
-	newName$0 = baseName$0;
-	while (Util$findFunctionInClass$LClassDefinition$SALType$B(classDef, newName$0, argTypes$0, true) != null) {
-		newName$0 = Util$format$SAS("%1_%2", [ baseName$0, index$0 + "" ]);
-		++index$0;
-	}
-	newName = newName$0;
-	_OptimizeCommand$getStash$L_OptimizeCommand$LStashable$($this, funcDef).altName = newName;
-	staticFuncDef._nameToken = new Token$2(newName, true);
-	MemberDefinition$setFlags$LMemberDefinition$N(staticFuncDef, funcDef._flags & -16385 | 8);
-	thisArg = new ArgumentDeclaration(new Token$2("$this", false), new ObjectType(classDef));
-	staticFuncDef._args.unshift(thisArg);
-	Util$forEachStatement$F$LStatement$B$ALStatement$((function onStatement(statement) {
-		var this$0;
-		var this$1;
-		if (statement instanceof FunctionStatement) {
-			this$1 = statement;
-			this$0 = this$1._funcDef;
-			Util$forEachStatement$F$LStatement$B$ALStatement$(onStatement, this$0._statements);
-		}
-		return statement.forEachExpression$F$LExpression$F$LExpression$V$B$((function onExpr(expr, replaceCb) {
-			if (expr instanceof ThisExpression) {
-				replaceCb(new LocalExpression(LocalVariable$getName$LLocalVariable$(thisArg), thisArg));
-			} else if (expr instanceof FunctionExpression) {
-				return MemberFunctionDefinition$forEachStatement$LMemberFunctionDefinition$F$LStatement$B$(FunctionExpression$getFuncDef$LFunctionExpression$(expr), onStatement);
-			}
-			return expr.forEachExpression$F$LExpression$F$LExpression$V$B$(onExpr);
-		})) && statement.forEachStatement$F$LStatement$B$(onStatement);
-	}), staticFuncDef._statements);
-};
-
-_StaticizeOptimizeCommand._staticizeMethod$L_StaticizeOptimizeCommand$LMemberFunctionDefinition$ = _StaticizeOptimizeCommand$_staticizeMethod$L_StaticizeOptimizeCommand$LMemberFunctionDefinition$;
-
-_StaticizeOptimizeCommand.prototype._newStaticFunctionName$LClassDefinition$SALType$B = function (classDef, baseName, argTypes, isStatic) {
-	var index;
-	var newName;
-	index = 0;
-	newName = baseName;
-	while (Util$findFunctionInClass$LClassDefinition$SALType$B(classDef, newName, argTypes, isStatic) != null) {
-		newName = Util$format$SAS("%1_%2", [ baseName, index + "" ]);
-		++index;
-	}
-	return newName;
-};
-
-
-function _StaticizeOptimizeCommand$_newStaticFunctionName$L_StaticizeOptimizeCommand$LClassDefinition$SALType$B($this, classDef, baseName, argTypes, isStatic) {
-	var index;
-	var newName;
-	index = 0;
-	newName = baseName;
-	while (Util$findFunctionInClass$LClassDefinition$SALType$B(classDef, newName, argTypes, isStatic) != null) {
-		newName = Util$format$SAS("%1_%2", [ baseName, index + "" ]);
-		++index;
-	}
-	return newName;
-};
-
-_StaticizeOptimizeCommand._newStaticFunctionName$L_StaticizeOptimizeCommand$LClassDefinition$SALType$B = _StaticizeOptimizeCommand$_newStaticFunctionName$L_StaticizeOptimizeCommand$LClassDefinition$SALType$B;
-
-_StaticizeOptimizeCommand.prototype._rewriteMethodCallsToStatic$LExpression$F$LExpression$V$LMemberFunctionDefinition$ = function (expr, replaceCb, rewritingFuncDef) {
-	var $this = this;
-	var onExpr;
-	function onExpr(expr, replaceCb) {
-		var calleeExpr;
-		var propertyExpr;
-		var receiverType;
-		var funcDef;
-		var newName;
-		var superExpr;
-		var classDef;
-		var thisVar;
-		var thisArg;
-		var this$0;
-		var this$1;
-		var this$0$0;
-		var this$2;
-		var this$3;
-		var this$4;
-		var this$5;
-		var this$6;
-		var this$7;
-		var this$8;
-		var this$9;
-		var this$10;
-		var this$11;
-		var this$12;
-		var this$13;
-		var this$14;
-		if (expr instanceof CallExpression) {
-			this$0 = expr;
-			calleeExpr = this$0._expr;
-			if (calleeExpr instanceof PropertyExpression && ! (this$13 = calleeExpr, this$13._expr).isClassSpecifier$() && ! (this$14 = calleeExpr, this$14._type).isAssignable$()) {
-				propertyExpr = calleeExpr;
-				this$1 = propertyExpr._expr.getType$();
-				receiverType = (this$1 instanceof NullableType ? (this$0$0 = this$1, this$0$0._baseType) : this$1);
-				if ((receiverType.getClassDef$().flags$() & 192) === 0) {
-					funcDef = _StaticizeOptimizeCommand$_findFunctionInClassTree$L_StaticizeOptimizeCommand$LClassDefinition$SALType$B($this, receiverType.getClassDef$(), (this$2 = propertyExpr._identifierToken, this$2._value), (this$3 = propertyExpr._type, this$3._argTypes), false);
-					if (funcDef != null && (newName = _OptimizeCommand$getStash$L_OptimizeCommand$LStashable$($this, funcDef).altName) != null) {
-						onExpr(propertyExpr._expr, (function (expr) {
-							UnaryExpression$setExpr$LUnaryExpression$LExpression$(propertyExpr, expr);
-						}));
-						Util$forEachExpression$F$LExpression$F$LExpression$V$B$ALExpression$(onExpr, (this$4 = expr, this$4._args));
-						replaceCb(new CallExpression(expr._token, new PropertyExpression$0(propertyExpr._token, new ClassExpression(new Token$2(funcDef._classDef.className$(), true), new ObjectType(funcDef._classDef)), new Token$2(newName, true), propertyExpr._typeArgs, new StaticFunctionType(null, (this$5 = funcDef.getType$(), this$5._returnType), [ new ObjectType(funcDef._classDef) ].concat((this$6 = funcDef.getType$(), this$6._argTypes)), false)), [ propertyExpr._expr ].concat((this$7 = expr, this$7._args))));
-						return true;
-					}
-				}
-			}
-		} else if (expr instanceof SuperExpression) {
-			superExpr = expr;
-			classDef = (this$8 = superExpr._funcType, this$8._objectType).getClassDef$();
-			funcDef = _StaticizeOptimizeCommand$_findFunctionInClassTree$L_StaticizeOptimizeCommand$LClassDefinition$SALType$B($this, classDef, (this$9 = superExpr._name, this$9._value), (this$10 = superExpr._funcType, this$10._argTypes), false);
-			if (funcDef != null && (newName = _OptimizeCommand$getStash$L_OptimizeCommand$LStashable$($this, funcDef).altName) != null) {
-				Util$forEachExpression$F$LExpression$F$LExpression$V$B$ALExpression$(onExpr, superExpr._args);
-				if ((rewritingFuncDef._flags & 8) !== 0) {
-					thisArg = rewritingFuncDef._args[0];
-					thisVar = new LocalExpression(thisArg._name, thisArg);
-				} else {
-					thisVar = new ThisExpression(new Token$2("this", false), funcDef._classDef);
-				}
-				replaceCb(new CallExpression(expr._token, new PropertyExpression$0(superExpr._token, new ClassExpression(new Token$2(funcDef._classDef.className$(), true), new ObjectType(funcDef._classDef)), new Token$2(newName, true), [  ], new StaticFunctionType(null, (this$11 = funcDef.getType$(), this$11._returnType), [ new ObjectType(funcDef._classDef) ].concat((this$12 = funcDef.getType$(), this$12._argTypes)), false)), [ thisVar ].concat(superExpr._args)));
-				return true;
-			}
-		}
-		return expr.forEachExpression$F$LExpression$F$LExpression$V$B$(onExpr);
-	}
-	onExpr(expr, replaceCb);
-};
-
-
-function _StaticizeOptimizeCommand$_rewriteMethodCallsToStatic$L_StaticizeOptimizeCommand$LExpression$F$LExpression$V$LMemberFunctionDefinition$($this, expr, replaceCb, rewritingFuncDef) {
-	var onExpr;
-	function onExpr(expr, replaceCb) {
-		var calleeExpr;
-		var propertyExpr;
-		var receiverType;
-		var funcDef;
-		var newName;
-		var superExpr;
-		var classDef;
-		var thisVar;
-		var thisArg;
-		var this$0;
-		var this$1;
-		var this$0$0;
-		var this$2;
-		var this$3;
-		var this$4;
-		var this$5;
-		var this$6;
-		var this$7;
-		var this$8;
-		var this$9;
-		var this$10;
-		var this$11;
-		var this$12;
-		var this$13;
-		var this$14;
-		if (expr instanceof CallExpression) {
-			this$0 = expr;
-			calleeExpr = this$0._expr;
-			if (calleeExpr instanceof PropertyExpression && ! (this$13 = calleeExpr, this$13._expr).isClassSpecifier$() && ! (this$14 = calleeExpr, this$14._type).isAssignable$()) {
-				propertyExpr = calleeExpr;
-				this$1 = propertyExpr._expr.getType$();
-				receiverType = (this$1 instanceof NullableType ? (this$0$0 = this$1, this$0$0._baseType) : this$1);
-				if ((receiverType.getClassDef$().flags$() & 192) === 0) {
-					funcDef = _StaticizeOptimizeCommand$_findFunctionInClassTree$L_StaticizeOptimizeCommand$LClassDefinition$SALType$B($this, receiverType.getClassDef$(), (this$2 = propertyExpr._identifierToken, this$2._value), (this$3 = propertyExpr._type, this$3._argTypes), false);
-					if (funcDef != null && (newName = _OptimizeCommand$getStash$L_OptimizeCommand$LStashable$($this, funcDef).altName) != null) {
-						onExpr(propertyExpr._expr, (function (expr) {
-							UnaryExpression$setExpr$LUnaryExpression$LExpression$(propertyExpr, expr);
-						}));
-						Util$forEachExpression$F$LExpression$F$LExpression$V$B$ALExpression$(onExpr, (this$4 = expr, this$4._args));
-						replaceCb(new CallExpression(expr._token, new PropertyExpression$0(propertyExpr._token, new ClassExpression(new Token$2(funcDef._classDef.className$(), true), new ObjectType(funcDef._classDef)), new Token$2(newName, true), propertyExpr._typeArgs, new StaticFunctionType(null, (this$5 = funcDef.getType$(), this$5._returnType), [ new ObjectType(funcDef._classDef) ].concat((this$6 = funcDef.getType$(), this$6._argTypes)), false)), [ propertyExpr._expr ].concat((this$7 = expr, this$7._args))));
-						return true;
-					}
-				}
-			}
-		} else if (expr instanceof SuperExpression) {
-			superExpr = expr;
-			classDef = (this$8 = superExpr._funcType, this$8._objectType).getClassDef$();
-			funcDef = _StaticizeOptimizeCommand$_findFunctionInClassTree$L_StaticizeOptimizeCommand$LClassDefinition$SALType$B($this, classDef, (this$9 = superExpr._name, this$9._value), (this$10 = superExpr._funcType, this$10._argTypes), false);
-			if (funcDef != null && (newName = _OptimizeCommand$getStash$L_OptimizeCommand$LStashable$($this, funcDef).altName) != null) {
-				Util$forEachExpression$F$LExpression$F$LExpression$V$B$ALExpression$(onExpr, superExpr._args);
-				if ((rewritingFuncDef._flags & 8) !== 0) {
-					thisArg = rewritingFuncDef._args[0];
-					thisVar = new LocalExpression(thisArg._name, thisArg);
-				} else {
-					thisVar = new ThisExpression(new Token$2("this", false), funcDef._classDef);
-				}
-				replaceCb(new CallExpression(expr._token, new PropertyExpression$0(superExpr._token, new ClassExpression(new Token$2(funcDef._classDef.className$(), true), new ObjectType(funcDef._classDef)), new Token$2(newName, true), [  ], new StaticFunctionType(null, (this$11 = funcDef.getType$(), this$11._returnType), [ new ObjectType(funcDef._classDef) ].concat((this$12 = funcDef.getType$(), this$12._argTypes)), false)), [ thisVar ].concat(superExpr._args)));
-				return true;
-			}
-		}
-		return expr.forEachExpression$F$LExpression$F$LExpression$V$B$(onExpr);
-	}
-	onExpr(expr, replaceCb);
-};
-
-_StaticizeOptimizeCommand._rewriteMethodCallsToStatic$L_StaticizeOptimizeCommand$LExpression$F$LExpression$V$LMemberFunctionDefinition$ = _StaticizeOptimizeCommand$_rewriteMethodCallsToStatic$L_StaticizeOptimizeCommand$LExpression$F$LExpression$V$LMemberFunctionDefinition$;
-
-_StaticizeOptimizeCommand.prototype._findFunctionInClassTree$LClassDefinition$SALType$B = function (classDef, name, argTypes, isStatic) {
-	var funcDef;
-	var this$0;
-	while (classDef.className$() !== "Object") {
-		if ((funcDef = Util$findFunctionInClass$LClassDefinition$SALType$B(classDef, name, argTypes, isStatic)) != null) {
-			return funcDef;
-		}
-		this$0 = classDef._extendType;
-		classDef = this$0._classDef;
-	}
-	return Util$findFunctionInClass$LClassDefinition$SALType$B(classDef, name, argTypes, isStatic);
-};
-
-
-function _StaticizeOptimizeCommand$_findFunctionInClassTree$L_StaticizeOptimizeCommand$LClassDefinition$SALType$B($this, classDef, name, argTypes, isStatic) {
-	var funcDef;
-	var this$0;
-	while (classDef.className$() !== "Object") {
-		if ((funcDef = Util$findFunctionInClass$LClassDefinition$SALType$B(classDef, name, argTypes, isStatic)) != null) {
-			return funcDef;
-		}
-		this$0 = classDef._extendType;
-		classDef = this$0._classDef;
-	}
-	return Util$findFunctionInClass$LClassDefinition$SALType$B(classDef, name, argTypes, isStatic);
-};
-
-_StaticizeOptimizeCommand._findFunctionInClassTree$L_StaticizeOptimizeCommand$LClassDefinition$SALType$B = _StaticizeOptimizeCommand$_findFunctionInClassTree$L_StaticizeOptimizeCommand$LClassDefinition$SALType$B;
-
-function _UnclassifyOptimizationCommand() {
-	this._identifier = "unclassify";
-	this._optimizer = null;
-};
-
-$__jsx_extend([_UnclassifyOptimizationCommand], _OptimizeCommand);
-_UnclassifyOptimizationCommand.prototype._createStash$ = function () {
-	return new _UnclassifyOptimizationCommand$x2EStash();
-};
-
-
-_UnclassifyOptimizationCommand.prototype.performOptimization$ = function () {
-	var $this = this;
-	var classDefs;
-	var this$0$0;
-	classDefs = _UnclassifyOptimizationCommand$_getClassesToUnclassify$L_UnclassifyOptimizationCommand$(this);
-	classDefs.forEach((function (classDef) {
-		var message$0;
-		var this$0$0;
-		var message$0$0;
-		message$0 = "unclassifying class: " + classDef.className$();
-		this$0$0 = $this._optimizer;
-		message$0$0 = "[" + $this._identifier + "] " + message$0;
-		this$0$0._log += message$0$0 + "\n";
-		ClassDefinition$forEachMemberFunction$LClassDefinition$F$LMemberFunctionDefinition$B$(classDef, (function onFunction(funcDef) {
-			if ((MemberDefinition$flags$LMemberDefinition$(funcDef) & ClassDefinition.IS_STATIC) === 0 && MemberDefinition$name$LMemberDefinition$(funcDef) !== "constructor") {
-				_OptimizeCommand$log$L_OptimizeCommand$S($this, "rewriting method to static function: " + MemberDefinition$name$LMemberDefinition$(funcDef));
-				_UnclassifyOptimizationCommand$_rewriteFunctionAsStatic$L_UnclassifyOptimizationCommand$LMemberFunctionDefinition$($this, funcDef);
-			}
-			return true;
-		}));
-	}));
-	Compiler$forEachClassDef$LCompiler$F$LParser$LClassDefinition$B$((this$0$0 = this._optimizer, this$0$0._compiler), (function (parser, classDef) {
-		var onFunction;
-		var message$0;
-		var this$0$0;
-		var message$0$0;
-		message$0 = "rewriting member method calls in class: " + classDef.className$();
-		this$0$0 = $this._optimizer;
-		message$0$0 = "[" + $this._identifier + "] " + message$0;
-		this$0$0._log += message$0$0 + "\n";
-		function onFunction(funcDef) {
-			var onStatement;
-			function onStatement(statement) {
-				statement.forEachExpression$F$LExpression$F$LExpression$V$B$((function (expr, replaceCb) {
-					_UnclassifyOptimizationCommand$_rewriteMethodCallsToStatic$L_UnclassifyOptimizationCommand$LExpression$F$LExpression$V$ALClassDefinition$($this, expr, replaceCb, classDefs);
-					return true;
-				}));
-				return statement.forEachStatement$F$LStatement$B$(onStatement);
-			}
-			MemberFunctionDefinition$forEachStatement$LMemberFunctionDefinition$F$LStatement$B$(funcDef, onStatement);
-			return MemberDefinition$forEachClosure$LMemberDefinition$F$LMemberFunctionDefinition$B$(funcDef, onFunction);
-		}
-		ClassDefinition$forEachMemberFunction$LClassDefinition$F$LMemberFunctionDefinition$B$(classDef, onFunction);
-		ClassDefinition$forEachMemberVariable$LClassDefinition$F$LMemberVariableDefinition$B$(classDef, (function (varDef) {
-			if ((MemberDefinition$flags$LMemberDefinition$(varDef) & ClassDefinition.IS_STATIC) !== 0) {
-				if (MemberVariableDefinition$getInitialValue$LMemberVariableDefinition$(varDef) != null) {
-					_UnclassifyOptimizationCommand$_rewriteMethodCallsToStatic$L_UnclassifyOptimizationCommand$LExpression$F$LExpression$V$ALClassDefinition$($this, MemberVariableDefinition$getInitialValue$LMemberVariableDefinition$(varDef), (function (expr) {
-						MemberVariableDefinition$setInitialValue$LMemberVariableDefinition$LExpression$(varDef, expr);
-					}), classDefs);
-				}
-			}
-			return MemberDefinition$forEachClosure$LMemberDefinition$F$LMemberFunctionDefinition$B$(varDef, onFunction);
-		}));
-		return true;
-	}));
-};
-
-
-_UnclassifyOptimizationCommand.prototype._getClassesToUnclassify$ = function () {
-	var $this = this;
-	var candidates;
-	var candidateIndex;
-	var hasInlineableCtor;
-	var this$0$0;
-	var this$0$1;
-	candidates = [];
-	Compiler$forEachClassDef$LCompiler$F$LParser$LClassDefinition$B$((this$0$0 = this._optimizer, this$0$0._compiler), (function (parser, classDef) {
-		var this$0;
-		if ((classDef.flags$() & 16404) === 4 && (this$0 = classDef._extendType, this$0._classDef).className$() === "Object" && classDef._implementTypes.length === 0 && ClassDefinition$forEachMemberFunction$LClassDefinition$F$LMemberFunctionDefinition$B$(classDef, (function (funcDef) {
-			return (MemberDefinition$flags$LMemberDefinition$(funcDef) & (ClassDefinition.IS_OVERRIDE | ClassDefinition.IS_EXPORT)) === 0;
-		}))) {
-			candidates.push(classDef);
-		}
-		return true;
-	}));
-	Compiler$forEachClassDef$LCompiler$F$LParser$LClassDefinition$B$((this$0$1 = this._optimizer, this$0$1._compiler), (function (parser, classDef) {
-		var onExpr;
-		var onFunction;
-		if (candidates.length === 0) {
-			return false;
-		}
-		function onExpr(expr) {
-			var foundClassDefIndex;
-			if (! (expr != null)) {
-				debugger;
-				throw new Error("[/Users/gfx/repo/try-on-web/JSX/src/optimizer.jsx:1482:28] assertion failure\n                assert expr != null;\n                            ^^\n");
-			}
-			if (expr instanceof InstanceofExpression) {
-				foundClassDefIndex = candidates.indexOf(InstanceofExpression$getExpectedType$LInstanceofExpression$(expr).getClassDef$());
-				if (foundClassDefIndex !== - 1) {
-					candidates.splice(foundClassDefIndex, 1);
-					if (candidates.length === 0) {
-						return false;
-					}
-				}
-			} else if (expr instanceof AsExpression && expr.getType$() instanceof ObjectType) {
-				foundClassDefIndex = candidates.indexOf(expr.getType$().getClassDef$());
-				if (foundClassDefIndex !== - 1) {
-					candidates.splice(foundClassDefIndex, 1);
-					if (candidates.length === 0) {
-						return false;
-					}
-				}
-			}
-			return Expression$forEachExpression$LExpression$F$LExpression$B$(expr, onExpr);
-		}
-		function onFunction(funcDef) {
-			MemberFunctionDefinition$forEachStatement$LMemberFunctionDefinition$F$LStatement$B$(funcDef, (function onStatement(statement) {
-				Statement$forEachExpression$LStatement$F$LExpression$B$(statement, onExpr);
-				return statement.forEachStatement$F$LStatement$B$(onStatement);
-			}));
-			return MemberDefinition$forEachClosure$LMemberDefinition$F$LMemberFunctionDefinition$B$(funcDef, onFunction);
-		}
-		ClassDefinition$forEachMemberFunction$LClassDefinition$F$LMemberFunctionDefinition$B$(classDef, onFunction);
-		ClassDefinition$forEachMemberVariable$LClassDefinition$F$LMemberVariableDefinition$B$(classDef, (function (varDef) {
-			if ((MemberDefinition$flags$LMemberDefinition$(varDef) & ClassDefinition.IS_STATIC) !== 0) {
-				if (MemberVariableDefinition$getInitialValue$LMemberVariableDefinition$(varDef) != null) {
-					onExpr(MemberVariableDefinition$getInitialValue$LMemberVariableDefinition$(varDef));
-				}
-			}
-			return MemberDefinition$forEachClosure$LMemberDefinition$F$LMemberFunctionDefinition$B$(varDef, onFunction);
-		}));
-		return true;
-	}));
-	for (candidateIndex = candidates.length - 1; candidateIndex >= 0; --candidateIndex) {
-		hasInlineableCtor = false;
-		ClassDefinition$forEachMemberFunction$LClassDefinition$F$LMemberFunctionDefinition$B$(candidates[candidateIndex], (function (funcDef) {
-			var inliner;
-			var message$0;
-			var this$0$0;
-			var message$0$0;
-			var this$0$1;
-			if ((funcDef._flags & 8) === 0 && (this$0$1 = funcDef._nameToken, this$0$1._value) === "constructor") {
-				inliner = _UnclassifyOptimizationCommand$_createInliner$L_UnclassifyOptimizationCommand$LMemberFunctionDefinition$($this, funcDef);
-				message$0 = funcDef.getNotation$() + " is" + (inliner ? "" : " not") + " inlineable";
-				this$0$0 = $this._optimizer;
-				message$0$0 = "[" + $this._identifier + "] " + message$0;
-				this$0$0._log += message$0$0 + "\n";
-				if (inliner) {
-					_OptimizeCommand$getStash$L_OptimizeCommand$LStashable$($this, funcDef).inliner = inliner;
-					hasInlineableCtor = true;
-				}
-			}
-			return true;
-		}));
-		if (! hasInlineableCtor) {
-			candidates.splice(candidateIndex, 1);
-		}
-	}
-	return (candidates.length === 0 ? candidates : candidates);
-};
-
-
-function _UnclassifyOptimizationCommand$_getClassesToUnclassify$L_UnclassifyOptimizationCommand$($this) {
-	var candidates;
-	var candidateIndex;
-	var hasInlineableCtor;
-	var this$0$0;
-	var this$0$1;
-	candidates = [];
-	Compiler$forEachClassDef$LCompiler$F$LParser$LClassDefinition$B$((this$0$0 = $this._optimizer, this$0$0._compiler), (function (parser, classDef) {
-		var this$0;
-		if ((classDef.flags$() & 16404) === 4 && (this$0 = classDef._extendType, this$0._classDef).className$() === "Object" && classDef._implementTypes.length === 0 && ClassDefinition$forEachMemberFunction$LClassDefinition$F$LMemberFunctionDefinition$B$(classDef, (function (funcDef) {
-			return (MemberDefinition$flags$LMemberDefinition$(funcDef) & (ClassDefinition.IS_OVERRIDE | ClassDefinition.IS_EXPORT)) === 0;
-		}))) {
-			candidates.push(classDef);
-		}
-		return true;
-	}));
-	Compiler$forEachClassDef$LCompiler$F$LParser$LClassDefinition$B$((this$0$1 = $this._optimizer, this$0$1._compiler), (function (parser, classDef) {
-		var onExpr;
-		var onFunction;
-		if (candidates.length === 0) {
-			return false;
-		}
-		function onExpr(expr) {
-			var foundClassDefIndex;
-			if (! (expr != null)) {
-				debugger;
-				throw new Error("[/Users/gfx/repo/try-on-web/JSX/src/optimizer.jsx:1482:28] assertion failure\n                assert expr != null;\n                            ^^\n");
-			}
-			if (expr instanceof InstanceofExpression) {
-				foundClassDefIndex = candidates.indexOf(InstanceofExpression$getExpectedType$LInstanceofExpression$(expr).getClassDef$());
-				if (foundClassDefIndex !== - 1) {
-					candidates.splice(foundClassDefIndex, 1);
-					if (candidates.length === 0) {
-						return false;
-					}
-				}
-			} else if (expr instanceof AsExpression && expr.getType$() instanceof ObjectType) {
-				foundClassDefIndex = candidates.indexOf(expr.getType$().getClassDef$());
-				if (foundClassDefIndex !== - 1) {
-					candidates.splice(foundClassDefIndex, 1);
-					if (candidates.length === 0) {
-						return false;
-					}
-				}
-			}
-			return Expression$forEachExpression$LExpression$F$LExpression$B$(expr, onExpr);
-		}
-		function onFunction(funcDef) {
-			MemberFunctionDefinition$forEachStatement$LMemberFunctionDefinition$F$LStatement$B$(funcDef, (function onStatement(statement) {
-				Statement$forEachExpression$LStatement$F$LExpression$B$(statement, onExpr);
-				return statement.forEachStatement$F$LStatement$B$(onStatement);
-			}));
-			return MemberDefinition$forEachClosure$LMemberDefinition$F$LMemberFunctionDefinition$B$(funcDef, onFunction);
-		}
-		ClassDefinition$forEachMemberFunction$LClassDefinition$F$LMemberFunctionDefinition$B$(classDef, onFunction);
-		ClassDefinition$forEachMemberVariable$LClassDefinition$F$LMemberVariableDefinition$B$(classDef, (function (varDef) {
-			if ((MemberDefinition$flags$LMemberDefinition$(varDef) & ClassDefinition.IS_STATIC) !== 0) {
-				if (MemberVariableDefinition$getInitialValue$LMemberVariableDefinition$(varDef) != null) {
-					onExpr(MemberVariableDefinition$getInitialValue$LMemberVariableDefinition$(varDef));
-				}
-			}
-			return MemberDefinition$forEachClosure$LMemberDefinition$F$LMemberFunctionDefinition$B$(varDef, onFunction);
-		}));
-		return true;
-	}));
-	for (candidateIndex = candidates.length - 1; candidateIndex >= 0; --candidateIndex) {
-		hasInlineableCtor = false;
-		ClassDefinition$forEachMemberFunction$LClassDefinition$F$LMemberFunctionDefinition$B$(candidates[candidateIndex], (function (funcDef) {
-			var inliner;
-			var message$0;
-			var this$0$0;
-			var message$0$0;
-			var this$0$1;
-			if ((funcDef._flags & 8) === 0 && (this$0$1 = funcDef._nameToken, this$0$1._value) === "constructor") {
-				inliner = _UnclassifyOptimizationCommand$_createInliner$L_UnclassifyOptimizationCommand$LMemberFunctionDefinition$($this, funcDef);
-				message$0 = funcDef.getNotation$() + " is" + (inliner ? "" : " not") + " inlineable";
-				this$0$0 = $this._optimizer;
-				message$0$0 = "[" + $this._identifier + "] " + message$0;
-				this$0$0._log += message$0$0 + "\n";
-				if (inliner) {
-					_OptimizeCommand$getStash$L_OptimizeCommand$LStashable$($this, funcDef).inliner = inliner;
-					hasInlineableCtor = true;
-				}
-			}
-			return true;
-		}));
-		if (! hasInlineableCtor) {
-			candidates.splice(candidateIndex, 1);
-		}
-	}
-	return (candidates.length === 0 ? candidates : candidates);
-};
-
-_UnclassifyOptimizationCommand._getClassesToUnclassify$L_UnclassifyOptimizationCommand$ = _UnclassifyOptimizationCommand$_getClassesToUnclassify$L_UnclassifyOptimizationCommand$;
-
-_UnclassifyOptimizationCommand.prototype._createInliner$LMemberFunctionDefinition$ = function (funcDef) {
-	var $this = this;
-	var propertyNames;
-	var propertyExprs;
-	var expectedArgIndex;
-	var statements;
-	var statementIndex;
-	var statementExpr;
-	var lhsExpr;
-	var onRHSExpr;
-	var propertyIndex;
-	var i;
-	var this$0;
-	var this$1;
-	var this$2;
-	var this$3;
-	var this$4;
-	var this$5;
-	var this$6;
-	var this$7;
-	var this$8;
-	var propertyNames$len$0;
-	if (funcDef._locals.length !== 0) {
-		return null;
-	}
-	propertyNames = [];
-	ClassDefinition$forEachMemberVariable$LClassDefinition$F$LMemberVariableDefinition$B$(funcDef._classDef, (function (member) {
-		var this$0$0;
-		if ((member._flags & 8) === 0) {
-			propertyNames.push((this$0$0 = member._nameToken, this$0$0._value));
-		}
-		return true;
-	}));
-	propertyExprs = [];
-	expectedArgIndex = 0;
-	statements = funcDef._statements;
-	if (statements.length !== propertyNames.length) {
-		return null;
-	}
-	for (statementIndex = 0; statementIndex < statements.length; ++statementIndex) {
-		if (! (statements[statementIndex] instanceof ExpressionStatement)) {
-			return null;
-		}
-		this$0 = statements[statementIndex];
-		statementExpr = this$0._expr;
-		if (! (statementExpr instanceof AssignmentExpression)) {
-			return null;
-		}
-		this$1 = statementExpr;
-		lhsExpr = this$1._expr1;
-		if (! (lhsExpr instanceof PropertyExpression && (this$2 = lhsExpr, this$2._expr) instanceof ThisExpression)) {
-			return null;
-		}
-		function onRHSExpr(expr) {
-			var argIndex;
-			var this$0;
-			var this$1;
-			var this$2;
-			var this$3;
-			if (expr instanceof AssignmentExpression || expr instanceof FusedAssignmentExpression || expr instanceof PreIncrementExpression || expr instanceof PostIncrementExpression) {
-				return false;
-			} else if (expr instanceof FunctionExpression) {
-				return false;
-			} else if (expr instanceof ThisExpression) {
-				return false;
-			} else if (expr instanceof LocalExpression) {
-				argIndex = funcDef._args.map((function (i) {
-					return i;
-				})).indexOf((this$0 = expr, this$0._local));
-				if (argIndex === -1) {
-					throw new Error("logic flaw; could not find argument: " + (this$3 = (this$2 = (this$1 = expr, this$1._local), this$2._name), this$3._value));
-				}
-				if (expectedArgIndex !== argIndex) {
-					return false;
-				}
-				++expectedArgIndex;
-			}
-			return Expression$forEachExpression$LExpression$F$LExpression$B$(expr, onRHSExpr);
-		}
-		if (! onRHSExpr((this$3 = statementExpr, this$3._expr2))) {
-			return null;
-		}
-		propertyIndex = propertyNames.indexOf((this$5 = (this$4 = lhsExpr, this$4._identifierToken), this$5._value));
-		if (propertyIndex === -1) {
-			throw new Error("logic flaw; could not find property: " + (this$7 = (this$6 = lhsExpr, this$6._identifierToken), this$7._value));
-		}
-		if (propertyExprs[propertyIndex]) {
-			return null;
-		}
-		for ((i = propertyIndex + 1, propertyNames$len$0 = propertyNames.length); i < propertyNames$len$0; ++i) {
-			if (propertyExprs[i] != null && _Util$exprHasSideEffects$LExpression$(propertyExprs[i])) {
-				return null;
-			}
-		}
-		propertyExprs[propertyIndex] = (this$8 = statementExpr, this$8._expr2).clone$();
-	}
-	return (function (newExpr) {
-		return propertyExprs.map((function (expr) {
-			var onExpr;
-			function onExpr(expr, replaceCb) {
-				var args;
-				var argIndex;
-				var i;
-				if (expr instanceof LocalExpression) {
-					(args = MemberFunctionDefinition$getArguments$LMemberFunctionDefinition$(funcDef), argIndex = - 1);
-					for (i in args) { i |= 0;
-						if (args[i] == LocalExpression$getLocal$LLocalExpression$(expr)) {
-							argIndex = i;
-							break;
-						}
-					}
-					if (argIndex === - 1) {
-						throw new Error("logic flaw");
-					}
-					replaceCb(NewExpression$getArguments$LNewExpression$(newExpr)[argIndex]);
-					return true;
-				}
-				return expr.forEachExpression$F$LExpression$F$LExpression$V$B$(onExpr);
-			}
-			expr = expr.clone$();
-			onExpr(expr, (function (newExpr) {
-				expr = newExpr;
-			}));
-			return expr;
-		}));
-	});
-};
-
-
-function _UnclassifyOptimizationCommand$_createInliner$L_UnclassifyOptimizationCommand$LMemberFunctionDefinition$($this, funcDef) {
-	var propertyNames;
-	var propertyExprs;
-	var expectedArgIndex;
-	var statements;
-	var statementIndex;
-	var statementExpr;
-	var lhsExpr;
-	var onRHSExpr;
-	var propertyIndex;
-	var i;
-	var this$0;
-	var this$1;
-	var this$2;
-	var this$3;
-	var this$4;
-	var this$5;
-	var this$6;
-	var this$7;
-	var this$8;
-	var propertyNames$len$0;
-	if (funcDef._locals.length !== 0) {
-		return null;
-	}
-	propertyNames = [];
-	ClassDefinition$forEachMemberVariable$LClassDefinition$F$LMemberVariableDefinition$B$(funcDef._classDef, (function (member) {
-		var this$0$0;
-		if ((member._flags & 8) === 0) {
-			propertyNames.push((this$0$0 = member._nameToken, this$0$0._value));
-		}
-		return true;
-	}));
-	propertyExprs = [];
-	expectedArgIndex = 0;
-	statements = funcDef._statements;
-	if (statements.length !== propertyNames.length) {
-		return null;
-	}
-	for (statementIndex = 0; statementIndex < statements.length; ++statementIndex) {
-		if (! (statements[statementIndex] instanceof ExpressionStatement)) {
-			return null;
-		}
-		this$0 = statements[statementIndex];
-		statementExpr = this$0._expr;
-		if (! (statementExpr instanceof AssignmentExpression)) {
-			return null;
-		}
-		this$1 = statementExpr;
-		lhsExpr = this$1._expr1;
-		if (! (lhsExpr instanceof PropertyExpression && (this$2 = lhsExpr, this$2._expr) instanceof ThisExpression)) {
-			return null;
-		}
-		function onRHSExpr(expr) {
-			var argIndex;
-			var this$0;
-			var this$1;
-			var this$2;
-			var this$3;
-			if (expr instanceof AssignmentExpression || expr instanceof FusedAssignmentExpression || expr instanceof PreIncrementExpression || expr instanceof PostIncrementExpression) {
-				return false;
-			} else if (expr instanceof FunctionExpression) {
-				return false;
-			} else if (expr instanceof ThisExpression) {
-				return false;
-			} else if (expr instanceof LocalExpression) {
-				argIndex = funcDef._args.map((function (i) {
-					return i;
-				})).indexOf((this$0 = expr, this$0._local));
-				if (argIndex === -1) {
-					throw new Error("logic flaw; could not find argument: " + (this$3 = (this$2 = (this$1 = expr, this$1._local), this$2._name), this$3._value));
-				}
-				if (expectedArgIndex !== argIndex) {
-					return false;
-				}
-				++expectedArgIndex;
-			}
-			return Expression$forEachExpression$LExpression$F$LExpression$B$(expr, onRHSExpr);
-		}
-		if (! onRHSExpr((this$3 = statementExpr, this$3._expr2))) {
-			return null;
-		}
-		propertyIndex = propertyNames.indexOf((this$5 = (this$4 = lhsExpr, this$4._identifierToken), this$5._value));
-		if (propertyIndex === -1) {
-			throw new Error("logic flaw; could not find property: " + (this$7 = (this$6 = lhsExpr, this$6._identifierToken), this$7._value));
-		}
-		if (propertyExprs[propertyIndex]) {
-			return null;
-		}
-		for ((i = propertyIndex + 1, propertyNames$len$0 = propertyNames.length); i < propertyNames$len$0; ++i) {
-			if (propertyExprs[i] != null && _Util$exprHasSideEffects$LExpression$(propertyExprs[i])) {
-				return null;
-			}
-		}
-		propertyExprs[propertyIndex] = (this$8 = statementExpr, this$8._expr2).clone$();
-	}
-	return (function (newExpr) {
-		return propertyExprs.map((function (expr) {
-			var onExpr;
-			function onExpr(expr, replaceCb) {
-				var args;
-				var argIndex;
-				var i;
-				if (expr instanceof LocalExpression) {
-					(args = MemberFunctionDefinition$getArguments$LMemberFunctionDefinition$(funcDef), argIndex = - 1);
-					for (i in args) { i |= 0;
-						if (args[i] == LocalExpression$getLocal$LLocalExpression$(expr)) {
-							argIndex = i;
-							break;
-						}
-					}
-					if (argIndex === - 1) {
-						throw new Error("logic flaw");
-					}
-					replaceCb(NewExpression$getArguments$LNewExpression$(newExpr)[argIndex]);
-					return true;
-				}
-				return expr.forEachExpression$F$LExpression$F$LExpression$V$B$(onExpr);
-			}
-			expr = expr.clone$();
-			onExpr(expr, (function (newExpr) {
-				expr = newExpr;
-			}));
-			return expr;
-		}));
-	});
-};
-
-_UnclassifyOptimizationCommand._createInliner$L_UnclassifyOptimizationCommand$LMemberFunctionDefinition$ = _UnclassifyOptimizationCommand$_createInliner$L_UnclassifyOptimizationCommand$LMemberFunctionDefinition$;
-
-_UnclassifyOptimizationCommand.prototype._rewriteFunctionAsStatic$LMemberFunctionDefinition$ = function (funcDef) {
-	var $this = this;
-	var thisArg;
-	thisArg = new ArgumentDeclaration(new Token$2("$this", false), new ObjectType(funcDef._classDef));
-	funcDef._args.unshift(thisArg);
-	Util$forEachStatement$F$LStatement$B$ALStatement$((function onStatement(statement) {
-		var this$0;
-		var this$1;
-		if (statement instanceof FunctionStatement) {
-			this$1 = statement;
-			this$0 = this$1._funcDef;
-			Util$forEachStatement$F$LStatement$B$ALStatement$(onStatement, this$0._statements);
-		}
-		return statement.forEachExpression$F$LExpression$F$LExpression$V$B$((function onExpr(expr, replaceCb) {
-			if (expr instanceof ThisExpression) {
-				replaceCb(new LocalExpression(LocalVariable$getName$LLocalVariable$(thisArg), thisArg));
-			} else if (expr instanceof FunctionExpression) {
-				return MemberFunctionDefinition$forEachStatement$LMemberFunctionDefinition$F$LStatement$B$(FunctionExpression$getFuncDef$LFunctionExpression$(expr), onStatement);
-			}
-			return expr.forEachExpression$F$LExpression$F$LExpression$V$B$(onExpr);
-		})) && statement.forEachStatement$F$LStatement$B$(onStatement);
-	}), funcDef._statements);
-	MemberDefinition$setFlags$LMemberDefinition$N(funcDef, funcDef._flags | 8);
-};
-
-
-function _UnclassifyOptimizationCommand$_rewriteFunctionAsStatic$L_UnclassifyOptimizationCommand$LMemberFunctionDefinition$($this, funcDef) {
-	var thisArg;
-	thisArg = new ArgumentDeclaration(new Token$2("$this", false), new ObjectType(funcDef._classDef));
-	funcDef._args.unshift(thisArg);
-	Util$forEachStatement$F$LStatement$B$ALStatement$((function onStatement(statement) {
-		var this$0;
-		var this$1;
-		if (statement instanceof FunctionStatement) {
-			this$1 = statement;
-			this$0 = this$1._funcDef;
-			Util$forEachStatement$F$LStatement$B$ALStatement$(onStatement, this$0._statements);
-		}
-		return statement.forEachExpression$F$LExpression$F$LExpression$V$B$((function onExpr(expr, replaceCb) {
-			if (expr instanceof ThisExpression) {
-				replaceCb(new LocalExpression(LocalVariable$getName$LLocalVariable$(thisArg), thisArg));
-			} else if (expr instanceof FunctionExpression) {
-				return MemberFunctionDefinition$forEachStatement$LMemberFunctionDefinition$F$LStatement$B$(FunctionExpression$getFuncDef$LFunctionExpression$(expr), onStatement);
-			}
-			return expr.forEachExpression$F$LExpression$F$LExpression$V$B$(onExpr);
-		})) && statement.forEachStatement$F$LStatement$B$(onStatement);
-	}), funcDef._statements);
-	MemberDefinition$setFlags$LMemberDefinition$N(funcDef, funcDef._flags | 8);
-};
-
-_UnclassifyOptimizationCommand._rewriteFunctionAsStatic$L_UnclassifyOptimizationCommand$LMemberFunctionDefinition$ = _UnclassifyOptimizationCommand$_rewriteFunctionAsStatic$L_UnclassifyOptimizationCommand$LMemberFunctionDefinition$;
-
-_UnclassifyOptimizationCommand.prototype._rewriteMethodCallsToStatic$LExpression$F$LExpression$V$ALClassDefinition$ = function (expr, replaceCb, unclassifyingClassDefs) {
-	var $this = this;
-	var onExpr;
-	onExpr = (function (expr, replaceCb) {
-		var calleeExpr;
-		var propertyExpr;
-		var receiverType;
-		var receiverClassDef;
-		var funcType;
-		var this$0;
-		var this$1;
-		var this$0$0;
-		var this$2;
-		var this$3;
-		var this$4;
-		var this$5;
-		var this$6;
-		var this$7;
-		var this$8;
-		var this$9;
-		var this$10;
-		if (expr instanceof CallExpression) {
-			this$0 = expr;
-			calleeExpr = this$0._expr;
-			if (calleeExpr instanceof PropertyExpression && ! (this$6 = calleeExpr, this$6._expr).isClassSpecifier$() && ! (this$7 = calleeExpr, this$7._type).isAssignable$() && ! ((this$9 = (this$8 = calleeExpr, this$8._identifierToken), this$9._value) === "toString" && (this$10 = expr, this$10._args).length === 0)) {
-				propertyExpr = calleeExpr;
-				this$1 = propertyExpr._expr.getType$();
-				receiverType = (this$1 instanceof NullableType ? (this$0$0 = this$1, this$0$0._baseType) : this$1);
-				receiverClassDef = receiverType.getClassDef$();
-				if (unclassifyingClassDefs.indexOf(receiverClassDef) !== -1) {
-					onExpr(propertyExpr._expr, (function (expr) {
-						UnaryExpression$setExpr$LUnaryExpression$LExpression$(propertyExpr, expr);
-					}));
-					Util$forEachExpression$F$LExpression$F$LExpression$V$B$ALExpression$(onExpr, (this$2 = expr, this$2._args));
-					funcType = propertyExpr._type;
-					replaceCb(new CallExpression(expr._token, new PropertyExpression$0(propertyExpr._token, new ClassExpression(new Token$2(receiverClassDef.className$(), true), receiverType), propertyExpr._identifierToken, propertyExpr._typeArgs, new StaticFunctionType(null, (this$3 = funcType, this$3._returnType), [ receiverType ].concat((this$4 = funcType, this$4._argTypes)), false)), [ propertyExpr._expr ].concat((this$5 = expr, this$5._args))));
-					return true;
-				}
-			}
-		}
-		return expr.forEachExpression$F$LExpression$F$LExpression$V$B$(onExpr);
-	});
-	onExpr(expr, replaceCb);
-};
-
-
-function _UnclassifyOptimizationCommand$_rewriteMethodCallsToStatic$L_UnclassifyOptimizationCommand$LExpression$F$LExpression$V$ALClassDefinition$($this, expr, replaceCb, unclassifyingClassDefs) {
-	var onExpr;
-	onExpr = (function (expr, replaceCb) {
-		var calleeExpr;
-		var propertyExpr;
-		var receiverType;
-		var receiverClassDef;
-		var funcType;
-		var this$0;
-		var this$1;
-		var this$0$0;
-		var this$2;
-		var this$3;
-		var this$4;
-		var this$5;
-		var this$6;
-		var this$7;
-		var this$8;
-		var this$9;
-		var this$10;
-		if (expr instanceof CallExpression) {
-			this$0 = expr;
-			calleeExpr = this$0._expr;
-			if (calleeExpr instanceof PropertyExpression && ! (this$6 = calleeExpr, this$6._expr).isClassSpecifier$() && ! (this$7 = calleeExpr, this$7._type).isAssignable$() && ! ((this$9 = (this$8 = calleeExpr, this$8._identifierToken), this$9._value) === "toString" && (this$10 = expr, this$10._args).length === 0)) {
-				propertyExpr = calleeExpr;
-				this$1 = propertyExpr._expr.getType$();
-				receiverType = (this$1 instanceof NullableType ? (this$0$0 = this$1, this$0$0._baseType) : this$1);
-				receiverClassDef = receiverType.getClassDef$();
-				if (unclassifyingClassDefs.indexOf(receiverClassDef) !== -1) {
-					onExpr(propertyExpr._expr, (function (expr) {
-						UnaryExpression$setExpr$LUnaryExpression$LExpression$(propertyExpr, expr);
-					}));
-					Util$forEachExpression$F$LExpression$F$LExpression$V$B$ALExpression$(onExpr, (this$2 = expr, this$2._args));
-					funcType = propertyExpr._type;
-					replaceCb(new CallExpression(expr._token, new PropertyExpression$0(propertyExpr._token, new ClassExpression(new Token$2(receiverClassDef.className$(), true), receiverType), propertyExpr._identifierToken, propertyExpr._typeArgs, new StaticFunctionType(null, (this$3 = funcType, this$3._returnType), [ receiverType ].concat((this$4 = funcType, this$4._argTypes)), false)), [ propertyExpr._expr ].concat((this$5 = expr, this$5._args))));
-					return true;
-				}
-			}
-		}
-		return expr.forEachExpression$F$LExpression$F$LExpression$V$B$(onExpr);
-	});
-	onExpr(expr, replaceCb);
-};
-
-_UnclassifyOptimizationCommand._rewriteMethodCallsToStatic$L_UnclassifyOptimizationCommand$LExpression$F$LExpression$V$ALClassDefinition$ = _UnclassifyOptimizationCommand$_rewriteMethodCallsToStatic$L_UnclassifyOptimizationCommand$LExpression$F$LExpression$V$ALClassDefinition$;
-
-function _FoldConstantCommand() {
-	this._identifier = "fold-const";
-	this._optimizer = null;
-	this._excludeNative = false;
-};
-
-$__jsx_extend([_FoldConstantCommand], _FunctionOptimizeCommand);
-_FoldConstantCommand.prototype._createStash$ = function () {
-	return new _FoldConstantCommand$x2EStash();
-};
-
-
-_FoldConstantCommand.prototype.optimizeFunction$LMemberFunctionDefinition$ = function (funcDef) {
-	var $this = this;
-	Util$forEachStatement$F$LStatement$B$ALStatement$((function onStatement(statement) {
-		statement.forEachStatement$F$LStatement$B$(onStatement);
-		statement.forEachExpression$F$LExpression$F$LExpression$V$B$((function (expr, replaceCb) {
-			return _FoldConstantCommand$_optimizeExpression$L_FoldConstantCommand$LExpression$F$LExpression$V$($this, expr, replaceCb);
-		}));
-		return true;
-	}), funcDef._statements);
-	return true;
-};
-
-
-_FoldConstantCommand.prototype._optimizeExpression$LExpression$F$LExpression$V$ = function (expr, replaceCb) {
-	var $this = this;
-	var propertyExpr;
-	var holderType;
-	var member;
-	var foldedExpr;
-	var calculateCb;
-	var baseExpr;
-	var firstExpr;
-	var secondExpr;
-	var innerExpr;
-	var condition;
-	var op;
-	var conditionalExpr;
-	var condExpr;
-	var ifTrueExpr;
-	var ifFalseExpr;
-	var callExpr;
-	var allArgsAreConstants;
-	var type$0;
-	var message$0;
-	var this$0$0;
-	var message$0$0;
-	var this$0;
-	var this$1;
-	var message$1;
-	var this$0$1;
-	var message$0$1;
-	var this$0$2;
-	var this$0$0$0;
-	var message$2;
-	var this$0$3;
-	var message$0$2;
-	var this$0$4;
-	var this$0$0$1;
-	var this$2;
-	var message$3;
-	var this$0$5;
-	var message$0$3;
-	var this$0$6;
-	var this$0$0$2;
-	var this$3;
-	var this$4;
-	var this$5;
-	var this$6;
-	var this$7;
-	var this$8;
-	var this$9;
-	var this$11;
-	var this$12;
-	var this$13;
-	var this$14;
-	var _token$0;
-	expr.forEachExpression$F$LExpression$F$LExpression$V$B$((function (expr, replaceCb) {
-		return _FoldConstantCommand$_optimizeExpression$L_FoldConstantCommand$LExpression$F$LExpression$V$($this, expr, replaceCb);
-	}));
-	if (expr instanceof PropertyExpression) {
-		propertyExpr = expr;
-		type$0 = propertyExpr._expr.getType$();
-		if (type$0 instanceof PrimitiveType) {
-			type$0 = new ObjectType(type$0.getClassDef$());
-		}
-		holderType = type$0;
-		if (propertyExpr._expr.isClassSpecifier$()) {
-			member = null;
-			ClassDefinition$forEachMemberVariable$LClassDefinition$F$LMemberVariableDefinition$B$(holderType.getClassDef$(), (function (m) {
-				var this$0$0;
-				var this$0;
-				if ((this$0$0 = m._nameToken, this$0$0._value) === (this$0 = propertyExpr._identifierToken, this$0._value)) {
-					member = m;
-				}
-				return member == null;
-			}));
-			if (member != null && (member._flags & 1) !== 0) {
-				_FoldConstantCommand$_foldStaticConst$L_FoldConstantCommand$LMemberVariableDefinition$(this, member);
-				foldedExpr = _FoldConstantCommand$_toFoldedExpr$L_FoldConstantCommand$LExpression$LType$(this, member._initialValue, member.getType$());
-				if (foldedExpr != null) {
-					foldedExpr = _FoldConstantCommand$_toFoldedExpr$L_FoldConstantCommand$LExpression$LType$(this, foldedExpr, propertyExpr._type);
-					if (foldedExpr != null && ! (foldedExpr instanceof StringLiteralExpression && foldedExpr.getDecoded$().length > 64)) {
-						message$0 = "folding property " + member.getNotation$() + " at " + (this$9 = _token$0 = propertyExpr._token, this$9._filename) + ":" + ((_token$0, _token$0._lineNumber) + "");
-						this$0$0 = this._optimizer;
-						message$0$0 = "[" + this._identifier + "] " + message$0;
-						this$0$0._log += message$0$0 + "\n";
-						replaceCb(foldedExpr);
-					}
-				}
-			}
-		} else if (propertyExpr._expr instanceof StringLiteralExpression) {
-			if ((this$11 = propertyExpr._identifierToken, this$11._value) === "length") {
-				replaceCb(new NumberLiteralExpression(new Token$3(propertyExpr._expr.getDecoded$().length + "")));
-			}
-		}
-	} else if (expr instanceof SignExpression) {
-		switch ((this$0 = expr._token, this$0._value)) {
-		case "+":
-			calculateCb = (function (x) {
-				return + x;
-			});
-			break;
-		case "-":
-			calculateCb = (function (x) {
-				return - x;
-			});
-			break;
-		default:
-			return false;
-		}
-		this$1 = expr;
-		baseExpr = this$1._expr;
-		if (baseExpr instanceof IntegerLiteralExpression) {
-			message$1 = "folding operator (number) " + (this$12 = expr._token, "'" + this$12._value + "'" + " at " + (this$12._filename || "<<unknown>>") + ":" + (this$12._lineNumber + "") + ":" + (this$12._columnNumber + ""));
-			this$0$1 = this._optimizer;
-			message$0$1 = "[" + this._identifier + "] " + message$1;
-			this$0$1._log += message$0$1 + "\n";
-			replaceCb(new IntegerLiteralExpression(new Token$3(calculateCb((baseExpr instanceof NumberLiteralExpression ? baseExpr.getDecoded$() : (this$0$2 = baseExpr, (this$0$0$0 = this$0$2._token, this$0$0$0._value) | 0))) + "")));
-		} else if (baseExpr instanceof NumberLiteralExpression) {
-			message$2 = "folding operator (number) " + (this$13 = expr._token, "'" + this$13._value + "'" + " at " + (this$13._filename || "<<unknown>>") + ":" + (this$13._lineNumber + "") + ":" + (this$13._columnNumber + ""));
-			this$0$3 = this._optimizer;
-			message$0$2 = "[" + this._identifier + "] " + message$2;
-			this$0$3._log += message$0$2 + "\n";
-			replaceCb(new NumberLiteralExpression(new Token$3(calculateCb((baseExpr instanceof NumberLiteralExpression ? baseExpr.getDecoded$() : (this$0$4 = baseExpr, (this$0$0$1 = this$0$4._token, this$0$0$1._value) | 0))) + "")));
-		}
-	} else if (expr instanceof BitwiseNotExpression) {
-		this$2 = expr;
-		baseExpr = this$2._expr;
-		if (baseExpr instanceof NumberLiteralExpression || baseExpr instanceof IntegerLiteralExpression) {
-			message$3 = "folding operator " + (this$14 = expr._token, "'" + this$14._value + "'" + " at " + (this$14._filename || "<<unknown>>") + ":" + (this$14._lineNumber + "") + ":" + (this$14._columnNumber + ""));
-			this$0$5 = this._optimizer;
-			message$0$3 = "[" + this._identifier + "] " + message$3;
-			this$0$5._log += message$0$3 + "\n";
-			replaceCb(new IntegerLiteralExpression(new Token$3(~ (baseExpr instanceof NumberLiteralExpression ? baseExpr.getDecoded$() : (this$0$6 = baseExpr, (this$0$0$2 = this$0$6._token, this$0$0$2._value) | 0)) + "")));
-		}
-	} else if (expr instanceof AdditiveExpression) {
-		this$3 = expr;
-		firstExpr = this$3._expr1;
-		this$4 = expr;
-		secondExpr = this$4._expr2;
-		if (_FoldConstantCommand$_foldNumericBinaryExpression$L_FoldConstantCommand$LBinaryExpression$F$LExpression$V$(this, expr, replaceCb)) {
-		} else if (firstExpr instanceof StringLiteralExpression && secondExpr instanceof StringLiteralExpression) {
-			replaceCb(new StringLiteralExpression(new Token$2(Util$encodeStringLiteral$S(firstExpr.getDecoded$() + secondExpr.getDecoded$()), false)));
-		}
-	} else if (expr instanceof EqualityExpression) {
-		_FoldConstantCommand$_foldEqualityExpression$L_FoldConstantCommand$LEqualityExpression$F$LExpression$V$(this, expr, replaceCb);
-	} else if (expr instanceof BinaryNumberExpression || expr instanceof ShiftExpression) {
-		_FoldConstantCommand$_foldNumericBinaryExpression$L_FoldConstantCommand$LBinaryExpression$F$LExpression$V$(this, expr, replaceCb);
-	} else if (expr instanceof AsExpression) {
-		_FoldConstantCommand$_foldAsExpression$L_FoldConstantCommand$LAsExpression$F$LExpression$V$(this, expr, replaceCb);
-	} else if (expr instanceof LogicalNotExpression) {
-		this$5 = expr;
-		innerExpr = this$5._expr;
-		if ((condition = _Util$conditionIsConstant$LExpression$(innerExpr)) != null) {
-			replaceCb(new BooleanLiteralExpression(new Token$2((condition ? "false" : "true"), false)));
-		}
-	} else if (expr instanceof LogicalExpression) {
-		this$6 = expr;
-		firstExpr = this$6._expr1;
-		this$7 = expr;
-		secondExpr = this$7._expr2;
-		if ((condition = _Util$conditionIsConstant$LExpression$(firstExpr)) != null) {
-			this$8 = expr._token;
-			op = this$8._value;
-			if (op === "||" && condition) {
-				replaceCb(new AsExpression(firstExpr._token, firstExpr, Type.booleanType));
-			} else if (op === "||" && ! condition) {
-				replaceCb(new AsExpression(secondExpr._token, secondExpr, Type.booleanType));
-			} else if (op === "&&" && condition) {
-				replaceCb(new AsExpression(secondExpr._token, secondExpr, Type.booleanType));
-			} else if (op === "&&" && ! condition) {
-				replaceCb(new AsExpression(firstExpr._token, firstExpr, Type.booleanType));
-			} else {
-				throw new Error("logic flaw");
-			}
-		}
-	} else if (expr instanceof ConditionalExpression) {
-		conditionalExpr = expr;
-		condExpr = conditionalExpr._condExpr;
-		if ((condition = _Util$conditionIsConstant$LExpression$(condExpr)) != null) {
-			ifTrueExpr = conditionalExpr._ifTrueExpr || condExpr;
-			ifFalseExpr = conditionalExpr._ifFalseExpr;
-			replaceCb(condition ? ifTrueExpr : ifFalseExpr);
-		}
-	} else if (expr instanceof CallExpression) {
-		callExpr = expr;
-		if (callExpr._expr instanceof PropertyExpression) {
-			allArgsAreConstants = true;
-			callExpr._args.forEach((function (expr) {
-				if (! (expr instanceof IntegerLiteralExpression || expr instanceof NumberLiteralExpression || expr instanceof BooleanLiteralExpression || expr instanceof StringLiteralExpression)) {
-					allArgsAreConstants = false;
-				}
-			}));
-			if (allArgsAreConstants) {
-				_FoldConstantCommand$_foldCallExpression$L_FoldConstantCommand$LCallExpression$F$LExpression$V$(this, callExpr, replaceCb);
-			}
-		}
-	}
-	return true;
-};
-
-
-function _FoldConstantCommand$_optimizeExpression$L_FoldConstantCommand$LExpression$F$LExpression$V$($this, expr, replaceCb) {
-	var propertyExpr;
-	var holderType;
-	var member;
-	var foldedExpr;
-	var calculateCb;
-	var baseExpr;
-	var firstExpr;
-	var secondExpr;
-	var innerExpr;
-	var condition;
-	var op;
-	var conditionalExpr;
-	var condExpr;
-	var ifTrueExpr;
-	var ifFalseExpr;
-	var callExpr;
-	var allArgsAreConstants;
-	var type$0;
-	var message$0;
-	var this$0$0;
-	var message$0$0;
-	var this$0;
-	var this$1;
-	var message$1;
-	var this$0$1;
-	var message$0$1;
-	var this$0$2;
-	var this$0$0$0;
-	var message$2;
-	var this$0$3;
-	var message$0$2;
-	var this$0$4;
-	var this$0$0$1;
-	var this$2;
-	var message$3;
-	var this$0$5;
-	var message$0$3;
-	var this$0$6;
-	var this$0$0$2;
-	var this$3;
-	var this$4;
-	var this$5;
-	var this$6;
-	var this$7;
-	var this$8;
-	var this$9;
-	var this$11;
-	var this$12;
-	var this$13;
-	var this$14;
-	var _token$0;
-	expr.forEachExpression$F$LExpression$F$LExpression$V$B$((function (expr, replaceCb) {
-		return _FoldConstantCommand$_optimizeExpression$L_FoldConstantCommand$LExpression$F$LExpression$V$($this, expr, replaceCb);
-	}));
-	if (expr instanceof PropertyExpression) {
-		propertyExpr = expr;
-		type$0 = propertyExpr._expr.getType$();
-		if (type$0 instanceof PrimitiveType) {
-			type$0 = new ObjectType(type$0.getClassDef$());
-		}
-		holderType = type$0;
-		if (propertyExpr._expr.isClassSpecifier$()) {
-			member = null;
-			ClassDefinition$forEachMemberVariable$LClassDefinition$F$LMemberVariableDefinition$B$(holderType.getClassDef$(), (function (m) {
-				var this$0$0;
-				var this$0;
-				if ((this$0$0 = m._nameToken, this$0$0._value) === (this$0 = propertyExpr._identifierToken, this$0._value)) {
-					member = m;
-				}
-				return member == null;
-			}));
-			if (member != null && (member._flags & 1) !== 0) {
-				_FoldConstantCommand$_foldStaticConst$L_FoldConstantCommand$LMemberVariableDefinition$($this, member);
-				foldedExpr = _FoldConstantCommand$_toFoldedExpr$L_FoldConstantCommand$LExpression$LType$($this, member._initialValue, member.getType$());
-				if (foldedExpr != null) {
-					foldedExpr = _FoldConstantCommand$_toFoldedExpr$L_FoldConstantCommand$LExpression$LType$($this, foldedExpr, propertyExpr._type);
-					if (foldedExpr != null && ! (foldedExpr instanceof StringLiteralExpression && foldedExpr.getDecoded$().length > 64)) {
-						message$0 = "folding property " + member.getNotation$() + " at " + (this$9 = _token$0 = propertyExpr._token, this$9._filename) + ":" + ((_token$0, _token$0._lineNumber) + "");
-						this$0$0 = $this._optimizer;
-						message$0$0 = "[" + $this._identifier + "] " + message$0;
-						this$0$0._log += message$0$0 + "\n";
-						replaceCb(foldedExpr);
-					}
-				}
-			}
-		} else if (propertyExpr._expr instanceof StringLiteralExpression) {
-			if ((this$11 = propertyExpr._identifierToken, this$11._value) === "length") {
-				replaceCb(new NumberLiteralExpression(new Token$3(propertyExpr._expr.getDecoded$().length + "")));
-			}
-		}
-	} else if (expr instanceof SignExpression) {
-		switch ((this$0 = expr._token, this$0._value)) {
-		case "+":
-			calculateCb = (function (x) {
-				return + x;
-			});
-			break;
-		case "-":
-			calculateCb = (function (x) {
-				return - x;
-			});
-			break;
-		default:
-			return false;
-		}
-		this$1 = expr;
-		baseExpr = this$1._expr;
-		if (baseExpr instanceof IntegerLiteralExpression) {
-			message$1 = "folding operator (number) " + (this$12 = expr._token, "'" + this$12._value + "'" + " at " + (this$12._filename || "<<unknown>>") + ":" + (this$12._lineNumber + "") + ":" + (this$12._columnNumber + ""));
-			this$0$1 = $this._optimizer;
-			message$0$1 = "[" + $this._identifier + "] " + message$1;
-			this$0$1._log += message$0$1 + "\n";
-			replaceCb(new IntegerLiteralExpression(new Token$3(calculateCb((baseExpr instanceof NumberLiteralExpression ? baseExpr.getDecoded$() : (this$0$2 = baseExpr, (this$0$0$0 = this$0$2._token, this$0$0$0._value) | 0))) + "")));
-		} else if (baseExpr instanceof NumberLiteralExpression) {
-			message$2 = "folding operator (number) " + (this$13 = expr._token, "'" + this$13._value + "'" + " at " + (this$13._filename || "<<unknown>>") + ":" + (this$13._lineNumber + "") + ":" + (this$13._columnNumber + ""));
-			this$0$3 = $this._optimizer;
-			message$0$2 = "[" + $this._identifier + "] " + message$2;
-			this$0$3._log += message$0$2 + "\n";
-			replaceCb(new NumberLiteralExpression(new Token$3(calculateCb((baseExpr instanceof NumberLiteralExpression ? baseExpr.getDecoded$() : (this$0$4 = baseExpr, (this$0$0$1 = this$0$4._token, this$0$0$1._value) | 0))) + "")));
-		}
-	} else if (expr instanceof BitwiseNotExpression) {
-		this$2 = expr;
-		baseExpr = this$2._expr;
-		if (baseExpr instanceof NumberLiteralExpression || baseExpr instanceof IntegerLiteralExpression) {
-			message$3 = "folding operator " + (this$14 = expr._token, "'" + this$14._value + "'" + " at " + (this$14._filename || "<<unknown>>") + ":" + (this$14._lineNumber + "") + ":" + (this$14._columnNumber + ""));
-			this$0$5 = $this._optimizer;
-			message$0$3 = "[" + $this._identifier + "] " + message$3;
-			this$0$5._log += message$0$3 + "\n";
-			replaceCb(new IntegerLiteralExpression(new Token$3(~ (baseExpr instanceof NumberLiteralExpression ? baseExpr.getDecoded$() : (this$0$6 = baseExpr, (this$0$0$2 = this$0$6._token, this$0$0$2._value) | 0)) + "")));
-		}
-	} else if (expr instanceof AdditiveExpression) {
-		this$3 = expr;
-		firstExpr = this$3._expr1;
-		this$4 = expr;
-		secondExpr = this$4._expr2;
-		if (_FoldConstantCommand$_foldNumericBinaryExpression$L_FoldConstantCommand$LBinaryExpression$F$LExpression$V$($this, expr, replaceCb)) {
-		} else if (firstExpr instanceof StringLiteralExpression && secondExpr instanceof StringLiteralExpression) {
-			replaceCb(new StringLiteralExpression(new Token$2(Util$encodeStringLiteral$S(firstExpr.getDecoded$() + secondExpr.getDecoded$()), false)));
-		}
-	} else if (expr instanceof EqualityExpression) {
-		_FoldConstantCommand$_foldEqualityExpression$L_FoldConstantCommand$LEqualityExpression$F$LExpression$V$($this, expr, replaceCb);
-	} else if (expr instanceof BinaryNumberExpression || expr instanceof ShiftExpression) {
-		_FoldConstantCommand$_foldNumericBinaryExpression$L_FoldConstantCommand$LBinaryExpression$F$LExpression$V$($this, expr, replaceCb);
-	} else if (expr instanceof AsExpression) {
-		_FoldConstantCommand$_foldAsExpression$L_FoldConstantCommand$LAsExpression$F$LExpression$V$($this, expr, replaceCb);
-	} else if (expr instanceof LogicalNotExpression) {
-		this$5 = expr;
-		innerExpr = this$5._expr;
-		if ((condition = _Util$conditionIsConstant$LExpression$(innerExpr)) != null) {
-			replaceCb(new BooleanLiteralExpression(new Token$2((condition ? "false" : "true"), false)));
-		}
-	} else if (expr instanceof LogicalExpression) {
-		this$6 = expr;
-		firstExpr = this$6._expr1;
-		this$7 = expr;
-		secondExpr = this$7._expr2;
-		if ((condition = _Util$conditionIsConstant$LExpression$(firstExpr)) != null) {
-			this$8 = expr._token;
-			op = this$8._value;
-			if (op === "||" && condition) {
-				replaceCb(new AsExpression(firstExpr._token, firstExpr, Type.booleanType));
-			} else if (op === "||" && ! condition) {
-				replaceCb(new AsExpression(secondExpr._token, secondExpr, Type.booleanType));
-			} else if (op === "&&" && condition) {
-				replaceCb(new AsExpression(secondExpr._token, secondExpr, Type.booleanType));
-			} else if (op === "&&" && ! condition) {
-				replaceCb(new AsExpression(firstExpr._token, firstExpr, Type.booleanType));
-			} else {
-				throw new Error("logic flaw");
-			}
-		}
-	} else if (expr instanceof ConditionalExpression) {
-		conditionalExpr = expr;
-		condExpr = conditionalExpr._condExpr;
-		if ((condition = _Util$conditionIsConstant$LExpression$(condExpr)) != null) {
-			ifTrueExpr = conditionalExpr._ifTrueExpr || condExpr;
-			ifFalseExpr = conditionalExpr._ifFalseExpr;
-			replaceCb(condition ? ifTrueExpr : ifFalseExpr);
-		}
-	} else if (expr instanceof CallExpression) {
-		callExpr = expr;
-		if (callExpr._expr instanceof PropertyExpression) {
-			allArgsAreConstants = true;
-			callExpr._args.forEach((function (expr) {
-				if (! (expr instanceof IntegerLiteralExpression || expr instanceof NumberLiteralExpression || expr instanceof BooleanLiteralExpression || expr instanceof StringLiteralExpression)) {
-					allArgsAreConstants = false;
-				}
-			}));
-			if (allArgsAreConstants) {
-				_FoldConstantCommand$_foldCallExpression$L_FoldConstantCommand$LCallExpression$F$LExpression$V$($this, callExpr, replaceCb);
-			}
-		}
-	}
-	return true;
-};
-
-_FoldConstantCommand._optimizeExpression$L_FoldConstantCommand$LExpression$F$LExpression$V$ = _FoldConstantCommand$_optimizeExpression$L_FoldConstantCommand$LExpression$F$LExpression$V$;
-
-_FoldConstantCommand.prototype._foldCallExpression$LCallExpression$F$LExpression$V$ = function (callExpr, replaceCb) {
-	var $this = this;
-	var propertyExpr;
-	var holderType;
-	var argExprs;
-	var member;
-	var s;
-	var recvStr;
-	var type$0;
-	var message$0;
-	var this$0$0;
-	var message$0$0;
-	var expr$0;
-	var this$0$1;
-	var this$0$0$0;
-	var message$1;
-	var this$0$2;
-	var message$0$1;
-	var expr$1;
-	var this$0$3;
-	var this$0$0$1;
-	var message$2;
-	var this$0$4;
-	var message$0$2;
-	var expr$2;
-	var this$0$5;
-	var this$0$0$2;
-	var expr$3;
-	var this$0$6;
-	var this$0$0$3;
-	var message$3;
-	var this$0$7;
-	var message$0$3;
-	var expr$4;
-	var this$0$8;
-	var this$0$0$4;
-	var message$4;
-	var this$0$9;
-	var message$0$4;
-	var expr$5;
-	var this$0$10;
-	var this$0$0$5;
-	var message$5;
-	var this$0$11;
-	var message$0$5;
-	var message$6;
-	var this$0$12;
-	var message$0$6;
-	var expr$6;
-	var this$0$13;
-	var this$0$0$6;
-	var this$0;
-	var this$1;
-	var this$2;
-	propertyExpr = callExpr._expr;
-	type$0 = propertyExpr._expr.getType$();
-	if (type$0 instanceof PrimitiveType) {
-		type$0 = new ObjectType(type$0.getClassDef$());
-	}
-	holderType = type$0;
-	if ((type$0.getClassDef$().flags$() & 16) === 0) {
-		return;
-	}
-	argExprs = callExpr._args;
-	member = null;
-	ClassDefinition$forEachMemberFunction$LClassDefinition$F$LMemberFunctionDefinition$B$(holderType.getClassDef$(), (function (m) {
-		var this$0$0;
-		var this$0;
-		if ((this$0$0 = m._nameToken, this$0$0._value) === (this$0 = propertyExpr._identifierToken, this$0._value)) {
-			member = m;
-		}
-		return member == null;
-	}));
-	if (member != null && (member._flags & 2048) === 0) {
-		return;
-	}
-	if (propertyExpr._expr.isClassSpecifier$()) {
-		if (ClassDefinition$classFullName$LClassDefinition$(holderType.getClassDef$()) === "Math") {
-			switch ((this$0 = propertyExpr._identifierToken, this$0._value)) {
-			case "sqrt":
-				message$0 = "folding " + member.getNotation$();
-				this$0$0 = this._optimizer;
-				message$0$0 = "[" + this._identifier + "] " + message$0;
-				this$0$0._log += message$0$0 + "\n";
-				replaceCb(new NumberLiteralExpression(new Token$3(Math.sqrt((expr$0 = argExprs[0], expr$0 instanceof NumberLiteralExpression ? expr$0.getDecoded$() : (this$0$1 = expr$0, (this$0$0$0 = this$0$1._token, this$0$0$0._value) | 0))) + "")));
-				break;
-			case "log":
-				message$1 = "folding " + member.getNotation$();
-				this$0$2 = this._optimizer;
-				message$0$1 = "[" + this._identifier + "] " + message$1;
-				this$0$2._log += message$0$1 + "\n";
-				replaceCb(new NumberLiteralExpression(new Token$3(Math.log((expr$1 = argExprs[0], expr$1 instanceof NumberLiteralExpression ? expr$1.getDecoded$() : (this$0$3 = expr$1, (this$0$0$1 = this$0$3._token, this$0$0$1._value) | 0))) + "")));
-				break;
-			case "pow":
-				message$2 = "folding " + member.getNotation$();
-				this$0$4 = this._optimizer;
-				message$0$2 = "[" + this._identifier + "] " + message$2;
-				this$0$4._log += message$0$2 + "\n";
-				replaceCb(new NumberLiteralExpression(new Token$3(Math.pow((expr$2 = argExprs[0], expr$2 instanceof NumberLiteralExpression ? expr$2.getDecoded$() : (this$0$5 = expr$2, (this$0$0$2 = this$0$5._token, this$0$0$2._value) | 0)), (expr$3 = argExprs[1], expr$3 instanceof NumberLiteralExpression ? expr$3.getDecoded$() : (this$0$6 = expr$3, (this$0$0$3 = this$0$6._token, this$0$0$3._value) | 0))) + "")));
-				break;
-			case "sin":
-				message$3 = "folding " + member.getNotation$();
-				this$0$7 = this._optimizer;
-				message$0$3 = "[" + this._identifier + "] " + message$3;
-				this$0$7._log += message$0$3 + "\n";
-				replaceCb(new NumberLiteralExpression(new Token$3(Math.sin((expr$4 = argExprs[0], expr$4 instanceof NumberLiteralExpression ? expr$4.getDecoded$() : (this$0$8 = expr$4, (this$0$0$4 = this$0$8._token, this$0$0$4._value) | 0))) + "")));
-				break;
-			case "cos":
-				message$4 = "folding " + member.getNotation$();
-				this$0$9 = this._optimizer;
-				message$0$4 = "[" + this._identifier + "] " + message$4;
-				this$0$9._log += message$0$4 + "\n";
-				replaceCb(new NumberLiteralExpression(new Token$3(Math.cos((expr$5 = argExprs[0], expr$5 instanceof NumberLiteralExpression ? expr$5.getDecoded$() : (this$0$10 = expr$5, (this$0$0$5 = this$0$10._token, this$0$0$5._value) | 0))) + "")));
-				break;
-			}
-		}
-		if (ClassDefinition$classFullName$LClassDefinition$(holderType.getClassDef$()) === "String") {
-			switch ((this$1 = propertyExpr._identifierToken, this$1._value)) {
-			case "fromCharCode":
-				message$5 = "folding " + member.getNotation$();
-				this$0$11 = this._optimizer;
-				message$0$5 = "[" + this._identifier + "] " + message$5;
-				this$0$11._log += message$0$5 + "\n";
-				s = "";
-				argExprs.forEach((function (arg) {
-					var this$0$0;
-					var this$0$0$0;
-					s += String.fromCharCode((arg instanceof NumberLiteralExpression ? arg.getDecoded$() : (this$0$0 = arg, (this$0$0$0 = this$0$0._token, this$0$0$0._value) | 0)));
-				}));
-				replaceCb(new StringLiteralExpression(new Token$3(Util$encodeStringLiteral$S(s))));
-				break;
-			}
-		}
-	} else if (propertyExpr._expr instanceof StringLiteralExpression) {
-		switch ((this$2 = propertyExpr._identifierToken, this$2._value)) {
-		case "charCodeAt":
-			message$6 = "folding " + member.getNotation$();
-			this$0$12 = this._optimizer;
-			message$0$6 = "[" + this._identifier + "] " + message$6;
-			this$0$12._log += message$0$6 + "\n";
-			recvStr = propertyExpr._expr.getDecoded$();
-			replaceCb(new NumberLiteralExpression(new Token$3(recvStr.charCodeAt((expr$6 = argExprs[0], expr$6 instanceof NumberLiteralExpression ? expr$6.getDecoded$() : (this$0$13 = expr$6, (this$0$0$6 = this$0$13._token, this$0$0$6._value) | 0))) + "")));
-			break;
-		}
-	}
-};
-
-
-function _FoldConstantCommand$_foldCallExpression$L_FoldConstantCommand$LCallExpression$F$LExpression$V$($this, callExpr, replaceCb) {
-	var propertyExpr;
-	var holderType;
-	var argExprs;
-	var member;
-	var s;
-	var recvStr;
-	var type$0;
-	var message$0;
-	var this$0$0;
-	var message$0$0;
-	var expr$0;
-	var this$0$1;
-	var this$0$0$0;
-	var message$1;
-	var this$0$2;
-	var message$0$1;
-	var expr$1;
-	var this$0$3;
-	var this$0$0$1;
-	var message$2;
-	var this$0$4;
-	var message$0$2;
-	var expr$2;
-	var this$0$5;
-	var this$0$0$2;
-	var expr$3;
-	var this$0$6;
-	var this$0$0$3;
-	var message$3;
-	var this$0$7;
-	var message$0$3;
-	var expr$4;
-	var this$0$8;
-	var this$0$0$4;
-	var message$4;
-	var this$0$9;
-	var message$0$4;
-	var expr$5;
-	var this$0$10;
-	var this$0$0$5;
-	var message$5;
-	var this$0$11;
-	var message$0$5;
-	var message$6;
-	var this$0$12;
-	var message$0$6;
-	var expr$6;
-	var this$0$13;
-	var this$0$0$6;
-	var this$0;
-	var this$1;
-	var this$2;
-	propertyExpr = callExpr._expr;
-	type$0 = propertyExpr._expr.getType$();
-	if (type$0 instanceof PrimitiveType) {
-		type$0 = new ObjectType(type$0.getClassDef$());
-	}
-	holderType = type$0;
-	if ((type$0.getClassDef$().flags$() & 16) === 0) {
-		return;
-	}
-	argExprs = callExpr._args;
-	member = null;
-	ClassDefinition$forEachMemberFunction$LClassDefinition$F$LMemberFunctionDefinition$B$(holderType.getClassDef$(), (function (m) {
-		var this$0$0;
-		var this$0;
-		if ((this$0$0 = m._nameToken, this$0$0._value) === (this$0 = propertyExpr._identifierToken, this$0._value)) {
-			member = m;
-		}
-		return member == null;
-	}));
-	if (member != null && (member._flags & 2048) === 0) {
-		return;
-	}
-	if (propertyExpr._expr.isClassSpecifier$()) {
-		if (ClassDefinition$classFullName$LClassDefinition$(holderType.getClassDef$()) === "Math") {
-			switch ((this$0 = propertyExpr._identifierToken, this$0._value)) {
-			case "sqrt":
-				message$0 = "folding " + member.getNotation$();
-				this$0$0 = $this._optimizer;
-				message$0$0 = "[" + $this._identifier + "] " + message$0;
-				this$0$0._log += message$0$0 + "\n";
-				replaceCb(new NumberLiteralExpression(new Token$3(Math.sqrt((expr$0 = argExprs[0], expr$0 instanceof NumberLiteralExpression ? expr$0.getDecoded$() : (this$0$1 = expr$0, (this$0$0$0 = this$0$1._token, this$0$0$0._value) | 0))) + "")));
-				break;
-			case "log":
-				message$1 = "folding " + member.getNotation$();
-				this$0$2 = $this._optimizer;
-				message$0$1 = "[" + $this._identifier + "] " + message$1;
-				this$0$2._log += message$0$1 + "\n";
-				replaceCb(new NumberLiteralExpression(new Token$3(Math.log((expr$1 = argExprs[0], expr$1 instanceof NumberLiteralExpression ? expr$1.getDecoded$() : (this$0$3 = expr$1, (this$0$0$1 = this$0$3._token, this$0$0$1._value) | 0))) + "")));
-				break;
-			case "pow":
-				message$2 = "folding " + member.getNotation$();
-				this$0$4 = $this._optimizer;
-				message$0$2 = "[" + $this._identifier + "] " + message$2;
-				this$0$4._log += message$0$2 + "\n";
-				replaceCb(new NumberLiteralExpression(new Token$3(Math.pow((expr$2 = argExprs[0], expr$2 instanceof NumberLiteralExpression ? expr$2.getDecoded$() : (this$0$5 = expr$2, (this$0$0$2 = this$0$5._token, this$0$0$2._value) | 0)), (expr$3 = argExprs[1], expr$3 instanceof NumberLiteralExpression ? expr$3.getDecoded$() : (this$0$6 = expr$3, (this$0$0$3 = this$0$6._token, this$0$0$3._value) | 0))) + "")));
-				break;
-			case "sin":
-				message$3 = "folding " + member.getNotation$();
-				this$0$7 = $this._optimizer;
-				message$0$3 = "[" + $this._identifier + "] " + message$3;
-				this$0$7._log += message$0$3 + "\n";
-				replaceCb(new NumberLiteralExpression(new Token$3(Math.sin((expr$4 = argExprs[0], expr$4 instanceof NumberLiteralExpression ? expr$4.getDecoded$() : (this$0$8 = expr$4, (this$0$0$4 = this$0$8._token, this$0$0$4._value) | 0))) + "")));
-				break;
-			case "cos":
-				message$4 = "folding " + member.getNotation$();
-				this$0$9 = $this._optimizer;
-				message$0$4 = "[" + $this._identifier + "] " + message$4;
-				this$0$9._log += message$0$4 + "\n";
-				replaceCb(new NumberLiteralExpression(new Token$3(Math.cos((expr$5 = argExprs[0], expr$5 instanceof NumberLiteralExpression ? expr$5.getDecoded$() : (this$0$10 = expr$5, (this$0$0$5 = this$0$10._token, this$0$0$5._value) | 0))) + "")));
-				break;
-			}
-		}
-		if (ClassDefinition$classFullName$LClassDefinition$(holderType.getClassDef$()) === "String") {
-			switch ((this$1 = propertyExpr._identifierToken, this$1._value)) {
-			case "fromCharCode":
-				message$5 = "folding " + member.getNotation$();
-				this$0$11 = $this._optimizer;
-				message$0$5 = "[" + $this._identifier + "] " + message$5;
-				this$0$11._log += message$0$5 + "\n";
-				s = "";
-				argExprs.forEach((function (arg) {
-					var this$0$0;
-					var this$0$0$0;
-					s += String.fromCharCode((arg instanceof NumberLiteralExpression ? arg.getDecoded$() : (this$0$0 = arg, (this$0$0$0 = this$0$0._token, this$0$0$0._value) | 0)));
-				}));
-				replaceCb(new StringLiteralExpression(new Token$3(Util$encodeStringLiteral$S(s))));
-				break;
-			}
-		}
-	} else if (propertyExpr._expr instanceof StringLiteralExpression) {
-		switch ((this$2 = propertyExpr._identifierToken, this$2._value)) {
-		case "charCodeAt":
-			message$6 = "folding " + member.getNotation$();
-			this$0$12 = $this._optimizer;
-			message$0$6 = "[" + $this._identifier + "] " + message$6;
-			this$0$12._log += message$0$6 + "\n";
-			recvStr = propertyExpr._expr.getDecoded$();
-			replaceCb(new NumberLiteralExpression(new Token$3(recvStr.charCodeAt((expr$6 = argExprs[0], expr$6 instanceof NumberLiteralExpression ? expr$6.getDecoded$() : (this$0$13 = expr$6, (this$0$0$6 = this$0$13._token, this$0$0$6._value) | 0))) + "")));
-			break;
-		}
-	}
-};
-
-_FoldConstantCommand._foldCallExpression$L_FoldConstantCommand$LCallExpression$F$LExpression$V$ = _FoldConstantCommand$_foldCallExpression$L_FoldConstantCommand$LCallExpression$F$LExpression$V$;
-
-_FoldConstantCommand.prototype._foldEqualityExpression$LEqualityExpression$F$LExpression$V$ = function (expr, replaceCb) {
-	var firstExpr;
-	var secondExpr;
-	var isEqual;
-	var result;
-	var this$0$0;
-	var this$0$0$0;
-	var this$0$1;
-	var this$0$0$1;
-	var this$0;
-	firstExpr = expr._expr1;
-	secondExpr = expr._expr2;
-	isEqual = null;
-	if (firstExpr instanceof StringLiteralExpression && secondExpr instanceof StringLiteralExpression) {
-		isEqual = firstExpr.getDecoded$() === secondExpr.getDecoded$();
-	} else if ((firstExpr instanceof NumberLiteralExpression || firstExpr instanceof IntegerLiteralExpression) && (secondExpr instanceof NumberLiteralExpression || secondExpr instanceof IntegerLiteralExpression)) {
-		isEqual = (firstExpr instanceof NumberLiteralExpression ? firstExpr.getDecoded$() : (this$0$0 = firstExpr, (this$0$0$0 = this$0$0._token, this$0$0$0._value) | 0)) === (secondExpr instanceof NumberLiteralExpression ? secondExpr.getDecoded$() : (this$0$1 = secondExpr, (this$0$0$1 = this$0$1._token, this$0$0$1._value) | 0));
-	}
-	if (isEqual != null) {
-		result = ((this$0 = expr._token, this$0._value) === "==" ? isEqual : ! isEqual);
-		replaceCb(new BooleanLiteralExpression(new Token$2((result ? "true" : "false"), true)));
-	}
-};
-
-
-function _FoldConstantCommand$_foldEqualityExpression$L_FoldConstantCommand$LEqualityExpression$F$LExpression$V$($this, expr, replaceCb) {
-	var firstExpr;
-	var secondExpr;
-	var isEqual;
-	var result;
-	var this$0$0;
-	var this$0$0$0;
-	var this$0$1;
-	var this$0$0$1;
-	var this$0;
-	firstExpr = expr._expr1;
-	secondExpr = expr._expr2;
-	isEqual = null;
-	if (firstExpr instanceof StringLiteralExpression && secondExpr instanceof StringLiteralExpression) {
-		isEqual = firstExpr.getDecoded$() === secondExpr.getDecoded$();
-	} else if ((firstExpr instanceof NumberLiteralExpression || firstExpr instanceof IntegerLiteralExpression) && (secondExpr instanceof NumberLiteralExpression || secondExpr instanceof IntegerLiteralExpression)) {
-		isEqual = (firstExpr instanceof NumberLiteralExpression ? firstExpr.getDecoded$() : (this$0$0 = firstExpr, (this$0$0$0 = this$0$0._token, this$0$0$0._value) | 0)) === (secondExpr instanceof NumberLiteralExpression ? secondExpr.getDecoded$() : (this$0$1 = secondExpr, (this$0$0$1 = this$0$1._token, this$0$0$1._value) | 0));
-	}
-	if (isEqual != null) {
-		result = ((this$0 = expr._token, this$0._value) === "==" ? isEqual : ! isEqual);
-		replaceCb(new BooleanLiteralExpression(new Token$2((result ? "true" : "false"), true)));
-	}
-};
-
-_FoldConstantCommand._foldEqualityExpression$L_FoldConstantCommand$LEqualityExpression$F$LExpression$V$ = _FoldConstantCommand$_foldEqualityExpression$L_FoldConstantCommand$LEqualityExpression$F$LExpression$V$;
-
-_FoldConstantCommand.prototype._foldNumericBinaryExpression$LBinaryExpression$F$LExpression$V$ = function (expr, replaceCb) {
-	var $this = this;
-	var exprIsZero;
-	var exprIsOne;
-	var expr$0;
-	var expr$1;
-	var this$0;
-	if ((expr$0 = expr._expr1, expr$0 instanceof NumberLiteralExpression || expr$0 instanceof IntegerLiteralExpression) && (expr$1 = expr._expr2, expr$1 instanceof NumberLiteralExpression || expr$1 instanceof IntegerLiteralExpression)) {
-		return _FoldConstantCommand$_foldNumericBinaryExpressionOfConstants$L_FoldConstantCommand$LBinaryExpression$F$LExpression$V$(this, expr, replaceCb);
-	}
-	function exprIsZero(expr) {
-		return expr instanceof NumberLiteralExpression && expr.getDecoded$() === 0;
-	}
-	function exprIsOne(expr) {
-		return expr instanceof NumberLiteralExpression && expr.getDecoded$() === 1;
-	}
-	switch ((this$0 = expr._token, this$0._value)) {
-	case "+":
-		if (exprIsZero(expr._expr1)) {
-			replaceCb(expr._expr2);
-			return true;
-		} else if (exprIsZero(expr._expr2)) {
-			replaceCb(expr._expr1);
-			return true;
-		}
-		break;
-	case "-":
-		if (exprIsZero(expr._expr1)) {
-			replaceCb(new SignExpression(new Token$2("-", false), expr._expr2));
-			return true;
-		} else if (exprIsZero(expr._expr2)) {
-			replaceCb(expr._expr1);
-			return true;
-		}
-		break;
-	case "*":
-		if (exprIsOne(expr._expr1)) {
-			replaceCb(expr._expr2);
-			return true;
-		} else if (exprIsOne(expr._expr2)) {
-			replaceCb(expr._expr1);
-			return true;
-		}
-		break;
-	case "/":
-		if (exprIsOne(expr._expr2)) {
-			replaceCb(expr._expr1);
-			return true;
-		}
-		break;
-	}
-	return false;
-};
-
-
-function _FoldConstantCommand$_foldNumericBinaryExpression$L_FoldConstantCommand$LBinaryExpression$F$LExpression$V$($this, expr, replaceCb) {
-	var exprIsZero;
-	var exprIsOne;
-	var expr$0;
-	var expr$1;
-	var this$0;
-	if ((expr$0 = expr._expr1, expr$0 instanceof NumberLiteralExpression || expr$0 instanceof IntegerLiteralExpression) && (expr$1 = expr._expr2, expr$1 instanceof NumberLiteralExpression || expr$1 instanceof IntegerLiteralExpression)) {
-		return _FoldConstantCommand$_foldNumericBinaryExpressionOfConstants$L_FoldConstantCommand$LBinaryExpression$F$LExpression$V$($this, expr, replaceCb);
-	}
-	function exprIsZero(expr) {
-		return expr instanceof NumberLiteralExpression && expr.getDecoded$() === 0;
-	}
-	function exprIsOne(expr) {
-		return expr instanceof NumberLiteralExpression && expr.getDecoded$() === 1;
-	}
-	switch ((this$0 = expr._token, this$0._value)) {
-	case "+":
-		if (exprIsZero(expr._expr1)) {
-			replaceCb(expr._expr2);
-			return true;
-		} else if (exprIsZero(expr._expr2)) {
-			replaceCb(expr._expr1);
-			return true;
-		}
-		break;
-	case "-":
-		if (exprIsZero(expr._expr1)) {
-			replaceCb(new SignExpression(new Token$2("-", false), expr._expr2));
-			return true;
-		} else if (exprIsZero(expr._expr2)) {
-			replaceCb(expr._expr1);
-			return true;
-		}
-		break;
-	case "*":
-		if (exprIsOne(expr._expr1)) {
-			replaceCb(expr._expr2);
-			return true;
-		} else if (exprIsOne(expr._expr2)) {
-			replaceCb(expr._expr1);
-			return true;
-		}
-		break;
-	case "/":
-		if (exprIsOne(expr._expr2)) {
-			replaceCb(expr._expr1);
-			return true;
-		}
-		break;
-	}
-	return false;
-};
-
-_FoldConstantCommand._foldNumericBinaryExpression$L_FoldConstantCommand$LBinaryExpression$F$LExpression$V$ = _FoldConstantCommand$_foldNumericBinaryExpression$L_FoldConstantCommand$LBinaryExpression$F$LExpression$V$;
-
-_FoldConstantCommand.prototype._foldNumericBinaryExpressionOfConstants$LBinaryExpression$F$LExpression$V$ = function (expr, replaceCb) {
-	var $this = this;
-	var this$0;
-	switch ((this$0 = expr._token, this$0._value)) {
-	case "+":
-		if (expr._expr1 instanceof IntegerLiteralExpression && expr._expr2 instanceof IntegerLiteralExpression) {
-			_FoldConstantCommand$_foldNumericBinaryExpressionAsInteger$L_FoldConstantCommand$LBinaryExpression$F$LExpression$V$F$III$(this, expr, replaceCb, (function (x, y) {
-				return ((x + y) | 0);
-			}));
-		} else {
-			_FoldConstantCommand$_foldNumericBinaryExpressionAsNumber$L_FoldConstantCommand$LBinaryExpression$F$LExpression$V$F$NNN$(this, expr, replaceCb, (function (x, y) {
-				return x + y;
-			}));
-		}
-		break;
-	case "-":
-		if (expr._expr1 instanceof IntegerLiteralExpression && expr._expr2 instanceof IntegerLiteralExpression) {
-			_FoldConstantCommand$_foldNumericBinaryExpressionAsInteger$L_FoldConstantCommand$LBinaryExpression$F$LExpression$V$F$III$(this, expr, replaceCb, (function (x, y) {
-				return ((x - y) | 0);
-			}));
-		} else {
-			_FoldConstantCommand$_foldNumericBinaryExpressionAsNumber$L_FoldConstantCommand$LBinaryExpression$F$LExpression$V$F$NNN$(this, expr, replaceCb, (function (x, y) {
-				return x - y;
-			}));
-		}
-		break;
-	case "*":
-		if (expr._expr1 instanceof IntegerLiteralExpression && expr._expr2 instanceof IntegerLiteralExpression) {
-			_FoldConstantCommand$_foldNumericBinaryExpressionAsInteger$L_FoldConstantCommand$LBinaryExpression$F$LExpression$V$F$III$(this, expr, replaceCb, (function (x, y) {
-				return $__jsx_imul(x, y);
-			}));
-		} else {
-			_FoldConstantCommand$_foldNumericBinaryExpressionAsNumber$L_FoldConstantCommand$LBinaryExpression$F$LExpression$V$F$NNN$(this, expr, replaceCb, (function (x, y) {
-				return x * y;
-			}));
-		}
-		break;
-	case "/":
-		_FoldConstantCommand$_foldNumericBinaryExpressionAsNumber$L_FoldConstantCommand$LBinaryExpression$F$LExpression$V$F$NNN$(this, expr, replaceCb, (function (x, y) {
-			return x / y;
-		}));
-		break;
-	case "%":
-		_FoldConstantCommand$_foldNumericBinaryExpressionAsNumber$L_FoldConstantCommand$LBinaryExpression$F$LExpression$V$F$NNN$(this, expr, replaceCb, (function (x, y) {
-			return x % y;
-		}));
-		break;
-	case ">>>":
-		_FoldConstantCommand$_foldNumericBinaryExpressionAsInteger$L_FoldConstantCommand$LBinaryExpression$F$LExpression$V$F$III$(this, expr, replaceCb, (function (x, y) {
-			return x >>> y;
-		}));
-		break;
-	case ">>":
-		_FoldConstantCommand$_foldNumericBinaryExpressionAsInteger$L_FoldConstantCommand$LBinaryExpression$F$LExpression$V$F$III$(this, expr, replaceCb, (function (x, y) {
-			return x >> y;
-		}));
-		break;
-	case "<<":
-		_FoldConstantCommand$_foldNumericBinaryExpressionAsInteger$L_FoldConstantCommand$LBinaryExpression$F$LExpression$V$F$III$(this, expr, replaceCb, (function (x, y) {
-			return x << y;
-		}));
-		break;
-	case "&":
-		_FoldConstantCommand$_foldNumericBinaryExpressionAsInteger$L_FoldConstantCommand$LBinaryExpression$F$LExpression$V$F$III$(this, expr, replaceCb, (function (x, y) {
-			return x & y;
-		}));
-		break;
-	case "|":
-		_FoldConstantCommand$_foldNumericBinaryExpressionAsInteger$L_FoldConstantCommand$LBinaryExpression$F$LExpression$V$F$III$(this, expr, replaceCb, (function (x, y) {
-			return x | y;
-		}));
-		break;
-	case "^":
-		_FoldConstantCommand$_foldNumericBinaryExpressionAsInteger$L_FoldConstantCommand$LBinaryExpression$F$LExpression$V$F$III$(this, expr, replaceCb, (function (x, y) {
-			return x ^ y;
-		}));
-		break;
-	case "<":
-		_FoldConstantCommand$_foldNumericBinaryExpressionAsBoolean$L_FoldConstantCommand$LBinaryExpression$F$LExpression$V$F$NNB$(this, expr, replaceCb, (function (x, y) {
-			return x < y;
-		}));
-		break;
-	case "<=":
-		_FoldConstantCommand$_foldNumericBinaryExpressionAsBoolean$L_FoldConstantCommand$LBinaryExpression$F$LExpression$V$F$NNB$(this, expr, replaceCb, (function (x, y) {
-			return x <= y;
-		}));
-		break;
-	case ">":
-		_FoldConstantCommand$_foldNumericBinaryExpressionAsBoolean$L_FoldConstantCommand$LBinaryExpression$F$LExpression$V$F$NNB$(this, expr, replaceCb, (function (x, y) {
-			return x > y;
-		}));
-		break;
-	case ">=":
-		_FoldConstantCommand$_foldNumericBinaryExpressionAsBoolean$L_FoldConstantCommand$LBinaryExpression$F$LExpression$V$F$NNB$(this, expr, replaceCb, (function (x, y) {
-			return x >= y;
-		}));
-		break;
-	default:
-		return false;
-	}
-	return true;
-};
-
-
-function _FoldConstantCommand$_foldNumericBinaryExpressionOfConstants$L_FoldConstantCommand$LBinaryExpression$F$LExpression$V$($this, expr, replaceCb) {
-	var this$0;
-	switch ((this$0 = expr._token, this$0._value)) {
-	case "+":
-		if (expr._expr1 instanceof IntegerLiteralExpression && expr._expr2 instanceof IntegerLiteralExpression) {
-			_FoldConstantCommand$_foldNumericBinaryExpressionAsInteger$L_FoldConstantCommand$LBinaryExpression$F$LExpression$V$F$III$($this, expr, replaceCb, (function (x, y) {
-				return ((x + y) | 0);
-			}));
-		} else {
-			_FoldConstantCommand$_foldNumericBinaryExpressionAsNumber$L_FoldConstantCommand$LBinaryExpression$F$LExpression$V$F$NNN$($this, expr, replaceCb, (function (x, y) {
-				return x + y;
-			}));
-		}
-		break;
-	case "-":
-		if (expr._expr1 instanceof IntegerLiteralExpression && expr._expr2 instanceof IntegerLiteralExpression) {
-			_FoldConstantCommand$_foldNumericBinaryExpressionAsInteger$L_FoldConstantCommand$LBinaryExpression$F$LExpression$V$F$III$($this, expr, replaceCb, (function (x, y) {
-				return ((x - y) | 0);
-			}));
-		} else {
-			_FoldConstantCommand$_foldNumericBinaryExpressionAsNumber$L_FoldConstantCommand$LBinaryExpression$F$LExpression$V$F$NNN$($this, expr, replaceCb, (function (x, y) {
-				return x - y;
-			}));
-		}
-		break;
-	case "*":
-		if (expr._expr1 instanceof IntegerLiteralExpression && expr._expr2 instanceof IntegerLiteralExpression) {
-			_FoldConstantCommand$_foldNumericBinaryExpressionAsInteger$L_FoldConstantCommand$LBinaryExpression$F$LExpression$V$F$III$($this, expr, replaceCb, (function (x, y) {
-				return $__jsx_imul(x, y);
-			}));
-		} else {
-			_FoldConstantCommand$_foldNumericBinaryExpressionAsNumber$L_FoldConstantCommand$LBinaryExpression$F$LExpression$V$F$NNN$($this, expr, replaceCb, (function (x, y) {
-				return x * y;
-			}));
-		}
-		break;
-	case "/":
-		_FoldConstantCommand$_foldNumericBinaryExpressionAsNumber$L_FoldConstantCommand$LBinaryExpression$F$LExpression$V$F$NNN$($this, expr, replaceCb, (function (x, y) {
-			return x / y;
-		}));
-		break;
-	case "%":
-		_FoldConstantCommand$_foldNumericBinaryExpressionAsNumber$L_FoldConstantCommand$LBinaryExpression$F$LExpression$V$F$NNN$($this, expr, replaceCb, (function (x, y) {
-			return x % y;
-		}));
-		break;
-	case ">>>":
-		_FoldConstantCommand$_foldNumericBinaryExpressionAsInteger$L_FoldConstantCommand$LBinaryExpression$F$LExpression$V$F$III$($this, expr, replaceCb, (function (x, y) {
-			return x >>> y;
-		}));
-		break;
-	case ">>":
-		_FoldConstantCommand$_foldNumericBinaryExpressionAsInteger$L_FoldConstantCommand$LBinaryExpression$F$LExpression$V$F$III$($this, expr, replaceCb, (function (x, y) {
-			return x >> y;
-		}));
-		break;
-	case "<<":
-		_FoldConstantCommand$_foldNumericBinaryExpressionAsInteger$L_FoldConstantCommand$LBinaryExpression$F$LExpression$V$F$III$($this, expr, replaceCb, (function (x, y) {
-			return x << y;
-		}));
-		break;
-	case "&":
-		_FoldConstantCommand$_foldNumericBinaryExpressionAsInteger$L_FoldConstantCommand$LBinaryExpression$F$LExpression$V$F$III$($this, expr, replaceCb, (function (x, y) {
-			return x & y;
-		}));
-		break;
-	case "|":
-		_FoldConstantCommand$_foldNumericBinaryExpressionAsInteger$L_FoldConstantCommand$LBinaryExpression$F$LExpression$V$F$III$($this, expr, replaceCb, (function (x, y) {
-			return x | y;
-		}));
-		break;
-	case "^":
-		_FoldConstantCommand$_foldNumericBinaryExpressionAsInteger$L_FoldConstantCommand$LBinaryExpression$F$LExpression$V$F$III$($this, expr, replaceCb, (function (x, y) {
-			return x ^ y;
-		}));
-		break;
-	case "<":
-		_FoldConstantCommand$_foldNumericBinaryExpressionAsBoolean$L_FoldConstantCommand$LBinaryExpression$F$LExpression$V$F$NNB$($this, expr, replaceCb, (function (x, y) {
-			return x < y;
-		}));
-		break;
-	case "<=":
-		_FoldConstantCommand$_foldNumericBinaryExpressionAsBoolean$L_FoldConstantCommand$LBinaryExpression$F$LExpression$V$F$NNB$($this, expr, replaceCb, (function (x, y) {
-			return x <= y;
-		}));
-		break;
-	case ">":
-		_FoldConstantCommand$_foldNumericBinaryExpressionAsBoolean$L_FoldConstantCommand$LBinaryExpression$F$LExpression$V$F$NNB$($this, expr, replaceCb, (function (x, y) {
-			return x > y;
-		}));
-		break;
-	case ">=":
-		_FoldConstantCommand$_foldNumericBinaryExpressionAsBoolean$L_FoldConstantCommand$LBinaryExpression$F$LExpression$V$F$NNB$($this, expr, replaceCb, (function (x, y) {
-			return x >= y;
-		}));
-		break;
-	default:
-		return false;
-	}
-	return true;
-};
-
-_FoldConstantCommand._foldNumericBinaryExpressionOfConstants$L_FoldConstantCommand$LBinaryExpression$F$LExpression$V$ = _FoldConstantCommand$_foldNumericBinaryExpressionOfConstants$L_FoldConstantCommand$LBinaryExpression$F$LExpression$V$;
-
-_FoldConstantCommand.prototype._foldNumericBinaryExpressionAsNumeric$LBinaryExpression$F$LExpression$V$F$III$F$NNN$ = function (expr, replaceCb, calcCbInt, calcCbNumber) {
-	if (expr._expr1 instanceof IntegerLiteralExpression && expr._expr2 instanceof IntegerLiteralExpression) {
-		_FoldConstantCommand$_foldNumericBinaryExpressionAsInteger$L_FoldConstantCommand$LBinaryExpression$F$LExpression$V$F$III$(this, expr, replaceCb, calcCbInt);
-	} else {
-		_FoldConstantCommand$_foldNumericBinaryExpressionAsNumber$L_FoldConstantCommand$LBinaryExpression$F$LExpression$V$F$NNN$(this, expr, replaceCb, calcCbNumber);
-	}
-};
-
-
-function _FoldConstantCommand$_foldNumericBinaryExpressionAsNumeric$L_FoldConstantCommand$LBinaryExpression$F$LExpression$V$F$III$F$NNN$($this, expr, replaceCb, calcCbInt, calcCbNumber) {
-	if (expr._expr1 instanceof IntegerLiteralExpression && expr._expr2 instanceof IntegerLiteralExpression) {
-		_FoldConstantCommand$_foldNumericBinaryExpressionAsInteger$L_FoldConstantCommand$LBinaryExpression$F$LExpression$V$F$III$($this, expr, replaceCb, calcCbInt);
-	} else {
-		_FoldConstantCommand$_foldNumericBinaryExpressionAsNumber$L_FoldConstantCommand$LBinaryExpression$F$LExpression$V$F$NNN$($this, expr, replaceCb, calcCbNumber);
-	}
-};
-
-_FoldConstantCommand._foldNumericBinaryExpressionAsNumeric$L_FoldConstantCommand$LBinaryExpression$F$LExpression$V$F$III$F$NNN$ = _FoldConstantCommand$_foldNumericBinaryExpressionAsNumeric$L_FoldConstantCommand$LBinaryExpression$F$LExpression$V$F$III$F$NNN$;
-
-_FoldConstantCommand.prototype._foldNumericBinaryExpressionAsInteger$LBinaryExpression$F$LExpression$V$F$III$ = function (expr, replaceCb, calcCb) {
-	var value;
-	var expr$0;
-	var this$0$0;
-	var this$0$0$0;
-	var expr$1;
-	var this$0$1;
-	var this$0$0$1;
-	var message$0;
-	var this$0$2;
-	var message$0$0;
-	var this$0;
-	value = calcCb((expr$0 = expr._expr1, expr$0 instanceof NumberLiteralExpression ? expr$0.getDecoded$() : (this$0$0 = expr$0, (this$0$0$0 = this$0$0._token, this$0$0$0._value) | 0)), (expr$1 = expr._expr2, expr$1 instanceof NumberLiteralExpression ? expr$1.getDecoded$() : (this$0$1 = expr$1, (this$0$0$1 = this$0$1._token, this$0$0$1._value) | 0)));
-	message$0 = "folding operator " + (this$0 = expr._token, "'" + this$0._value + "'" + " at " + (this$0._filename || "<<unknown>>") + ":" + (this$0._lineNumber + "") + ":" + (this$0._columnNumber + "")) + " to int: " + (value + "");
-	this$0$2 = this._optimizer;
-	message$0$0 = "[" + this._identifier + "] " + message$0;
-	this$0$2._log += message$0$0 + "\n";
-	if (value !== (value | 0)) {
-		throw new Error("value is not an integer");
-	}
-	replaceCb(new IntegerLiteralExpression(new Token$3(value + "")));
-};
-
-
-function _FoldConstantCommand$_foldNumericBinaryExpressionAsInteger$L_FoldConstantCommand$LBinaryExpression$F$LExpression$V$F$III$($this, expr, replaceCb, calcCb) {
-	var value;
-	var expr$0;
-	var this$0$0;
-	var this$0$0$0;
-	var expr$1;
-	var this$0$1;
-	var this$0$0$1;
-	var message$0;
-	var this$0$2;
-	var message$0$0;
-	var this$0;
-	value = calcCb((expr$0 = expr._expr1, expr$0 instanceof NumberLiteralExpression ? expr$0.getDecoded$() : (this$0$0 = expr$0, (this$0$0$0 = this$0$0._token, this$0$0$0._value) | 0)), (expr$1 = expr._expr2, expr$1 instanceof NumberLiteralExpression ? expr$1.getDecoded$() : (this$0$1 = expr$1, (this$0$0$1 = this$0$1._token, this$0$0$1._value) | 0)));
-	message$0 = "folding operator " + (this$0 = expr._token, "'" + this$0._value + "'" + " at " + (this$0._filename || "<<unknown>>") + ":" + (this$0._lineNumber + "") + ":" + (this$0._columnNumber + "")) + " to int: " + (value + "");
-	this$0$2 = $this._optimizer;
-	message$0$0 = "[" + $this._identifier + "] " + message$0;
-	this$0$2._log += message$0$0 + "\n";
-	if (value !== (value | 0)) {
-		throw new Error("value is not an integer");
-	}
-	replaceCb(new IntegerLiteralExpression(new Token$3(value + "")));
-};
-
-_FoldConstantCommand._foldNumericBinaryExpressionAsInteger$L_FoldConstantCommand$LBinaryExpression$F$LExpression$V$F$III$ = _FoldConstantCommand$_foldNumericBinaryExpressionAsInteger$L_FoldConstantCommand$LBinaryExpression$F$LExpression$V$F$III$;
-
-_FoldConstantCommand.prototype._foldNumericBinaryExpressionAsNumber$LBinaryExpression$F$LExpression$V$F$NNN$ = function (expr, replaceCb, calcCb) {
-	var value;
-	var expr$0;
-	var this$0$0;
-	var this$0$0$0;
-	var expr$1;
-	var this$0$1;
-	var this$0$0$1;
-	var message$0;
-	var this$0$2;
-	var message$0$0;
-	var this$0;
-	value = calcCb((expr$0 = expr._expr1, expr$0 instanceof NumberLiteralExpression ? expr$0.getDecoded$() : (this$0$0 = expr$0, (this$0$0$0 = this$0$0._token, this$0$0$0._value) | 0)), (expr$1 = expr._expr2, expr$1 instanceof NumberLiteralExpression ? expr$1.getDecoded$() : (this$0$1 = expr$1, (this$0$0$1 = this$0$1._token, this$0$0$1._value) | 0)));
-	message$0 = "folding operator " + (this$0 = expr._token, "'" + this$0._value + "'" + " at " + (this$0._filename || "<<unknown>>") + ":" + (this$0._lineNumber + "") + ":" + (this$0._columnNumber + "")) + " to number: " + (value + "");
-	this$0$2 = this._optimizer;
-	message$0$0 = "[" + this._identifier + "] " + message$0;
-	this$0$2._log += message$0$0 + "\n";
-	replaceCb(new NumberLiteralExpression(new Token$3(value + "")));
-};
-
-
-function _FoldConstantCommand$_foldNumericBinaryExpressionAsNumber$L_FoldConstantCommand$LBinaryExpression$F$LExpression$V$F$NNN$($this, expr, replaceCb, calcCb) {
-	var value;
-	var expr$0;
-	var this$0$0;
-	var this$0$0$0;
-	var expr$1;
-	var this$0$1;
-	var this$0$0$1;
-	var message$0;
-	var this$0$2;
-	var message$0$0;
-	var this$0;
-	value = calcCb((expr$0 = expr._expr1, expr$0 instanceof NumberLiteralExpression ? expr$0.getDecoded$() : (this$0$0 = expr$0, (this$0$0$0 = this$0$0._token, this$0$0$0._value) | 0)), (expr$1 = expr._expr2, expr$1 instanceof NumberLiteralExpression ? expr$1.getDecoded$() : (this$0$1 = expr$1, (this$0$0$1 = this$0$1._token, this$0$0$1._value) | 0)));
-	message$0 = "folding operator " + (this$0 = expr._token, "'" + this$0._value + "'" + " at " + (this$0._filename || "<<unknown>>") + ":" + (this$0._lineNumber + "") + ":" + (this$0._columnNumber + "")) + " to number: " + (value + "");
-	this$0$2 = $this._optimizer;
-	message$0$0 = "[" + $this._identifier + "] " + message$0;
-	this$0$2._log += message$0$0 + "\n";
-	replaceCb(new NumberLiteralExpression(new Token$3(value + "")));
-};
-
-_FoldConstantCommand._foldNumericBinaryExpressionAsNumber$L_FoldConstantCommand$LBinaryExpression$F$LExpression$V$F$NNN$ = _FoldConstantCommand$_foldNumericBinaryExpressionAsNumber$L_FoldConstantCommand$LBinaryExpression$F$LExpression$V$F$NNN$;
-
-_FoldConstantCommand.prototype._foldNumericBinaryExpressionAsBoolean$LBinaryExpression$F$LExpression$V$F$NNB$ = function (expr, replaceCb, calcCb) {
-	var value;
-	var expr$0;
-	var this$0$0;
-	var this$0$0$0;
-	var expr$1;
-	var this$0$1;
-	var this$0$0$1;
-	var message$0;
-	var this$0$2;
-	var message$0$0;
-	var this$0;
-	value = calcCb((expr$0 = expr._expr1, expr$0 instanceof NumberLiteralExpression ? expr$0.getDecoded$() : (this$0$0 = expr$0, (this$0$0$0 = this$0$0._token, this$0$0$0._value) | 0)), (expr$1 = expr._expr2, expr$1 instanceof NumberLiteralExpression ? expr$1.getDecoded$() : (this$0$1 = expr$1, (this$0$0$1 = this$0$1._token, this$0$0$1._value) | 0)));
-	message$0 = "folding operator " + (this$0 = expr._token, "'" + this$0._value + "'" + " at " + (this$0._filename || "<<unknown>>") + ":" + (this$0._lineNumber + "") + ":" + (this$0._columnNumber + "")) + " to boolean: " + (value + "");
-	this$0$2 = this._optimizer;
-	message$0$0 = "[" + this._identifier + "] " + message$0;
-	this$0$2._log += message$0$0 + "\n";
-	replaceCb(new BooleanLiteralExpression(new Token$3(value + "")));
-};
-
-
-function _FoldConstantCommand$_foldNumericBinaryExpressionAsBoolean$L_FoldConstantCommand$LBinaryExpression$F$LExpression$V$F$NNB$($this, expr, replaceCb, calcCb) {
-	var value;
-	var expr$0;
-	var this$0$0;
-	var this$0$0$0;
-	var expr$1;
-	var this$0$1;
-	var this$0$0$1;
-	var message$0;
-	var this$0$2;
-	var message$0$0;
-	var this$0;
-	value = calcCb((expr$0 = expr._expr1, expr$0 instanceof NumberLiteralExpression ? expr$0.getDecoded$() : (this$0$0 = expr$0, (this$0$0$0 = this$0$0._token, this$0$0$0._value) | 0)), (expr$1 = expr._expr2, expr$1 instanceof NumberLiteralExpression ? expr$1.getDecoded$() : (this$0$1 = expr$1, (this$0$0$1 = this$0$1._token, this$0$0$1._value) | 0)));
-	message$0 = "folding operator " + (this$0 = expr._token, "'" + this$0._value + "'" + " at " + (this$0._filename || "<<unknown>>") + ":" + (this$0._lineNumber + "") + ":" + (this$0._columnNumber + "")) + " to boolean: " + (value + "");
-	this$0$2 = $this._optimizer;
-	message$0$0 = "[" + $this._identifier + "] " + message$0;
-	this$0$2._log += message$0$0 + "\n";
-	replaceCb(new BooleanLiteralExpression(new Token$3(value + "")));
-};
-
-_FoldConstantCommand._foldNumericBinaryExpressionAsBoolean$L_FoldConstantCommand$LBinaryExpression$F$LExpression$V$F$NNB$ = _FoldConstantCommand$_foldNumericBinaryExpressionAsBoolean$L_FoldConstantCommand$LBinaryExpression$F$LExpression$V$F$NNB$;
-
-_FoldConstantCommand.prototype._isIntegerOrNumberLiteralExpression$LExpression$ = function (expr) {
-	return expr instanceof NumberLiteralExpression || expr instanceof IntegerLiteralExpression;
-};
-
-
-function _FoldConstantCommand$_isIntegerOrNumberLiteralExpression$L_FoldConstantCommand$LExpression$($this, expr) {
-	return expr instanceof NumberLiteralExpression || expr instanceof IntegerLiteralExpression;
-};
-
-_FoldConstantCommand._isIntegerOrNumberLiteralExpression$L_FoldConstantCommand$LExpression$ = _FoldConstantCommand$_isIntegerOrNumberLiteralExpression$L_FoldConstantCommand$LExpression$;
-
-_FoldConstantCommand.prototype._foldStaticConst$LMemberVariableDefinition$ = function (member) {
-	var $this = this;
-	var stash;
-	var initialValue;
-	stash = _OptimizeCommand$getStash$L_OptimizeCommand$LStashable$(this, member);
-	if (stash.isOptimized) {
-		return;
-	}
-	stash.isOptimized = true;
-	initialValue = member._initialValue;
-	if (initialValue != null) {
-		_FoldConstantCommand$_optimizeExpression$L_FoldConstantCommand$LExpression$F$LExpression$V$(this, initialValue, (function (expr) {
-			member._initialValue = expr;
-		}));
-	}
-};
-
-
-function _FoldConstantCommand$_foldStaticConst$L_FoldConstantCommand$LMemberVariableDefinition$($this, member) {
-	var stash;
-	var initialValue;
-	stash = _OptimizeCommand$getStash$L_OptimizeCommand$LStashable$($this, member);
-	if (stash.isOptimized) {
-		return;
-	}
-	stash.isOptimized = true;
-	initialValue = member._initialValue;
-	if (initialValue != null) {
-		_FoldConstantCommand$_optimizeExpression$L_FoldConstantCommand$LExpression$F$LExpression$V$($this, initialValue, (function (expr) {
-			member._initialValue = expr;
-		}));
-	}
-};
-
-_FoldConstantCommand._foldStaticConst$L_FoldConstantCommand$LMemberVariableDefinition$ = _FoldConstantCommand$_foldStaticConst$L_FoldConstantCommand$LMemberVariableDefinition$;
-
-_FoldConstantCommand.prototype._toFoldedExpr$LExpression$LType$ = function (expr, type) {
-	var this$0$0;
-	if (expr instanceof NullExpression) {
-		return expr;
-	} else if (expr instanceof BooleanLiteralExpression) {
-		return expr;
-	} else if (expr instanceof IntegerLiteralExpression) {
-		return expr;
-	} else if (expr instanceof NumberLiteralExpression) {
-		if ((type instanceof NullableType ? (this$0$0 = type, this$0$0._baseType) : type).equals$LType$(Type.integerType)) {
-			return new IntegerLiteralExpression(new Token$3((expr.getDecoded$() | 0) + ""));
-		}
-		return expr;
-	} else if (expr instanceof StringLiteralExpression) {
-		return expr;
-	}
-	return null;
-};
-
-
-function _FoldConstantCommand$_toFoldedExpr$L_FoldConstantCommand$LExpression$LType$($this, expr, type) {
-	var this$0$0;
-	if (expr instanceof NullExpression) {
-		return expr;
-	} else if (expr instanceof BooleanLiteralExpression) {
-		return expr;
-	} else if (expr instanceof IntegerLiteralExpression) {
-		return expr;
-	} else if (expr instanceof NumberLiteralExpression) {
-		if ((type instanceof NullableType ? (this$0$0 = type, this$0$0._baseType) : type).equals$LType$(Type.integerType)) {
-			return new IntegerLiteralExpression(new Token$3((expr.getDecoded$() | 0) + ""));
-		}
-		return expr;
-	} else if (expr instanceof StringLiteralExpression) {
-		return expr;
-	}
-	return null;
-};
-
-_FoldConstantCommand._toFoldedExpr$L_FoldConstantCommand$LExpression$LType$ = _FoldConstantCommand$_toFoldedExpr$L_FoldConstantCommand$LExpression$LType$;
-
-_FoldConstantCommand.prototype._foldAsExpression$LAsExpression$F$LExpression$V$ = function (expr, replaceCb) {
-	var baseExpr;
-	var this$0$0;
-	var message$0$0;
-	var this$0$1;
-	var message$0$1;
-	var this$0$2;
-	var message$0$2;
-	var this$0$3;
-	var message$0$3;
-	var this$0$4;
-	var message$0$4;
-	var this$0$5;
-	var message$0$5;
-	var this$0$6;
-	var message$0$6;
-	var this$0$7;
-	var message$0$7;
-	var this$0$8;
-	var message$0$8;
-	var this$0$9;
-	var message$0$9;
-	var this$0$10;
-	var message$0$10;
-	var this$0$11;
-	var message$0$11;
-	var this$0;
-	var this$0$12;
-	baseExpr = expr._expr;
-	if (expr._type.equals$LType$(Type.stringType)) {
-		if (baseExpr.getType$().equals$LType$(Type.stringType)) {
-			this$0$0 = this._optimizer;
-			message$0$0 = "[" + this._identifier + "] " + "folding type cast: string as string";
-			this$0$0._log += message$0$0 + "\n";
-			replaceCb(baseExpr);
-		} else if (baseExpr instanceof PrimitiveLiteralExpression) {
-			this$0$1 = this._optimizer;
-			message$0$1 = "[" + this._identifier + "] " + "folding type cast: primitive literal as string";
-			this$0$1._log += message$0$1 + "\n";
-			replaceCb(new StringLiteralExpression(new Token$2(Util$encodeStringLiteral$S(baseExpr.toNormalizedString$()), false)));
-		}
-	} else if (expr._type.equals$LType$(Type.numberType)) {
-		if (baseExpr.getType$().equals$LType$(Type.numberType)) {
-			this$0$2 = this._optimizer;
-			message$0$2 = "[" + this._identifier + "] " + "folding type cast: number as number";
-			this$0$2._log += message$0$2 + "\n";
-			replaceCb(baseExpr);
-		} else if (baseExpr instanceof StringLiteralExpression) {
-			this$0$3 = this._optimizer;
-			message$0$3 = "[" + this._identifier + "] " + "folding type cast: string literal as number";
-			this$0$3._log += message$0$3 + "\n";
-			replaceCb(new NumberLiteralExpression(new Token$2(+baseExpr.getDecoded$() + "", false)));
-		} else if (baseExpr instanceof IntegerLiteralExpression) {
-			this$0$4 = this._optimizer;
-			message$0$4 = "[" + this._identifier + "] " + "folding type cast: int literal as number";
-			this$0$4._log += message$0$4 + "\n";
-			replaceCb(new NumberLiteralExpression(new Token$2(+baseExpr.getDecoded$() + "", false)));
-		}
-	} else if (expr._type.equals$LType$(Type.integerType)) {
-		if (baseExpr.getType$().equals$LType$(Type.integerType)) {
-			this$0$5 = this._optimizer;
-			message$0$5 = "[" + this._identifier + "] " + "folding type cast: int as int";
-			this$0$5._log += message$0$5 + "\n";
-			replaceCb(baseExpr);
-		} else if (baseExpr instanceof StringLiteralExpression) {
-			this$0$6 = this._optimizer;
-			message$0$6 = "[" + this._identifier + "] " + "folding type cast: string literal as int";
-			this$0$6._log += message$0$6 + "\n";
-			replaceCb(new IntegerLiteralExpression(new Token$2((baseExpr.getDecoded$() | 0) + "", false)));
-		} else if (baseExpr instanceof NumberLiteralExpression) {
-			this$0$7 = this._optimizer;
-			message$0$7 = "[" + this._identifier + "] " + "folding type cast: number literal as int";
-			this$0$7._log += message$0$7 + "\n";
-			replaceCb(new IntegerLiteralExpression(new Token$2((baseExpr.getDecoded$() | 0) + "", false)));
-		}
-	} else if (expr._type.equals$LType$(Type.booleanType)) {
-		if (baseExpr.getType$().equals$LType$(Type.booleanType)) {
-			this$0$8 = this._optimizer;
-			message$0$8 = "[" + this._identifier + "] " + "folding type cast: boolean as boolean";
-			this$0$8._log += message$0$8 + "\n";
-			replaceCb(baseExpr);
-		} else if (baseExpr instanceof StringLiteralExpression) {
-			this$0$9 = this._optimizer;
-			message$0$9 = "[" + this._identifier + "] " + "folding type cast: string literal as boolean";
-			this$0$9._log += message$0$9 + "\n";
-			replaceCb(new BooleanLiteralExpression(new Token$2(!! baseExpr.getDecoded$() + "", false)));
-		} else if (baseExpr instanceof NumberLiteralExpression) {
-			this$0$10 = this._optimizer;
-			message$0$10 = "[" + this._identifier + "] " + "folding type cast: number literal as boolean";
-			this$0$10._log += message$0$10 + "\n";
-			replaceCb(new BooleanLiteralExpression(new Token$2((baseExpr.getDecoded$() ? "true" : "false"), false)));
-		} else if (baseExpr instanceof IntegerLiteralExpression) {
-			this$0$11 = this._optimizer;
-			message$0$11 = "[" + this._identifier + "] " + "folding type cast: integer literal as boolean";
-			this$0$11._log += message$0$11 + "\n";
-			replaceCb(new BooleanLiteralExpression(new Token$2(((this$0 = baseExpr, (this$0$12 = this$0._token, this$0$12._value) | 0) ? "true" : "false"), false)));
-		}
-	}
-};
-
-
-function _FoldConstantCommand$_foldAsExpression$L_FoldConstantCommand$LAsExpression$F$LExpression$V$($this, expr, replaceCb) {
-	var baseExpr;
-	var this$0$0;
-	var message$0$0;
-	var this$0$1;
-	var message$0$1;
-	var this$0$2;
-	var message$0$2;
-	var this$0$3;
-	var message$0$3;
-	var this$0$4;
-	var message$0$4;
-	var this$0$5;
-	var message$0$5;
-	var this$0$6;
-	var message$0$6;
-	var this$0$7;
-	var message$0$7;
-	var this$0$8;
-	var message$0$8;
-	var this$0$9;
-	var message$0$9;
-	var this$0$10;
-	var message$0$10;
-	var this$0$11;
-	var message$0$11;
-	var this$0;
-	var this$0$12;
-	baseExpr = expr._expr;
-	if (expr._type.equals$LType$(Type.stringType)) {
-		if (baseExpr.getType$().equals$LType$(Type.stringType)) {
-			this$0$0 = $this._optimizer;
-			message$0$0 = "[" + $this._identifier + "] " + "folding type cast: string as string";
-			this$0$0._log += message$0$0 + "\n";
-			replaceCb(baseExpr);
-		} else if (baseExpr instanceof PrimitiveLiteralExpression) {
-			this$0$1 = $this._optimizer;
-			message$0$1 = "[" + $this._identifier + "] " + "folding type cast: primitive literal as string";
-			this$0$1._log += message$0$1 + "\n";
-			replaceCb(new StringLiteralExpression(new Token$2(Util$encodeStringLiteral$S(baseExpr.toNormalizedString$()), false)));
-		}
-	} else if (expr._type.equals$LType$(Type.numberType)) {
-		if (baseExpr.getType$().equals$LType$(Type.numberType)) {
-			this$0$2 = $this._optimizer;
-			message$0$2 = "[" + $this._identifier + "] " + "folding type cast: number as number";
-			this$0$2._log += message$0$2 + "\n";
-			replaceCb(baseExpr);
-		} else if (baseExpr instanceof StringLiteralExpression) {
-			this$0$3 = $this._optimizer;
-			message$0$3 = "[" + $this._identifier + "] " + "folding type cast: string literal as number";
-			this$0$3._log += message$0$3 + "\n";
-			replaceCb(new NumberLiteralExpression(new Token$2(+baseExpr.getDecoded$() + "", false)));
-		} else if (baseExpr instanceof IntegerLiteralExpression) {
-			this$0$4 = $this._optimizer;
-			message$0$4 = "[" + $this._identifier + "] " + "folding type cast: int literal as number";
-			this$0$4._log += message$0$4 + "\n";
-			replaceCb(new NumberLiteralExpression(new Token$2(+baseExpr.getDecoded$() + "", false)));
-		}
-	} else if (expr._type.equals$LType$(Type.integerType)) {
-		if (baseExpr.getType$().equals$LType$(Type.integerType)) {
-			this$0$5 = $this._optimizer;
-			message$0$5 = "[" + $this._identifier + "] " + "folding type cast: int as int";
-			this$0$5._log += message$0$5 + "\n";
-			replaceCb(baseExpr);
-		} else if (baseExpr instanceof StringLiteralExpression) {
-			this$0$6 = $this._optimizer;
-			message$0$6 = "[" + $this._identifier + "] " + "folding type cast: string literal as int";
-			this$0$6._log += message$0$6 + "\n";
-			replaceCb(new IntegerLiteralExpression(new Token$2((baseExpr.getDecoded$() | 0) + "", false)));
-		} else if (baseExpr instanceof NumberLiteralExpression) {
-			this$0$7 = $this._optimizer;
-			message$0$7 = "[" + $this._identifier + "] " + "folding type cast: number literal as int";
-			this$0$7._log += message$0$7 + "\n";
-			replaceCb(new IntegerLiteralExpression(new Token$2((baseExpr.getDecoded$() | 0) + "", false)));
-		}
-	} else if (expr._type.equals$LType$(Type.booleanType)) {
-		if (baseExpr.getType$().equals$LType$(Type.booleanType)) {
-			this$0$8 = $this._optimizer;
-			message$0$8 = "[" + $this._identifier + "] " + "folding type cast: boolean as boolean";
-			this$0$8._log += message$0$8 + "\n";
-			replaceCb(baseExpr);
-		} else if (baseExpr instanceof StringLiteralExpression) {
-			this$0$9 = $this._optimizer;
-			message$0$9 = "[" + $this._identifier + "] " + "folding type cast: string literal as boolean";
-			this$0$9._log += message$0$9 + "\n";
-			replaceCb(new BooleanLiteralExpression(new Token$2(!! baseExpr.getDecoded$() + "", false)));
-		} else if (baseExpr instanceof NumberLiteralExpression) {
-			this$0$10 = $this._optimizer;
-			message$0$10 = "[" + $this._identifier + "] " + "folding type cast: number literal as boolean";
-			this$0$10._log += message$0$10 + "\n";
-			replaceCb(new BooleanLiteralExpression(new Token$2((baseExpr.getDecoded$() ? "true" : "false"), false)));
-		} else if (baseExpr instanceof IntegerLiteralExpression) {
-			this$0$11 = $this._optimizer;
-			message$0$11 = "[" + $this._identifier + "] " + "folding type cast: integer literal as boolean";
-			this$0$11._log += message$0$11 + "\n";
-			replaceCb(new BooleanLiteralExpression(new Token$2(((this$0 = baseExpr, (this$0$12 = this$0._token, this$0$12._value) | 0) ? "true" : "false"), false)));
-		}
-	}
-};
-
-_FoldConstantCommand._foldAsExpression$L_FoldConstantCommand$LAsExpression$F$LExpression$V$ = _FoldConstantCommand$_foldAsExpression$L_FoldConstantCommand$LAsExpression$F$LExpression$V$;
 
 function _DeadCodeEliminationOptimizeCommand() {
 	this._identifier = "dce";
@@ -7313,7 +3785,7 @@ _DeadCodeEliminationOptimizeCommand.prototype._eliminateDeadStoresToProperties$L
 		if (expr instanceof AssignmentExpression) {
 			assignmentExpr = expr;
 			firstExpr = assignmentExpr._expr1;
-			if (isFirstLevelPropertyAccess(firstExpr) && ! Util$isNativeClass$LType$((this$16 = firstExpr, this$16._expr).getType$())) {
+			if (isFirstLevelPropertyAccess(firstExpr) && ! Util$rootIsNativeClass$LType$((this$16 = firstExpr, this$16._expr).getType$())) {
 				this$10 = firstExpr;
 				this$0 = this$10._identifierToken;
 				propertyName = this$0._value;
@@ -7411,7 +3883,7 @@ function _DeadCodeEliminationOptimizeCommand$_eliminateDeadStoresToProperties$L_
 		if (expr instanceof AssignmentExpression) {
 			assignmentExpr = expr;
 			firstExpr = assignmentExpr._expr1;
-			if (isFirstLevelPropertyAccess(firstExpr) && ! Util$isNativeClass$LType$((this$16 = firstExpr, this$16._expr).getType$())) {
+			if (isFirstLevelPropertyAccess(firstExpr) && ! Util$rootIsNativeClass$LType$((this$16 = firstExpr, this$16._expr).getType$())) {
 				this$10 = firstExpr;
 				this$0 = this$10._identifierToken;
 				propertyName = this$0._value;
@@ -7526,6 +3998,4918 @@ function _DeadCodeEliminationOptimizeCommand$_eliminateDeadConditions$L_DeadCode
 
 _DeadCodeEliminationOptimizeCommand._eliminateDeadConditions$L_DeadCodeEliminationOptimizeCommand$LMemberFunctionDefinition$ALExpression$ = _DeadCodeEliminationOptimizeCommand$_eliminateDeadConditions$L_DeadCodeEliminationOptimizeCommand$LMemberFunctionDefinition$ALExpression$;
 
+function _ReturnIfOptimizeCommand() {
+	this._identifier = "return-if";
+	this._optimizer = null;
+	this._excludeNative = false;
+	this._altered = false;
+};
+
+$__jsx_extend([_ReturnIfOptimizeCommand], _FunctionOptimizeCommand);
+_ReturnIfOptimizeCommand.prototype.optimizeFunction$LMemberFunctionDefinition$ = function (funcDef) {
+	var message$0;
+	var this$0$0;
+	var message$0$0;
+	if (funcDef._returnType == null || funcDef._returnType.equals$LType$(Type.voidType)) {
+		return false;
+	}
+	this._altered = false;
+	_ReturnIfOptimizeCommand$_optimizeStatements$L_ReturnIfOptimizeCommand$ALStatement$(this, funcDef._statements);
+	message$0 = funcDef.getNotation$() + " " + (this._altered ? "Y" : "N");
+	this$0$0 = this._optimizer;
+	message$0$0 = "[" + this._identifier + "] " + message$0;
+	this$0$0._log += message$0$0 + "\n";
+	return this._altered;
+};
+
+
+_ReturnIfOptimizeCommand.prototype._statementsCanBeReturnExpr$ALStatement$ = function (statements) {
+	if (statements.length === 1 && statements[0] instanceof ReturnStatement) {
+		return true;
+	}
+	_ReturnIfOptimizeCommand$_optimizeStatements$L_ReturnIfOptimizeCommand$ALStatement$(this, statements);
+	return (statements.length === 1 && statements[0] instanceof ReturnStatement ? true : false);
+};
+
+
+function _ReturnIfOptimizeCommand$_statementsCanBeReturnExpr$L_ReturnIfOptimizeCommand$ALStatement$($this, statements) {
+	if (statements.length === 1 && statements[0] instanceof ReturnStatement) {
+		return true;
+	}
+	_ReturnIfOptimizeCommand$_optimizeStatements$L_ReturnIfOptimizeCommand$ALStatement$($this, statements);
+	return (statements.length === 1 && statements[0] instanceof ReturnStatement ? true : false);
+};
+
+_ReturnIfOptimizeCommand._statementsCanBeReturnExpr$L_ReturnIfOptimizeCommand$ALStatement$ = _ReturnIfOptimizeCommand$_statementsCanBeReturnExpr$L_ReturnIfOptimizeCommand$ALStatement$;
+
+_ReturnIfOptimizeCommand.prototype._optimizeStatements$ALStatement$ = function (statements) {
+	var ifStatement;
+	var onFalseStatements;
+	var token$0;
+	var condExpr$0;
+	var trueExpr$0;
+	var falseExpr$0;
+	var this$0;
+	var this$1;
+	var token$1;
+	var condExpr$1;
+	var trueExpr$1;
+	var falseExpr$1;
+	var this$2;
+	var this$3;
+	var this$4;
+	var this$5;
+	if (statements.length >= 1 && statements[statements.length - 1] instanceof IfStatement) {
+		ifStatement = statements[statements.length - 1];
+		if (_ReturnIfOptimizeCommand$_statementsCanBeReturnExpr$L_ReturnIfOptimizeCommand$ALStatement$(this, ifStatement._onTrueStatements) && _ReturnIfOptimizeCommand$_statementsCanBeReturnExpr$L_ReturnIfOptimizeCommand$ALStatement$(this, ifStatement._onFalseStatements)) {
+			token$0 = ifStatement._token;
+			condExpr$0 = ifStatement._expr;
+			this$3 = ifStatement._onTrueStatements[0];
+			trueExpr$0 = this$3._expr;
+			this$4 = ifStatement._onFalseStatements[0];
+			falseExpr$0 = this$4._expr;
+			statements[statements.length - 1] = new ReturnStatement(token$0, new ConditionalExpression$0(new Token$2("?", false), condExpr$0, trueExpr$0, falseExpr$0, falseExpr$0.getType$()));
+			this._altered = true;
+			_ReturnIfOptimizeCommand$_optimizeStatements$L_ReturnIfOptimizeCommand$ALStatement$(this, statements);
+		}
+	} else if (statements.length >= 2 && statements[statements.length - 1] instanceof ReturnStatement && statements[statements.length - 2] instanceof IfStatement) {
+		ifStatement = statements[statements.length - 2];
+		if (_ReturnIfOptimizeCommand$_statementsCanBeReturnExpr$L_ReturnIfOptimizeCommand$ALStatement$(this, ifStatement._onTrueStatements)) {
+			onFalseStatements = ifStatement._onFalseStatements;
+			if (onFalseStatements.length === 0) {
+				statements.splice(statements.length - 2, 2, (token$1 = ifStatement._token, condExpr$1 = ifStatement._expr, trueExpr$1 = (this$0 = ifStatement._onTrueStatements[0], this$0._expr), falseExpr$1 = (this$1 = statements[statements.length - 1], this$1._expr), new ReturnStatement(token$1, new ConditionalExpression$0(new Token$2("?", false), condExpr$1, trueExpr$1, falseExpr$1, falseExpr$1.getType$()))));
+				this._altered = true;
+				_ReturnIfOptimizeCommand$_optimizeStatements$L_ReturnIfOptimizeCommand$ALStatement$(this, statements);
+			} else if (onFalseStatements.length === 1 && onFalseStatements[0] instanceof IfStatement && (this$5 = onFalseStatements[0], this$5._onFalseStatements).length === 0) {
+				(this$2 = onFalseStatements[0], this$2._onFalseStatements).push(statements[statements.length - 1]);
+				statements.pop();
+				this._altered = true;
+				_ReturnIfOptimizeCommand$_optimizeStatements$L_ReturnIfOptimizeCommand$ALStatement$(this, statements);
+			}
+		}
+	}
+};
+
+
+function _ReturnIfOptimizeCommand$_optimizeStatements$L_ReturnIfOptimizeCommand$ALStatement$($this, statements) {
+	var ifStatement;
+	var onFalseStatements;
+	var token$0;
+	var condExpr$0;
+	var trueExpr$0;
+	var falseExpr$0;
+	var this$0;
+	var this$1;
+	var token$1;
+	var condExpr$1;
+	var trueExpr$1;
+	var falseExpr$1;
+	var this$2;
+	var this$3;
+	var this$4;
+	var this$5;
+	if (statements.length >= 1 && statements[statements.length - 1] instanceof IfStatement) {
+		ifStatement = statements[statements.length - 1];
+		if (_ReturnIfOptimizeCommand$_statementsCanBeReturnExpr$L_ReturnIfOptimizeCommand$ALStatement$($this, ifStatement._onTrueStatements) && _ReturnIfOptimizeCommand$_statementsCanBeReturnExpr$L_ReturnIfOptimizeCommand$ALStatement$($this, ifStatement._onFalseStatements)) {
+			token$0 = ifStatement._token;
+			condExpr$0 = ifStatement._expr;
+			this$3 = ifStatement._onTrueStatements[0];
+			trueExpr$0 = this$3._expr;
+			this$4 = ifStatement._onFalseStatements[0];
+			falseExpr$0 = this$4._expr;
+			statements[statements.length - 1] = new ReturnStatement(token$0, new ConditionalExpression$0(new Token$2("?", false), condExpr$0, trueExpr$0, falseExpr$0, falseExpr$0.getType$()));
+			$this._altered = true;
+			_ReturnIfOptimizeCommand$_optimizeStatements$L_ReturnIfOptimizeCommand$ALStatement$($this, statements);
+		}
+	} else if (statements.length >= 2 && statements[statements.length - 1] instanceof ReturnStatement && statements[statements.length - 2] instanceof IfStatement) {
+		ifStatement = statements[statements.length - 2];
+		if (_ReturnIfOptimizeCommand$_statementsCanBeReturnExpr$L_ReturnIfOptimizeCommand$ALStatement$($this, ifStatement._onTrueStatements)) {
+			onFalseStatements = ifStatement._onFalseStatements;
+			if (onFalseStatements.length === 0) {
+				statements.splice(statements.length - 2, 2, (token$1 = ifStatement._token, condExpr$1 = ifStatement._expr, trueExpr$1 = (this$0 = ifStatement._onTrueStatements[0], this$0._expr), falseExpr$1 = (this$1 = statements[statements.length - 1], this$1._expr), new ReturnStatement(token$1, new ConditionalExpression$0(new Token$2("?", false), condExpr$1, trueExpr$1, falseExpr$1, falseExpr$1.getType$()))));
+				$this._altered = true;
+				_ReturnIfOptimizeCommand$_optimizeStatements$L_ReturnIfOptimizeCommand$ALStatement$($this, statements);
+			} else if (onFalseStatements.length === 1 && onFalseStatements[0] instanceof IfStatement && (this$5 = onFalseStatements[0], this$5._onFalseStatements).length === 0) {
+				(this$2 = onFalseStatements[0], this$2._onFalseStatements).push(statements[statements.length - 1]);
+				statements.pop();
+				$this._altered = true;
+				_ReturnIfOptimizeCommand$_optimizeStatements$L_ReturnIfOptimizeCommand$ALStatement$($this, statements);
+			}
+		}
+	}
+};
+
+_ReturnIfOptimizeCommand._optimizeStatements$L_ReturnIfOptimizeCommand$ALStatement$ = _ReturnIfOptimizeCommand$_optimizeStatements$L_ReturnIfOptimizeCommand$ALStatement$;
+
+_ReturnIfOptimizeCommand.prototype._createReturnStatement$LToken$LExpression$LExpression$LExpression$ = function (token, condExpr, trueExpr, falseExpr) {
+	return new ReturnStatement(token, new ConditionalExpression$0(new Token$2("?", false), condExpr, trueExpr, falseExpr, falseExpr.getType$()));
+};
+
+
+function _ReturnIfOptimizeCommand$_createReturnStatement$L_ReturnIfOptimizeCommand$LToken$LExpression$LExpression$LExpression$($this, token, condExpr, trueExpr, falseExpr) {
+	return new ReturnStatement(token, new ConditionalExpression$0(new Token$2("?", false), condExpr, trueExpr, falseExpr, falseExpr.getType$()));
+};
+
+_ReturnIfOptimizeCommand._createReturnStatement$L_ReturnIfOptimizeCommand$LToken$LExpression$LExpression$LExpression$ = _ReturnIfOptimizeCommand$_createReturnStatement$L_ReturnIfOptimizeCommand$LToken$LExpression$LExpression$LExpression$;
+
+function _LCSECachedExpression(origExpr, replaceCb) {
+	this._origExpr = origExpr;
+	this._replaceCb = replaceCb;
+	this._localExpr = null;
+};
+
+$__jsx_extend([_LCSECachedExpression], Object);
+function _LCSECachedExpression$getOrigExpr$L_LCSECachedExpression$($this) {
+	return $this._origExpr;
+};
+
+_LCSECachedExpression.getOrigExpr$L_LCSECachedExpression$ = _LCSECachedExpression$getOrigExpr$L_LCSECachedExpression$;
+
+function _LCSECachedExpression$getLocalExpr$L_LCSECachedExpression$F$LType$SLLocalExpression$$($this, createVarCb) {
+	var this$0;
+	var this$1;
+	if ($this._localExpr == null) {
+		$this._localExpr = createVarCb($this._origExpr.getType$(), (this$1 = (this$0 = $this._origExpr, this$0._identifierToken), this$1._value));
+		$this._replaceCb(new AssignmentExpression(new Token$2("=", false), $this._localExpr, $this._origExpr));
+	}
+	return $this._localExpr;
+};
+
+_LCSECachedExpression.getLocalExpr$L_LCSECachedExpression$F$LType$SLLocalExpression$$ = _LCSECachedExpression$getLocalExpr$L_LCSECachedExpression$F$LType$SLLocalExpression$$;
+
+function _LCSEOptimizeCommand() {
+	this._identifier = "lcse";
+	this._optimizer = null;
+	this._excludeNative = false;
+};
+
+$__jsx_extend([_LCSEOptimizeCommand], _FunctionOptimizeCommand);
+_LCSEOptimizeCommand.prototype.optimizeFunction$LMemberFunctionDefinition$ = function (funcDef) {
+	var $this = this;
+	_Util$optimizeBasicBlock$LMemberFunctionDefinition$F$ALExpression$V$(funcDef, (function (exprs) {
+		_LCSEOptimizeCommand$_optimizeExpressions$L_LCSEOptimizeCommand$LMemberFunctionDefinition$ALExpression$($this, funcDef, exprs);
+	}));
+	return true;
+};
+
+
+_LCSEOptimizeCommand.prototype._optimizeExpressions$LMemberFunctionDefinition$ALExpression$ = function (funcDef, exprs) {
+	var $this = this;
+	var cachedExprs;
+	var getCacheKey;
+	var registerCacheable;
+	var clearCacheByLocalName;
+	var clearCache;
+	var this$0$0;
+	var message$0$0;
+	this$0$0 = this._optimizer;
+	message$0$0 = "[" + this._identifier + "] " + "optimizing expressions starting";
+	this$0$0._log += message$0$0 + "\n";
+	cachedExprs = {};
+	getCacheKey = (function (expr) {
+		var propertyExpr;
+		var receiverType;
+		var base;
+		var this$0;
+		var this$1;
+		var this$2;
+		var this$3;
+		if (expr instanceof PropertyExpression) {
+			propertyExpr = expr;
+			receiverType = propertyExpr._expr.getType$();
+			if (Util$rootIsNativeClass$LType$(receiverType)) {
+				return null;
+			}
+			base = getCacheKey(propertyExpr._expr);
+			return (base == null ? null : base + "." + (this$0 = propertyExpr._identifierToken, this$0._value));
+		} else if (expr instanceof LocalExpression) {
+			this$3 = expr;
+			this$2 = this$3._local;
+			this$1 = this$2._name;
+			return this$1._value;
+		} else if (expr instanceof ThisExpression) {
+			return "this";
+		}
+		return null;
+	});
+	registerCacheable = (function (key, expr, replaceCb) {
+		var message$0;
+		var this$0$0;
+		var message$0$0;
+		message$0 = "registering lcse entry for: " + key;
+		this$0$0 = $this._optimizer;
+		message$0$0 = "[" + $this._identifier + "] " + message$0;
+		this$0$0._log += message$0$0 + "\n";
+		cachedExprs[key] = ({_origExpr: expr, _replaceCb: replaceCb, _localExpr: null});
+	});
+	clearCacheByLocalName = (function (name) {
+		var k;
+		var message$0;
+		var this$0$0;
+		var message$0$0;
+		var message$1;
+		var this$0$1;
+		var message$0$1;
+		message$0 = "clearing lcse entry for local name: " + name;
+		this$0$0 = $this._optimizer;
+		message$0$0 = "[" + $this._identifier + "] " + message$0;
+		this$0$0._log += message$0$0 + "\n";
+		for (k in cachedExprs) {
+			if (k.substring(0, name.length + 1) === name + ".") {
+				message$1 = "  removing: " + k;
+				this$0$1 = $this._optimizer;
+				message$0$1 = "[" + $this._identifier + "] " + message$1;
+				this$0$1._log += message$0$1 + "\n";
+				delete cachedExprs[k];
+			}
+		}
+	});
+	clearCache = (function () {
+		var this$0$0;
+		var message$0$0;
+		this$0$0 = $this._optimizer;
+		message$0$0 = "[" + $this._identifier + "] " + "clearing lcse cache";
+		this$0$0._log += message$0$0 + "\n";
+		cachedExprs = {};
+	});
+	Util$forEachExpression$F$LExpression$F$LExpression$V$B$ALExpression$((function onExpr(expr, replaceCb) {
+		var assignmentExpr;
+		var lhsExpr;
+		var lhsPropertyExpr;
+		var cacheKey;
+		var incrementExpr;
+		var propertyExpr;
+		var conditionalExpr;
+		var funcExpr;
+		var args;
+		var i;
+		var this$0;
+		var this$1;
+		var this$2;
+		var this$3;
+		var this$4;
+		var this$5;
+		var this$6;
+		var this$0$0;
+		var message$0$0;
+		var this$7;
+		var message$0;
+		var this$0$1;
+		var message$0$1;
+		var this$8;
+		var that$0;
+		var this$9;
+		var this$10;
+		if (expr instanceof AssignmentExpression || expr instanceof FusedAssignmentExpression) {
+			assignmentExpr = expr;
+			lhsExpr = assignmentExpr._expr1;
+			if (lhsExpr instanceof LocalExpression) {
+				onExpr(assignmentExpr._expr2, (function (expr) {
+					BinaryExpression$setSecondExpr$LBinaryExpression$LExpression$(assignmentExpr, expr);
+				}));
+				clearCacheByLocalName((this$2 = (this$1 = (this$0 = lhsExpr, this$0._local), this$1._name), this$2._value));
+			} else if (lhsExpr instanceof PropertyExpression) {
+				lhsPropertyExpr = lhsExpr;
+				onExpr((this$3 = lhsExpr, this$3._expr), (function (expr) {
+					UnaryExpression$setExpr$LUnaryExpression$LExpression$(lhsPropertyExpr, expr);
+				}));
+				onExpr(assignmentExpr._expr2, (function (expr) {
+					BinaryExpression$setSecondExpr$LBinaryExpression$LExpression$(assignmentExpr, expr);
+				}));
+				if ((this$4 = lhsPropertyExpr._identifierToken, this$4._value) === "length") {
+				} else {
+					cacheKey = getCacheKey(lhsExpr);
+					if (cacheKey) {
+						registerCacheable(cacheKey, lhsExpr, (function (expr) {
+							BinaryExpression$setFirstExpr$LBinaryExpression$LExpression$(assignmentExpr, expr);
+						}));
+					}
+				}
+			} else {
+				clearCache();
+			}
+			return true;
+		} else if (expr instanceof IncrementExpression) {
+			incrementExpr = expr;
+			if (incrementExpr._expr instanceof PropertyExpression) {
+				propertyExpr = incrementExpr._expr;
+				onExpr(propertyExpr._expr, (function (expr) {
+					UnaryExpression$setExpr$LUnaryExpression$LExpression$(propertyExpr, expr);
+				}));
+			}
+			clearCache();
+			return true;
+		} else if (expr instanceof ConditionalExpression) {
+			conditionalExpr = expr;
+			onExpr(conditionalExpr._condExpr, (function (expr) {
+				ConditionalExpression$setCondExpr$LConditionalExpression$LExpression$(conditionalExpr, expr);
+			}));
+			clearCache();
+			return true;
+		} else if (expr instanceof LogicalExpression) {
+			if (! Expression$forEachExpression$LExpression$F$LExpression$B$(expr, (function (expr) {
+				return ! _Util$exprHasSideEffects$LExpression$(expr);
+			}))) {
+				clearCache();
+				return true;
+			}
+		} else if (expr instanceof FunctionExpression) {
+			clearCache();
+			return true;
+		} else if (expr instanceof CallExpression) {
+			this$5 = expr;
+			funcExpr = this$5._expr;
+			if (funcExpr instanceof LocalExpression) {
+			} else if (funcExpr instanceof PropertyExpression) {
+				propertyExpr = funcExpr;
+				onExpr(propertyExpr._expr, (function (expr) {
+					UnaryExpression$setExpr$LUnaryExpression$LExpression$(propertyExpr, expr);
+				}));
+			} else {
+				clearCache();
+			}
+			this$6 = expr;
+			args = this$6._args;
+			for (i = 0; i < args.length; ++i) {
+				onExpr(args[i], (function (args, index) {
+					return (function (expr) {
+						args[index] = expr;
+					});
+				})(args, i));
+			}
+			clearCache();
+			return true;
+		} else if (expr instanceof NewExpression) {
+			this$0$0 = $this._optimizer;
+			message$0$0 = "[" + $this._identifier + "] " + "new expression";
+			this$0$0._log += message$0$0 + "\n";
+			this$7 = expr;
+			args = this$7._args;
+			for (i = 0; i < args.length; ++i) {
+				onExpr(args[i], (function (args, index) {
+					return (function (expr) {
+						args[index] = expr;
+					});
+				})(args, i));
+			}
+			clearCache();
+			return true;
+		}
+		if (expr instanceof PropertyExpression) {
+			if ((this$10 = (this$9 = expr, this$9._identifierToken), this$10._value) === "length") {
+			} else {
+				cacheKey = getCacheKey(expr);
+				if (cacheKey) {
+					message$0 = "rewriting cse for: " + cacheKey;
+					this$0$1 = $this._optimizer;
+					message$0$1 = "[" + $this._identifier + "] " + message$0;
+					this$0$1._log += message$0$1 + "\n";
+					if (cachedExprs[cacheKey]) {
+						replaceCb((this$8 = _LCSECachedExpression$getLocalExpr$L_LCSECachedExpression$F$LType$SLLocalExpression$$(cachedExprs[cacheKey], (function (type, baseName) {
+							var localVar;
+							localVar = _OptimizeCommand$createVar$L_OptimizeCommand$LMemberFunctionDefinition$LType$S($this, funcDef, type, baseName);
+							return new LocalExpression(LocalVariable$getName$LLocalVariable$(localVar), localVar);
+						})), that$0 = new LocalExpression(this$8._token, this$8._local), that$0._cloned = true, that$0));
+					} else {
+						registerCacheable(cacheKey, expr, replaceCb);
+					}
+				}
+			}
+		}
+		return expr.forEachExpression$F$LExpression$F$LExpression$V$B$(onExpr);
+	}), exprs);
+};
+
+
+function _LCSEOptimizeCommand$_optimizeExpressions$L_LCSEOptimizeCommand$LMemberFunctionDefinition$ALExpression$($this, funcDef, exprs) {
+	var cachedExprs;
+	var getCacheKey;
+	var registerCacheable;
+	var clearCacheByLocalName;
+	var clearCache;
+	var this$0$0;
+	var message$0$0;
+	this$0$0 = $this._optimizer;
+	message$0$0 = "[" + $this._identifier + "] " + "optimizing expressions starting";
+	this$0$0._log += message$0$0 + "\n";
+	cachedExprs = {};
+	getCacheKey = (function (expr) {
+		var propertyExpr;
+		var receiverType;
+		var base;
+		var this$0;
+		var this$1;
+		var this$2;
+		var this$3;
+		if (expr instanceof PropertyExpression) {
+			propertyExpr = expr;
+			receiverType = propertyExpr._expr.getType$();
+			if (Util$rootIsNativeClass$LType$(receiverType)) {
+				return null;
+			}
+			base = getCacheKey(propertyExpr._expr);
+			return (base == null ? null : base + "." + (this$0 = propertyExpr._identifierToken, this$0._value));
+		} else if (expr instanceof LocalExpression) {
+			this$3 = expr;
+			this$2 = this$3._local;
+			this$1 = this$2._name;
+			return this$1._value;
+		} else if (expr instanceof ThisExpression) {
+			return "this";
+		}
+		return null;
+	});
+	registerCacheable = (function (key, expr, replaceCb) {
+		var message$0;
+		var this$0$0;
+		var message$0$0;
+		message$0 = "registering lcse entry for: " + key;
+		this$0$0 = $this._optimizer;
+		message$0$0 = "[" + $this._identifier + "] " + message$0;
+		this$0$0._log += message$0$0 + "\n";
+		cachedExprs[key] = ({_origExpr: expr, _replaceCb: replaceCb, _localExpr: null});
+	});
+	clearCacheByLocalName = (function (name) {
+		var k;
+		var message$0;
+		var this$0$0;
+		var message$0$0;
+		var message$1;
+		var this$0$1;
+		var message$0$1;
+		message$0 = "clearing lcse entry for local name: " + name;
+		this$0$0 = $this._optimizer;
+		message$0$0 = "[" + $this._identifier + "] " + message$0;
+		this$0$0._log += message$0$0 + "\n";
+		for (k in cachedExprs) {
+			if (k.substring(0, name.length + 1) === name + ".") {
+				message$1 = "  removing: " + k;
+				this$0$1 = $this._optimizer;
+				message$0$1 = "[" + $this._identifier + "] " + message$1;
+				this$0$1._log += message$0$1 + "\n";
+				delete cachedExprs[k];
+			}
+		}
+	});
+	clearCache = (function () {
+		var this$0$0;
+		var message$0$0;
+		this$0$0 = $this._optimizer;
+		message$0$0 = "[" + $this._identifier + "] " + "clearing lcse cache";
+		this$0$0._log += message$0$0 + "\n";
+		cachedExprs = {};
+	});
+	Util$forEachExpression$F$LExpression$F$LExpression$V$B$ALExpression$((function onExpr(expr, replaceCb) {
+		var assignmentExpr;
+		var lhsExpr;
+		var lhsPropertyExpr;
+		var cacheKey;
+		var incrementExpr;
+		var propertyExpr;
+		var conditionalExpr;
+		var funcExpr;
+		var args;
+		var i;
+		var this$0;
+		var this$1;
+		var this$2;
+		var this$3;
+		var this$4;
+		var this$5;
+		var this$6;
+		var this$0$0;
+		var message$0$0;
+		var this$7;
+		var message$0;
+		var this$0$1;
+		var message$0$1;
+		var this$8;
+		var that$0;
+		var this$9;
+		var this$10;
+		if (expr instanceof AssignmentExpression || expr instanceof FusedAssignmentExpression) {
+			assignmentExpr = expr;
+			lhsExpr = assignmentExpr._expr1;
+			if (lhsExpr instanceof LocalExpression) {
+				onExpr(assignmentExpr._expr2, (function (expr) {
+					BinaryExpression$setSecondExpr$LBinaryExpression$LExpression$(assignmentExpr, expr);
+				}));
+				clearCacheByLocalName((this$2 = (this$1 = (this$0 = lhsExpr, this$0._local), this$1._name), this$2._value));
+			} else if (lhsExpr instanceof PropertyExpression) {
+				lhsPropertyExpr = lhsExpr;
+				onExpr((this$3 = lhsExpr, this$3._expr), (function (expr) {
+					UnaryExpression$setExpr$LUnaryExpression$LExpression$(lhsPropertyExpr, expr);
+				}));
+				onExpr(assignmentExpr._expr2, (function (expr) {
+					BinaryExpression$setSecondExpr$LBinaryExpression$LExpression$(assignmentExpr, expr);
+				}));
+				if ((this$4 = lhsPropertyExpr._identifierToken, this$4._value) === "length") {
+				} else {
+					cacheKey = getCacheKey(lhsExpr);
+					if (cacheKey) {
+						registerCacheable(cacheKey, lhsExpr, (function (expr) {
+							BinaryExpression$setFirstExpr$LBinaryExpression$LExpression$(assignmentExpr, expr);
+						}));
+					}
+				}
+			} else {
+				clearCache();
+			}
+			return true;
+		} else if (expr instanceof IncrementExpression) {
+			incrementExpr = expr;
+			if (incrementExpr._expr instanceof PropertyExpression) {
+				propertyExpr = incrementExpr._expr;
+				onExpr(propertyExpr._expr, (function (expr) {
+					UnaryExpression$setExpr$LUnaryExpression$LExpression$(propertyExpr, expr);
+				}));
+			}
+			clearCache();
+			return true;
+		} else if (expr instanceof ConditionalExpression) {
+			conditionalExpr = expr;
+			onExpr(conditionalExpr._condExpr, (function (expr) {
+				ConditionalExpression$setCondExpr$LConditionalExpression$LExpression$(conditionalExpr, expr);
+			}));
+			clearCache();
+			return true;
+		} else if (expr instanceof LogicalExpression) {
+			if (! Expression$forEachExpression$LExpression$F$LExpression$B$(expr, (function (expr) {
+				return ! _Util$exprHasSideEffects$LExpression$(expr);
+			}))) {
+				clearCache();
+				return true;
+			}
+		} else if (expr instanceof FunctionExpression) {
+			clearCache();
+			return true;
+		} else if (expr instanceof CallExpression) {
+			this$5 = expr;
+			funcExpr = this$5._expr;
+			if (funcExpr instanceof LocalExpression) {
+			} else if (funcExpr instanceof PropertyExpression) {
+				propertyExpr = funcExpr;
+				onExpr(propertyExpr._expr, (function (expr) {
+					UnaryExpression$setExpr$LUnaryExpression$LExpression$(propertyExpr, expr);
+				}));
+			} else {
+				clearCache();
+			}
+			this$6 = expr;
+			args = this$6._args;
+			for (i = 0; i < args.length; ++i) {
+				onExpr(args[i], (function (args, index) {
+					return (function (expr) {
+						args[index] = expr;
+					});
+				})(args, i));
+			}
+			clearCache();
+			return true;
+		} else if (expr instanceof NewExpression) {
+			this$0$0 = $this._optimizer;
+			message$0$0 = "[" + $this._identifier + "] " + "new expression";
+			this$0$0._log += message$0$0 + "\n";
+			this$7 = expr;
+			args = this$7._args;
+			for (i = 0; i < args.length; ++i) {
+				onExpr(args[i], (function (args, index) {
+					return (function (expr) {
+						args[index] = expr;
+					});
+				})(args, i));
+			}
+			clearCache();
+			return true;
+		}
+		if (expr instanceof PropertyExpression) {
+			if ((this$10 = (this$9 = expr, this$9._identifierToken), this$10._value) === "length") {
+			} else {
+				cacheKey = getCacheKey(expr);
+				if (cacheKey) {
+					message$0 = "rewriting cse for: " + cacheKey;
+					this$0$1 = $this._optimizer;
+					message$0$1 = "[" + $this._identifier + "] " + message$0;
+					this$0$1._log += message$0$1 + "\n";
+					if (cachedExprs[cacheKey]) {
+						replaceCb((this$8 = _LCSECachedExpression$getLocalExpr$L_LCSECachedExpression$F$LType$SLLocalExpression$$(cachedExprs[cacheKey], (function (type, baseName) {
+							var localVar;
+							localVar = _OptimizeCommand$createVar$L_OptimizeCommand$LMemberFunctionDefinition$LType$S($this, funcDef, type, baseName);
+							return new LocalExpression(LocalVariable$getName$LLocalVariable$(localVar), localVar);
+						})), that$0 = new LocalExpression(this$8._token, this$8._local), that$0._cloned = true, that$0));
+					} else {
+						registerCacheable(cacheKey, expr, replaceCb);
+					}
+				}
+			}
+		}
+		return expr.forEachExpression$F$LExpression$F$LExpression$V$B$(onExpr);
+	}), exprs);
+};
+
+_LCSEOptimizeCommand._optimizeExpressions$L_LCSEOptimizeCommand$LMemberFunctionDefinition$ALExpression$ = _LCSEOptimizeCommand$_optimizeExpressions$L_LCSEOptimizeCommand$LMemberFunctionDefinition$ALExpression$;
+
+function _ArrayLengthOptimizeCommand() {
+	this._identifier = "array-length";
+	this._optimizer = null;
+	this._excludeNative = false;
+};
+
+$__jsx_extend([_ArrayLengthOptimizeCommand], _FunctionOptimizeCommand);
+_ArrayLengthOptimizeCommand.prototype.optimizeFunction$LMemberFunctionDefinition$ = function (funcDef) {
+	var $this = this;
+	Util$forEachStatement$F$LStatement$B$ALStatement$((function onStatement(statement) {
+		var condExpr;
+		var arrayLocal;
+		var this$0;
+		statement.forEachStatement$F$LStatement$B$(onStatement);
+		if (statement instanceof ForStatement) {
+			this$0 = statement;
+			condExpr = this$0._condExpr;
+			arrayLocal = (condExpr != null ? _ArrayLengthOptimizeCommand$_hasLengthExprOfLocalArray$L_ArrayLengthOptimizeCommand$LExpression$($this, condExpr) : null);
+			if (arrayLocal != null) {
+				_ArrayLengthOptimizeCommand$_optimizeArrayLength$L_ArrayLengthOptimizeCommand$LMemberFunctionDefinition$LForStatement$LLocalVariable$($this, funcDef, statement, arrayLocal);
+			}
+		}
+		return true;
+	}), funcDef._statements);
+	return true;
+};
+
+
+_ArrayLengthOptimizeCommand.prototype._optimizeArrayLength$LMemberFunctionDefinition$LForStatement$LLocalVariable$ = function (funcDef, statement, arrayLocal) {
+	var $this = this;
+	var lengthLocal;
+	var assignToLocal;
+	var onExpr;
+	var message$0;
+	var this$0$0;
+	var message$0$0;
+	var this$0;
+	var this$1;
+	var this$2;
+	var expr$0;
+	var this$3;
+	if (_ArrayLengthOptimizeCommand$_lengthIsUnmodifiedInExpr$L_ArrayLengthOptimizeCommand$LExpression$(this, statement._condExpr) && _ArrayLengthOptimizeCommand$_lengthIsUnmodifiedInExpr$L_ArrayLengthOptimizeCommand$LExpression$(this, statement._postExpr) && (! Util$forEachStatement$F$LStatement$B$ALStatement$((function (statement) {
+		return _ArrayLengthOptimizeCommand$_lengthIsUnmodifiedInStatement$L_ArrayLengthOptimizeCommand$LStatement$($this, statement);
+	}), statement._statements) ? false : true)) {
+		message$0 = funcDef.getNotation$() + " optimizing " + (this$3 = statement._token, "'" + this$3._value + "'" + " at " + (this$3._filename || "<<unknown>>") + ":" + (this$3._lineNumber + "") + ":" + (this$3._columnNumber + ""));
+		this$0$0 = this._optimizer;
+		message$0$0 = "[" + this._identifier + "] " + message$0;
+		this$0$0._log += message$0$0 + "\n";
+		lengthLocal = _OptimizeCommand$createVar$L_OptimizeCommand$LMemberFunctionDefinition$LType$S(this, funcDef, Type.integerType, (this$0 = arrayLocal._name, this$0._value) + "$len");
+		assignToLocal = new AssignmentExpression(new Token$3("="), new LocalExpression(new Token$2((this$1 = lengthLocal._name, this$1._value), true), lengthLocal), new PropertyExpression$0(new Token$3("."), new LocalExpression(new Token$2((this$2 = arrayLocal._name, this$2._value), true), arrayLocal), new Token$3("length"), [], lengthLocal._type));
+		if (statement._initExpr != null) {
+			expr$0 = new CommaExpression(new Token$3(","), statement._initExpr, assignToLocal);
+			statement._initExpr = expr$0;
+		} else {
+			statement._initExpr = assignToLocal;
+		}
+		onExpr = (function (expr, replaceCb) {
+			var this$0;
+			var this$1;
+			var this$2;
+			var this$3;
+			var this$4;
+			var this$5;
+			if (expr instanceof PropertyExpression && (this$2 = (this$1 = expr, this$1._identifierToken), this$2._value) === "length" && (this$3 = expr, this$3._expr) instanceof LocalExpression && (this$5 = (this$4 = expr, this$4._expr), this$5._local) == arrayLocal) {
+				replaceCb(new LocalExpression(new Token$2((this$0 = lengthLocal._name, this$0._value), true), lengthLocal));
+			} else {
+				expr.forEachExpression$F$LExpression$F$LExpression$V$B$(onExpr);
+			}
+			return true;
+		});
+		statement._condExpr.forEachExpression$F$LExpression$F$LExpression$V$B$(onExpr);
+		statement._postExpr.forEachExpression$F$LExpression$F$LExpression$V$B$(onExpr);
+		Util$forEachStatement$F$LStatement$B$ALStatement$((function onStatement2(statement) {
+			statement.forEachStatement$F$LStatement$B$(onStatement2);
+			statement.forEachExpression$F$LExpression$F$LExpression$V$B$(onExpr);
+			return true;
+		}), statement._statements);
+	}
+};
+
+
+function _ArrayLengthOptimizeCommand$_optimizeArrayLength$L_ArrayLengthOptimizeCommand$LMemberFunctionDefinition$LForStatement$LLocalVariable$($this, funcDef, statement, arrayLocal) {
+	var lengthLocal;
+	var assignToLocal;
+	var onExpr;
+	var message$0;
+	var this$0$0;
+	var message$0$0;
+	var this$0;
+	var this$1;
+	var this$2;
+	var expr$0;
+	var this$3;
+	if (_ArrayLengthOptimizeCommand$_lengthIsUnmodifiedInExpr$L_ArrayLengthOptimizeCommand$LExpression$($this, statement._condExpr) && _ArrayLengthOptimizeCommand$_lengthIsUnmodifiedInExpr$L_ArrayLengthOptimizeCommand$LExpression$($this, statement._postExpr) && (! Util$forEachStatement$F$LStatement$B$ALStatement$((function (statement) {
+		return _ArrayLengthOptimizeCommand$_lengthIsUnmodifiedInStatement$L_ArrayLengthOptimizeCommand$LStatement$($this, statement);
+	}), statement._statements) ? false : true)) {
+		message$0 = funcDef.getNotation$() + " optimizing " + (this$3 = statement._token, "'" + this$3._value + "'" + " at " + (this$3._filename || "<<unknown>>") + ":" + (this$3._lineNumber + "") + ":" + (this$3._columnNumber + ""));
+		this$0$0 = $this._optimizer;
+		message$0$0 = "[" + $this._identifier + "] " + message$0;
+		this$0$0._log += message$0$0 + "\n";
+		lengthLocal = _OptimizeCommand$createVar$L_OptimizeCommand$LMemberFunctionDefinition$LType$S($this, funcDef, Type.integerType, (this$0 = arrayLocal._name, this$0._value) + "$len");
+		assignToLocal = new AssignmentExpression(new Token$3("="), new LocalExpression(new Token$2((this$1 = lengthLocal._name, this$1._value), true), lengthLocal), new PropertyExpression$0(new Token$3("."), new LocalExpression(new Token$2((this$2 = arrayLocal._name, this$2._value), true), arrayLocal), new Token$3("length"), [], lengthLocal._type));
+		if (statement._initExpr != null) {
+			expr$0 = new CommaExpression(new Token$3(","), statement._initExpr, assignToLocal);
+			statement._initExpr = expr$0;
+		} else {
+			statement._initExpr = assignToLocal;
+		}
+		onExpr = (function (expr, replaceCb) {
+			var this$0;
+			var this$1;
+			var this$2;
+			var this$3;
+			var this$4;
+			var this$5;
+			if (expr instanceof PropertyExpression && (this$2 = (this$1 = expr, this$1._identifierToken), this$2._value) === "length" && (this$3 = expr, this$3._expr) instanceof LocalExpression && (this$5 = (this$4 = expr, this$4._expr), this$5._local) == arrayLocal) {
+				replaceCb(new LocalExpression(new Token$2((this$0 = lengthLocal._name, this$0._value), true), lengthLocal));
+			} else {
+				expr.forEachExpression$F$LExpression$F$LExpression$V$B$(onExpr);
+			}
+			return true;
+		});
+		statement._condExpr.forEachExpression$F$LExpression$F$LExpression$V$B$(onExpr);
+		statement._postExpr.forEachExpression$F$LExpression$F$LExpression$V$B$(onExpr);
+		Util$forEachStatement$F$LStatement$B$ALStatement$((function onStatement2(statement) {
+			statement.forEachStatement$F$LStatement$B$(onStatement2);
+			statement.forEachExpression$F$LExpression$F$LExpression$V$B$(onExpr);
+			return true;
+		}), statement._statements);
+	}
+};
+
+_ArrayLengthOptimizeCommand._optimizeArrayLength$L_ArrayLengthOptimizeCommand$LMemberFunctionDefinition$LForStatement$LLocalVariable$ = _ArrayLengthOptimizeCommand$_optimizeArrayLength$L_ArrayLengthOptimizeCommand$LMemberFunctionDefinition$LForStatement$LLocalVariable$;
+
+_ArrayLengthOptimizeCommand.prototype._hasLengthExprOfLocalArray$LExpression$ = function (expr) {
+	var $this = this;
+	var local;
+	local = null;
+	Expression$forEachExpression$LExpression$F$LExpression$B$(expr, (function onExpr(expr) {
+		var this$0;
+		var this$1;
+		var this$2;
+		var this$3;
+		var this$4;
+		var this$5;
+		var this$6;
+		var this$0$0;
+		if (expr instanceof PropertyExpression && (this$3 = (this$2 = expr, this$2._identifierToken), this$3._value) === "length" && (this$4 = expr, this$4._expr) instanceof LocalExpression && _ArrayLengthOptimizeCommand$_typeIsArray$L_ArrayLengthOptimizeCommand$LType$($this, (this$6 = (this$5 = expr, this$5._expr).getType$(), this$6 instanceof NullableType ? (this$0$0 = this$6, this$0$0._baseType) : this$6))) {
+			this$0 = (this$1 = expr, this$1._expr);
+			local = this$0._local;
+			return false;
+		}
+		return Expression$forEachExpression$LExpression$F$LExpression$B$(expr, onExpr);
+	}));
+	return local;
+};
+
+
+function _ArrayLengthOptimizeCommand$_hasLengthExprOfLocalArray$L_ArrayLengthOptimizeCommand$LExpression$($this, expr) {
+	var local;
+	local = null;
+	Expression$forEachExpression$LExpression$F$LExpression$B$(expr, (function onExpr(expr) {
+		var this$0;
+		var this$1;
+		var this$2;
+		var this$3;
+		var this$4;
+		var this$5;
+		var this$6;
+		var this$0$0;
+		if (expr instanceof PropertyExpression && (this$3 = (this$2 = expr, this$2._identifierToken), this$3._value) === "length" && (this$4 = expr, this$4._expr) instanceof LocalExpression && _ArrayLengthOptimizeCommand$_typeIsArray$L_ArrayLengthOptimizeCommand$LType$($this, (this$6 = (this$5 = expr, this$5._expr).getType$(), this$6 instanceof NullableType ? (this$0$0 = this$6, this$0$0._baseType) : this$6))) {
+			this$0 = (this$1 = expr, this$1._expr);
+			local = this$0._local;
+			return false;
+		}
+		return Expression$forEachExpression$LExpression$F$LExpression$B$(expr, onExpr);
+	}));
+	return local;
+};
+
+_ArrayLengthOptimizeCommand._hasLengthExprOfLocalArray$L_ArrayLengthOptimizeCommand$LExpression$ = _ArrayLengthOptimizeCommand$_hasLengthExprOfLocalArray$L_ArrayLengthOptimizeCommand$LExpression$;
+
+_ArrayLengthOptimizeCommand.prototype._lengthIsUnmodifiedInStatement$LStatement$ = function (statement) {
+	var $this = this;
+	return (! statement.forEachStatement$F$LStatement$B$((function (statement) {
+		return _ArrayLengthOptimizeCommand$_lengthIsUnmodifiedInStatement$L_ArrayLengthOptimizeCommand$LStatement$($this, statement);
+	})) ? false : Statement$forEachExpression$LStatement$F$LExpression$B$(statement, (function (expr) {
+		return _ArrayLengthOptimizeCommand$_lengthIsUnmodifiedInExpr$L_ArrayLengthOptimizeCommand$LExpression$($this, expr);
+	})));
+};
+
+
+function _ArrayLengthOptimizeCommand$_lengthIsUnmodifiedInStatement$L_ArrayLengthOptimizeCommand$LStatement$($this, statement) {
+	return (! statement.forEachStatement$F$LStatement$B$((function (statement) {
+		return _ArrayLengthOptimizeCommand$_lengthIsUnmodifiedInStatement$L_ArrayLengthOptimizeCommand$LStatement$($this, statement);
+	})) ? false : Statement$forEachExpression$LStatement$F$LExpression$B$(statement, (function (expr) {
+		return _ArrayLengthOptimizeCommand$_lengthIsUnmodifiedInExpr$L_ArrayLengthOptimizeCommand$LExpression$($this, expr);
+	})));
+};
+
+_ArrayLengthOptimizeCommand._lengthIsUnmodifiedInStatement$L_ArrayLengthOptimizeCommand$LStatement$ = _ArrayLengthOptimizeCommand$_lengthIsUnmodifiedInStatement$L_ArrayLengthOptimizeCommand$LStatement$;
+
+_ArrayLengthOptimizeCommand.prototype._lengthIsUnmodifiedInExpr$LExpression$ = function (expr) {
+	var this$0;
+	var this$1;
+	if (expr instanceof AssignmentExpression) {
+		if (_ArrayLengthOptimizeCommand$_lhsMayModifyLength$L_ArrayLengthOptimizeCommand$LExpression$(this, (this$0 = expr, this$0._expr1))) {
+			return false;
+		}
+	} else if (expr instanceof CallExpression || expr instanceof SuperExpression) {
+		return false;
+	} else if (expr instanceof IncrementExpression) {
+		if (_ArrayLengthOptimizeCommand$_lhsMayModifyLength$L_ArrayLengthOptimizeCommand$LExpression$(this, (this$1 = expr, this$1._expr))) {
+			return false;
+		}
+	}
+	return true;
+};
+
+
+function _ArrayLengthOptimizeCommand$_lengthIsUnmodifiedInExpr$L_ArrayLengthOptimizeCommand$LExpression$($this, expr) {
+	var this$0;
+	var this$1;
+	if (expr instanceof AssignmentExpression) {
+		if (_ArrayLengthOptimizeCommand$_lhsMayModifyLength$L_ArrayLengthOptimizeCommand$LExpression$($this, (this$0 = expr, this$0._expr1))) {
+			return false;
+		}
+	} else if (expr instanceof CallExpression || expr instanceof SuperExpression) {
+		return false;
+	} else if (expr instanceof IncrementExpression) {
+		if (_ArrayLengthOptimizeCommand$_lhsMayModifyLength$L_ArrayLengthOptimizeCommand$LExpression$($this, (this$1 = expr, this$1._expr))) {
+			return false;
+		}
+	}
+	return true;
+};
+
+_ArrayLengthOptimizeCommand._lengthIsUnmodifiedInExpr$L_ArrayLengthOptimizeCommand$LExpression$ = _ArrayLengthOptimizeCommand$_lengthIsUnmodifiedInExpr$L_ArrayLengthOptimizeCommand$LExpression$;
+
+_ArrayLengthOptimizeCommand.prototype._lhsMayModifyLength$LExpression$ = function (expr) {
+	var exprType;
+	var this$0;
+	var this$1;
+	var this$2;
+	var this$0$0;
+	if (expr instanceof PropertyExpression && (this$1 = (this$0 = expr, this$0._identifierToken), this$1._value) === "length") {
+		return true;
+	}
+	if (expr instanceof ArrayExpression) {
+		return true;
+	}
+	this$2 = expr.getType$();
+	exprType = (this$2 instanceof NullableType ? (this$0$0 = this$2, this$0$0._baseType) : this$2);
+	return (exprType.equals$LType$(Type.variantType) ? true : _ArrayLengthOptimizeCommand$_typeIsArray$L_ArrayLengthOptimizeCommand$LType$(this, exprType) ? true : false);
+};
+
+
+function _ArrayLengthOptimizeCommand$_lhsMayModifyLength$L_ArrayLengthOptimizeCommand$LExpression$($this, expr) {
+	var exprType;
+	var this$0;
+	var this$1;
+	var this$2;
+	var this$0$0;
+	if (expr instanceof PropertyExpression && (this$1 = (this$0 = expr, this$0._identifierToken), this$1._value) === "length") {
+		return true;
+	}
+	if (expr instanceof ArrayExpression) {
+		return true;
+	}
+	this$2 = expr.getType$();
+	exprType = (this$2 instanceof NullableType ? (this$0$0 = this$2, this$0$0._baseType) : this$2);
+	return (exprType.equals$LType$(Type.variantType) ? true : _ArrayLengthOptimizeCommand$_typeIsArray$L_ArrayLengthOptimizeCommand$LType$($this, exprType) ? true : false);
+};
+
+_ArrayLengthOptimizeCommand._lhsMayModifyLength$L_ArrayLengthOptimizeCommand$LExpression$ = _ArrayLengthOptimizeCommand$_lhsMayModifyLength$L_ArrayLengthOptimizeCommand$LExpression$;
+
+_ArrayLengthOptimizeCommand.prototype._typeIsArray$LType$ = function (type) {
+	var classDef;
+	var this$0;
+	var this$0$0;
+	if (! (type instanceof ObjectType)) {
+		return false;
+	}
+	classDef = type.getClassDef$();
+	return (! (classDef instanceof InstantiatedClassDefinition) ? false : (this$0 = classDef, this$0$0 = this$0._templateClassDef, this$0$0._className) === "Array");
+};
+
+
+function _ArrayLengthOptimizeCommand$_typeIsArray$L_ArrayLengthOptimizeCommand$LType$($this, type) {
+	var classDef;
+	var this$0;
+	var this$0$0;
+	if (! (type instanceof ObjectType)) {
+		return false;
+	}
+	classDef = type.getClassDef$();
+	return (! (classDef instanceof InstantiatedClassDefinition) ? false : (this$0 = classDef, this$0$0 = this$0._templateClassDef, this$0$0._className) === "Array");
+};
+
+_ArrayLengthOptimizeCommand._typeIsArray$L_ArrayLengthOptimizeCommand$LType$ = _ArrayLengthOptimizeCommand$_typeIsArray$L_ArrayLengthOptimizeCommand$LType$;
+
+function _TailRecursionOptimizeCommand() {
+	this._identifier = "tail-rec";
+	this._optimizer = null;
+	this._excludeNative = false;
+};
+
+$__jsx_extend([_TailRecursionOptimizeCommand], _FunctionOptimizeCommand);
+_TailRecursionOptimizeCommand.prototype.optimizeFunction$LMemberFunctionDefinition$ = function (funcDef) {
+	var $this = this;
+	var altered;
+	var statements;
+	var body;
+	var message$0;
+	var this$0$0;
+	var message$0$0;
+	var statements$0;
+	var _flags$0;
+	if (((_flags$0 = funcDef._flags) & 50) !== 0 || (_flags$0 & 12) === 0) {
+		return false;
+	}
+	altered = false;
+	statements = funcDef._statements;
+	(function onStatements(statements) {
+		var i;
+		for (i = 0; i < statements.length; ++i) {
+			if (_TailRecursionOptimizeCommand$_isTailCall$L_TailRecursionOptimizeCommand$LMemberFunctionDefinition$LStatement$($this, funcDef, statements[i])) {
+				_TailRecursionOptimizeCommand$_replaceTailCallStatement$L_TailRecursionOptimizeCommand$LMemberFunctionDefinition$ALStatement$N($this, funcDef, statements, i);
+				altered = true;
+			}
+			statements[i].handleStatements$F$ALStatement$B$(onStatements);
+		}
+		return true;
+	})(statements);
+	if (altered) {
+		message$0 = "transform " + funcDef.getNotation$();
+		this$0$0 = this._optimizer;
+		message$0$0 = "[" + this._identifier + "] " + message$0;
+		this$0$0._log += message$0$0 + "\n";
+		body = new WhileStatement(new Token$3("while"), new Token$3("$TAIL_REC"), new BooleanLiteralExpression(new Token$3("true")), statements);
+		statements$0 = [ body ];
+		funcDef._statements = statements$0;
+	}
+	return true;
+};
+
+
+_TailRecursionOptimizeCommand.prototype._isTailCall$LMemberFunctionDefinition$LStatement$ = function (funcDef, statement) {
+	var returnStatement;
+	var _expr$0;
+	if (statement instanceof ReturnStatement) {
+		returnStatement = statement;
+		if ((_expr$0 = returnStatement._expr) != null && _expr$0 instanceof CallExpression) {
+			return funcDef == _DetermineCalleeCommand$getCallingFuncDef$LStashable$(returnStatement._expr);
+		}
+	}
+	return false;
+};
+
+
+function _TailRecursionOptimizeCommand$_isTailCall$L_TailRecursionOptimizeCommand$LMemberFunctionDefinition$LStatement$($this, funcDef, statement) {
+	var returnStatement;
+	var _expr$0;
+	if (statement instanceof ReturnStatement) {
+		returnStatement = statement;
+		if ((_expr$0 = returnStatement._expr) != null && _expr$0 instanceof CallExpression) {
+			return funcDef == _DetermineCalleeCommand$getCallingFuncDef$LStashable$(returnStatement._expr);
+		}
+	}
+	return false;
+};
+
+_TailRecursionOptimizeCommand._isTailCall$L_TailRecursionOptimizeCommand$LMemberFunctionDefinition$LStatement$ = _TailRecursionOptimizeCommand$_isTailCall$L_TailRecursionOptimizeCommand$LMemberFunctionDefinition$LStatement$;
+
+_TailRecursionOptimizeCommand.prototype._replaceTailCallStatement$LMemberFunctionDefinition$ALStatement$N = function (funcDef, statements, idx) {
+	var $this = this;
+	var callExpression;
+	var locals;
+	var setupArgs;
+	var retry;
+	var localsToArgs;
+	var this$0;
+	callExpression = (this$0 = statements[idx], this$0._expr);
+	locals = funcDef._args.map((function (argDecl) {
+		var this$0;
+		return _OptimizeCommand$createVar$L_OptimizeCommand$LMemberFunctionDefinition$LType$S($this, funcDef, argDecl._type, (this$0 = argDecl._name, this$0._value));
+	}));
+	setupArgs = callExpression._args.reduce((function (prevExpr, arg, i) {
+		var assignToArg;
+		var this$0;
+		assignToArg = new AssignmentExpression(new Token$3("="), new LocalExpression((this$0 = locals[i], this$0._name), locals[i]), arg);
+		return (prevExpr == null ? assignToArg : new CommaExpression(new Token$3(","), prevExpr, assignToArg));
+	}), null);
+	retry = new ContinueStatement(new Token$3("continue"), new Token$3("$TAIL_REC"));
+	if (setupArgs == null) {
+		statements.splice(idx, 1, retry);
+	} else {
+		localsToArgs = locals.reduce((function (prevExpr, local, i) {
+			var assignToArg;
+			var this$0;
+			var _args$0;
+			assignToArg = new AssignmentExpression(new Token$3("="), new LocalExpression((this$0 = (_args$0 = funcDef._args)[i], this$0._name), _args$0[i]), new LocalExpression(local._name, local));
+			return (prevExpr == null ? assignToArg : new CommaExpression(new Token$3(","), prevExpr, assignToArg));
+		}), null);
+		statements.splice(idx, 1, new ExpressionStatement(setupArgs), new ExpressionStatement(localsToArgs), retry);
+	}
+};
+
+
+function _TailRecursionOptimizeCommand$_replaceTailCallStatement$L_TailRecursionOptimizeCommand$LMemberFunctionDefinition$ALStatement$N($this, funcDef, statements, idx) {
+	var callExpression;
+	var locals;
+	var setupArgs;
+	var retry;
+	var localsToArgs;
+	var this$0;
+	callExpression = (this$0 = statements[idx], this$0._expr);
+	locals = funcDef._args.map((function (argDecl) {
+		var this$0;
+		return _OptimizeCommand$createVar$L_OptimizeCommand$LMemberFunctionDefinition$LType$S($this, funcDef, argDecl._type, (this$0 = argDecl._name, this$0._value));
+	}));
+	setupArgs = callExpression._args.reduce((function (prevExpr, arg, i) {
+		var assignToArg;
+		var this$0;
+		assignToArg = new AssignmentExpression(new Token$3("="), new LocalExpression((this$0 = locals[i], this$0._name), locals[i]), arg);
+		return (prevExpr == null ? assignToArg : new CommaExpression(new Token$3(","), prevExpr, assignToArg));
+	}), null);
+	retry = new ContinueStatement(new Token$3("continue"), new Token$3("$TAIL_REC"));
+	if (setupArgs == null) {
+		statements.splice(idx, 1, retry);
+	} else {
+		localsToArgs = locals.reduce((function (prevExpr, local, i) {
+			var assignToArg;
+			var this$0;
+			var _args$0;
+			assignToArg = new AssignmentExpression(new Token$3("="), new LocalExpression((this$0 = (_args$0 = funcDef._args)[i], this$0._name), _args$0[i]), new LocalExpression(local._name, local));
+			return (prevExpr == null ? assignToArg : new CommaExpression(new Token$3(","), prevExpr, assignToArg));
+		}), null);
+		statements.splice(idx, 1, new ExpressionStatement(setupArgs), new ExpressionStatement(localsToArgs), retry);
+	}
+};
+
+_TailRecursionOptimizeCommand._replaceTailCallStatement$L_TailRecursionOptimizeCommand$LMemberFunctionDefinition$ALStatement$N = _TailRecursionOptimizeCommand$_replaceTailCallStatement$L_TailRecursionOptimizeCommand$LMemberFunctionDefinition$ALStatement$N;
+
+function _StructuredStashAccessor$x2E$x3CStash$x3E() {
+};
+
+$__jsx_extend([_StructuredStashAccessor$x2E$x3CStash$x3E], Object);
+_StructuredStashAccessor$x2E$x3CStash$x3E.prototype.$__jsx_implements__StructuredStashAccessor$x2E$x3CStash$x3E = true;
+
+_StructuredStashAccessor$x2E$x3CStash$x3E.prototype.getStash$LStashable$ = function (stashable) {
+	var identifier;
+	var stash;
+	identifier = this._identifier;
+	stash = stashable.getStash$S(identifier);
+	if (stash == null) {
+		stash = new _LinkTimeOptimizationCommand$x2EStash();
+		stashable.setStash$SLStash$(identifier, stash);
+	}
+	return stash;
+};
+
+
+_StructuredStashAccessor$x2E$x3CStash$x3E.prototype.resetStash$LStashable$ = function (stashable) {
+	var identifier;
+	identifier = this._identifier;
+	stashable.setStash$SLStash$(identifier, null);
+};
+
+
+function _LinkTimeOptimizationCommand() {
+	this._identifier = "lto";
+	this._optimizer = null;
+};
+
+$__jsx_extend([_LinkTimeOptimizationCommand], _OptimizeCommand);
+$__jsx_merge_interface(_LinkTimeOptimizationCommand, _StructuredStashAccessor$x2E$x3CStash$x3E);
+
+_LinkTimeOptimizationCommand.prototype.performOptimization$ = function () {
+	var $this = this;
+	var this$0$0;
+	var this$0$1;
+	Compiler$forEachClassDef$LCompiler$F$LParser$LClassDefinition$B$((this$0$0 = this._optimizer, this$0$0._compiler), (function (parser, classDef) {
+		var i;
+		var this$0;
+		var this$1;
+		if (classDef._extendType != null) {
+			$this.getStash$LStashable$((this$0 = classDef._extendType, this$0._classDef)).extendedBy.push(classDef);
+		}
+		for (i = 0; i < classDef._implementTypes.length; ++i) {
+			$this.getStash$LStashable$((this$1 = classDef._implementTypes[i], this$1._classDef)).extendedBy.push(classDef);
+		}
+		return true;
+	}));
+	Compiler$forEachClassDef$LCompiler$F$LParser$LClassDefinition$B$((this$0$1 = this._optimizer, this$0$1._compiler), (function (parser, classDef) {
+		var message$0;
+		var this$0$0;
+		var message$0$0;
+		if ((classDef.flags$() & 16596) === 0 && $this.getStash$LStashable$(classDef).extendedBy.length === 0) {
+			message$0 = "marking class as final: " + classDef.className$();
+			this$0$0 = $this._optimizer;
+			message$0$0 = "[" + $this._identifier + "] " + message$0;
+			this$0$0._log += message$0$0 + "\n";
+			ClassDefinition$setFlags$LClassDefinition$N(classDef, classDef.flags$() | 4);
+			ClassDefinition$forEachMemberFunction$LClassDefinition$F$LMemberFunctionDefinition$B$(classDef, (function (funcDef) {
+				if ((MemberDefinition$flags$LMemberDefinition$(funcDef) & (ClassDefinition.IS_STATIC | ClassDefinition.IS_FINAL)) === 0) {
+					MemberDefinition$setFlags$LMemberDefinition$N(funcDef, MemberDefinition$flags$LMemberDefinition$(funcDef) | ClassDefinition.IS_FINAL);
+				}
+				return true;
+			}));
+		} else if ((classDef.flags$() & 20) === 0) {
+			ClassDefinition$forEachMemberFunction$LClassDefinition$F$LMemberFunctionDefinition$B$(classDef, (function (funcDef) {
+				var overrides;
+				if ((MemberDefinition$flags$LMemberDefinition$(funcDef) & (ClassDefinition.IS_STATIC | ClassDefinition.IS_NATIVE | ClassDefinition.IS_FINAL)) !== 0) {
+				} else if ((MemberDefinition$flags$LMemberDefinition$(funcDef) & ClassDefinition.IS_ABSTRACT) === 0) {
+					if (MemberFunctionDefinition$getStatements$LMemberFunctionDefinition$(funcDef) == null) {
+						throw new Error("a non-native, non-abstract function with out function body?");
+					}
+					overrides = _LinkTimeOptimizationCommand$_getOverrides$L_LinkTimeOptimizationCommand$LClassDefinition$ALClassDefinition$SALType$($this, classDef, $this.getStash$LStashable$(classDef).extendedBy, MemberDefinition$name$LMemberDefinition$(funcDef), MemberFunctionDefinition$getArgumentTypes$LMemberFunctionDefinition$(funcDef));
+					if (overrides.length === 0) {
+						_OptimizeCommand$log$L_OptimizeCommand$S($this, "marking function as final: " + funcDef.getNotation$());
+						MemberDefinition$setFlags$LMemberDefinition$N(funcDef, MemberDefinition$flags$LMemberDefinition$(funcDef) | ClassDefinition.IS_FINAL);
+					} else {
+						_OptimizeCommand$log$L_OptimizeCommand$S($this, "function has overrides, not marking as final: " + funcDef.getNotation$());
+					}
+				} else if ((MemberDefinition$flags$LMemberDefinition$(funcDef) & ClassDefinition.IS_ABSTRACT) !== 0) {
+				}
+				return true;
+			}));
+		}
+		return true;
+	}));
+};
+
+
+_LinkTimeOptimizationCommand.prototype._getOverrides$LClassDefinition$ALClassDefinition$SALType$ = function (srcClassDef, classDefs, name, argTypes) {
+	var overrides;
+	var i;
+	overrides = [];
+	for (i = 0; i < classDefs.length; ++i) {
+		overrides = overrides.concat(_LinkTimeOptimizationCommand$_getOverridesByClass$L_LinkTimeOptimizationCommand$LClassDefinition$LClassDefinition$SALType$(this, srcClassDef, classDefs[i], name, argTypes));
+	}
+	return overrides;
+};
+
+
+function _LinkTimeOptimizationCommand$_getOverrides$L_LinkTimeOptimizationCommand$LClassDefinition$ALClassDefinition$SALType$($this, srcClassDef, classDefs, name, argTypes) {
+	var overrides;
+	var i;
+	overrides = [];
+	for (i = 0; i < classDefs.length; ++i) {
+		overrides = overrides.concat(_LinkTimeOptimizationCommand$_getOverridesByClass$L_LinkTimeOptimizationCommand$LClassDefinition$LClassDefinition$SALType$($this, srcClassDef, classDefs[i], name, argTypes));
+	}
+	return overrides;
+};
+
+_LinkTimeOptimizationCommand._getOverrides$L_LinkTimeOptimizationCommand$LClassDefinition$ALClassDefinition$SALType$ = _LinkTimeOptimizationCommand$_getOverrides$L_LinkTimeOptimizationCommand$LClassDefinition$ALClassDefinition$SALType$;
+
+_LinkTimeOptimizationCommand.prototype._getOverridesByClass$LClassDefinition$LClassDefinition$SALType$ = function (srcClassDef, classDef, name, argTypes) {
+	var $this = this;
+	var overrides;
+	var addOverride;
+	var implementClassDefs;
+	var i;
+	var classDefs$0;
+	var overrides$0;
+	var i$0;
+	classDefs$0 = this.getStash$LStashable$(classDef).extendedBy;
+	overrides$0 = [];
+	for (i$0 = 0; i$0 < classDefs$0.length; ++i$0) {
+		overrides$0 = overrides$0.concat(_LinkTimeOptimizationCommand$_getOverridesByClass$L_LinkTimeOptimizationCommand$LClassDefinition$LClassDefinition$SALType$(this, srcClassDef, classDefs$0[i$0], name, argTypes));
+	}
+	overrides = overrides$0;
+	function addOverride(funcDef) {
+		var this$0$0;
+		if ((this$0$0 = funcDef._nameToken, this$0$0._value) === name && (funcDef._flags & 2) === 0 && Util$typesAreEqual$ALType$ALType$(MemberFunctionDefinition$getArgumentTypes$LMemberFunctionDefinition$(funcDef), argTypes)) {
+			overrides.push(funcDef);
+			return false;
+		}
+		return true;
+	}
+	ClassDefinition$forEachMemberFunction$LClassDefinition$F$LMemberFunctionDefinition$B$(classDef, addOverride);
+	implementClassDefs = classDef._implementTypes.map((function (type) {
+		return type._classDef;
+	}));
+	for (i = 0; i < implementClassDefs.length; ++i) {
+		if (srcClassDef != implementClassDefs[i]) {
+			ClassDefinition$forEachClassToBase$LClassDefinition$F$LClassDefinition$B$(implementClassDefs[i], (function (classDef) {
+				return ClassDefinition$forEachMemberFunction$LClassDefinition$F$LMemberFunctionDefinition$B$(classDef, addOverride);
+			}));
+		}
+	}
+	return overrides;
+};
+
+
+function _LinkTimeOptimizationCommand$_getOverridesByClass$L_LinkTimeOptimizationCommand$LClassDefinition$LClassDefinition$SALType$($this, srcClassDef, classDef, name, argTypes) {
+	var overrides;
+	var addOverride;
+	var implementClassDefs;
+	var i;
+	var classDefs$0;
+	var overrides$0;
+	var i$0;
+	classDefs$0 = $this.getStash$LStashable$(classDef).extendedBy;
+	overrides$0 = [];
+	for (i$0 = 0; i$0 < classDefs$0.length; ++i$0) {
+		overrides$0 = overrides$0.concat(_LinkTimeOptimizationCommand$_getOverridesByClass$L_LinkTimeOptimizationCommand$LClassDefinition$LClassDefinition$SALType$($this, srcClassDef, classDefs$0[i$0], name, argTypes));
+	}
+	overrides = overrides$0;
+	function addOverride(funcDef) {
+		var this$0$0;
+		if ((this$0$0 = funcDef._nameToken, this$0$0._value) === name && (funcDef._flags & 2) === 0 && Util$typesAreEqual$ALType$ALType$(MemberFunctionDefinition$getArgumentTypes$LMemberFunctionDefinition$(funcDef), argTypes)) {
+			overrides.push(funcDef);
+			return false;
+		}
+		return true;
+	}
+	ClassDefinition$forEachMemberFunction$LClassDefinition$F$LMemberFunctionDefinition$B$(classDef, addOverride);
+	implementClassDefs = classDef._implementTypes.map((function (type) {
+		return type._classDef;
+	}));
+	for (i = 0; i < implementClassDefs.length; ++i) {
+		if (srcClassDef != implementClassDefs[i]) {
+			ClassDefinition$forEachClassToBase$LClassDefinition$F$LClassDefinition$B$(implementClassDefs[i], (function (classDef) {
+				return ClassDefinition$forEachMemberFunction$LClassDefinition$F$LMemberFunctionDefinition$B$(classDef, addOverride);
+			}));
+		}
+	}
+	return overrides;
+};
+
+_LinkTimeOptimizationCommand._getOverridesByClass$L_LinkTimeOptimizationCommand$LClassDefinition$LClassDefinition$SALType$ = _LinkTimeOptimizationCommand$_getOverridesByClass$L_LinkTimeOptimizationCommand$LClassDefinition$LClassDefinition$SALType$;
+
+function _StructuredStashAccessor$x2E$x3C_Stash$x3E() {
+};
+
+$__jsx_extend([_StructuredStashAccessor$x2E$x3C_Stash$x3E], Object);
+_StructuredStashAccessor$x2E$x3C_Stash$x3E.prototype.$__jsx_implements__StructuredStashAccessor$x2E$x3C_Stash$x3E = true;
+
+_StructuredStashAccessor$x2E$x3C_Stash$x3E.prototype.getStash$LStashable$ = function (stashable) {
+	var identifier;
+	var stash;
+	identifier = this._identifier;
+	stash = stashable.getStash$S(identifier);
+	if (stash == null) {
+		stash = new _StripOptimizeCommand$x2E_Stash();
+		stashable.setStash$SLStash$(identifier, stash);
+	}
+	return stash;
+};
+
+
+_StructuredStashAccessor$x2E$x3C_Stash$x3E.prototype.resetStash$LStashable$ = function (stashable) {
+	var identifier;
+	identifier = this._identifier;
+	stashable.setStash$SLStash$(identifier, null);
+};
+
+
+function _StripOptimizeCommand() {
+	this._identifier = "strip";
+	this._optimizer = null;
+	this._classesInstantiated = [];
+	this._methodsAlive = {};
+	this._membersToWalk = [];
+};
+
+$__jsx_extend([_StripOptimizeCommand], _OptimizeCommand);
+$__jsx_merge_interface(_StripOptimizeCommand, _StructuredStashAccessor$x2E$x3C_Stash$x3E);
+
+_StripOptimizeCommand.prototype._touchStatic$LMemberDefinition$ = function (member) {
+	var stash;
+	var identifier$0;
+	var stash$0;
+	var message$0;
+	var this$0$0;
+	var message$0$0;
+	identifier$0 = this._identifier;
+	stash$0 = member.getStash$S(identifier$0);
+	if (stash$0 == null) {
+		stash$0 = new _StripOptimizeCommand$x2E_Stash();
+		member.setStash$SLStash$(identifier$0, stash$0);
+	}
+	stash = stash$0;
+	if (stash$0.touched) {
+		return;
+	}
+	message$0 = "touched " + member.getNotation$();
+	this$0$0 = this._optimizer;
+	message$0$0 = "[" + this._identifier + "] " + message$0;
+	this$0$0._log += message$0$0 + "\n";
+	stash.touched = true;
+	this._membersToWalk.push(member);
+};
+
+
+function _StripOptimizeCommand$_touchStatic$L_StripOptimizeCommand$LMemberDefinition$($this, member) {
+	var stash;
+	var identifier$0;
+	var stash$0;
+	var message$0;
+	var this$0$0;
+	var message$0$0;
+	identifier$0 = $this._identifier;
+	stash$0 = member.getStash$S(identifier$0);
+	if (stash$0 == null) {
+		stash$0 = new _StripOptimizeCommand$x2E_Stash();
+		member.setStash$SLStash$(identifier$0, stash$0);
+	}
+	stash = stash$0;
+	if (stash$0.touched) {
+		return;
+	}
+	message$0 = "touched " + member.getNotation$();
+	this$0$0 = $this._optimizer;
+	message$0$0 = "[" + $this._identifier + "] " + message$0;
+	this$0$0._log += message$0$0 + "\n";
+	stash.touched = true;
+	$this._membersToWalk.push(member);
+};
+
+_StripOptimizeCommand._touchStatic$L_StripOptimizeCommand$LMemberDefinition$ = _StripOptimizeCommand$_touchStatic$L_StripOptimizeCommand$LMemberDefinition$;
+
+_StripOptimizeCommand.prototype._touchInstance$LClassDefinition$ = function (classDef) {
+	var $this = this;
+	var stash;
+	var name;
+	var listOfArgTypes;
+	var i;
+	var funcDef;
+	var identifier$0;
+	var stash$0;
+	var message$0;
+	var this$0$0;
+	var message$0$0;
+	var this$0;
+	identifier$0 = this._identifier;
+	stash$0 = classDef.getStash$S(identifier$0);
+	if (stash$0 == null) {
+		stash$0 = new _StripOptimizeCommand$x2E_Stash();
+		classDef.setStash$SLStash$(identifier$0, stash$0);
+	}
+	stash = stash$0;
+	if (stash$0.touched) {
+		return;
+	}
+	message$0 = "touched " + classDef.className$();
+	this$0$0 = this._optimizer;
+	message$0$0 = "[" + this._identifier + "] " + message$0;
+	this$0$0._log += message$0$0 + "\n";
+	stash.touched = true;
+	this._classesInstantiated.push(classDef);
+	for (name in this._methodsAlive) {
+		listOfArgTypes = this._methodsAlive[name];
+		for (i = 0; i !== listOfArgTypes.length; ++i) {
+			funcDef = Util$findFunctionInClass$LClassDefinition$SALType$B(classDef, name, listOfArgTypes[i], false);
+			if (funcDef != null) {
+				this._membersToWalk.push(funcDef);
+			}
+		}
+	}
+	ClassDefinition$forEachMemberVariable$LClassDefinition$F$LMemberVariableDefinition$B$(classDef, (function (varDef) {
+		if ((varDef._flags & 8) === 0) {
+			$this._membersToWalk.push(varDef);
+		}
+		return true;
+	}));
+	if (classDef._extendType != null) {
+		_StripOptimizeCommand$_touchInstance$L_StripOptimizeCommand$LClassDefinition$(this, (this$0 = classDef._extendType, this$0._classDef));
+	}
+	classDef._implementTypes.forEach((function (implementType) {
+		_StripOptimizeCommand$_touchInstance$L_StripOptimizeCommand$LClassDefinition$($this, implementType._classDef);
+	}));
+	if (classDef._outerClassDef != null) {
+		_StripOptimizeCommand$_touchInstance$L_StripOptimizeCommand$LClassDefinition$(this, classDef._outerClassDef);
+	}
+};
+
+
+function _StripOptimizeCommand$_touchInstance$L_StripOptimizeCommand$LClassDefinition$($this, classDef) {
+	var stash;
+	var name;
+	var listOfArgTypes;
+	var i;
+	var funcDef;
+	var identifier$0;
+	var stash$0;
+	var message$0;
+	var this$0$0;
+	var message$0$0;
+	var this$0;
+	identifier$0 = $this._identifier;
+	stash$0 = classDef.getStash$S(identifier$0);
+	if (stash$0 == null) {
+		stash$0 = new _StripOptimizeCommand$x2E_Stash();
+		classDef.setStash$SLStash$(identifier$0, stash$0);
+	}
+	stash = stash$0;
+	if (stash$0.touched) {
+		return;
+	}
+	message$0 = "touched " + classDef.className$();
+	this$0$0 = $this._optimizer;
+	message$0$0 = "[" + $this._identifier + "] " + message$0;
+	this$0$0._log += message$0$0 + "\n";
+	stash.touched = true;
+	$this._classesInstantiated.push(classDef);
+	for (name in $this._methodsAlive) {
+		listOfArgTypes = $this._methodsAlive[name];
+		for (i = 0; i !== listOfArgTypes.length; ++i) {
+			funcDef = Util$findFunctionInClass$LClassDefinition$SALType$B(classDef, name, listOfArgTypes[i], false);
+			if (funcDef != null) {
+				$this._membersToWalk.push(funcDef);
+			}
+		}
+	}
+	ClassDefinition$forEachMemberVariable$LClassDefinition$F$LMemberVariableDefinition$B$(classDef, (function (varDef) {
+		if ((varDef._flags & 8) === 0) {
+			$this._membersToWalk.push(varDef);
+		}
+		return true;
+	}));
+	if (classDef._extendType != null) {
+		_StripOptimizeCommand$_touchInstance$L_StripOptimizeCommand$LClassDefinition$($this, (this$0 = classDef._extendType, this$0._classDef));
+	}
+	classDef._implementTypes.forEach((function (implementType) {
+		_StripOptimizeCommand$_touchInstance$L_StripOptimizeCommand$LClassDefinition$($this, implementType._classDef);
+	}));
+	if (classDef._outerClassDef != null) {
+		_StripOptimizeCommand$_touchInstance$L_StripOptimizeCommand$LClassDefinition$($this, classDef._outerClassDef);
+	}
+};
+
+_StripOptimizeCommand._touchInstance$L_StripOptimizeCommand$LClassDefinition$ = _StripOptimizeCommand$_touchInstance$L_StripOptimizeCommand$LClassDefinition$;
+
+_StripOptimizeCommand.prototype._touchConstructor$LMemberFunctionDefinition$ = function (funcDef) {
+	var stash;
+	var identifier$0;
+	var stash$0;
+	var message$0;
+	var this$0$0;
+	var message$0$0;
+	identifier$0 = this._identifier;
+	stash$0 = funcDef.getStash$S(identifier$0);
+	if (stash$0 == null) {
+		stash$0 = new _StripOptimizeCommand$x2E_Stash();
+		funcDef.setStash$SLStash$(identifier$0, stash$0);
+	}
+	stash = stash$0;
+	if (stash$0.touched) {
+		return;
+	}
+	message$0 = "touched " + funcDef.getNotation$();
+	this$0$0 = this._optimizer;
+	message$0$0 = "[" + this._identifier + "] " + message$0;
+	this$0$0._log += message$0$0 + "\n";
+	stash.touched = true;
+	this._membersToWalk.push(funcDef);
+	_StripOptimizeCommand$_touchInstance$L_StripOptimizeCommand$LClassDefinition$(this, funcDef._classDef);
+};
+
+
+function _StripOptimizeCommand$_touchConstructor$L_StripOptimizeCommand$LMemberFunctionDefinition$($this, funcDef) {
+	var stash;
+	var identifier$0;
+	var stash$0;
+	var message$0;
+	var this$0$0;
+	var message$0$0;
+	identifier$0 = $this._identifier;
+	stash$0 = funcDef.getStash$S(identifier$0);
+	if (stash$0 == null) {
+		stash$0 = new _StripOptimizeCommand$x2E_Stash();
+		funcDef.setStash$SLStash$(identifier$0, stash$0);
+	}
+	stash = stash$0;
+	if (stash$0.touched) {
+		return;
+	}
+	message$0 = "touched " + funcDef.getNotation$();
+	this$0$0 = $this._optimizer;
+	message$0$0 = "[" + $this._identifier + "] " + message$0;
+	this$0$0._log += message$0$0 + "\n";
+	stash.touched = true;
+	$this._membersToWalk.push(funcDef);
+	_StripOptimizeCommand$_touchInstance$L_StripOptimizeCommand$LClassDefinition$($this, funcDef._classDef);
+};
+
+_StripOptimizeCommand._touchConstructor$L_StripOptimizeCommand$LMemberFunctionDefinition$ = _StripOptimizeCommand$_touchConstructor$L_StripOptimizeCommand$LMemberFunctionDefinition$;
+
+_StripOptimizeCommand.prototype._touchMethod$SALType$ = function (name, argTypes) {
+	var listOfArgTypes;
+	var i;
+	var funcDef;
+	var message$0;
+	var this$0$0;
+	var message$0$0;
+	if ($__jsx_ObjectHasOwnProperty.call(this._methodsAlive, name)) {
+		listOfArgTypes = this._methodsAlive[name];
+	} else {
+		listOfArgTypes = this._methodsAlive[name] = [];
+	}
+	for (i = 0; i < listOfArgTypes.length; ++i) {
+		if (Util$typesAreEqual$ALType$ALType$(listOfArgTypes[i], argTypes)) {
+			return;
+		}
+	}
+	message$0 = "touched #" + name;
+	this$0$0 = this._optimizer;
+	message$0$0 = "[" + this._identifier + "] " + message$0;
+	this$0$0._log += message$0$0 + "\n";
+	listOfArgTypes.push(argTypes.concat());
+	for (i = 0; i < this._classesInstantiated.length; ++i) {
+		funcDef = Util$findFunctionInClass$LClassDefinition$SALType$B(this._classesInstantiated[i], name, argTypes, false);
+		if (funcDef != null) {
+			this._membersToWalk.push(funcDef);
+		}
+	}
+};
+
+
+function _StripOptimizeCommand$_touchMethod$L_StripOptimizeCommand$SALType$($this, name, argTypes) {
+	var listOfArgTypes;
+	var i;
+	var funcDef;
+	var message$0;
+	var this$0$0;
+	var message$0$0;
+	if ($__jsx_ObjectHasOwnProperty.call($this._methodsAlive, name)) {
+		listOfArgTypes = $this._methodsAlive[name];
+	} else {
+		listOfArgTypes = $this._methodsAlive[name] = [];
+	}
+	for (i = 0; i < listOfArgTypes.length; ++i) {
+		if (Util$typesAreEqual$ALType$ALType$(listOfArgTypes[i], argTypes)) {
+			return;
+		}
+	}
+	message$0 = "touched #" + name;
+	this$0$0 = $this._optimizer;
+	message$0$0 = "[" + $this._identifier + "] " + message$0;
+	this$0$0._log += message$0$0 + "\n";
+	listOfArgTypes.push(argTypes.concat());
+	for (i = 0; i < $this._classesInstantiated.length; ++i) {
+		funcDef = Util$findFunctionInClass$LClassDefinition$SALType$B($this._classesInstantiated[i], name, argTypes, false);
+		if (funcDef != null) {
+			$this._membersToWalk.push(funcDef);
+		}
+	}
+};
+
+_StripOptimizeCommand._touchMethod$L_StripOptimizeCommand$SALType$ = _StripOptimizeCommand$_touchMethod$L_StripOptimizeCommand$SALType$;
+
+_StripOptimizeCommand.prototype.performOptimization$ = function () {
+	var $this = this;
+	var isEmittedClass;
+	var member;
+	var memberShouldPreserve;
+	var this$0$0;
+	var this$0$1;
+	var this$0$2;
+	var message$0;
+	var this$0$3;
+	var message$0$0;
+	var this$0$4;
+	var this$0$5;
+	var this$0;
+	function isEmittedClass(classDef) {
+		return (classDef instanceof TemplateClassDefinition ? false : (classDef.flags$() & 16) !== 0 ? false : true);
+	}
+	Compiler$forEachClassDef$LCompiler$F$LParser$LClassDefinition$B$((this$0$0 = this._optimizer, this$0$0._compiler), (function (parser, classDef) {
+		var identifier$0;
+		identifier$0 = $this._identifier;
+		classDef.setStash$SLStash$(identifier$0, null);
+		return ClassDefinition$forEachMember$LClassDefinition$F$LMemberDefinition$B$(classDef, (function (member) {
+			$this.resetStash$LStashable$(member);
+			return true;
+		}));
+	}));
+	Compiler$forEachClassDef$LCompiler$F$LParser$LClassDefinition$B$((this$0$1 = this._optimizer, this$0$1._compiler), (function (parser, classDef) {
+		if (! (classDef instanceof TemplateClassDefinition) && (classDef.flags$() & 16) !== 0) {
+			ClassDefinition$forEachMemberFunction$LClassDefinition$F$LMemberFunctionDefinition$B$(classDef, (function (funcDef) {
+				if (MemberDefinition$name$LMemberDefinition$(funcDef) === "constructor") {
+				} else if ((MemberDefinition$flags$LMemberDefinition$(funcDef) & ClassDefinition.IS_FINAL) !== 0) {
+				} else {
+					_StripOptimizeCommand$_touchMethod$L_StripOptimizeCommand$SALType$($this, MemberDefinition$name$LMemberDefinition$(funcDef), MemberFunctionDefinition$getArgumentTypes$LMemberFunctionDefinition$(funcDef));
+				}
+				return true;
+			}));
+		}
+		return true;
+	}));
+	Compiler$forEachClassDef$LCompiler$F$LParser$LClassDefinition$B$((this$0$2 = this._optimizer, this$0$2._compiler), (function (parser, classDef) {
+		if (isEmittedClass(classDef)) {
+			if ((classDef.flags$() & 16384) !== 0) {
+				_StripOptimizeCommand$_touchInstance$L_StripOptimizeCommand$LClassDefinition$($this, classDef);
+			}
+			ClassDefinition$forEachMember$LClassDefinition$F$LMemberDefinition$B$(classDef, (function (member) {
+				var funcDef;
+				if ((MemberDefinition$flags$LMemberDefinition$(member) & ClassDefinition.IS_EXPORT) !== 0) {
+					if ((MemberDefinition$flags$LMemberDefinition$(member) & ClassDefinition.IS_STATIC) !== 0) {
+						_StripOptimizeCommand$_touchStatic$L_StripOptimizeCommand$LMemberDefinition$($this, member);
+					} else if (member instanceof MemberFunctionDefinition) {
+						funcDef = member;
+						if (MemberDefinition$name$LMemberDefinition$(funcDef) === "constructor") {
+							_StripOptimizeCommand$_touchConstructor$L_StripOptimizeCommand$LMemberFunctionDefinition$($this, funcDef);
+						} else {
+							_StripOptimizeCommand$_touchMethod$L_StripOptimizeCommand$SALType$($this, MemberDefinition$name$LMemberDefinition$(funcDef), MemberFunctionDefinition$getArgumentTypes$LMemberFunctionDefinition$(funcDef));
+						}
+					}
+				}
+				return true;
+			}));
+		}
+		return true;
+	}));
+	while (this._membersToWalk.length !== 0) {
+		member = this._membersToWalk.shift();
+		message$0 = "walking " + member.getNotation$();
+		this$0$3 = this._optimizer;
+		message$0$0 = "[" + this._identifier + "] " + message$0;
+		this$0$3._log += message$0$0 + "\n";
+		if (member instanceof MemberFunctionDefinition) {
+			_StripOptimizeCommand$_walkFunctionDefinition$L_StripOptimizeCommand$LMemberFunctionDefinition$(this, member);
+		} else {
+			_StripOptimizeCommand$_walkVariableDefinition$L_StripOptimizeCommand$LMemberVariableDefinition$(this, member);
+		}
+	}
+	function memberShouldPreserve(member) {
+		var isTouched;
+		var listOfArgTypes;
+		var i;
+		var this$0$0;
+		var this$0$1;
+		var this$0$2;
+		if ((member._flags & 16384) !== 0) {
+			return true;
+		}
+		isTouched = $this.getStash$LStashable$(member).touched;
+		if ((member._flags & 8) !== 0) {
+			return isTouched;
+		} else if (member instanceof MemberFunctionDefinition) {
+			if ((this$0$2 = member._nameToken, this$0$2._value) === "constructor") {
+				return isTouched;
+			} else {
+				if ($this.getStash$LStashable$(member._classDef).touched && $__jsx_ObjectHasOwnProperty.call($this._methodsAlive, (this$0$1 = member._nameToken, this$0$1._value))) {
+					listOfArgTypes = $this._methodsAlive[(this$0$0 = member._nameToken, this$0$0._value)];
+					for (i = 0; i !== listOfArgTypes.length; ++i) {
+						if (Util$typesAreEqual$ALType$ALType$(listOfArgTypes[i], MemberFunctionDefinition$getArgumentTypes$LMemberFunctionDefinition$(member))) {
+							return true;
+						}
+					}
+				}
+				return false;
+			}
+		} else {
+			return true;
+		}
+	}
+	Compiler$forEachClassDef$LCompiler$F$LParser$LClassDefinition$B$((this$0$4 = this._optimizer, this$0$4._compiler), (function (parser, classDef) {
+		var numConstructors;
+		var members;
+		var memberIndex;
+		var member;
+		var ctor;
+		var this$0$0;
+		var message$0;
+		var this$0$1;
+		var message$0$0;
+		var message$1;
+		var this$0$2;
+		var message$0$1;
+		var message$2;
+		var this$0$3;
+		var message$0$2;
+		if (isEmittedClass(classDef)) {
+			numConstructors = 0;
+			members = classDef._members;
+			for (memberIndex = 0; memberIndex !== members.length; ) {
+				member = members[memberIndex];
+				if (memberShouldPreserve(member)) {
+					if (member instanceof MemberFunctionDefinition && (member._flags & 8) === 0 && (this$0$0 = member._nameToken, this$0$0._value) === "constructor") {
+						++numConstructors;
+					}
+					++memberIndex;
+					message$0 = "preserving used: " + member.getNotation$();
+					this$0$1 = $this._optimizer;
+					message$0$0 = "[" + $this._identifier + "] " + message$0;
+					this$0$1._log += message$0$0 + "\n";
+				} else {
+					message$1 = "removing unused: " + member.getNotation$();
+					this$0$2 = $this._optimizer;
+					message$0$1 = "[" + $this._identifier + "] " + message$1;
+					this$0$2._log += message$0$1 + "\n";
+					members.splice(memberIndex, 1);
+				}
+			}
+			if (numConstructors === 0) {
+				message$2 = "substituting fake constructor for class: " + classDef.className$();
+				this$0$3 = $this._optimizer;
+				message$0$2 = "[" + $this._identifier + "] " + message$2;
+				this$0$3._log += message$0$2 + "\n";
+				ctor = new MemberFunctionDefinition(null, new Token$2("constructor", true), 4 | classDef.flags$() & 16384, Type.voidType, [], [], [], [], classDef.getToken$(), null);
+				ctor._classDef = classDef;
+				members.push(ctor);
+			}
+		}
+		return true;
+	}));
+	(this$0 = (this$0$5 = this._optimizer, this$0$5._compiler), this$0._parsers).forEach((function (parser) {
+		var classDefs;
+		var i;
+		var preserve;
+		var this$0;
+		var message$0;
+		var this$0$0;
+		var message$0$0;
+		classDefs = parser._classDefs;
+		for (i = 0; i !== classDefs.length; ) {
+			preserve = true;
+			if ((classDefs[i].flags$() & 16) !== 0 && (this$0 = classDefs[i], this$0._nativeSource) != null && ! $this.getStash$LStashable$(classDefs[i]).touched && ClassDefinition$forEachMember$LClassDefinition$F$LMemberDefinition$B$(classDefs[i], (function (member) {
+				if ((MemberDefinition$flags$LMemberDefinition$(member) & ClassDefinition.IS_STATIC) === 0) {
+					return true;
+				}
+				return ! $this.getStash$LStashable$(member).touched;
+			}))) {
+				preserve = false;
+			}
+			if (preserve) {
+				++i;
+			} else {
+				message$0 = "removing unused native class: " + classDefs[i].className$();
+				this$0$0 = $this._optimizer;
+				message$0$0 = "[" + $this._identifier + "] " + message$0;
+				this$0$0._log += message$0$0 + "\n";
+				classDefs.splice(i, 1);
+			}
+		}
+	}));
+};
+
+
+_StripOptimizeCommand.prototype._walkExpression$LExpression$ = function (expr) {
+	var $this = this;
+	var onExpr;
+	function onExpr(expr) {
+		var callee;
+		var propertyExpr;
+		var holderClassDef;
+		var name;
+		var member;
+		var superExpr;
+		var this$0;
+		var this$1;
+		var this$2;
+		var this$3;
+		var exprType$0;
+		var this$4;
+		var exprType$1;
+		var this$5;
+		var this$6;
+		var this$7;
+		if (expr instanceof NewExpression) {
+			callee = Util$findFunctionInClass$LClassDefinition$SALType$B(expr.getType$().getClassDef$(), "constructor", (this$1 = (this$0 = expr, this$0._constructor), this$1._argTypes), false);
+			_StripOptimizeCommand$_touchConstructor$L_StripOptimizeCommand$LMemberFunctionDefinition$($this, callee);
+		} else if (expr instanceof InstanceofExpression) {
+			_StripOptimizeCommand$_touchInstance$L_StripOptimizeCommand$LClassDefinition$($this, (this$2 = expr, this$2._expectedType).getClassDef$());
+		} else if (expr instanceof AsExpression) {
+			if (expr.getType$() instanceof ObjectType) {
+				_StripOptimizeCommand$_touchInstance$L_StripOptimizeCommand$LClassDefinition$($this, expr.getType$().getClassDef$());
+			}
+		} else if (expr instanceof AsNoConvertExpression) {
+			if (expr.getType$() instanceof ObjectType) {
+				_StripOptimizeCommand$_touchInstance$L_StripOptimizeCommand$LClassDefinition$($this, expr.getType$().getClassDef$());
+			}
+		} else if (expr instanceof PropertyExpression) {
+			propertyExpr = expr;
+			holderClassDef = propertyExpr.getHolderType$().getClassDef$();
+			if (propertyExpr._isInner) {
+				if ((holderClassDef.flags$() & 16) !== 0) {
+					_StripOptimizeCommand$_touchInstance$L_StripOptimizeCommand$LClassDefinition$($this, holderClassDef);
+				}
+			} else {
+				this$3 = propertyExpr._identifierToken;
+				name = this$3._value;
+				if (propertyExpr._expr.isClassSpecifier$()) {
+					exprType$0 = propertyExpr._type;
+					if (! (exprType$0 instanceof FunctionType) ? false : exprType$0.isAssignable$() ? false : true) {
+						member = Util$findFunctionInClass$LClassDefinition$SALType$B(holderClassDef, name, (this$4 = expr.getType$(), this$4._argTypes), true);
+					} else {
+						member = Util$findVariableInClass$LClassDefinition$SB(holderClassDef, name, true);
+					}
+					_StripOptimizeCommand$_touchStatic$L_StripOptimizeCommand$LMemberDefinition$($this, member);
+				} else {
+					exprType$1 = propertyExpr._type;
+					if (! (exprType$1 instanceof FunctionType) ? false : exprType$1.isAssignable$() ? false : true) {
+						_StripOptimizeCommand$_touchMethod$L_StripOptimizeCommand$SALType$($this, name, (this$5 = expr.getType$(), this$5._argTypes));
+					}
+				}
+			}
+		} else if (expr instanceof SuperExpression) {
+			superExpr = expr;
+			_StripOptimizeCommand$_touchMethod$L_StripOptimizeCommand$SALType$($this, (this$6 = superExpr._name, this$6._value), (this$7 = superExpr._funcType, this$7._argTypes));
+		}
+		return Expression$forEachExpression$LExpression$F$LExpression$B$(expr, onExpr);
+	}
+	return onExpr(expr);
+};
+
+
+function _StripOptimizeCommand$_walkExpression$L_StripOptimizeCommand$LExpression$($this, expr) {
+	var onExpr;
+	function onExpr(expr) {
+		var callee;
+		var propertyExpr;
+		var holderClassDef;
+		var name;
+		var member;
+		var superExpr;
+		var this$0;
+		var this$1;
+		var this$2;
+		var this$3;
+		var exprType$0;
+		var this$4;
+		var exprType$1;
+		var this$5;
+		var this$6;
+		var this$7;
+		if (expr instanceof NewExpression) {
+			callee = Util$findFunctionInClass$LClassDefinition$SALType$B(expr.getType$().getClassDef$(), "constructor", (this$1 = (this$0 = expr, this$0._constructor), this$1._argTypes), false);
+			_StripOptimizeCommand$_touchConstructor$L_StripOptimizeCommand$LMemberFunctionDefinition$($this, callee);
+		} else if (expr instanceof InstanceofExpression) {
+			_StripOptimizeCommand$_touchInstance$L_StripOptimizeCommand$LClassDefinition$($this, (this$2 = expr, this$2._expectedType).getClassDef$());
+		} else if (expr instanceof AsExpression) {
+			if (expr.getType$() instanceof ObjectType) {
+				_StripOptimizeCommand$_touchInstance$L_StripOptimizeCommand$LClassDefinition$($this, expr.getType$().getClassDef$());
+			}
+		} else if (expr instanceof AsNoConvertExpression) {
+			if (expr.getType$() instanceof ObjectType) {
+				_StripOptimizeCommand$_touchInstance$L_StripOptimizeCommand$LClassDefinition$($this, expr.getType$().getClassDef$());
+			}
+		} else if (expr instanceof PropertyExpression) {
+			propertyExpr = expr;
+			holderClassDef = propertyExpr.getHolderType$().getClassDef$();
+			if (propertyExpr._isInner) {
+				if ((holderClassDef.flags$() & 16) !== 0) {
+					_StripOptimizeCommand$_touchInstance$L_StripOptimizeCommand$LClassDefinition$($this, holderClassDef);
+				}
+			} else {
+				this$3 = propertyExpr._identifierToken;
+				name = this$3._value;
+				if (propertyExpr._expr.isClassSpecifier$()) {
+					exprType$0 = propertyExpr._type;
+					if (! (exprType$0 instanceof FunctionType) ? false : exprType$0.isAssignable$() ? false : true) {
+						member = Util$findFunctionInClass$LClassDefinition$SALType$B(holderClassDef, name, (this$4 = expr.getType$(), this$4._argTypes), true);
+					} else {
+						member = Util$findVariableInClass$LClassDefinition$SB(holderClassDef, name, true);
+					}
+					_StripOptimizeCommand$_touchStatic$L_StripOptimizeCommand$LMemberDefinition$($this, member);
+				} else {
+					exprType$1 = propertyExpr._type;
+					if (! (exprType$1 instanceof FunctionType) ? false : exprType$1.isAssignable$() ? false : true) {
+						_StripOptimizeCommand$_touchMethod$L_StripOptimizeCommand$SALType$($this, name, (this$5 = expr.getType$(), this$5._argTypes));
+					}
+				}
+			}
+		} else if (expr instanceof SuperExpression) {
+			superExpr = expr;
+			_StripOptimizeCommand$_touchMethod$L_StripOptimizeCommand$SALType$($this, (this$6 = superExpr._name, this$6._value), (this$7 = superExpr._funcType, this$7._argTypes));
+		}
+		return Expression$forEachExpression$LExpression$F$LExpression$B$(expr, onExpr);
+	}
+	return onExpr(expr);
+};
+
+_StripOptimizeCommand._walkExpression$L_StripOptimizeCommand$LExpression$ = _StripOptimizeCommand$_walkExpression$L_StripOptimizeCommand$LExpression$;
+
+_StripOptimizeCommand.prototype._walkStatement$LStatement$ = function (statement) {
+	var $this = this;
+	var onStatement;
+	function onStatement(statement) {
+		var ctorStatement;
+		var callee;
+		var this$0;
+		if (statement instanceof ConstructorInvocationStatement) {
+			ctorStatement = statement;
+			callee = Util$findFunctionInClass$LClassDefinition$SALType$B(ctorStatement._ctorClassType.getClassDef$(), "constructor", (this$0 = ctorStatement._ctorFunctionType, this$0._argTypes), false);
+			_StripOptimizeCommand$_touchConstructor$L_StripOptimizeCommand$LMemberFunctionDefinition$($this, callee);
+		}
+		Statement$forEachExpression$LStatement$F$LExpression$B$(statement, (function (expr) {
+			return _StripOptimizeCommand$_walkExpression$L_StripOptimizeCommand$LExpression$($this, expr);
+		}));
+		return statement.forEachStatement$F$LStatement$B$(onStatement);
+	}
+	return onStatement(statement);
+};
+
+
+function _StripOptimizeCommand$_walkStatement$L_StripOptimizeCommand$LStatement$($this, statement) {
+	var onStatement;
+	function onStatement(statement) {
+		var ctorStatement;
+		var callee;
+		var this$0;
+		if (statement instanceof ConstructorInvocationStatement) {
+			ctorStatement = statement;
+			callee = Util$findFunctionInClass$LClassDefinition$SALType$B(ctorStatement._ctorClassType.getClassDef$(), "constructor", (this$0 = ctorStatement._ctorFunctionType, this$0._argTypes), false);
+			_StripOptimizeCommand$_touchConstructor$L_StripOptimizeCommand$LMemberFunctionDefinition$($this, callee);
+		}
+		Statement$forEachExpression$LStatement$F$LExpression$B$(statement, (function (expr) {
+			return _StripOptimizeCommand$_walkExpression$L_StripOptimizeCommand$LExpression$($this, expr);
+		}));
+		return statement.forEachStatement$F$LStatement$B$(onStatement);
+	}
+	return onStatement(statement);
+};
+
+_StripOptimizeCommand._walkStatement$L_StripOptimizeCommand$LStatement$ = _StripOptimizeCommand$_walkStatement$L_StripOptimizeCommand$LStatement$;
+
+_StripOptimizeCommand.prototype._walkFunctionDefinition$LMemberFunctionDefinition$ = function (funcDef) {
+	var $this = this;
+	if (funcDef._statements != null) {
+		Util$forEachStatement$F$LStatement$B$ALStatement$((function onStatement(statement) {
+			return _StripOptimizeCommand$_walkStatement$L_StripOptimizeCommand$LStatement$($this, statement);
+		}), funcDef._statements);
+	}
+	return MemberDefinition$forEachClosure$LMemberDefinition$F$LMemberFunctionDefinition$B$(funcDef, (function (funcDef) {
+		return _StripOptimizeCommand$_walkFunctionDefinition$L_StripOptimizeCommand$LMemberFunctionDefinition$($this, funcDef);
+	}));
+};
+
+
+function _StripOptimizeCommand$_walkFunctionDefinition$L_StripOptimizeCommand$LMemberFunctionDefinition$($this, funcDef) {
+	if (funcDef._statements != null) {
+		Util$forEachStatement$F$LStatement$B$ALStatement$((function onStatement(statement) {
+			return _StripOptimizeCommand$_walkStatement$L_StripOptimizeCommand$LStatement$($this, statement);
+		}), funcDef._statements);
+	}
+	return MemberDefinition$forEachClosure$LMemberDefinition$F$LMemberFunctionDefinition$B$(funcDef, (function (funcDef) {
+		return _StripOptimizeCommand$_walkFunctionDefinition$L_StripOptimizeCommand$LMemberFunctionDefinition$($this, funcDef);
+	}));
+};
+
+_StripOptimizeCommand._walkFunctionDefinition$L_StripOptimizeCommand$LMemberFunctionDefinition$ = _StripOptimizeCommand$_walkFunctionDefinition$L_StripOptimizeCommand$LMemberFunctionDefinition$;
+
+_StripOptimizeCommand.prototype._walkVariableDefinition$LMemberVariableDefinition$ = function (varDef) {
+	var $this = this;
+	var initialValue;
+	initialValue = varDef._initialValue;
+	if (initialValue != null) {
+		_StripOptimizeCommand$_walkExpression$L_StripOptimizeCommand$LExpression$(this, initialValue);
+	}
+	return MemberDefinition$forEachClosure$LMemberDefinition$F$LMemberFunctionDefinition$B$(varDef, (function (funcDef) {
+		return _StripOptimizeCommand$_walkFunctionDefinition$L_StripOptimizeCommand$LMemberFunctionDefinition$($this, funcDef);
+	}));
+};
+
+
+function _StripOptimizeCommand$_walkVariableDefinition$L_StripOptimizeCommand$LMemberVariableDefinition$($this, varDef) {
+	var initialValue;
+	initialValue = varDef._initialValue;
+	if (initialValue != null) {
+		_StripOptimizeCommand$_walkExpression$L_StripOptimizeCommand$LExpression$($this, initialValue);
+	}
+	return MemberDefinition$forEachClosure$LMemberDefinition$F$LMemberFunctionDefinition$B$(varDef, (function (funcDef) {
+		return _StripOptimizeCommand$_walkFunctionDefinition$L_StripOptimizeCommand$LMemberFunctionDefinition$($this, funcDef);
+	}));
+};
+
+_StripOptimizeCommand._walkVariableDefinition$L_StripOptimizeCommand$LMemberVariableDefinition$ = _StripOptimizeCommand$_walkVariableDefinition$L_StripOptimizeCommand$LMemberVariableDefinition$;
+
+function _StructuredStashAccessor$x2E$x3CStash$x3E$0() {
+};
+
+$__jsx_extend([_StructuredStashAccessor$x2E$x3CStash$x3E$0], Object);
+_StructuredStashAccessor$x2E$x3CStash$x3E$0.prototype.$__jsx_implements__StructuredStashAccessor$x2E$x3CStash$x3E$0 = true;
+
+_StructuredStashAccessor$x2E$x3CStash$x3E$0.prototype.getStash$LStashable$ = function (stashable) {
+	var identifier;
+	var stash;
+	identifier = this._identifier;
+	stash = stashable.getStash$S(identifier);
+	if (stash == null) {
+		stash = new _DetermineCalleeCommand$x2EStash();
+		stashable.setStash$SLStash$(identifier, stash);
+	}
+	return stash;
+};
+
+
+_StructuredStashAccessor$x2E$x3CStash$x3E$0.prototype.resetStash$LStashable$ = function (stashable) {
+	var identifier;
+	identifier = this._identifier;
+	stashable.setStash$SLStash$(identifier, null);
+};
+
+
+function _DetermineCalleeCommand() {
+	this._identifier = "determine-callee";
+	this._optimizer = null;
+	this._excludeNative = false;
+};
+
+$__jsx_extend([_DetermineCalleeCommand], _FunctionOptimizeCommand);
+$__jsx_merge_interface(_DetermineCalleeCommand, _StructuredStashAccessor$x2E$x3CStash$x3E$0);
+
+_DetermineCalleeCommand.prototype.optimizeFunction$LMemberFunctionDefinition$ = function (funcDef) {
+	var $this = this;
+	Util$forEachStatement$F$LStatement$B$ALStatement$((function onStatement(statement) {
+		var callingFuncDef;
+		var classDef$0;
+		var argTypes$0;
+		var found$0;
+		var this$0;
+		var this$1;
+		var this$2;
+		var this$3;
+		var this$4;
+		if (statement instanceof ConstructorInvocationStatement) {
+			this$1 = statement;
+			classDef$0 = this$1._ctorClassType.getClassDef$();
+			this$2 = (this$4 = statement, this$4._ctorFunctionType);
+			argTypes$0 = this$2._argTypes;
+			found$0 = Util$findFunctionInClass$LClassDefinition$SALType$B(classDef$0, "constructor", argTypes$0, false);
+			if (found$0 != null) {
+				if ((found$0._flags & 12) === 0) {
+					found$0 = null;
+				}
+			}
+			callingFuncDef = found$0;
+			if (found$0 == null) {
+				throw new Error("could not determine the associated parent ctor");
+			}
+			$this.getStash$LStashable$(statement).callingFuncDef = callingFuncDef;
+		} else if (statement instanceof FunctionStatement) {
+			this$3 = statement;
+			this$0 = this$3._funcDef;
+			Util$forEachStatement$F$LStatement$B$ALStatement$(onStatement, this$0._statements);
+		}
+		Statement$forEachExpression$LStatement$F$LExpression$B$(statement, (function onExpr(expr) {
+			var calleeExpr;
+			var propertyExpr;
+			var holderType;
+			var callingFuncDef;
+			var newExpr;
+			if (expr instanceof CallExpression) {
+				calleeExpr = CallExpression$getExpr$LCallExpression$(expr);
+				if (calleeExpr instanceof PropertyExpression && ! calleeExpr.getType$().isAssignable$()) {
+					propertyExpr = calleeExpr;
+					holderType = propertyExpr.getHolderType$();
+					callingFuncDef = _DetermineCalleeCommand$findCallingFunction$LClassDefinition$SALType$B(holderType.getClassDef$(), Token$getValue$LToken$(PropertyExpression$getIdentifierToken$LPropertyExpression$(propertyExpr)), ResolvedFunctionType$getArgumentTypes$LResolvedFunctionType$(propertyExpr.getType$()), UnaryExpression$getExpr$LUnaryExpression$(propertyExpr).isClassSpecifier$());
+					_DetermineCalleeCommand$_setCallingFuncDef$L_DetermineCalleeCommand$LStashable$LMemberFunctionDefinition$($this, expr, callingFuncDef);
+				} else if (calleeExpr instanceof FunctionExpression) {
+					_DetermineCalleeCommand$_setCallingFuncDef$L_DetermineCalleeCommand$LStashable$LMemberFunctionDefinition$($this, expr, FunctionExpression$getFuncDef$LFunctionExpression$(calleeExpr));
+				} else {
+					_DetermineCalleeCommand$_setCallingFuncDef$L_DetermineCalleeCommand$LStashable$LMemberFunctionDefinition$($this, expr, null);
+				}
+			} else if (expr instanceof NewExpression) {
+				newExpr = expr;
+				if (! (newExpr.getType$().getClassDef$() != null)) {
+					debugger;
+					throw new Error("[/Users/gfx/repo/try-on-web/JSX/src/optimizer.jsx:1039:59] assertion failure\n                    assert newExpr.getType().getClassDef() != null;\n                                                           ^^\n");
+				}
+				if (! (NewExpression$getConstructor$LNewExpression$(newExpr) != null)) {
+					debugger;
+					throw new Error("[/Users/gfx/repo/try-on-web/JSX/src/optimizer.jsx:1040:52] assertion failure\n                    assert newExpr.getConstructor() != null;\n                                                    ^^\n");
+				}
+				callingFuncDef = _DetermineCalleeCommand$findCallingFunctionInClass$LClassDefinition$SALType$B(newExpr.getType$().getClassDef$(), "constructor", ResolvedFunctionType$getArgumentTypes$LResolvedFunctionType$(NewExpression$getConstructor$LNewExpression$(newExpr)), false);
+				if (callingFuncDef == null) {
+					throw new Error("could not find matching constructor for " + NewExpression$getConstructor$LNewExpression$(newExpr).toString());
+				}
+				_DetermineCalleeCommand$_setCallingFuncDef$L_DetermineCalleeCommand$LStashable$LMemberFunctionDefinition$($this, newExpr, callingFuncDef);
+			}
+			if (expr instanceof FunctionExpression) {
+				return MemberFunctionDefinition$forEachStatement$LMemberFunctionDefinition$F$LStatement$B$(FunctionExpression$getFuncDef$LFunctionExpression$(expr), onStatement);
+			} else {
+				return Expression$forEachExpression$LExpression$F$LExpression$B$(expr, onExpr);
+			}
+		}));
+		return statement.forEachStatement$F$LStatement$B$(onStatement);
+	}), funcDef._statements);
+	return true;
+};
+
+
+_DetermineCalleeCommand.prototype._setCallingFuncDef$LStashable$LMemberFunctionDefinition$ = function (stashable, funcDef) {
+	this.getStash$LStashable$(stashable).callingFuncDef = funcDef;
+};
+
+
+function _DetermineCalleeCommand$_setCallingFuncDef$L_DetermineCalleeCommand$LStashable$LMemberFunctionDefinition$($this, stashable, funcDef) {
+	$this.getStash$LStashable$(stashable).callingFuncDef = funcDef;
+};
+
+_DetermineCalleeCommand._setCallingFuncDef$L_DetermineCalleeCommand$LStashable$LMemberFunctionDefinition$ = _DetermineCalleeCommand$_setCallingFuncDef$L_DetermineCalleeCommand$LStashable$LMemberFunctionDefinition$;
+
+function _DetermineCalleeCommand$findCallingFunctionInClass$LClassDefinition$SALType$B(classDef, funcName, argTypes, isStatic) {
+	var found;
+	found = Util$findFunctionInClass$LClassDefinition$SALType$B(classDef, funcName, argTypes, isStatic);
+	if (found != null) {
+		if ((found._flags & 12) === 0) {
+			found = null;
+		}
+	}
+	return found;
+};
+
+_DetermineCalleeCommand.findCallingFunctionInClass$LClassDefinition$SALType$B = _DetermineCalleeCommand$findCallingFunctionInClass$LClassDefinition$SALType$B;
+
+function _DetermineCalleeCommand$findCallingFunction$LClassDefinition$SALType$B(classDef, funcName, argTypes, isStatic) {
+	var found;
+	found = null;
+	ClassDefinition$forEachClassToBase$LClassDefinition$F$LClassDefinition$B$(classDef, (function (classDef) {
+		return ((found = _DetermineCalleeCommand$findCallingFunctionInClass$LClassDefinition$SALType$B(classDef, funcName, argTypes, isStatic)) != null ? false : true);
+	}));
+	return found;
+};
+
+_DetermineCalleeCommand.findCallingFunction$LClassDefinition$SALType$B = _DetermineCalleeCommand$findCallingFunction$LClassDefinition$SALType$B;
+
+function _DetermineCalleeCommand$getCallingFuncDef$LStashable$(stashable) {
+	var stash;
+	stash = stashable.getStash$S("determine-callee");
+	if (stash == null) {
+		throw new Error("callee not searched");
+	}
+	return stash.callingFuncDef;
+};
+
+_DetermineCalleeCommand.getCallingFuncDef$LStashable$ = _DetermineCalleeCommand$getCallingFuncDef$LStashable$;
+
+function _StructuredStashAccessor$x2E$x3CStash$x3E$1() {
+};
+
+$__jsx_extend([_StructuredStashAccessor$x2E$x3CStash$x3E$1], Object);
+_StructuredStashAccessor$x2E$x3CStash$x3E$1.prototype.$__jsx_implements__StructuredStashAccessor$x2E$x3CStash$x3E$1 = true;
+
+_StructuredStashAccessor$x2E$x3CStash$x3E$1.prototype.getStash$LStashable$ = function (stashable) {
+	var identifier;
+	var stash;
+	identifier = this._identifier;
+	stash = stashable.getStash$S(identifier);
+	if (stash == null) {
+		stash = new _StaticizeOptimizeCommand$x2EStash();
+		stashable.setStash$SLStash$(identifier, stash);
+	}
+	return stash;
+};
+
+
+_StructuredStashAccessor$x2E$x3CStash$x3E$1.prototype.resetStash$LStashable$ = function (stashable) {
+	var identifier;
+	identifier = this._identifier;
+	stashable.setStash$SLStash$(identifier, null);
+};
+
+
+function _StaticizeOptimizeCommand() {
+	this._identifier = "staticize";
+	this._optimizer = null;
+};
+
+$__jsx_extend([_StaticizeOptimizeCommand], _OptimizeCommand);
+$__jsx_merge_interface(_StaticizeOptimizeCommand, _StructuredStashAccessor$x2E$x3CStash$x3E$1);
+
+_StaticizeOptimizeCommand.prototype.performOptimization$ = function () {
+	var $this = this;
+	var memberCanBeStaticized;
+	var this$0$0;
+	var this$0$1;
+	function memberCanBeStaticized(funcDef) {
+		var onStatement;
+		var this$0$0;
+		if ((funcDef._flags & 62) !== 4) {
+			return false;
+		}
+		if ((this$0$0 = funcDef._nameToken, this$0$0._value) === "constructor") {
+			return false;
+		}
+		function onStatement(statement) {
+			if (statement instanceof FunctionStatement) {
+				return MemberFunctionDefinition$forEachStatement$LMemberFunctionDefinition$F$LStatement$B$(FunctionStatement$getFuncDef$LFunctionStatement$(statement), onStatement);
+			}
+			return Statement$forEachExpression$LStatement$F$LExpression$B$(statement, (function onExpression(expr) {
+				if (expr instanceof FunctionExpression) {
+					return MemberFunctionDefinition$forEachStatement$LMemberFunctionDefinition$F$LStatement$B$(FunctionExpression$getFuncDef$LFunctionExpression$(expr), onStatement);
+				} else if (expr instanceof SuperExpression) {
+					return false;
+				}
+				return Expression$forEachExpression$LExpression$F$LExpression$B$(expr, onExpression);
+			})) && statement.forEachStatement$F$LStatement$B$(onStatement);
+		}
+		return (! Util$forEachStatement$F$LStatement$B$ALStatement$(onStatement, funcDef._statements) ? false : true);
+	}
+	Compiler$forEachClassDef$LCompiler$F$LParser$LClassDefinition$B$((this$0$0 = this._optimizer, this$0$0._compiler), (function (parser, classDef) {
+		if ((classDef.flags$() & 192) !== 0) {
+			return true;
+		}
+		ClassDefinition$forEachMemberFunction$LClassDefinition$F$LMemberFunctionDefinition$B$(classDef, (function onFunction(funcDef) {
+			if (memberCanBeStaticized(funcDef)) {
+				_OptimizeCommand$log$L_OptimizeCommand$S($this, "staticizing method: " + MemberDefinition$name$LMemberDefinition$(funcDef));
+				_StaticizeOptimizeCommand$_staticizeMethod$L_StaticizeOptimizeCommand$LMemberFunctionDefinition$($this, funcDef);
+			}
+			return true;
+		}));
+		return true;
+	}));
+	Compiler$forEachClassDef$LCompiler$F$LParser$LClassDefinition$B$((this$0$1 = this._optimizer, this$0$1._compiler), (function (parser, classDef) {
+		var onFunction;
+		var message$0;
+		var this$0$0;
+		var message$0$0;
+		message$0 = "rewriting member method calls in class: " + classDef.className$();
+		this$0$0 = $this._optimizer;
+		message$0$0 = "[" + $this._identifier + "] " + message$0;
+		this$0$0._log += message$0$0 + "\n";
+		ClassDefinition$forEachMemberVariable$LClassDefinition$F$LMemberVariableDefinition$B$(classDef, (function (varDef) {
+			if (MemberVariableDefinition$getInitialValue$LMemberVariableDefinition$(varDef) == null) {
+				return true;
+			}
+			_StaticizeOptimizeCommand$_rewriteMethodCallsToStatic$L_StaticizeOptimizeCommand$LExpression$F$LExpression$V$LMemberFunctionDefinition$($this, MemberVariableDefinition$getInitialValue$LMemberVariableDefinition$(varDef), (function (expr) {
+				MemberVariableDefinition$setInitialValue$LMemberVariableDefinition$LExpression$(varDef, expr);
+			}), null);
+			return true;
+		}));
+		function onFunction(funcDef) {
+			var onStatement;
+			function onStatement(statement) {
+				statement.forEachExpression$F$LExpression$F$LExpression$V$B$((function (expr, replaceCb) {
+					_StaticizeOptimizeCommand$_rewriteMethodCallsToStatic$L_StaticizeOptimizeCommand$LExpression$F$LExpression$V$LMemberFunctionDefinition$($this, expr, replaceCb, funcDef);
+					return true;
+				}));
+				return statement.forEachStatement$F$LStatement$B$(onStatement);
+			}
+			MemberFunctionDefinition$forEachStatement$LMemberFunctionDefinition$F$LStatement$B$(funcDef, onStatement);
+			return MemberDefinition$forEachClosure$LMemberDefinition$F$LMemberFunctionDefinition$B$(funcDef, onFunction);
+		}
+		ClassDefinition$forEachMemberFunction$LClassDefinition$F$LMemberFunctionDefinition$B$(classDef, onFunction);
+		return true;
+	}));
+};
+
+
+_StaticizeOptimizeCommand.prototype._staticizeMethod$LMemberFunctionDefinition$ = function (funcDef) {
+	var $this = this;
+	var staticFuncDef;
+	var classDef;
+	var newName;
+	var thisArg;
+	var baseName$0;
+	var argTypes$0;
+	var index$0;
+	var newName$0;
+	var this$0$0;
+	var this$0;
+	staticFuncDef = MemberFunctionDefinition$clone$LMemberFunctionDefinition$(funcDef);
+	classDef = staticFuncDef._classDef;
+	this$0$0 = funcDef._nameToken;
+	baseName$0 = this$0$0._value;
+	argTypes$0 = [ new ObjectType(classDef) ].concat((this$0 = funcDef.getType$(), this$0._argTypes));
+	index$0 = 0;
+	newName$0 = baseName$0;
+	while (Util$findFunctionInClass$LClassDefinition$SALType$B(classDef, newName$0, argTypes$0, true) != null) {
+		newName$0 = Util$format$SAS("%1_%2", [ baseName$0, index$0 + "" ]);
+		++index$0;
+	}
+	newName = newName$0;
+	this.getStash$LStashable$(funcDef).altName = newName;
+	staticFuncDef._nameToken = new Token$2(newName, true);
+	MemberDefinition$setFlags$LMemberDefinition$N(staticFuncDef, funcDef._flags & -16385 | 8);
+	thisArg = new ArgumentDeclaration(new Token$2("$this", false), new ObjectType(classDef));
+	staticFuncDef._args.unshift(thisArg);
+	Util$forEachStatement$F$LStatement$B$ALStatement$((function onStatement(statement) {
+		var this$0;
+		var this$1;
+		if (statement instanceof FunctionStatement) {
+			this$1 = statement;
+			this$0 = this$1._funcDef;
+			Util$forEachStatement$F$LStatement$B$ALStatement$(onStatement, this$0._statements);
+		}
+		return statement.forEachExpression$F$LExpression$F$LExpression$V$B$((function onExpr(expr, replaceCb) {
+			if (expr instanceof ThisExpression) {
+				replaceCb(new LocalExpression(LocalVariable$getName$LLocalVariable$(thisArg), thisArg));
+			} else if (expr instanceof FunctionExpression) {
+				return MemberFunctionDefinition$forEachStatement$LMemberFunctionDefinition$F$LStatement$B$(FunctionExpression$getFuncDef$LFunctionExpression$(expr), onStatement);
+			}
+			return expr.forEachExpression$F$LExpression$F$LExpression$V$B$(onExpr);
+		})) && statement.forEachStatement$F$LStatement$B$(onStatement);
+	}), staticFuncDef._statements);
+};
+
+
+function _StaticizeOptimizeCommand$_staticizeMethod$L_StaticizeOptimizeCommand$LMemberFunctionDefinition$($this, funcDef) {
+	var staticFuncDef;
+	var classDef;
+	var newName;
+	var thisArg;
+	var baseName$0;
+	var argTypes$0;
+	var index$0;
+	var newName$0;
+	var this$0$0;
+	var this$0;
+	staticFuncDef = MemberFunctionDefinition$clone$LMemberFunctionDefinition$(funcDef);
+	classDef = staticFuncDef._classDef;
+	this$0$0 = funcDef._nameToken;
+	baseName$0 = this$0$0._value;
+	argTypes$0 = [ new ObjectType(classDef) ].concat((this$0 = funcDef.getType$(), this$0._argTypes));
+	index$0 = 0;
+	newName$0 = baseName$0;
+	while (Util$findFunctionInClass$LClassDefinition$SALType$B(classDef, newName$0, argTypes$0, true) != null) {
+		newName$0 = Util$format$SAS("%1_%2", [ baseName$0, index$0 + "" ]);
+		++index$0;
+	}
+	newName = newName$0;
+	$this.getStash$LStashable$(funcDef).altName = newName;
+	staticFuncDef._nameToken = new Token$2(newName, true);
+	MemberDefinition$setFlags$LMemberDefinition$N(staticFuncDef, funcDef._flags & -16385 | 8);
+	thisArg = new ArgumentDeclaration(new Token$2("$this", false), new ObjectType(classDef));
+	staticFuncDef._args.unshift(thisArg);
+	Util$forEachStatement$F$LStatement$B$ALStatement$((function onStatement(statement) {
+		var this$0;
+		var this$1;
+		if (statement instanceof FunctionStatement) {
+			this$1 = statement;
+			this$0 = this$1._funcDef;
+			Util$forEachStatement$F$LStatement$B$ALStatement$(onStatement, this$0._statements);
+		}
+		return statement.forEachExpression$F$LExpression$F$LExpression$V$B$((function onExpr(expr, replaceCb) {
+			if (expr instanceof ThisExpression) {
+				replaceCb(new LocalExpression(LocalVariable$getName$LLocalVariable$(thisArg), thisArg));
+			} else if (expr instanceof FunctionExpression) {
+				return MemberFunctionDefinition$forEachStatement$LMemberFunctionDefinition$F$LStatement$B$(FunctionExpression$getFuncDef$LFunctionExpression$(expr), onStatement);
+			}
+			return expr.forEachExpression$F$LExpression$F$LExpression$V$B$(onExpr);
+		})) && statement.forEachStatement$F$LStatement$B$(onStatement);
+	}), staticFuncDef._statements);
+};
+
+_StaticizeOptimizeCommand._staticizeMethod$L_StaticizeOptimizeCommand$LMemberFunctionDefinition$ = _StaticizeOptimizeCommand$_staticizeMethod$L_StaticizeOptimizeCommand$LMemberFunctionDefinition$;
+
+_StaticizeOptimizeCommand.prototype._newStaticFunctionName$LClassDefinition$SALType$B = function (classDef, baseName, argTypes, isStatic) {
+	var index;
+	var newName;
+	index = 0;
+	newName = baseName;
+	while (Util$findFunctionInClass$LClassDefinition$SALType$B(classDef, newName, argTypes, isStatic) != null) {
+		newName = Util$format$SAS("%1_%2", [ baseName, index + "" ]);
+		++index;
+	}
+	return newName;
+};
+
+
+function _StaticizeOptimizeCommand$_newStaticFunctionName$L_StaticizeOptimizeCommand$LClassDefinition$SALType$B($this, classDef, baseName, argTypes, isStatic) {
+	var index;
+	var newName;
+	index = 0;
+	newName = baseName;
+	while (Util$findFunctionInClass$LClassDefinition$SALType$B(classDef, newName, argTypes, isStatic) != null) {
+		newName = Util$format$SAS("%1_%2", [ baseName, index + "" ]);
+		++index;
+	}
+	return newName;
+};
+
+_StaticizeOptimizeCommand._newStaticFunctionName$L_StaticizeOptimizeCommand$LClassDefinition$SALType$B = _StaticizeOptimizeCommand$_newStaticFunctionName$L_StaticizeOptimizeCommand$LClassDefinition$SALType$B;
+
+_StaticizeOptimizeCommand.prototype._rewriteMethodCallsToStatic$LExpression$F$LExpression$V$LMemberFunctionDefinition$ = function (expr, replaceCb, rewritingFuncDef) {
+	var $this = this;
+	var onExpr;
+	function onExpr(expr, replaceCb) {
+		var calleeExpr;
+		var propertyExpr;
+		var receiverType;
+		var funcDef;
+		var newName;
+		var superExpr;
+		var classDef;
+		var thisVar;
+		var thisArg;
+		var this$0;
+		var this$1;
+		var this$0$0;
+		var this$2;
+		var this$3;
+		var this$4;
+		var this$5;
+		var this$6;
+		var this$7;
+		var this$8;
+		var this$9;
+		var this$10;
+		var this$11;
+		var this$12;
+		var this$13;
+		var this$14;
+		if (expr instanceof CallExpression) {
+			this$0 = expr;
+			calleeExpr = this$0._expr;
+			if (calleeExpr instanceof PropertyExpression && ! (this$13 = calleeExpr, this$13._expr).isClassSpecifier$() && ! (this$14 = calleeExpr, this$14._type).isAssignable$()) {
+				propertyExpr = calleeExpr;
+				this$1 = propertyExpr._expr.getType$();
+				receiverType = (this$1 instanceof NullableType ? (this$0$0 = this$1, this$0$0._baseType) : this$1);
+				if ((receiverType.getClassDef$().flags$() & 192) === 0) {
+					funcDef = _StaticizeOptimizeCommand$_findFunctionInClassTree$L_StaticizeOptimizeCommand$LClassDefinition$SALType$B($this, receiverType.getClassDef$(), (this$2 = propertyExpr._identifierToken, this$2._value), (this$3 = propertyExpr._type, this$3._argTypes), false);
+					if (funcDef != null && (newName = $this.getStash$LStashable$(funcDef).altName) != null) {
+						onExpr(propertyExpr._expr, (function (expr) {
+							UnaryExpression$setExpr$LUnaryExpression$LExpression$(propertyExpr, expr);
+						}));
+						Util$forEachExpression$F$LExpression$F$LExpression$V$B$ALExpression$(onExpr, (this$4 = expr, this$4._args));
+						replaceCb(new CallExpression(expr._token, new PropertyExpression$0(propertyExpr._token, new ClassExpression(new Token$2(funcDef._classDef.className$(), true), new ObjectType(funcDef._classDef)), new Token$2(newName, true), propertyExpr._typeArgs, new StaticFunctionType(null, (this$5 = funcDef.getType$(), this$5._returnType), [ new ObjectType(funcDef._classDef) ].concat((this$6 = funcDef.getType$(), this$6._argTypes)), false)), [ propertyExpr._expr ].concat((this$7 = expr, this$7._args))));
+						return true;
+					}
+				}
+			}
+		} else if (expr instanceof SuperExpression) {
+			superExpr = expr;
+			classDef = (this$8 = superExpr._funcType, this$8._objectType).getClassDef$();
+			funcDef = _StaticizeOptimizeCommand$_findFunctionInClassTree$L_StaticizeOptimizeCommand$LClassDefinition$SALType$B($this, classDef, (this$9 = superExpr._name, this$9._value), (this$10 = superExpr._funcType, this$10._argTypes), false);
+			if (funcDef != null && (newName = $this.getStash$LStashable$(funcDef).altName) != null) {
+				Util$forEachExpression$F$LExpression$F$LExpression$V$B$ALExpression$(onExpr, superExpr._args);
+				if ((rewritingFuncDef._flags & 8) !== 0) {
+					thisArg = rewritingFuncDef._args[0];
+					thisVar = new LocalExpression(thisArg._name, thisArg);
+				} else {
+					thisVar = new ThisExpression(new Token$2("this", false), funcDef._classDef);
+				}
+				replaceCb(new CallExpression(expr._token, new PropertyExpression$0(superExpr._token, new ClassExpression(new Token$2(funcDef._classDef.className$(), true), new ObjectType(funcDef._classDef)), new Token$2(newName, true), [  ], new StaticFunctionType(null, (this$11 = funcDef.getType$(), this$11._returnType), [ new ObjectType(funcDef._classDef) ].concat((this$12 = funcDef.getType$(), this$12._argTypes)), false)), [ thisVar ].concat(superExpr._args)));
+				return true;
+			}
+		}
+		return expr.forEachExpression$F$LExpression$F$LExpression$V$B$(onExpr);
+	}
+	onExpr(expr, replaceCb);
+};
+
+
+function _StaticizeOptimizeCommand$_rewriteMethodCallsToStatic$L_StaticizeOptimizeCommand$LExpression$F$LExpression$V$LMemberFunctionDefinition$($this, expr, replaceCb, rewritingFuncDef) {
+	var onExpr;
+	function onExpr(expr, replaceCb) {
+		var calleeExpr;
+		var propertyExpr;
+		var receiverType;
+		var funcDef;
+		var newName;
+		var superExpr;
+		var classDef;
+		var thisVar;
+		var thisArg;
+		var this$0;
+		var this$1;
+		var this$0$0;
+		var this$2;
+		var this$3;
+		var this$4;
+		var this$5;
+		var this$6;
+		var this$7;
+		var this$8;
+		var this$9;
+		var this$10;
+		var this$11;
+		var this$12;
+		var this$13;
+		var this$14;
+		if (expr instanceof CallExpression) {
+			this$0 = expr;
+			calleeExpr = this$0._expr;
+			if (calleeExpr instanceof PropertyExpression && ! (this$13 = calleeExpr, this$13._expr).isClassSpecifier$() && ! (this$14 = calleeExpr, this$14._type).isAssignable$()) {
+				propertyExpr = calleeExpr;
+				this$1 = propertyExpr._expr.getType$();
+				receiverType = (this$1 instanceof NullableType ? (this$0$0 = this$1, this$0$0._baseType) : this$1);
+				if ((receiverType.getClassDef$().flags$() & 192) === 0) {
+					funcDef = _StaticizeOptimizeCommand$_findFunctionInClassTree$L_StaticizeOptimizeCommand$LClassDefinition$SALType$B($this, receiverType.getClassDef$(), (this$2 = propertyExpr._identifierToken, this$2._value), (this$3 = propertyExpr._type, this$3._argTypes), false);
+					if (funcDef != null && (newName = $this.getStash$LStashable$(funcDef).altName) != null) {
+						onExpr(propertyExpr._expr, (function (expr) {
+							UnaryExpression$setExpr$LUnaryExpression$LExpression$(propertyExpr, expr);
+						}));
+						Util$forEachExpression$F$LExpression$F$LExpression$V$B$ALExpression$(onExpr, (this$4 = expr, this$4._args));
+						replaceCb(new CallExpression(expr._token, new PropertyExpression$0(propertyExpr._token, new ClassExpression(new Token$2(funcDef._classDef.className$(), true), new ObjectType(funcDef._classDef)), new Token$2(newName, true), propertyExpr._typeArgs, new StaticFunctionType(null, (this$5 = funcDef.getType$(), this$5._returnType), [ new ObjectType(funcDef._classDef) ].concat((this$6 = funcDef.getType$(), this$6._argTypes)), false)), [ propertyExpr._expr ].concat((this$7 = expr, this$7._args))));
+						return true;
+					}
+				}
+			}
+		} else if (expr instanceof SuperExpression) {
+			superExpr = expr;
+			classDef = (this$8 = superExpr._funcType, this$8._objectType).getClassDef$();
+			funcDef = _StaticizeOptimizeCommand$_findFunctionInClassTree$L_StaticizeOptimizeCommand$LClassDefinition$SALType$B($this, classDef, (this$9 = superExpr._name, this$9._value), (this$10 = superExpr._funcType, this$10._argTypes), false);
+			if (funcDef != null && (newName = $this.getStash$LStashable$(funcDef).altName) != null) {
+				Util$forEachExpression$F$LExpression$F$LExpression$V$B$ALExpression$(onExpr, superExpr._args);
+				if ((rewritingFuncDef._flags & 8) !== 0) {
+					thisArg = rewritingFuncDef._args[0];
+					thisVar = new LocalExpression(thisArg._name, thisArg);
+				} else {
+					thisVar = new ThisExpression(new Token$2("this", false), funcDef._classDef);
+				}
+				replaceCb(new CallExpression(expr._token, new PropertyExpression$0(superExpr._token, new ClassExpression(new Token$2(funcDef._classDef.className$(), true), new ObjectType(funcDef._classDef)), new Token$2(newName, true), [  ], new StaticFunctionType(null, (this$11 = funcDef.getType$(), this$11._returnType), [ new ObjectType(funcDef._classDef) ].concat((this$12 = funcDef.getType$(), this$12._argTypes)), false)), [ thisVar ].concat(superExpr._args)));
+				return true;
+			}
+		}
+		return expr.forEachExpression$F$LExpression$F$LExpression$V$B$(onExpr);
+	}
+	onExpr(expr, replaceCb);
+};
+
+_StaticizeOptimizeCommand._rewriteMethodCallsToStatic$L_StaticizeOptimizeCommand$LExpression$F$LExpression$V$LMemberFunctionDefinition$ = _StaticizeOptimizeCommand$_rewriteMethodCallsToStatic$L_StaticizeOptimizeCommand$LExpression$F$LExpression$V$LMemberFunctionDefinition$;
+
+_StaticizeOptimizeCommand.prototype._findFunctionInClassTree$LClassDefinition$SALType$B = function (classDef, name, argTypes, isStatic) {
+	var funcDef;
+	var this$0;
+	while (classDef.className$() !== "Object") {
+		if ((funcDef = Util$findFunctionInClass$LClassDefinition$SALType$B(classDef, name, argTypes, isStatic)) != null) {
+			return funcDef;
+		}
+		this$0 = classDef._extendType;
+		classDef = this$0._classDef;
+	}
+	return Util$findFunctionInClass$LClassDefinition$SALType$B(classDef, name, argTypes, isStatic);
+};
+
+
+function _StaticizeOptimizeCommand$_findFunctionInClassTree$L_StaticizeOptimizeCommand$LClassDefinition$SALType$B($this, classDef, name, argTypes, isStatic) {
+	var funcDef;
+	var this$0;
+	while (classDef.className$() !== "Object") {
+		if ((funcDef = Util$findFunctionInClass$LClassDefinition$SALType$B(classDef, name, argTypes, isStatic)) != null) {
+			return funcDef;
+		}
+		this$0 = classDef._extendType;
+		classDef = this$0._classDef;
+	}
+	return Util$findFunctionInClass$LClassDefinition$SALType$B(classDef, name, argTypes, isStatic);
+};
+
+_StaticizeOptimizeCommand._findFunctionInClassTree$L_StaticizeOptimizeCommand$LClassDefinition$SALType$B = _StaticizeOptimizeCommand$_findFunctionInClassTree$L_StaticizeOptimizeCommand$LClassDefinition$SALType$B;
+
+function _StructuredStashAccessor$x2E$x3CStash$x3E$2() {
+};
+
+$__jsx_extend([_StructuredStashAccessor$x2E$x3CStash$x3E$2], Object);
+_StructuredStashAccessor$x2E$x3CStash$x3E$2.prototype.$__jsx_implements__StructuredStashAccessor$x2E$x3CStash$x3E$2 = true;
+
+_StructuredStashAccessor$x2E$x3CStash$x3E$2.prototype.getStash$LStashable$ = function (stashable) {
+	var identifier;
+	var stash;
+	identifier = this._identifier;
+	stash = stashable.getStash$S(identifier);
+	if (stash == null) {
+		stash = new _UnclassifyOptimizationCommand$x2EStash();
+		stashable.setStash$SLStash$(identifier, stash);
+	}
+	return stash;
+};
+
+
+_StructuredStashAccessor$x2E$x3CStash$x3E$2.prototype.resetStash$LStashable$ = function (stashable) {
+	var identifier;
+	identifier = this._identifier;
+	stashable.setStash$SLStash$(identifier, null);
+};
+
+
+function _UnclassifyOptimizationCommand() {
+	this._identifier = "unclassify";
+	this._optimizer = null;
+};
+
+$__jsx_extend([_UnclassifyOptimizationCommand], _OptimizeCommand);
+$__jsx_merge_interface(_UnclassifyOptimizationCommand, _StructuredStashAccessor$x2E$x3CStash$x3E$2);
+
+_UnclassifyOptimizationCommand.prototype.performOptimization$ = function () {
+	var $this = this;
+	var classDefs;
+	var this$0$0;
+	classDefs = _UnclassifyOptimizationCommand$_getClassesToUnclassify$L_UnclassifyOptimizationCommand$(this);
+	classDefs.forEach((function (classDef) {
+		var message$0;
+		var this$0$0;
+		var message$0$0;
+		message$0 = "unclassifying class: " + classDef.className$();
+		this$0$0 = $this._optimizer;
+		message$0$0 = "[" + $this._identifier + "] " + message$0;
+		this$0$0._log += message$0$0 + "\n";
+		ClassDefinition$forEachMemberFunction$LClassDefinition$F$LMemberFunctionDefinition$B$(classDef, (function onFunction(funcDef) {
+			if ((MemberDefinition$flags$LMemberDefinition$(funcDef) & ClassDefinition.IS_STATIC) === 0 && MemberDefinition$name$LMemberDefinition$(funcDef) !== "constructor") {
+				_OptimizeCommand$log$L_OptimizeCommand$S($this, "rewriting method to static function: " + MemberDefinition$name$LMemberDefinition$(funcDef));
+				_UnclassifyOptimizationCommand$_rewriteFunctionAsStatic$L_UnclassifyOptimizationCommand$LMemberFunctionDefinition$($this, funcDef);
+			}
+			return true;
+		}));
+	}));
+	Compiler$forEachClassDef$LCompiler$F$LParser$LClassDefinition$B$((this$0$0 = this._optimizer, this$0$0._compiler), (function (parser, classDef) {
+		var onFunction;
+		var message$0;
+		var this$0$0;
+		var message$0$0;
+		message$0 = "rewriting member method calls in class: " + classDef.className$();
+		this$0$0 = $this._optimizer;
+		message$0$0 = "[" + $this._identifier + "] " + message$0;
+		this$0$0._log += message$0$0 + "\n";
+		function onFunction(funcDef) {
+			var onStatement;
+			function onStatement(statement) {
+				statement.forEachExpression$F$LExpression$F$LExpression$V$B$((function (expr, replaceCb) {
+					_UnclassifyOptimizationCommand$_rewriteMethodCallsToStatic$L_UnclassifyOptimizationCommand$LExpression$F$LExpression$V$ALClassDefinition$($this, expr, replaceCb, classDefs);
+					return true;
+				}));
+				return statement.forEachStatement$F$LStatement$B$(onStatement);
+			}
+			MemberFunctionDefinition$forEachStatement$LMemberFunctionDefinition$F$LStatement$B$(funcDef, onStatement);
+			return MemberDefinition$forEachClosure$LMemberDefinition$F$LMemberFunctionDefinition$B$(funcDef, onFunction);
+		}
+		ClassDefinition$forEachMemberFunction$LClassDefinition$F$LMemberFunctionDefinition$B$(classDef, onFunction);
+		ClassDefinition$forEachMemberVariable$LClassDefinition$F$LMemberVariableDefinition$B$(classDef, (function (varDef) {
+			if ((MemberDefinition$flags$LMemberDefinition$(varDef) & ClassDefinition.IS_STATIC) !== 0) {
+				if (MemberVariableDefinition$getInitialValue$LMemberVariableDefinition$(varDef) != null) {
+					_UnclassifyOptimizationCommand$_rewriteMethodCallsToStatic$L_UnclassifyOptimizationCommand$LExpression$F$LExpression$V$ALClassDefinition$($this, MemberVariableDefinition$getInitialValue$LMemberVariableDefinition$(varDef), (function (expr) {
+						MemberVariableDefinition$setInitialValue$LMemberVariableDefinition$LExpression$(varDef, expr);
+					}), classDefs);
+				}
+			}
+			return MemberDefinition$forEachClosure$LMemberDefinition$F$LMemberFunctionDefinition$B$(varDef, onFunction);
+		}));
+		return true;
+	}));
+};
+
+
+_UnclassifyOptimizationCommand.prototype._getClassesToUnclassify$ = function () {
+	var $this = this;
+	var candidates;
+	var candidateIndex;
+	var hasInlineableCtor;
+	var this$0$0;
+	var this$0$1;
+	candidates = [];
+	Compiler$forEachClassDef$LCompiler$F$LParser$LClassDefinition$B$((this$0$0 = this._optimizer, this$0$0._compiler), (function (parser, classDef) {
+		var this$0;
+		if ((classDef.flags$() & 16404) === 4 && (this$0 = classDef._extendType, this$0._classDef).className$() === "Object" && classDef._implementTypes.length === 0 && ClassDefinition$forEachMemberFunction$LClassDefinition$F$LMemberFunctionDefinition$B$(classDef, (function (funcDef) {
+			return (MemberDefinition$flags$LMemberDefinition$(funcDef) & (ClassDefinition.IS_OVERRIDE | ClassDefinition.IS_EXPORT)) === 0;
+		}))) {
+			candidates.push(classDef);
+		}
+		return true;
+	}));
+	Compiler$forEachClassDef$LCompiler$F$LParser$LClassDefinition$B$((this$0$1 = this._optimizer, this$0$1._compiler), (function (parser, classDef) {
+		var onExpr;
+		var onFunction;
+		if (candidates.length === 0) {
+			return false;
+		}
+		function onExpr(expr) {
+			var foundClassDefIndex;
+			if (! (expr != null)) {
+				debugger;
+				throw new Error("[/Users/gfx/repo/try-on-web/JSX/src/optimizer.jsx:1420:28] assertion failure\n                assert expr != null;\n                            ^^\n");
+			}
+			if (expr instanceof InstanceofExpression) {
+				foundClassDefIndex = candidates.indexOf(InstanceofExpression$getExpectedType$LInstanceofExpression$(expr).getClassDef$());
+				if (foundClassDefIndex !== - 1) {
+					candidates.splice(foundClassDefIndex, 1);
+					if (candidates.length === 0) {
+						return false;
+					}
+				}
+			} else if (expr instanceof AsExpression && expr.getType$() instanceof ObjectType) {
+				foundClassDefIndex = candidates.indexOf(expr.getType$().getClassDef$());
+				if (foundClassDefIndex !== - 1) {
+					candidates.splice(foundClassDefIndex, 1);
+					if (candidates.length === 0) {
+						return false;
+					}
+				}
+			}
+			return Expression$forEachExpression$LExpression$F$LExpression$B$(expr, onExpr);
+		}
+		function onFunction(funcDef) {
+			MemberFunctionDefinition$forEachStatement$LMemberFunctionDefinition$F$LStatement$B$(funcDef, (function onStatement(statement) {
+				Statement$forEachExpression$LStatement$F$LExpression$B$(statement, onExpr);
+				return statement.forEachStatement$F$LStatement$B$(onStatement);
+			}));
+			return MemberDefinition$forEachClosure$LMemberDefinition$F$LMemberFunctionDefinition$B$(funcDef, onFunction);
+		}
+		ClassDefinition$forEachMemberFunction$LClassDefinition$F$LMemberFunctionDefinition$B$(classDef, onFunction);
+		ClassDefinition$forEachMemberVariable$LClassDefinition$F$LMemberVariableDefinition$B$(classDef, (function (varDef) {
+			if ((MemberDefinition$flags$LMemberDefinition$(varDef) & ClassDefinition.IS_STATIC) !== 0) {
+				if (MemberVariableDefinition$getInitialValue$LMemberVariableDefinition$(varDef) != null) {
+					onExpr(MemberVariableDefinition$getInitialValue$LMemberVariableDefinition$(varDef));
+				}
+			}
+			return MemberDefinition$forEachClosure$LMemberDefinition$F$LMemberFunctionDefinition$B$(varDef, onFunction);
+		}));
+		return true;
+	}));
+	for (candidateIndex = candidates.length - 1; candidateIndex >= 0; --candidateIndex) {
+		hasInlineableCtor = false;
+		ClassDefinition$forEachMemberFunction$LClassDefinition$F$LMemberFunctionDefinition$B$(candidates[candidateIndex], (function (funcDef) {
+			var inliner;
+			var message$0;
+			var this$0$0;
+			var message$0$0;
+			var this$0$1;
+			if ((funcDef._flags & 8) === 0 && (this$0$1 = funcDef._nameToken, this$0$1._value) === "constructor") {
+				inliner = _UnclassifyOptimizationCommand$_createInliner$L_UnclassifyOptimizationCommand$LMemberFunctionDefinition$($this, funcDef);
+				message$0 = funcDef.getNotation$() + " is" + (inliner ? "" : " not") + " inlineable";
+				this$0$0 = $this._optimizer;
+				message$0$0 = "[" + $this._identifier + "] " + message$0;
+				this$0$0._log += message$0$0 + "\n";
+				if (inliner) {
+					$this.getStash$LStashable$(funcDef).inliner = inliner;
+					hasInlineableCtor = true;
+				}
+			}
+			return true;
+		}));
+		if (! hasInlineableCtor) {
+			candidates.splice(candidateIndex, 1);
+		}
+	}
+	return (candidates.length === 0 ? candidates : candidates);
+};
+
+
+function _UnclassifyOptimizationCommand$_getClassesToUnclassify$L_UnclassifyOptimizationCommand$($this) {
+	var candidates;
+	var candidateIndex;
+	var hasInlineableCtor;
+	var this$0$0;
+	var this$0$1;
+	candidates = [];
+	Compiler$forEachClassDef$LCompiler$F$LParser$LClassDefinition$B$((this$0$0 = $this._optimizer, this$0$0._compiler), (function (parser, classDef) {
+		var this$0;
+		if ((classDef.flags$() & 16404) === 4 && (this$0 = classDef._extendType, this$0._classDef).className$() === "Object" && classDef._implementTypes.length === 0 && ClassDefinition$forEachMemberFunction$LClassDefinition$F$LMemberFunctionDefinition$B$(classDef, (function (funcDef) {
+			return (MemberDefinition$flags$LMemberDefinition$(funcDef) & (ClassDefinition.IS_OVERRIDE | ClassDefinition.IS_EXPORT)) === 0;
+		}))) {
+			candidates.push(classDef);
+		}
+		return true;
+	}));
+	Compiler$forEachClassDef$LCompiler$F$LParser$LClassDefinition$B$((this$0$1 = $this._optimizer, this$0$1._compiler), (function (parser, classDef) {
+		var onExpr;
+		var onFunction;
+		if (candidates.length === 0) {
+			return false;
+		}
+		function onExpr(expr) {
+			var foundClassDefIndex;
+			if (! (expr != null)) {
+				debugger;
+				throw new Error("[/Users/gfx/repo/try-on-web/JSX/src/optimizer.jsx:1420:28] assertion failure\n                assert expr != null;\n                            ^^\n");
+			}
+			if (expr instanceof InstanceofExpression) {
+				foundClassDefIndex = candidates.indexOf(InstanceofExpression$getExpectedType$LInstanceofExpression$(expr).getClassDef$());
+				if (foundClassDefIndex !== - 1) {
+					candidates.splice(foundClassDefIndex, 1);
+					if (candidates.length === 0) {
+						return false;
+					}
+				}
+			} else if (expr instanceof AsExpression && expr.getType$() instanceof ObjectType) {
+				foundClassDefIndex = candidates.indexOf(expr.getType$().getClassDef$());
+				if (foundClassDefIndex !== - 1) {
+					candidates.splice(foundClassDefIndex, 1);
+					if (candidates.length === 0) {
+						return false;
+					}
+				}
+			}
+			return Expression$forEachExpression$LExpression$F$LExpression$B$(expr, onExpr);
+		}
+		function onFunction(funcDef) {
+			MemberFunctionDefinition$forEachStatement$LMemberFunctionDefinition$F$LStatement$B$(funcDef, (function onStatement(statement) {
+				Statement$forEachExpression$LStatement$F$LExpression$B$(statement, onExpr);
+				return statement.forEachStatement$F$LStatement$B$(onStatement);
+			}));
+			return MemberDefinition$forEachClosure$LMemberDefinition$F$LMemberFunctionDefinition$B$(funcDef, onFunction);
+		}
+		ClassDefinition$forEachMemberFunction$LClassDefinition$F$LMemberFunctionDefinition$B$(classDef, onFunction);
+		ClassDefinition$forEachMemberVariable$LClassDefinition$F$LMemberVariableDefinition$B$(classDef, (function (varDef) {
+			if ((MemberDefinition$flags$LMemberDefinition$(varDef) & ClassDefinition.IS_STATIC) !== 0) {
+				if (MemberVariableDefinition$getInitialValue$LMemberVariableDefinition$(varDef) != null) {
+					onExpr(MemberVariableDefinition$getInitialValue$LMemberVariableDefinition$(varDef));
+				}
+			}
+			return MemberDefinition$forEachClosure$LMemberDefinition$F$LMemberFunctionDefinition$B$(varDef, onFunction);
+		}));
+		return true;
+	}));
+	for (candidateIndex = candidates.length - 1; candidateIndex >= 0; --candidateIndex) {
+		hasInlineableCtor = false;
+		ClassDefinition$forEachMemberFunction$LClassDefinition$F$LMemberFunctionDefinition$B$(candidates[candidateIndex], (function (funcDef) {
+			var inliner;
+			var message$0;
+			var this$0$0;
+			var message$0$0;
+			var this$0$1;
+			if ((funcDef._flags & 8) === 0 && (this$0$1 = funcDef._nameToken, this$0$1._value) === "constructor") {
+				inliner = _UnclassifyOptimizationCommand$_createInliner$L_UnclassifyOptimizationCommand$LMemberFunctionDefinition$($this, funcDef);
+				message$0 = funcDef.getNotation$() + " is" + (inliner ? "" : " not") + " inlineable";
+				this$0$0 = $this._optimizer;
+				message$0$0 = "[" + $this._identifier + "] " + message$0;
+				this$0$0._log += message$0$0 + "\n";
+				if (inliner) {
+					$this.getStash$LStashable$(funcDef).inliner = inliner;
+					hasInlineableCtor = true;
+				}
+			}
+			return true;
+		}));
+		if (! hasInlineableCtor) {
+			candidates.splice(candidateIndex, 1);
+		}
+	}
+	return (candidates.length === 0 ? candidates : candidates);
+};
+
+_UnclassifyOptimizationCommand._getClassesToUnclassify$L_UnclassifyOptimizationCommand$ = _UnclassifyOptimizationCommand$_getClassesToUnclassify$L_UnclassifyOptimizationCommand$;
+
+_UnclassifyOptimizationCommand.prototype._createInliner$LMemberFunctionDefinition$ = function (funcDef) {
+	var $this = this;
+	var propertyNames;
+	var propertyExprs;
+	var expectedArgIndex;
+	var statements;
+	var statementIndex;
+	var statementExpr;
+	var lhsExpr;
+	var onRHSExpr;
+	var propertyIndex;
+	var i;
+	var this$0;
+	var this$1;
+	var this$2;
+	var this$3;
+	var this$4;
+	var this$5;
+	var this$6;
+	var this$7;
+	var this$8;
+	var propertyNames$len$0;
+	if (funcDef._locals.length !== 0) {
+		return null;
+	}
+	propertyNames = [];
+	ClassDefinition$forEachMemberVariable$LClassDefinition$F$LMemberVariableDefinition$B$(funcDef._classDef, (function (member) {
+		var this$0$0;
+		if ((member._flags & 8) === 0) {
+			propertyNames.push((this$0$0 = member._nameToken, this$0$0._value));
+		}
+		return true;
+	}));
+	propertyExprs = [];
+	expectedArgIndex = 0;
+	statements = funcDef._statements;
+	if (statements.length !== propertyNames.length) {
+		return null;
+	}
+	for (statementIndex = 0; statementIndex < statements.length; ++statementIndex) {
+		if (! (statements[statementIndex] instanceof ExpressionStatement)) {
+			return null;
+		}
+		this$0 = statements[statementIndex];
+		statementExpr = this$0._expr;
+		if (! (statementExpr instanceof AssignmentExpression)) {
+			return null;
+		}
+		this$1 = statementExpr;
+		lhsExpr = this$1._expr1;
+		if (! (lhsExpr instanceof PropertyExpression && (this$2 = lhsExpr, this$2._expr) instanceof ThisExpression)) {
+			return null;
+		}
+		function onRHSExpr(expr) {
+			var argIndex;
+			var this$0;
+			var this$1;
+			var this$2;
+			var this$3;
+			if (expr instanceof AssignmentExpression || expr instanceof FusedAssignmentExpression || expr instanceof PreIncrementExpression || expr instanceof PostIncrementExpression) {
+				return false;
+			} else if (expr instanceof FunctionExpression) {
+				return false;
+			} else if (expr instanceof ThisExpression) {
+				return false;
+			} else if (expr instanceof LocalExpression) {
+				argIndex = funcDef._args.map((function (i) {
+					return i;
+				})).indexOf((this$0 = expr, this$0._local));
+				if (argIndex === -1) {
+					throw new Error("logic flaw; could not find argument: " + (this$3 = (this$2 = (this$1 = expr, this$1._local), this$2._name), this$3._value));
+				}
+				if (expectedArgIndex !== argIndex) {
+					return false;
+				}
+				++expectedArgIndex;
+			}
+			return Expression$forEachExpression$LExpression$F$LExpression$B$(expr, onRHSExpr);
+		}
+		if (! onRHSExpr((this$3 = statementExpr, this$3._expr2))) {
+			return null;
+		}
+		propertyIndex = propertyNames.indexOf((this$5 = (this$4 = lhsExpr, this$4._identifierToken), this$5._value));
+		if (propertyIndex === -1) {
+			throw new Error("logic flaw; could not find property: " + (this$7 = (this$6 = lhsExpr, this$6._identifierToken), this$7._value));
+		}
+		if (propertyExprs[propertyIndex]) {
+			return null;
+		}
+		for ((i = propertyIndex + 1, propertyNames$len$0 = propertyNames.length); i < propertyNames$len$0; ++i) {
+			if (propertyExprs[i] != null && _Util$exprHasSideEffects$LExpression$(propertyExprs[i])) {
+				return null;
+			}
+		}
+		propertyExprs[propertyIndex] = (this$8 = statementExpr, this$8._expr2).clone$();
+	}
+	return (function (newExpr) {
+		return propertyExprs.map((function (expr) {
+			var onExpr;
+			function onExpr(expr, replaceCb) {
+				var args;
+				var argIndex;
+				var i;
+				if (expr instanceof LocalExpression) {
+					(args = MemberFunctionDefinition$getArguments$LMemberFunctionDefinition$(funcDef), argIndex = - 1);
+					for (i in args) { i |= 0;
+						if (args[i] == LocalExpression$getLocal$LLocalExpression$(expr)) {
+							argIndex = i;
+							break;
+						}
+					}
+					if (argIndex === - 1) {
+						throw new Error("logic flaw");
+					}
+					replaceCb(NewExpression$getArguments$LNewExpression$(newExpr)[argIndex]);
+					return true;
+				}
+				return expr.forEachExpression$F$LExpression$F$LExpression$V$B$(onExpr);
+			}
+			expr = expr.clone$();
+			onExpr(expr, (function (newExpr) {
+				expr = newExpr;
+			}));
+			return expr;
+		}));
+	});
+};
+
+
+function _UnclassifyOptimizationCommand$_createInliner$L_UnclassifyOptimizationCommand$LMemberFunctionDefinition$($this, funcDef) {
+	var propertyNames;
+	var propertyExprs;
+	var expectedArgIndex;
+	var statements;
+	var statementIndex;
+	var statementExpr;
+	var lhsExpr;
+	var onRHSExpr;
+	var propertyIndex;
+	var i;
+	var this$0;
+	var this$1;
+	var this$2;
+	var this$3;
+	var this$4;
+	var this$5;
+	var this$6;
+	var this$7;
+	var this$8;
+	var propertyNames$len$0;
+	if (funcDef._locals.length !== 0) {
+		return null;
+	}
+	propertyNames = [];
+	ClassDefinition$forEachMemberVariable$LClassDefinition$F$LMemberVariableDefinition$B$(funcDef._classDef, (function (member) {
+		var this$0$0;
+		if ((member._flags & 8) === 0) {
+			propertyNames.push((this$0$0 = member._nameToken, this$0$0._value));
+		}
+		return true;
+	}));
+	propertyExprs = [];
+	expectedArgIndex = 0;
+	statements = funcDef._statements;
+	if (statements.length !== propertyNames.length) {
+		return null;
+	}
+	for (statementIndex = 0; statementIndex < statements.length; ++statementIndex) {
+		if (! (statements[statementIndex] instanceof ExpressionStatement)) {
+			return null;
+		}
+		this$0 = statements[statementIndex];
+		statementExpr = this$0._expr;
+		if (! (statementExpr instanceof AssignmentExpression)) {
+			return null;
+		}
+		this$1 = statementExpr;
+		lhsExpr = this$1._expr1;
+		if (! (lhsExpr instanceof PropertyExpression && (this$2 = lhsExpr, this$2._expr) instanceof ThisExpression)) {
+			return null;
+		}
+		function onRHSExpr(expr) {
+			var argIndex;
+			var this$0;
+			var this$1;
+			var this$2;
+			var this$3;
+			if (expr instanceof AssignmentExpression || expr instanceof FusedAssignmentExpression || expr instanceof PreIncrementExpression || expr instanceof PostIncrementExpression) {
+				return false;
+			} else if (expr instanceof FunctionExpression) {
+				return false;
+			} else if (expr instanceof ThisExpression) {
+				return false;
+			} else if (expr instanceof LocalExpression) {
+				argIndex = funcDef._args.map((function (i) {
+					return i;
+				})).indexOf((this$0 = expr, this$0._local));
+				if (argIndex === -1) {
+					throw new Error("logic flaw; could not find argument: " + (this$3 = (this$2 = (this$1 = expr, this$1._local), this$2._name), this$3._value));
+				}
+				if (expectedArgIndex !== argIndex) {
+					return false;
+				}
+				++expectedArgIndex;
+			}
+			return Expression$forEachExpression$LExpression$F$LExpression$B$(expr, onRHSExpr);
+		}
+		if (! onRHSExpr((this$3 = statementExpr, this$3._expr2))) {
+			return null;
+		}
+		propertyIndex = propertyNames.indexOf((this$5 = (this$4 = lhsExpr, this$4._identifierToken), this$5._value));
+		if (propertyIndex === -1) {
+			throw new Error("logic flaw; could not find property: " + (this$7 = (this$6 = lhsExpr, this$6._identifierToken), this$7._value));
+		}
+		if (propertyExprs[propertyIndex]) {
+			return null;
+		}
+		for ((i = propertyIndex + 1, propertyNames$len$0 = propertyNames.length); i < propertyNames$len$0; ++i) {
+			if (propertyExprs[i] != null && _Util$exprHasSideEffects$LExpression$(propertyExprs[i])) {
+				return null;
+			}
+		}
+		propertyExprs[propertyIndex] = (this$8 = statementExpr, this$8._expr2).clone$();
+	}
+	return (function (newExpr) {
+		return propertyExprs.map((function (expr) {
+			var onExpr;
+			function onExpr(expr, replaceCb) {
+				var args;
+				var argIndex;
+				var i;
+				if (expr instanceof LocalExpression) {
+					(args = MemberFunctionDefinition$getArguments$LMemberFunctionDefinition$(funcDef), argIndex = - 1);
+					for (i in args) { i |= 0;
+						if (args[i] == LocalExpression$getLocal$LLocalExpression$(expr)) {
+							argIndex = i;
+							break;
+						}
+					}
+					if (argIndex === - 1) {
+						throw new Error("logic flaw");
+					}
+					replaceCb(NewExpression$getArguments$LNewExpression$(newExpr)[argIndex]);
+					return true;
+				}
+				return expr.forEachExpression$F$LExpression$F$LExpression$V$B$(onExpr);
+			}
+			expr = expr.clone$();
+			onExpr(expr, (function (newExpr) {
+				expr = newExpr;
+			}));
+			return expr;
+		}));
+	});
+};
+
+_UnclassifyOptimizationCommand._createInliner$L_UnclassifyOptimizationCommand$LMemberFunctionDefinition$ = _UnclassifyOptimizationCommand$_createInliner$L_UnclassifyOptimizationCommand$LMemberFunctionDefinition$;
+
+_UnclassifyOptimizationCommand.prototype._rewriteFunctionAsStatic$LMemberFunctionDefinition$ = function (funcDef) {
+	var $this = this;
+	var thisArg;
+	thisArg = new ArgumentDeclaration(new Token$2("$this", false), new ObjectType(funcDef._classDef));
+	funcDef._args.unshift(thisArg);
+	Util$forEachStatement$F$LStatement$B$ALStatement$((function onStatement(statement) {
+		var this$0;
+		var this$1;
+		if (statement instanceof FunctionStatement) {
+			this$1 = statement;
+			this$0 = this$1._funcDef;
+			Util$forEachStatement$F$LStatement$B$ALStatement$(onStatement, this$0._statements);
+		}
+		return statement.forEachExpression$F$LExpression$F$LExpression$V$B$((function onExpr(expr, replaceCb) {
+			if (expr instanceof ThisExpression) {
+				replaceCb(new LocalExpression(LocalVariable$getName$LLocalVariable$(thisArg), thisArg));
+			} else if (expr instanceof FunctionExpression) {
+				return MemberFunctionDefinition$forEachStatement$LMemberFunctionDefinition$F$LStatement$B$(FunctionExpression$getFuncDef$LFunctionExpression$(expr), onStatement);
+			}
+			return expr.forEachExpression$F$LExpression$F$LExpression$V$B$(onExpr);
+		})) && statement.forEachStatement$F$LStatement$B$(onStatement);
+	}), funcDef._statements);
+	MemberDefinition$setFlags$LMemberDefinition$N(funcDef, funcDef._flags | 8);
+};
+
+
+function _UnclassifyOptimizationCommand$_rewriteFunctionAsStatic$L_UnclassifyOptimizationCommand$LMemberFunctionDefinition$($this, funcDef) {
+	var thisArg;
+	thisArg = new ArgumentDeclaration(new Token$2("$this", false), new ObjectType(funcDef._classDef));
+	funcDef._args.unshift(thisArg);
+	Util$forEachStatement$F$LStatement$B$ALStatement$((function onStatement(statement) {
+		var this$0;
+		var this$1;
+		if (statement instanceof FunctionStatement) {
+			this$1 = statement;
+			this$0 = this$1._funcDef;
+			Util$forEachStatement$F$LStatement$B$ALStatement$(onStatement, this$0._statements);
+		}
+		return statement.forEachExpression$F$LExpression$F$LExpression$V$B$((function onExpr(expr, replaceCb) {
+			if (expr instanceof ThisExpression) {
+				replaceCb(new LocalExpression(LocalVariable$getName$LLocalVariable$(thisArg), thisArg));
+			} else if (expr instanceof FunctionExpression) {
+				return MemberFunctionDefinition$forEachStatement$LMemberFunctionDefinition$F$LStatement$B$(FunctionExpression$getFuncDef$LFunctionExpression$(expr), onStatement);
+			}
+			return expr.forEachExpression$F$LExpression$F$LExpression$V$B$(onExpr);
+		})) && statement.forEachStatement$F$LStatement$B$(onStatement);
+	}), funcDef._statements);
+	MemberDefinition$setFlags$LMemberDefinition$N(funcDef, funcDef._flags | 8);
+};
+
+_UnclassifyOptimizationCommand._rewriteFunctionAsStatic$L_UnclassifyOptimizationCommand$LMemberFunctionDefinition$ = _UnclassifyOptimizationCommand$_rewriteFunctionAsStatic$L_UnclassifyOptimizationCommand$LMemberFunctionDefinition$;
+
+_UnclassifyOptimizationCommand.prototype._rewriteMethodCallsToStatic$LExpression$F$LExpression$V$ALClassDefinition$ = function (expr, replaceCb, unclassifyingClassDefs) {
+	var $this = this;
+	var onExpr;
+	onExpr = (function (expr, replaceCb) {
+		var calleeExpr;
+		var propertyExpr;
+		var receiverType;
+		var receiverClassDef;
+		var funcType;
+		var this$0;
+		var this$1;
+		var this$0$0;
+		var this$2;
+		var this$3;
+		var this$4;
+		var this$5;
+		var this$6;
+		var this$7;
+		var this$8;
+		var this$9;
+		var this$10;
+		if (expr instanceof CallExpression) {
+			this$0 = expr;
+			calleeExpr = this$0._expr;
+			if (calleeExpr instanceof PropertyExpression && ! (this$6 = calleeExpr, this$6._expr).isClassSpecifier$() && ! (this$7 = calleeExpr, this$7._type).isAssignable$() && ! ((this$9 = (this$8 = calleeExpr, this$8._identifierToken), this$9._value) === "toString" && (this$10 = expr, this$10._args).length === 0)) {
+				propertyExpr = calleeExpr;
+				this$1 = propertyExpr._expr.getType$();
+				receiverType = (this$1 instanceof NullableType ? (this$0$0 = this$1, this$0$0._baseType) : this$1);
+				receiverClassDef = receiverType.getClassDef$();
+				if (unclassifyingClassDefs.indexOf(receiverClassDef) !== -1) {
+					onExpr(propertyExpr._expr, (function (expr) {
+						UnaryExpression$setExpr$LUnaryExpression$LExpression$(propertyExpr, expr);
+					}));
+					Util$forEachExpression$F$LExpression$F$LExpression$V$B$ALExpression$(onExpr, (this$2 = expr, this$2._args));
+					funcType = propertyExpr._type;
+					replaceCb(new CallExpression(expr._token, new PropertyExpression$0(propertyExpr._token, new ClassExpression(new Token$2(receiverClassDef.className$(), true), receiverType), propertyExpr._identifierToken, propertyExpr._typeArgs, new StaticFunctionType(null, (this$3 = funcType, this$3._returnType), [ receiverType ].concat((this$4 = funcType, this$4._argTypes)), false)), [ propertyExpr._expr ].concat((this$5 = expr, this$5._args))));
+					return true;
+				}
+			}
+		}
+		return expr.forEachExpression$F$LExpression$F$LExpression$V$B$(onExpr);
+	});
+	onExpr(expr, replaceCb);
+};
+
+
+function _UnclassifyOptimizationCommand$_rewriteMethodCallsToStatic$L_UnclassifyOptimizationCommand$LExpression$F$LExpression$V$ALClassDefinition$($this, expr, replaceCb, unclassifyingClassDefs) {
+	var onExpr;
+	onExpr = (function (expr, replaceCb) {
+		var calleeExpr;
+		var propertyExpr;
+		var receiverType;
+		var receiverClassDef;
+		var funcType;
+		var this$0;
+		var this$1;
+		var this$0$0;
+		var this$2;
+		var this$3;
+		var this$4;
+		var this$5;
+		var this$6;
+		var this$7;
+		var this$8;
+		var this$9;
+		var this$10;
+		if (expr instanceof CallExpression) {
+			this$0 = expr;
+			calleeExpr = this$0._expr;
+			if (calleeExpr instanceof PropertyExpression && ! (this$6 = calleeExpr, this$6._expr).isClassSpecifier$() && ! (this$7 = calleeExpr, this$7._type).isAssignable$() && ! ((this$9 = (this$8 = calleeExpr, this$8._identifierToken), this$9._value) === "toString" && (this$10 = expr, this$10._args).length === 0)) {
+				propertyExpr = calleeExpr;
+				this$1 = propertyExpr._expr.getType$();
+				receiverType = (this$1 instanceof NullableType ? (this$0$0 = this$1, this$0$0._baseType) : this$1);
+				receiverClassDef = receiverType.getClassDef$();
+				if (unclassifyingClassDefs.indexOf(receiverClassDef) !== -1) {
+					onExpr(propertyExpr._expr, (function (expr) {
+						UnaryExpression$setExpr$LUnaryExpression$LExpression$(propertyExpr, expr);
+					}));
+					Util$forEachExpression$F$LExpression$F$LExpression$V$B$ALExpression$(onExpr, (this$2 = expr, this$2._args));
+					funcType = propertyExpr._type;
+					replaceCb(new CallExpression(expr._token, new PropertyExpression$0(propertyExpr._token, new ClassExpression(new Token$2(receiverClassDef.className$(), true), receiverType), propertyExpr._identifierToken, propertyExpr._typeArgs, new StaticFunctionType(null, (this$3 = funcType, this$3._returnType), [ receiverType ].concat((this$4 = funcType, this$4._argTypes)), false)), [ propertyExpr._expr ].concat((this$5 = expr, this$5._args))));
+					return true;
+				}
+			}
+		}
+		return expr.forEachExpression$F$LExpression$F$LExpression$V$B$(onExpr);
+	});
+	onExpr(expr, replaceCb);
+};
+
+_UnclassifyOptimizationCommand._rewriteMethodCallsToStatic$L_UnclassifyOptimizationCommand$LExpression$F$LExpression$V$ALClassDefinition$ = _UnclassifyOptimizationCommand$_rewriteMethodCallsToStatic$L_UnclassifyOptimizationCommand$LExpression$F$LExpression$V$ALClassDefinition$;
+
+function _StructuredStashAccessor$x2E$x3CStash$x3E$3() {
+};
+
+$__jsx_extend([_StructuredStashAccessor$x2E$x3CStash$x3E$3], Object);
+_StructuredStashAccessor$x2E$x3CStash$x3E$3.prototype.$__jsx_implements__StructuredStashAccessor$x2E$x3CStash$x3E$3 = true;
+
+_StructuredStashAccessor$x2E$x3CStash$x3E$3.prototype.getStash$LStashable$ = function (stashable) {
+	var identifier;
+	var stash;
+	identifier = this._identifier;
+	stash = stashable.getStash$S(identifier);
+	if (stash == null) {
+		stash = new _FoldConstantCommand$x2EStash();
+		stashable.setStash$SLStash$(identifier, stash);
+	}
+	return stash;
+};
+
+
+_StructuredStashAccessor$x2E$x3CStash$x3E$3.prototype.resetStash$LStashable$ = function (stashable) {
+	var identifier;
+	identifier = this._identifier;
+	stashable.setStash$SLStash$(identifier, null);
+};
+
+
+function _FoldConstantCommand() {
+	this._identifier = "fold-const";
+	this._optimizer = null;
+	this._excludeNative = false;
+};
+
+$__jsx_extend([_FoldConstantCommand], _FunctionOptimizeCommand);
+$__jsx_merge_interface(_FoldConstantCommand, _StructuredStashAccessor$x2E$x3CStash$x3E$3);
+
+_FoldConstantCommand.prototype.performOptimization$ = function () {
+	var $this = this;
+	var this$0$0;
+	_FunctionOptimizeCommand.prototype.performOptimization$.call(this);
+	Compiler$forEachClassDef$LCompiler$F$LParser$LClassDefinition$B$((this$0$0 = this._optimizer, this$0$0._compiler), (function (parser, classDef) {
+		if (classDef instanceof TemplateClassDefinition || (classDef.flags$() & 16) !== 0) {
+			return true;
+		}
+		ClassDefinition$forEachMemberVariable$LClassDefinition$F$LMemberVariableDefinition$B$(classDef, (function (varDef) {
+			if ((MemberDefinition$flags$LMemberDefinition$(varDef) & ClassDefinition.IS_STATIC) !== 0 && MemberVariableDefinition$getInitialValue$LMemberVariableDefinition$(varDef) != null) {
+				_OptimizeCommand$log$L_OptimizeCommand$S($this, "starting optimization of " + varDef.getNotation$());
+				_FoldConstantCommand$_optimizeExpression$L_FoldConstantCommand$LExpression$F$LExpression$V$($this, MemberVariableDefinition$getInitialValue$LMemberVariableDefinition$(varDef), (function (expr) {
+					MemberVariableDefinition$setInitialValue$LMemberVariableDefinition$LExpression$(varDef, expr);
+				}));
+				_OptimizeCommand$log$L_OptimizeCommand$S($this, "finished optimization of " + varDef.getNotation$());
+			}
+			return true;
+		}));
+		return true;
+	}));
+};
+
+
+_FoldConstantCommand.prototype.optimizeFunction$LMemberFunctionDefinition$ = function (funcDef) {
+	var $this = this;
+	Util$forEachStatement$F$LStatement$B$ALStatement$((function onStatement(statement) {
+		statement.forEachStatement$F$LStatement$B$(onStatement);
+		statement.forEachExpression$F$LExpression$F$LExpression$V$B$((function (expr, replaceCb) {
+			return _FoldConstantCommand$_optimizeExpression$L_FoldConstantCommand$LExpression$F$LExpression$V$($this, expr, replaceCb);
+		}));
+		return true;
+	}), funcDef._statements);
+	return true;
+};
+
+
+_FoldConstantCommand.prototype._optimizeExpression$LExpression$F$LExpression$V$ = function (expr, replaceCb) {
+	var $this = this;
+	var propertyExpr;
+	var holderType;
+	var member;
+	var foldedExpr;
+	var calculateCb;
+	var baseExpr;
+	var firstExpr;
+	var secondExpr;
+	var innerExpr;
+	var condition;
+	var op;
+	var conditionalExpr;
+	var condExpr;
+	var ifTrueExpr;
+	var ifFalseExpr;
+	var callExpr;
+	var allArgsAreConstants;
+	var type$0;
+	var message$0;
+	var this$0$0;
+	var message$0$0;
+	var this$0;
+	var this$1;
+	var message$1;
+	var this$0$1;
+	var message$0$1;
+	var this$0$2;
+	var this$0$0$0;
+	var message$2;
+	var this$0$3;
+	var message$0$2;
+	var this$0$4;
+	var this$0$0$1;
+	var this$2;
+	var message$3;
+	var this$0$5;
+	var message$0$3;
+	var this$0$6;
+	var this$0$0$2;
+	var this$3;
+	var this$4;
+	var this$5;
+	var this$6;
+	var this$7;
+	var this$8;
+	var this$9;
+	var this$11;
+	var this$12;
+	var this$13;
+	var this$14;
+	var _token$0;
+	expr.forEachExpression$F$LExpression$F$LExpression$V$B$((function (expr, replaceCb) {
+		return _FoldConstantCommand$_optimizeExpression$L_FoldConstantCommand$LExpression$F$LExpression$V$($this, expr, replaceCb);
+	}));
+	if (expr instanceof PropertyExpression) {
+		propertyExpr = expr;
+		type$0 = propertyExpr._expr.getType$();
+		if (type$0 instanceof PrimitiveType) {
+			type$0 = new ObjectType(type$0.getClassDef$());
+		}
+		holderType = type$0;
+		if (propertyExpr._expr.isClassSpecifier$()) {
+			member = null;
+			ClassDefinition$forEachMemberVariable$LClassDefinition$F$LMemberVariableDefinition$B$(holderType.getClassDef$(), (function (m) {
+				var this$0$0;
+				var this$0;
+				if ((this$0$0 = m._nameToken, this$0$0._value) === (this$0 = propertyExpr._identifierToken, this$0._value)) {
+					member = m;
+				}
+				return member == null;
+			}));
+			if (member != null && (member._flags & 1) !== 0) {
+				_FoldConstantCommand$_foldStaticConst$L_FoldConstantCommand$LMemberVariableDefinition$(this, member);
+				foldedExpr = _FoldConstantCommand$_toFoldedExpr$L_FoldConstantCommand$LExpression$LType$(this, member._initialValue, member.getType$());
+				if (foldedExpr != null) {
+					foldedExpr = _FoldConstantCommand$_toFoldedExpr$L_FoldConstantCommand$LExpression$LType$(this, foldedExpr, propertyExpr._type);
+					if (foldedExpr != null && ! (foldedExpr instanceof StringLiteralExpression && foldedExpr.getDecoded$().length > 64)) {
+						message$0 = "folding property " + member.getNotation$() + " at " + (this$9 = _token$0 = propertyExpr._token, this$9._filename) + ":" + ((_token$0, _token$0._lineNumber) + "");
+						this$0$0 = this._optimizer;
+						message$0$0 = "[" + this._identifier + "] " + message$0;
+						this$0$0._log += message$0$0 + "\n";
+						replaceCb(foldedExpr);
+					}
+				}
+			}
+		} else if (propertyExpr._expr instanceof StringLiteralExpression) {
+			if ((this$11 = propertyExpr._identifierToken, this$11._value) === "length") {
+				replaceCb(new NumberLiteralExpression(new Token$3(propertyExpr._expr.getDecoded$().length + "")));
+			}
+		}
+	} else if (expr instanceof SignExpression) {
+		switch ((this$0 = expr._token, this$0._value)) {
+		case "+":
+			calculateCb = (function (x) {
+				return + x;
+			});
+			break;
+		case "-":
+			calculateCb = (function (x) {
+				return - x;
+			});
+			break;
+		default:
+			return false;
+		}
+		this$1 = expr;
+		baseExpr = this$1._expr;
+		if (baseExpr instanceof IntegerLiteralExpression) {
+			message$1 = "folding operator (number) " + (this$12 = expr._token, "'" + this$12._value + "'" + " at " + (this$12._filename || "<<unknown>>") + ":" + (this$12._lineNumber + "") + ":" + (this$12._columnNumber + ""));
+			this$0$1 = this._optimizer;
+			message$0$1 = "[" + this._identifier + "] " + message$1;
+			this$0$1._log += message$0$1 + "\n";
+			replaceCb(new IntegerLiteralExpression(new Token$3(calculateCb((baseExpr instanceof NumberLiteralExpression ? baseExpr.getDecoded$() : (this$0$2 = baseExpr, (this$0$0$0 = this$0$2._token, this$0$0$0._value) | 0))) + "")));
+		} else if (baseExpr instanceof NumberLiteralExpression) {
+			message$2 = "folding operator (number) " + (this$13 = expr._token, "'" + this$13._value + "'" + " at " + (this$13._filename || "<<unknown>>") + ":" + (this$13._lineNumber + "") + ":" + (this$13._columnNumber + ""));
+			this$0$3 = this._optimizer;
+			message$0$2 = "[" + this._identifier + "] " + message$2;
+			this$0$3._log += message$0$2 + "\n";
+			replaceCb(new NumberLiteralExpression(new Token$3(calculateCb((baseExpr instanceof NumberLiteralExpression ? baseExpr.getDecoded$() : (this$0$4 = baseExpr, (this$0$0$1 = this$0$4._token, this$0$0$1._value) | 0))) + "")));
+		}
+	} else if (expr instanceof BitwiseNotExpression) {
+		this$2 = expr;
+		baseExpr = this$2._expr;
+		if (baseExpr instanceof NumberLiteralExpression || baseExpr instanceof IntegerLiteralExpression) {
+			message$3 = "folding operator " + (this$14 = expr._token, "'" + this$14._value + "'" + " at " + (this$14._filename || "<<unknown>>") + ":" + (this$14._lineNumber + "") + ":" + (this$14._columnNumber + ""));
+			this$0$5 = this._optimizer;
+			message$0$3 = "[" + this._identifier + "] " + message$3;
+			this$0$5._log += message$0$3 + "\n";
+			replaceCb(new IntegerLiteralExpression(new Token$3(~ (baseExpr instanceof NumberLiteralExpression ? baseExpr.getDecoded$() : (this$0$6 = baseExpr, (this$0$0$2 = this$0$6._token, this$0$0$2._value) | 0)) + "")));
+		}
+	} else if (expr instanceof AdditiveExpression) {
+		this$3 = expr;
+		firstExpr = this$3._expr1;
+		this$4 = expr;
+		secondExpr = this$4._expr2;
+		if (_FoldConstantCommand$_foldNumericBinaryExpression$L_FoldConstantCommand$LBinaryExpression$F$LExpression$V$(this, expr, replaceCb)) {
+		} else if (firstExpr instanceof StringLiteralExpression && secondExpr instanceof StringLiteralExpression) {
+			replaceCb(new StringLiteralExpression(new Token$2(Util$encodeStringLiteral$S(firstExpr.getDecoded$() + secondExpr.getDecoded$()), false)));
+		}
+	} else if (expr instanceof EqualityExpression) {
+		_FoldConstantCommand$_foldEqualityExpression$L_FoldConstantCommand$LEqualityExpression$F$LExpression$V$(this, expr, replaceCb);
+	} else if (expr instanceof BinaryNumberExpression || expr instanceof ShiftExpression) {
+		_FoldConstantCommand$_foldNumericBinaryExpression$L_FoldConstantCommand$LBinaryExpression$F$LExpression$V$(this, expr, replaceCb);
+	} else if (expr instanceof AsExpression) {
+		_FoldConstantCommand$_foldAsExpression$L_FoldConstantCommand$LAsExpression$F$LExpression$V$(this, expr, replaceCb);
+	} else if (expr instanceof LogicalNotExpression) {
+		this$5 = expr;
+		innerExpr = this$5._expr;
+		if ((condition = _Util$conditionIsConstant$LExpression$(innerExpr)) != null) {
+			replaceCb(new BooleanLiteralExpression(new Token$2((condition ? "false" : "true"), false)));
+		}
+	} else if (expr instanceof LogicalExpression) {
+		this$6 = expr;
+		firstExpr = this$6._expr1;
+		this$7 = expr;
+		secondExpr = this$7._expr2;
+		if ((condition = _Util$conditionIsConstant$LExpression$(firstExpr)) != null) {
+			this$8 = expr._token;
+			op = this$8._value;
+			if (op === "||" && condition) {
+				replaceCb(new AsExpression(firstExpr._token, firstExpr, Type.booleanType));
+			} else if (op === "||" && ! condition) {
+				replaceCb(new AsExpression(secondExpr._token, secondExpr, Type.booleanType));
+			} else if (op === "&&" && condition) {
+				replaceCb(new AsExpression(secondExpr._token, secondExpr, Type.booleanType));
+			} else if (op === "&&" && ! condition) {
+				replaceCb(new AsExpression(firstExpr._token, firstExpr, Type.booleanType));
+			} else {
+				throw new Error("logic flaw");
+			}
+		}
+	} else if (expr instanceof ConditionalExpression) {
+		conditionalExpr = expr;
+		condExpr = conditionalExpr._condExpr;
+		if ((condition = _Util$conditionIsConstant$LExpression$(condExpr)) != null) {
+			ifTrueExpr = conditionalExpr._ifTrueExpr || condExpr;
+			ifFalseExpr = conditionalExpr._ifFalseExpr;
+			replaceCb(condition ? ifTrueExpr : ifFalseExpr);
+		}
+	} else if (expr instanceof CallExpression) {
+		callExpr = expr;
+		if (callExpr._expr instanceof PropertyExpression) {
+			allArgsAreConstants = true;
+			callExpr._args.forEach((function (expr) {
+				if (! (expr instanceof IntegerLiteralExpression || expr instanceof NumberLiteralExpression || expr instanceof BooleanLiteralExpression || expr instanceof StringLiteralExpression)) {
+					allArgsAreConstants = false;
+				}
+			}));
+			if (allArgsAreConstants) {
+				_FoldConstantCommand$_foldCallExpression$L_FoldConstantCommand$LCallExpression$F$LExpression$V$(this, callExpr, replaceCb);
+			}
+		}
+	}
+	return true;
+};
+
+
+function _FoldConstantCommand$_optimizeExpression$L_FoldConstantCommand$LExpression$F$LExpression$V$($this, expr, replaceCb) {
+	var propertyExpr;
+	var holderType;
+	var member;
+	var foldedExpr;
+	var calculateCb;
+	var baseExpr;
+	var firstExpr;
+	var secondExpr;
+	var innerExpr;
+	var condition;
+	var op;
+	var conditionalExpr;
+	var condExpr;
+	var ifTrueExpr;
+	var ifFalseExpr;
+	var callExpr;
+	var allArgsAreConstants;
+	var type$0;
+	var message$0;
+	var this$0$0;
+	var message$0$0;
+	var this$0;
+	var this$1;
+	var message$1;
+	var this$0$1;
+	var message$0$1;
+	var this$0$2;
+	var this$0$0$0;
+	var message$2;
+	var this$0$3;
+	var message$0$2;
+	var this$0$4;
+	var this$0$0$1;
+	var this$2;
+	var message$3;
+	var this$0$5;
+	var message$0$3;
+	var this$0$6;
+	var this$0$0$2;
+	var this$3;
+	var this$4;
+	var this$5;
+	var this$6;
+	var this$7;
+	var this$8;
+	var this$9;
+	var this$11;
+	var this$12;
+	var this$13;
+	var this$14;
+	var _token$0;
+	expr.forEachExpression$F$LExpression$F$LExpression$V$B$((function (expr, replaceCb) {
+		return _FoldConstantCommand$_optimizeExpression$L_FoldConstantCommand$LExpression$F$LExpression$V$($this, expr, replaceCb);
+	}));
+	if (expr instanceof PropertyExpression) {
+		propertyExpr = expr;
+		type$0 = propertyExpr._expr.getType$();
+		if (type$0 instanceof PrimitiveType) {
+			type$0 = new ObjectType(type$0.getClassDef$());
+		}
+		holderType = type$0;
+		if (propertyExpr._expr.isClassSpecifier$()) {
+			member = null;
+			ClassDefinition$forEachMemberVariable$LClassDefinition$F$LMemberVariableDefinition$B$(holderType.getClassDef$(), (function (m) {
+				var this$0$0;
+				var this$0;
+				if ((this$0$0 = m._nameToken, this$0$0._value) === (this$0 = propertyExpr._identifierToken, this$0._value)) {
+					member = m;
+				}
+				return member == null;
+			}));
+			if (member != null && (member._flags & 1) !== 0) {
+				_FoldConstantCommand$_foldStaticConst$L_FoldConstantCommand$LMemberVariableDefinition$($this, member);
+				foldedExpr = _FoldConstantCommand$_toFoldedExpr$L_FoldConstantCommand$LExpression$LType$($this, member._initialValue, member.getType$());
+				if (foldedExpr != null) {
+					foldedExpr = _FoldConstantCommand$_toFoldedExpr$L_FoldConstantCommand$LExpression$LType$($this, foldedExpr, propertyExpr._type);
+					if (foldedExpr != null && ! (foldedExpr instanceof StringLiteralExpression && foldedExpr.getDecoded$().length > 64)) {
+						message$0 = "folding property " + member.getNotation$() + " at " + (this$9 = _token$0 = propertyExpr._token, this$9._filename) + ":" + ((_token$0, _token$0._lineNumber) + "");
+						this$0$0 = $this._optimizer;
+						message$0$0 = "[" + $this._identifier + "] " + message$0;
+						this$0$0._log += message$0$0 + "\n";
+						replaceCb(foldedExpr);
+					}
+				}
+			}
+		} else if (propertyExpr._expr instanceof StringLiteralExpression) {
+			if ((this$11 = propertyExpr._identifierToken, this$11._value) === "length") {
+				replaceCb(new NumberLiteralExpression(new Token$3(propertyExpr._expr.getDecoded$().length + "")));
+			}
+		}
+	} else if (expr instanceof SignExpression) {
+		switch ((this$0 = expr._token, this$0._value)) {
+		case "+":
+			calculateCb = (function (x) {
+				return + x;
+			});
+			break;
+		case "-":
+			calculateCb = (function (x) {
+				return - x;
+			});
+			break;
+		default:
+			return false;
+		}
+		this$1 = expr;
+		baseExpr = this$1._expr;
+		if (baseExpr instanceof IntegerLiteralExpression) {
+			message$1 = "folding operator (number) " + (this$12 = expr._token, "'" + this$12._value + "'" + " at " + (this$12._filename || "<<unknown>>") + ":" + (this$12._lineNumber + "") + ":" + (this$12._columnNumber + ""));
+			this$0$1 = $this._optimizer;
+			message$0$1 = "[" + $this._identifier + "] " + message$1;
+			this$0$1._log += message$0$1 + "\n";
+			replaceCb(new IntegerLiteralExpression(new Token$3(calculateCb((baseExpr instanceof NumberLiteralExpression ? baseExpr.getDecoded$() : (this$0$2 = baseExpr, (this$0$0$0 = this$0$2._token, this$0$0$0._value) | 0))) + "")));
+		} else if (baseExpr instanceof NumberLiteralExpression) {
+			message$2 = "folding operator (number) " + (this$13 = expr._token, "'" + this$13._value + "'" + " at " + (this$13._filename || "<<unknown>>") + ":" + (this$13._lineNumber + "") + ":" + (this$13._columnNumber + ""));
+			this$0$3 = $this._optimizer;
+			message$0$2 = "[" + $this._identifier + "] " + message$2;
+			this$0$3._log += message$0$2 + "\n";
+			replaceCb(new NumberLiteralExpression(new Token$3(calculateCb((baseExpr instanceof NumberLiteralExpression ? baseExpr.getDecoded$() : (this$0$4 = baseExpr, (this$0$0$1 = this$0$4._token, this$0$0$1._value) | 0))) + "")));
+		}
+	} else if (expr instanceof BitwiseNotExpression) {
+		this$2 = expr;
+		baseExpr = this$2._expr;
+		if (baseExpr instanceof NumberLiteralExpression || baseExpr instanceof IntegerLiteralExpression) {
+			message$3 = "folding operator " + (this$14 = expr._token, "'" + this$14._value + "'" + " at " + (this$14._filename || "<<unknown>>") + ":" + (this$14._lineNumber + "") + ":" + (this$14._columnNumber + ""));
+			this$0$5 = $this._optimizer;
+			message$0$3 = "[" + $this._identifier + "] " + message$3;
+			this$0$5._log += message$0$3 + "\n";
+			replaceCb(new IntegerLiteralExpression(new Token$3(~ (baseExpr instanceof NumberLiteralExpression ? baseExpr.getDecoded$() : (this$0$6 = baseExpr, (this$0$0$2 = this$0$6._token, this$0$0$2._value) | 0)) + "")));
+		}
+	} else if (expr instanceof AdditiveExpression) {
+		this$3 = expr;
+		firstExpr = this$3._expr1;
+		this$4 = expr;
+		secondExpr = this$4._expr2;
+		if (_FoldConstantCommand$_foldNumericBinaryExpression$L_FoldConstantCommand$LBinaryExpression$F$LExpression$V$($this, expr, replaceCb)) {
+		} else if (firstExpr instanceof StringLiteralExpression && secondExpr instanceof StringLiteralExpression) {
+			replaceCb(new StringLiteralExpression(new Token$2(Util$encodeStringLiteral$S(firstExpr.getDecoded$() + secondExpr.getDecoded$()), false)));
+		}
+	} else if (expr instanceof EqualityExpression) {
+		_FoldConstantCommand$_foldEqualityExpression$L_FoldConstantCommand$LEqualityExpression$F$LExpression$V$($this, expr, replaceCb);
+	} else if (expr instanceof BinaryNumberExpression || expr instanceof ShiftExpression) {
+		_FoldConstantCommand$_foldNumericBinaryExpression$L_FoldConstantCommand$LBinaryExpression$F$LExpression$V$($this, expr, replaceCb);
+	} else if (expr instanceof AsExpression) {
+		_FoldConstantCommand$_foldAsExpression$L_FoldConstantCommand$LAsExpression$F$LExpression$V$($this, expr, replaceCb);
+	} else if (expr instanceof LogicalNotExpression) {
+		this$5 = expr;
+		innerExpr = this$5._expr;
+		if ((condition = _Util$conditionIsConstant$LExpression$(innerExpr)) != null) {
+			replaceCb(new BooleanLiteralExpression(new Token$2((condition ? "false" : "true"), false)));
+		}
+	} else if (expr instanceof LogicalExpression) {
+		this$6 = expr;
+		firstExpr = this$6._expr1;
+		this$7 = expr;
+		secondExpr = this$7._expr2;
+		if ((condition = _Util$conditionIsConstant$LExpression$(firstExpr)) != null) {
+			this$8 = expr._token;
+			op = this$8._value;
+			if (op === "||" && condition) {
+				replaceCb(new AsExpression(firstExpr._token, firstExpr, Type.booleanType));
+			} else if (op === "||" && ! condition) {
+				replaceCb(new AsExpression(secondExpr._token, secondExpr, Type.booleanType));
+			} else if (op === "&&" && condition) {
+				replaceCb(new AsExpression(secondExpr._token, secondExpr, Type.booleanType));
+			} else if (op === "&&" && ! condition) {
+				replaceCb(new AsExpression(firstExpr._token, firstExpr, Type.booleanType));
+			} else {
+				throw new Error("logic flaw");
+			}
+		}
+	} else if (expr instanceof ConditionalExpression) {
+		conditionalExpr = expr;
+		condExpr = conditionalExpr._condExpr;
+		if ((condition = _Util$conditionIsConstant$LExpression$(condExpr)) != null) {
+			ifTrueExpr = conditionalExpr._ifTrueExpr || condExpr;
+			ifFalseExpr = conditionalExpr._ifFalseExpr;
+			replaceCb(condition ? ifTrueExpr : ifFalseExpr);
+		}
+	} else if (expr instanceof CallExpression) {
+		callExpr = expr;
+		if (callExpr._expr instanceof PropertyExpression) {
+			allArgsAreConstants = true;
+			callExpr._args.forEach((function (expr) {
+				if (! (expr instanceof IntegerLiteralExpression || expr instanceof NumberLiteralExpression || expr instanceof BooleanLiteralExpression || expr instanceof StringLiteralExpression)) {
+					allArgsAreConstants = false;
+				}
+			}));
+			if (allArgsAreConstants) {
+				_FoldConstantCommand$_foldCallExpression$L_FoldConstantCommand$LCallExpression$F$LExpression$V$($this, callExpr, replaceCb);
+			}
+		}
+	}
+	return true;
+};
+
+_FoldConstantCommand._optimizeExpression$L_FoldConstantCommand$LExpression$F$LExpression$V$ = _FoldConstantCommand$_optimizeExpression$L_FoldConstantCommand$LExpression$F$LExpression$V$;
+
+_FoldConstantCommand.prototype._foldCallExpression$LCallExpression$F$LExpression$V$ = function (callExpr, replaceCb) {
+	var $this = this;
+	var propertyExpr;
+	var holderType;
+	var argExprs;
+	var member;
+	var s;
+	var recvStr;
+	var type$0;
+	var message$0;
+	var this$0$0;
+	var message$0$0;
+	var expr$0;
+	var this$0$1;
+	var this$0$0$0;
+	var message$1;
+	var this$0$2;
+	var message$0$1;
+	var expr$1;
+	var this$0$3;
+	var this$0$0$1;
+	var message$2;
+	var this$0$4;
+	var message$0$2;
+	var expr$2;
+	var this$0$5;
+	var this$0$0$2;
+	var expr$3;
+	var this$0$6;
+	var this$0$0$3;
+	var message$3;
+	var this$0$7;
+	var message$0$3;
+	var expr$4;
+	var this$0$8;
+	var this$0$0$4;
+	var message$4;
+	var this$0$9;
+	var message$0$4;
+	var expr$5;
+	var this$0$10;
+	var this$0$0$5;
+	var message$5;
+	var this$0$11;
+	var message$0$5;
+	var message$6;
+	var this$0$12;
+	var message$0$6;
+	var expr$6;
+	var this$0$13;
+	var this$0$0$6;
+	var this$0;
+	var this$1;
+	var this$2;
+	propertyExpr = callExpr._expr;
+	type$0 = propertyExpr._expr.getType$();
+	if (type$0 instanceof PrimitiveType) {
+		type$0 = new ObjectType(type$0.getClassDef$());
+	}
+	holderType = type$0;
+	if ((type$0.getClassDef$().flags$() & 16) === 0) {
+		return;
+	}
+	argExprs = callExpr._args;
+	member = null;
+	ClassDefinition$forEachMemberFunction$LClassDefinition$F$LMemberFunctionDefinition$B$(holderType.getClassDef$(), (function (m) {
+		var this$0$0;
+		var this$0;
+		if ((this$0$0 = m._nameToken, this$0$0._value) === (this$0 = propertyExpr._identifierToken, this$0._value)) {
+			member = m;
+		}
+		return member == null;
+	}));
+	if (member != null && (member._flags & 2048) === 0) {
+		return;
+	}
+	if (propertyExpr._expr.isClassSpecifier$()) {
+		if (ClassDefinition$classFullName$LClassDefinition$(holderType.getClassDef$()) === "Math") {
+			switch ((this$0 = propertyExpr._identifierToken, this$0._value)) {
+			case "sqrt":
+				message$0 = "folding " + member.getNotation$();
+				this$0$0 = this._optimizer;
+				message$0$0 = "[" + this._identifier + "] " + message$0;
+				this$0$0._log += message$0$0 + "\n";
+				replaceCb(new NumberLiteralExpression(new Token$3(Math.sqrt((expr$0 = argExprs[0], expr$0 instanceof NumberLiteralExpression ? expr$0.getDecoded$() : (this$0$1 = expr$0, (this$0$0$0 = this$0$1._token, this$0$0$0._value) | 0))) + "")));
+				break;
+			case "log":
+				message$1 = "folding " + member.getNotation$();
+				this$0$2 = this._optimizer;
+				message$0$1 = "[" + this._identifier + "] " + message$1;
+				this$0$2._log += message$0$1 + "\n";
+				replaceCb(new NumberLiteralExpression(new Token$3(Math.log((expr$1 = argExprs[0], expr$1 instanceof NumberLiteralExpression ? expr$1.getDecoded$() : (this$0$3 = expr$1, (this$0$0$1 = this$0$3._token, this$0$0$1._value) | 0))) + "")));
+				break;
+			case "pow":
+				message$2 = "folding " + member.getNotation$();
+				this$0$4 = this._optimizer;
+				message$0$2 = "[" + this._identifier + "] " + message$2;
+				this$0$4._log += message$0$2 + "\n";
+				replaceCb(new NumberLiteralExpression(new Token$3(Math.pow((expr$2 = argExprs[0], expr$2 instanceof NumberLiteralExpression ? expr$2.getDecoded$() : (this$0$5 = expr$2, (this$0$0$2 = this$0$5._token, this$0$0$2._value) | 0)), (expr$3 = argExprs[1], expr$3 instanceof NumberLiteralExpression ? expr$3.getDecoded$() : (this$0$6 = expr$3, (this$0$0$3 = this$0$6._token, this$0$0$3._value) | 0))) + "")));
+				break;
+			case "sin":
+				message$3 = "folding " + member.getNotation$();
+				this$0$7 = this._optimizer;
+				message$0$3 = "[" + this._identifier + "] " + message$3;
+				this$0$7._log += message$0$3 + "\n";
+				replaceCb(new NumberLiteralExpression(new Token$3(Math.sin((expr$4 = argExprs[0], expr$4 instanceof NumberLiteralExpression ? expr$4.getDecoded$() : (this$0$8 = expr$4, (this$0$0$4 = this$0$8._token, this$0$0$4._value) | 0))) + "")));
+				break;
+			case "cos":
+				message$4 = "folding " + member.getNotation$();
+				this$0$9 = this._optimizer;
+				message$0$4 = "[" + this._identifier + "] " + message$4;
+				this$0$9._log += message$0$4 + "\n";
+				replaceCb(new NumberLiteralExpression(new Token$3(Math.cos((expr$5 = argExprs[0], expr$5 instanceof NumberLiteralExpression ? expr$5.getDecoded$() : (this$0$10 = expr$5, (this$0$0$5 = this$0$10._token, this$0$0$5._value) | 0))) + "")));
+				break;
+			}
+		}
+		if (ClassDefinition$classFullName$LClassDefinition$(holderType.getClassDef$()) === "String") {
+			switch ((this$1 = propertyExpr._identifierToken, this$1._value)) {
+			case "fromCharCode":
+				message$5 = "folding " + member.getNotation$();
+				this$0$11 = this._optimizer;
+				message$0$5 = "[" + this._identifier + "] " + message$5;
+				this$0$11._log += message$0$5 + "\n";
+				s = "";
+				argExprs.forEach((function (arg) {
+					var this$0$0;
+					var this$0$0$0;
+					s += String.fromCharCode((arg instanceof NumberLiteralExpression ? arg.getDecoded$() : (this$0$0 = arg, (this$0$0$0 = this$0$0._token, this$0$0$0._value) | 0)));
+				}));
+				replaceCb(new StringLiteralExpression(new Token$3(Util$encodeStringLiteral$S(s))));
+				break;
+			}
+		}
+	} else if (propertyExpr._expr instanceof StringLiteralExpression) {
+		switch ((this$2 = propertyExpr._identifierToken, this$2._value)) {
+		case "charCodeAt":
+			message$6 = "folding " + member.getNotation$();
+			this$0$12 = this._optimizer;
+			message$0$6 = "[" + this._identifier + "] " + message$6;
+			this$0$12._log += message$0$6 + "\n";
+			recvStr = propertyExpr._expr.getDecoded$();
+			replaceCb(new NumberLiteralExpression(new Token$3(recvStr.charCodeAt((expr$6 = argExprs[0], expr$6 instanceof NumberLiteralExpression ? expr$6.getDecoded$() : (this$0$13 = expr$6, (this$0$0$6 = this$0$13._token, this$0$0$6._value) | 0))) + "")));
+			break;
+		}
+	}
+};
+
+
+function _FoldConstantCommand$_foldCallExpression$L_FoldConstantCommand$LCallExpression$F$LExpression$V$($this, callExpr, replaceCb) {
+	var propertyExpr;
+	var holderType;
+	var argExprs;
+	var member;
+	var s;
+	var recvStr;
+	var type$0;
+	var message$0;
+	var this$0$0;
+	var message$0$0;
+	var expr$0;
+	var this$0$1;
+	var this$0$0$0;
+	var message$1;
+	var this$0$2;
+	var message$0$1;
+	var expr$1;
+	var this$0$3;
+	var this$0$0$1;
+	var message$2;
+	var this$0$4;
+	var message$0$2;
+	var expr$2;
+	var this$0$5;
+	var this$0$0$2;
+	var expr$3;
+	var this$0$6;
+	var this$0$0$3;
+	var message$3;
+	var this$0$7;
+	var message$0$3;
+	var expr$4;
+	var this$0$8;
+	var this$0$0$4;
+	var message$4;
+	var this$0$9;
+	var message$0$4;
+	var expr$5;
+	var this$0$10;
+	var this$0$0$5;
+	var message$5;
+	var this$0$11;
+	var message$0$5;
+	var message$6;
+	var this$0$12;
+	var message$0$6;
+	var expr$6;
+	var this$0$13;
+	var this$0$0$6;
+	var this$0;
+	var this$1;
+	var this$2;
+	propertyExpr = callExpr._expr;
+	type$0 = propertyExpr._expr.getType$();
+	if (type$0 instanceof PrimitiveType) {
+		type$0 = new ObjectType(type$0.getClassDef$());
+	}
+	holderType = type$0;
+	if ((type$0.getClassDef$().flags$() & 16) === 0) {
+		return;
+	}
+	argExprs = callExpr._args;
+	member = null;
+	ClassDefinition$forEachMemberFunction$LClassDefinition$F$LMemberFunctionDefinition$B$(holderType.getClassDef$(), (function (m) {
+		var this$0$0;
+		var this$0;
+		if ((this$0$0 = m._nameToken, this$0$0._value) === (this$0 = propertyExpr._identifierToken, this$0._value)) {
+			member = m;
+		}
+		return member == null;
+	}));
+	if (member != null && (member._flags & 2048) === 0) {
+		return;
+	}
+	if (propertyExpr._expr.isClassSpecifier$()) {
+		if (ClassDefinition$classFullName$LClassDefinition$(holderType.getClassDef$()) === "Math") {
+			switch ((this$0 = propertyExpr._identifierToken, this$0._value)) {
+			case "sqrt":
+				message$0 = "folding " + member.getNotation$();
+				this$0$0 = $this._optimizer;
+				message$0$0 = "[" + $this._identifier + "] " + message$0;
+				this$0$0._log += message$0$0 + "\n";
+				replaceCb(new NumberLiteralExpression(new Token$3(Math.sqrt((expr$0 = argExprs[0], expr$0 instanceof NumberLiteralExpression ? expr$0.getDecoded$() : (this$0$1 = expr$0, (this$0$0$0 = this$0$1._token, this$0$0$0._value) | 0))) + "")));
+				break;
+			case "log":
+				message$1 = "folding " + member.getNotation$();
+				this$0$2 = $this._optimizer;
+				message$0$1 = "[" + $this._identifier + "] " + message$1;
+				this$0$2._log += message$0$1 + "\n";
+				replaceCb(new NumberLiteralExpression(new Token$3(Math.log((expr$1 = argExprs[0], expr$1 instanceof NumberLiteralExpression ? expr$1.getDecoded$() : (this$0$3 = expr$1, (this$0$0$1 = this$0$3._token, this$0$0$1._value) | 0))) + "")));
+				break;
+			case "pow":
+				message$2 = "folding " + member.getNotation$();
+				this$0$4 = $this._optimizer;
+				message$0$2 = "[" + $this._identifier + "] " + message$2;
+				this$0$4._log += message$0$2 + "\n";
+				replaceCb(new NumberLiteralExpression(new Token$3(Math.pow((expr$2 = argExprs[0], expr$2 instanceof NumberLiteralExpression ? expr$2.getDecoded$() : (this$0$5 = expr$2, (this$0$0$2 = this$0$5._token, this$0$0$2._value) | 0)), (expr$3 = argExprs[1], expr$3 instanceof NumberLiteralExpression ? expr$3.getDecoded$() : (this$0$6 = expr$3, (this$0$0$3 = this$0$6._token, this$0$0$3._value) | 0))) + "")));
+				break;
+			case "sin":
+				message$3 = "folding " + member.getNotation$();
+				this$0$7 = $this._optimizer;
+				message$0$3 = "[" + $this._identifier + "] " + message$3;
+				this$0$7._log += message$0$3 + "\n";
+				replaceCb(new NumberLiteralExpression(new Token$3(Math.sin((expr$4 = argExprs[0], expr$4 instanceof NumberLiteralExpression ? expr$4.getDecoded$() : (this$0$8 = expr$4, (this$0$0$4 = this$0$8._token, this$0$0$4._value) | 0))) + "")));
+				break;
+			case "cos":
+				message$4 = "folding " + member.getNotation$();
+				this$0$9 = $this._optimizer;
+				message$0$4 = "[" + $this._identifier + "] " + message$4;
+				this$0$9._log += message$0$4 + "\n";
+				replaceCb(new NumberLiteralExpression(new Token$3(Math.cos((expr$5 = argExprs[0], expr$5 instanceof NumberLiteralExpression ? expr$5.getDecoded$() : (this$0$10 = expr$5, (this$0$0$5 = this$0$10._token, this$0$0$5._value) | 0))) + "")));
+				break;
+			}
+		}
+		if (ClassDefinition$classFullName$LClassDefinition$(holderType.getClassDef$()) === "String") {
+			switch ((this$1 = propertyExpr._identifierToken, this$1._value)) {
+			case "fromCharCode":
+				message$5 = "folding " + member.getNotation$();
+				this$0$11 = $this._optimizer;
+				message$0$5 = "[" + $this._identifier + "] " + message$5;
+				this$0$11._log += message$0$5 + "\n";
+				s = "";
+				argExprs.forEach((function (arg) {
+					var this$0$0;
+					var this$0$0$0;
+					s += String.fromCharCode((arg instanceof NumberLiteralExpression ? arg.getDecoded$() : (this$0$0 = arg, (this$0$0$0 = this$0$0._token, this$0$0$0._value) | 0)));
+				}));
+				replaceCb(new StringLiteralExpression(new Token$3(Util$encodeStringLiteral$S(s))));
+				break;
+			}
+		}
+	} else if (propertyExpr._expr instanceof StringLiteralExpression) {
+		switch ((this$2 = propertyExpr._identifierToken, this$2._value)) {
+		case "charCodeAt":
+			message$6 = "folding " + member.getNotation$();
+			this$0$12 = $this._optimizer;
+			message$0$6 = "[" + $this._identifier + "] " + message$6;
+			this$0$12._log += message$0$6 + "\n";
+			recvStr = propertyExpr._expr.getDecoded$();
+			replaceCb(new NumberLiteralExpression(new Token$3(recvStr.charCodeAt((expr$6 = argExprs[0], expr$6 instanceof NumberLiteralExpression ? expr$6.getDecoded$() : (this$0$13 = expr$6, (this$0$0$6 = this$0$13._token, this$0$0$6._value) | 0))) + "")));
+			break;
+		}
+	}
+};
+
+_FoldConstantCommand._foldCallExpression$L_FoldConstantCommand$LCallExpression$F$LExpression$V$ = _FoldConstantCommand$_foldCallExpression$L_FoldConstantCommand$LCallExpression$F$LExpression$V$;
+
+_FoldConstantCommand.prototype._foldEqualityExpression$LEqualityExpression$F$LExpression$V$ = function (expr, replaceCb) {
+	var $this = this;
+	var firstExpr;
+	var secondExpr;
+	var isEqual;
+	var isNullVsPrimitiveLiteral;
+	var result;
+	var this$0$0;
+	var this$0$0$0;
+	var this$0$1;
+	var this$0$0$1;
+	var this$0;
+	firstExpr = expr._expr1;
+	secondExpr = expr._expr2;
+	isEqual = null;
+	function isNullVsPrimitiveLiteral(x, y) {
+		return x instanceof NullExpression && y instanceof PrimitiveLiteralExpression;
+	}
+	if (firstExpr instanceof NullExpression && secondExpr instanceof NullExpression) {
+		isEqual = true;
+	} else if (isNullVsPrimitiveLiteral(firstExpr, secondExpr) || isNullVsPrimitiveLiteral(secondExpr, firstExpr)) {
+		isEqual = false;
+	} else if (firstExpr instanceof StringLiteralExpression && secondExpr instanceof StringLiteralExpression) {
+		isEqual = firstExpr.getDecoded$() === secondExpr.getDecoded$();
+	} else if ((firstExpr instanceof NumberLiteralExpression || firstExpr instanceof IntegerLiteralExpression) && (secondExpr instanceof NumberLiteralExpression || secondExpr instanceof IntegerLiteralExpression)) {
+		isEqual = (firstExpr instanceof NumberLiteralExpression ? firstExpr.getDecoded$() : (this$0$0 = firstExpr, (this$0$0$0 = this$0$0._token, this$0$0$0._value) | 0)) === (secondExpr instanceof NumberLiteralExpression ? secondExpr.getDecoded$() : (this$0$1 = secondExpr, (this$0$0$1 = this$0$1._token, this$0$0$1._value) | 0));
+	}
+	if (isEqual != null) {
+		result = ((this$0 = expr._token, this$0._value) === "==" ? isEqual : ! isEqual);
+		replaceCb(new BooleanLiteralExpression(new Token$2((result ? "true" : "false"), true)));
+	}
+};
+
+
+function _FoldConstantCommand$_foldEqualityExpression$L_FoldConstantCommand$LEqualityExpression$F$LExpression$V$($this, expr, replaceCb) {
+	var firstExpr;
+	var secondExpr;
+	var isEqual;
+	var isNullVsPrimitiveLiteral;
+	var result;
+	var this$0$0;
+	var this$0$0$0;
+	var this$0$1;
+	var this$0$0$1;
+	var this$0;
+	firstExpr = expr._expr1;
+	secondExpr = expr._expr2;
+	isEqual = null;
+	function isNullVsPrimitiveLiteral(x, y) {
+		return x instanceof NullExpression && y instanceof PrimitiveLiteralExpression;
+	}
+	if (firstExpr instanceof NullExpression && secondExpr instanceof NullExpression) {
+		isEqual = true;
+	} else if (isNullVsPrimitiveLiteral(firstExpr, secondExpr) || isNullVsPrimitiveLiteral(secondExpr, firstExpr)) {
+		isEqual = false;
+	} else if (firstExpr instanceof StringLiteralExpression && secondExpr instanceof StringLiteralExpression) {
+		isEqual = firstExpr.getDecoded$() === secondExpr.getDecoded$();
+	} else if ((firstExpr instanceof NumberLiteralExpression || firstExpr instanceof IntegerLiteralExpression) && (secondExpr instanceof NumberLiteralExpression || secondExpr instanceof IntegerLiteralExpression)) {
+		isEqual = (firstExpr instanceof NumberLiteralExpression ? firstExpr.getDecoded$() : (this$0$0 = firstExpr, (this$0$0$0 = this$0$0._token, this$0$0$0._value) | 0)) === (secondExpr instanceof NumberLiteralExpression ? secondExpr.getDecoded$() : (this$0$1 = secondExpr, (this$0$0$1 = this$0$1._token, this$0$0$1._value) | 0));
+	}
+	if (isEqual != null) {
+		result = ((this$0 = expr._token, this$0._value) === "==" ? isEqual : ! isEqual);
+		replaceCb(new BooleanLiteralExpression(new Token$2((result ? "true" : "false"), true)));
+	}
+};
+
+_FoldConstantCommand._foldEqualityExpression$L_FoldConstantCommand$LEqualityExpression$F$LExpression$V$ = _FoldConstantCommand$_foldEqualityExpression$L_FoldConstantCommand$LEqualityExpression$F$LExpression$V$;
+
+_FoldConstantCommand.prototype._foldNumericBinaryExpression$LBinaryExpression$F$LExpression$V$ = function (expr, replaceCb) {
+	var $this = this;
+	var exprIsZero;
+	var exprIsOne;
+	var expr$0;
+	var expr$1;
+	var this$0;
+	if ((expr$0 = expr._expr1, expr$0 instanceof NumberLiteralExpression || expr$0 instanceof IntegerLiteralExpression) && (expr$1 = expr._expr2, expr$1 instanceof NumberLiteralExpression || expr$1 instanceof IntegerLiteralExpression)) {
+		return _FoldConstantCommand$_foldNumericBinaryExpressionOfConstants$L_FoldConstantCommand$LBinaryExpression$F$LExpression$V$(this, expr, replaceCb);
+	}
+	function exprIsZero(expr) {
+		return expr instanceof NumberLiteralExpression && expr.getDecoded$() === 0;
+	}
+	function exprIsOne(expr) {
+		return expr instanceof NumberLiteralExpression && expr.getDecoded$() === 1;
+	}
+	switch ((this$0 = expr._token, this$0._value)) {
+	case "+":
+		if (exprIsZero(expr._expr1)) {
+			replaceCb(expr._expr2);
+			return true;
+		} else if (exprIsZero(expr._expr2)) {
+			replaceCb(expr._expr1);
+			return true;
+		}
+		break;
+	case "-":
+		if (exprIsZero(expr._expr1)) {
+			replaceCb(new SignExpression(new Token$2("-", false), expr._expr2));
+			return true;
+		} else if (exprIsZero(expr._expr2)) {
+			replaceCb(expr._expr1);
+			return true;
+		}
+		break;
+	case "*":
+		if (exprIsOne(expr._expr1)) {
+			replaceCb(expr._expr2);
+			return true;
+		} else if (exprIsOne(expr._expr2)) {
+			replaceCb(expr._expr1);
+			return true;
+		}
+		break;
+	case "/":
+		if (exprIsOne(expr._expr2)) {
+			replaceCb(expr._expr1);
+			return true;
+		}
+		break;
+	}
+	return false;
+};
+
+
+function _FoldConstantCommand$_foldNumericBinaryExpression$L_FoldConstantCommand$LBinaryExpression$F$LExpression$V$($this, expr, replaceCb) {
+	var exprIsZero;
+	var exprIsOne;
+	var expr$0;
+	var expr$1;
+	var this$0;
+	if ((expr$0 = expr._expr1, expr$0 instanceof NumberLiteralExpression || expr$0 instanceof IntegerLiteralExpression) && (expr$1 = expr._expr2, expr$1 instanceof NumberLiteralExpression || expr$1 instanceof IntegerLiteralExpression)) {
+		return _FoldConstantCommand$_foldNumericBinaryExpressionOfConstants$L_FoldConstantCommand$LBinaryExpression$F$LExpression$V$($this, expr, replaceCb);
+	}
+	function exprIsZero(expr) {
+		return expr instanceof NumberLiteralExpression && expr.getDecoded$() === 0;
+	}
+	function exprIsOne(expr) {
+		return expr instanceof NumberLiteralExpression && expr.getDecoded$() === 1;
+	}
+	switch ((this$0 = expr._token, this$0._value)) {
+	case "+":
+		if (exprIsZero(expr._expr1)) {
+			replaceCb(expr._expr2);
+			return true;
+		} else if (exprIsZero(expr._expr2)) {
+			replaceCb(expr._expr1);
+			return true;
+		}
+		break;
+	case "-":
+		if (exprIsZero(expr._expr1)) {
+			replaceCb(new SignExpression(new Token$2("-", false), expr._expr2));
+			return true;
+		} else if (exprIsZero(expr._expr2)) {
+			replaceCb(expr._expr1);
+			return true;
+		}
+		break;
+	case "*":
+		if (exprIsOne(expr._expr1)) {
+			replaceCb(expr._expr2);
+			return true;
+		} else if (exprIsOne(expr._expr2)) {
+			replaceCb(expr._expr1);
+			return true;
+		}
+		break;
+	case "/":
+		if (exprIsOne(expr._expr2)) {
+			replaceCb(expr._expr1);
+			return true;
+		}
+		break;
+	}
+	return false;
+};
+
+_FoldConstantCommand._foldNumericBinaryExpression$L_FoldConstantCommand$LBinaryExpression$F$LExpression$V$ = _FoldConstantCommand$_foldNumericBinaryExpression$L_FoldConstantCommand$LBinaryExpression$F$LExpression$V$;
+
+_FoldConstantCommand.prototype._foldNumericBinaryExpressionOfConstants$LBinaryExpression$F$LExpression$V$ = function (expr, replaceCb) {
+	var $this = this;
+	var this$0;
+	switch ((this$0 = expr._token, this$0._value)) {
+	case "+":
+		if (expr._expr1 instanceof IntegerLiteralExpression && expr._expr2 instanceof IntegerLiteralExpression) {
+			_FoldConstantCommand$_foldNumericBinaryExpressionAsInteger$L_FoldConstantCommand$LBinaryExpression$F$LExpression$V$F$III$(this, expr, replaceCb, (function (x, y) {
+				return ((x + y) | 0);
+			}));
+		} else {
+			_FoldConstantCommand$_foldNumericBinaryExpressionAsNumber$L_FoldConstantCommand$LBinaryExpression$F$LExpression$V$F$NNN$(this, expr, replaceCb, (function (x, y) {
+				return x + y;
+			}));
+		}
+		break;
+	case "-":
+		if (expr._expr1 instanceof IntegerLiteralExpression && expr._expr2 instanceof IntegerLiteralExpression) {
+			_FoldConstantCommand$_foldNumericBinaryExpressionAsInteger$L_FoldConstantCommand$LBinaryExpression$F$LExpression$V$F$III$(this, expr, replaceCb, (function (x, y) {
+				return ((x - y) | 0);
+			}));
+		} else {
+			_FoldConstantCommand$_foldNumericBinaryExpressionAsNumber$L_FoldConstantCommand$LBinaryExpression$F$LExpression$V$F$NNN$(this, expr, replaceCb, (function (x, y) {
+				return x - y;
+			}));
+		}
+		break;
+	case "*":
+		if (expr._expr1 instanceof IntegerLiteralExpression && expr._expr2 instanceof IntegerLiteralExpression) {
+			_FoldConstantCommand$_foldNumericBinaryExpressionAsInteger$L_FoldConstantCommand$LBinaryExpression$F$LExpression$V$F$III$(this, expr, replaceCb, (function (x, y) {
+				return $__jsx_imul(x, y);
+			}));
+		} else {
+			_FoldConstantCommand$_foldNumericBinaryExpressionAsNumber$L_FoldConstantCommand$LBinaryExpression$F$LExpression$V$F$NNN$(this, expr, replaceCb, (function (x, y) {
+				return x * y;
+			}));
+		}
+		break;
+	case "/":
+		_FoldConstantCommand$_foldNumericBinaryExpressionAsNumber$L_FoldConstantCommand$LBinaryExpression$F$LExpression$V$F$NNN$(this, expr, replaceCb, (function (x, y) {
+			return x / y;
+		}));
+		break;
+	case "%":
+		_FoldConstantCommand$_foldNumericBinaryExpressionAsNumber$L_FoldConstantCommand$LBinaryExpression$F$LExpression$V$F$NNN$(this, expr, replaceCb, (function (x, y) {
+			return x % y;
+		}));
+		break;
+	case ">>>":
+		_FoldConstantCommand$_foldNumericBinaryExpressionAsInteger$L_FoldConstantCommand$LBinaryExpression$F$LExpression$V$F$III$(this, expr, replaceCb, (function (x, y) {
+			return x >>> y;
+		}));
+		break;
+	case ">>":
+		_FoldConstantCommand$_foldNumericBinaryExpressionAsInteger$L_FoldConstantCommand$LBinaryExpression$F$LExpression$V$F$III$(this, expr, replaceCb, (function (x, y) {
+			return x >> y;
+		}));
+		break;
+	case "<<":
+		_FoldConstantCommand$_foldNumericBinaryExpressionAsInteger$L_FoldConstantCommand$LBinaryExpression$F$LExpression$V$F$III$(this, expr, replaceCb, (function (x, y) {
+			return x << y;
+		}));
+		break;
+	case "&":
+		_FoldConstantCommand$_foldNumericBinaryExpressionAsInteger$L_FoldConstantCommand$LBinaryExpression$F$LExpression$V$F$III$(this, expr, replaceCb, (function (x, y) {
+			return x & y;
+		}));
+		break;
+	case "|":
+		_FoldConstantCommand$_foldNumericBinaryExpressionAsInteger$L_FoldConstantCommand$LBinaryExpression$F$LExpression$V$F$III$(this, expr, replaceCb, (function (x, y) {
+			return x | y;
+		}));
+		break;
+	case "^":
+		_FoldConstantCommand$_foldNumericBinaryExpressionAsInteger$L_FoldConstantCommand$LBinaryExpression$F$LExpression$V$F$III$(this, expr, replaceCb, (function (x, y) {
+			return x ^ y;
+		}));
+		break;
+	case "<":
+		_FoldConstantCommand$_foldNumericBinaryExpressionAsBoolean$L_FoldConstantCommand$LBinaryExpression$F$LExpression$V$F$NNB$(this, expr, replaceCb, (function (x, y) {
+			return x < y;
+		}));
+		break;
+	case "<=":
+		_FoldConstantCommand$_foldNumericBinaryExpressionAsBoolean$L_FoldConstantCommand$LBinaryExpression$F$LExpression$V$F$NNB$(this, expr, replaceCb, (function (x, y) {
+			return x <= y;
+		}));
+		break;
+	case ">":
+		_FoldConstantCommand$_foldNumericBinaryExpressionAsBoolean$L_FoldConstantCommand$LBinaryExpression$F$LExpression$V$F$NNB$(this, expr, replaceCb, (function (x, y) {
+			return x > y;
+		}));
+		break;
+	case ">=":
+		_FoldConstantCommand$_foldNumericBinaryExpressionAsBoolean$L_FoldConstantCommand$LBinaryExpression$F$LExpression$V$F$NNB$(this, expr, replaceCb, (function (x, y) {
+			return x >= y;
+		}));
+		break;
+	default:
+		return false;
+	}
+	return true;
+};
+
+
+function _FoldConstantCommand$_foldNumericBinaryExpressionOfConstants$L_FoldConstantCommand$LBinaryExpression$F$LExpression$V$($this, expr, replaceCb) {
+	var this$0;
+	switch ((this$0 = expr._token, this$0._value)) {
+	case "+":
+		if (expr._expr1 instanceof IntegerLiteralExpression && expr._expr2 instanceof IntegerLiteralExpression) {
+			_FoldConstantCommand$_foldNumericBinaryExpressionAsInteger$L_FoldConstantCommand$LBinaryExpression$F$LExpression$V$F$III$($this, expr, replaceCb, (function (x, y) {
+				return ((x + y) | 0);
+			}));
+		} else {
+			_FoldConstantCommand$_foldNumericBinaryExpressionAsNumber$L_FoldConstantCommand$LBinaryExpression$F$LExpression$V$F$NNN$($this, expr, replaceCb, (function (x, y) {
+				return x + y;
+			}));
+		}
+		break;
+	case "-":
+		if (expr._expr1 instanceof IntegerLiteralExpression && expr._expr2 instanceof IntegerLiteralExpression) {
+			_FoldConstantCommand$_foldNumericBinaryExpressionAsInteger$L_FoldConstantCommand$LBinaryExpression$F$LExpression$V$F$III$($this, expr, replaceCb, (function (x, y) {
+				return ((x - y) | 0);
+			}));
+		} else {
+			_FoldConstantCommand$_foldNumericBinaryExpressionAsNumber$L_FoldConstantCommand$LBinaryExpression$F$LExpression$V$F$NNN$($this, expr, replaceCb, (function (x, y) {
+				return x - y;
+			}));
+		}
+		break;
+	case "*":
+		if (expr._expr1 instanceof IntegerLiteralExpression && expr._expr2 instanceof IntegerLiteralExpression) {
+			_FoldConstantCommand$_foldNumericBinaryExpressionAsInteger$L_FoldConstantCommand$LBinaryExpression$F$LExpression$V$F$III$($this, expr, replaceCb, (function (x, y) {
+				return $__jsx_imul(x, y);
+			}));
+		} else {
+			_FoldConstantCommand$_foldNumericBinaryExpressionAsNumber$L_FoldConstantCommand$LBinaryExpression$F$LExpression$V$F$NNN$($this, expr, replaceCb, (function (x, y) {
+				return x * y;
+			}));
+		}
+		break;
+	case "/":
+		_FoldConstantCommand$_foldNumericBinaryExpressionAsNumber$L_FoldConstantCommand$LBinaryExpression$F$LExpression$V$F$NNN$($this, expr, replaceCb, (function (x, y) {
+			return x / y;
+		}));
+		break;
+	case "%":
+		_FoldConstantCommand$_foldNumericBinaryExpressionAsNumber$L_FoldConstantCommand$LBinaryExpression$F$LExpression$V$F$NNN$($this, expr, replaceCb, (function (x, y) {
+			return x % y;
+		}));
+		break;
+	case ">>>":
+		_FoldConstantCommand$_foldNumericBinaryExpressionAsInteger$L_FoldConstantCommand$LBinaryExpression$F$LExpression$V$F$III$($this, expr, replaceCb, (function (x, y) {
+			return x >>> y;
+		}));
+		break;
+	case ">>":
+		_FoldConstantCommand$_foldNumericBinaryExpressionAsInteger$L_FoldConstantCommand$LBinaryExpression$F$LExpression$V$F$III$($this, expr, replaceCb, (function (x, y) {
+			return x >> y;
+		}));
+		break;
+	case "<<":
+		_FoldConstantCommand$_foldNumericBinaryExpressionAsInteger$L_FoldConstantCommand$LBinaryExpression$F$LExpression$V$F$III$($this, expr, replaceCb, (function (x, y) {
+			return x << y;
+		}));
+		break;
+	case "&":
+		_FoldConstantCommand$_foldNumericBinaryExpressionAsInteger$L_FoldConstantCommand$LBinaryExpression$F$LExpression$V$F$III$($this, expr, replaceCb, (function (x, y) {
+			return x & y;
+		}));
+		break;
+	case "|":
+		_FoldConstantCommand$_foldNumericBinaryExpressionAsInteger$L_FoldConstantCommand$LBinaryExpression$F$LExpression$V$F$III$($this, expr, replaceCb, (function (x, y) {
+			return x | y;
+		}));
+		break;
+	case "^":
+		_FoldConstantCommand$_foldNumericBinaryExpressionAsInteger$L_FoldConstantCommand$LBinaryExpression$F$LExpression$V$F$III$($this, expr, replaceCb, (function (x, y) {
+			return x ^ y;
+		}));
+		break;
+	case "<":
+		_FoldConstantCommand$_foldNumericBinaryExpressionAsBoolean$L_FoldConstantCommand$LBinaryExpression$F$LExpression$V$F$NNB$($this, expr, replaceCb, (function (x, y) {
+			return x < y;
+		}));
+		break;
+	case "<=":
+		_FoldConstantCommand$_foldNumericBinaryExpressionAsBoolean$L_FoldConstantCommand$LBinaryExpression$F$LExpression$V$F$NNB$($this, expr, replaceCb, (function (x, y) {
+			return x <= y;
+		}));
+		break;
+	case ">":
+		_FoldConstantCommand$_foldNumericBinaryExpressionAsBoolean$L_FoldConstantCommand$LBinaryExpression$F$LExpression$V$F$NNB$($this, expr, replaceCb, (function (x, y) {
+			return x > y;
+		}));
+		break;
+	case ">=":
+		_FoldConstantCommand$_foldNumericBinaryExpressionAsBoolean$L_FoldConstantCommand$LBinaryExpression$F$LExpression$V$F$NNB$($this, expr, replaceCb, (function (x, y) {
+			return x >= y;
+		}));
+		break;
+	default:
+		return false;
+	}
+	return true;
+};
+
+_FoldConstantCommand._foldNumericBinaryExpressionOfConstants$L_FoldConstantCommand$LBinaryExpression$F$LExpression$V$ = _FoldConstantCommand$_foldNumericBinaryExpressionOfConstants$L_FoldConstantCommand$LBinaryExpression$F$LExpression$V$;
+
+_FoldConstantCommand.prototype._foldNumericBinaryExpressionAsNumeric$LBinaryExpression$F$LExpression$V$F$III$F$NNN$ = function (expr, replaceCb, calcCbInt, calcCbNumber) {
+	if (expr._expr1 instanceof IntegerLiteralExpression && expr._expr2 instanceof IntegerLiteralExpression) {
+		_FoldConstantCommand$_foldNumericBinaryExpressionAsInteger$L_FoldConstantCommand$LBinaryExpression$F$LExpression$V$F$III$(this, expr, replaceCb, calcCbInt);
+	} else {
+		_FoldConstantCommand$_foldNumericBinaryExpressionAsNumber$L_FoldConstantCommand$LBinaryExpression$F$LExpression$V$F$NNN$(this, expr, replaceCb, calcCbNumber);
+	}
+};
+
+
+function _FoldConstantCommand$_foldNumericBinaryExpressionAsNumeric$L_FoldConstantCommand$LBinaryExpression$F$LExpression$V$F$III$F$NNN$($this, expr, replaceCb, calcCbInt, calcCbNumber) {
+	if (expr._expr1 instanceof IntegerLiteralExpression && expr._expr2 instanceof IntegerLiteralExpression) {
+		_FoldConstantCommand$_foldNumericBinaryExpressionAsInteger$L_FoldConstantCommand$LBinaryExpression$F$LExpression$V$F$III$($this, expr, replaceCb, calcCbInt);
+	} else {
+		_FoldConstantCommand$_foldNumericBinaryExpressionAsNumber$L_FoldConstantCommand$LBinaryExpression$F$LExpression$V$F$NNN$($this, expr, replaceCb, calcCbNumber);
+	}
+};
+
+_FoldConstantCommand._foldNumericBinaryExpressionAsNumeric$L_FoldConstantCommand$LBinaryExpression$F$LExpression$V$F$III$F$NNN$ = _FoldConstantCommand$_foldNumericBinaryExpressionAsNumeric$L_FoldConstantCommand$LBinaryExpression$F$LExpression$V$F$III$F$NNN$;
+
+_FoldConstantCommand.prototype._foldNumericBinaryExpressionAsInteger$LBinaryExpression$F$LExpression$V$F$III$ = function (expr, replaceCb, calcCb) {
+	var value;
+	var expr$0;
+	var this$0$0;
+	var this$0$0$0;
+	var expr$1;
+	var this$0$1;
+	var this$0$0$1;
+	var message$0;
+	var this$0$2;
+	var message$0$0;
+	var this$0;
+	value = calcCb((expr$0 = expr._expr1, expr$0 instanceof NumberLiteralExpression ? expr$0.getDecoded$() : (this$0$0 = expr$0, (this$0$0$0 = this$0$0._token, this$0$0$0._value) | 0)), (expr$1 = expr._expr2, expr$1 instanceof NumberLiteralExpression ? expr$1.getDecoded$() : (this$0$1 = expr$1, (this$0$0$1 = this$0$1._token, this$0$0$1._value) | 0)));
+	message$0 = "folding operator " + (this$0 = expr._token, "'" + this$0._value + "'" + " at " + (this$0._filename || "<<unknown>>") + ":" + (this$0._lineNumber + "") + ":" + (this$0._columnNumber + "")) + " to int: " + (value + "");
+	this$0$2 = this._optimizer;
+	message$0$0 = "[" + this._identifier + "] " + message$0;
+	this$0$2._log += message$0$0 + "\n";
+	if (value !== (value | 0)) {
+		throw new Error("value is not an integer");
+	}
+	replaceCb(new IntegerLiteralExpression(new Token$3(value + "")));
+};
+
+
+function _FoldConstantCommand$_foldNumericBinaryExpressionAsInteger$L_FoldConstantCommand$LBinaryExpression$F$LExpression$V$F$III$($this, expr, replaceCb, calcCb) {
+	var value;
+	var expr$0;
+	var this$0$0;
+	var this$0$0$0;
+	var expr$1;
+	var this$0$1;
+	var this$0$0$1;
+	var message$0;
+	var this$0$2;
+	var message$0$0;
+	var this$0;
+	value = calcCb((expr$0 = expr._expr1, expr$0 instanceof NumberLiteralExpression ? expr$0.getDecoded$() : (this$0$0 = expr$0, (this$0$0$0 = this$0$0._token, this$0$0$0._value) | 0)), (expr$1 = expr._expr2, expr$1 instanceof NumberLiteralExpression ? expr$1.getDecoded$() : (this$0$1 = expr$1, (this$0$0$1 = this$0$1._token, this$0$0$1._value) | 0)));
+	message$0 = "folding operator " + (this$0 = expr._token, "'" + this$0._value + "'" + " at " + (this$0._filename || "<<unknown>>") + ":" + (this$0._lineNumber + "") + ":" + (this$0._columnNumber + "")) + " to int: " + (value + "");
+	this$0$2 = $this._optimizer;
+	message$0$0 = "[" + $this._identifier + "] " + message$0;
+	this$0$2._log += message$0$0 + "\n";
+	if (value !== (value | 0)) {
+		throw new Error("value is not an integer");
+	}
+	replaceCb(new IntegerLiteralExpression(new Token$3(value + "")));
+};
+
+_FoldConstantCommand._foldNumericBinaryExpressionAsInteger$L_FoldConstantCommand$LBinaryExpression$F$LExpression$V$F$III$ = _FoldConstantCommand$_foldNumericBinaryExpressionAsInteger$L_FoldConstantCommand$LBinaryExpression$F$LExpression$V$F$III$;
+
+_FoldConstantCommand.prototype._foldNumericBinaryExpressionAsNumber$LBinaryExpression$F$LExpression$V$F$NNN$ = function (expr, replaceCb, calcCb) {
+	var value;
+	var expr$0;
+	var this$0$0;
+	var this$0$0$0;
+	var expr$1;
+	var this$0$1;
+	var this$0$0$1;
+	var message$0;
+	var this$0$2;
+	var message$0$0;
+	var this$0;
+	value = calcCb((expr$0 = expr._expr1, expr$0 instanceof NumberLiteralExpression ? expr$0.getDecoded$() : (this$0$0 = expr$0, (this$0$0$0 = this$0$0._token, this$0$0$0._value) | 0)), (expr$1 = expr._expr2, expr$1 instanceof NumberLiteralExpression ? expr$1.getDecoded$() : (this$0$1 = expr$1, (this$0$0$1 = this$0$1._token, this$0$0$1._value) | 0)));
+	message$0 = "folding operator " + (this$0 = expr._token, "'" + this$0._value + "'" + " at " + (this$0._filename || "<<unknown>>") + ":" + (this$0._lineNumber + "") + ":" + (this$0._columnNumber + "")) + " to number: " + (value + "");
+	this$0$2 = this._optimizer;
+	message$0$0 = "[" + this._identifier + "] " + message$0;
+	this$0$2._log += message$0$0 + "\n";
+	replaceCb(new NumberLiteralExpression(new Token$3(value + "")));
+};
+
+
+function _FoldConstantCommand$_foldNumericBinaryExpressionAsNumber$L_FoldConstantCommand$LBinaryExpression$F$LExpression$V$F$NNN$($this, expr, replaceCb, calcCb) {
+	var value;
+	var expr$0;
+	var this$0$0;
+	var this$0$0$0;
+	var expr$1;
+	var this$0$1;
+	var this$0$0$1;
+	var message$0;
+	var this$0$2;
+	var message$0$0;
+	var this$0;
+	value = calcCb((expr$0 = expr._expr1, expr$0 instanceof NumberLiteralExpression ? expr$0.getDecoded$() : (this$0$0 = expr$0, (this$0$0$0 = this$0$0._token, this$0$0$0._value) | 0)), (expr$1 = expr._expr2, expr$1 instanceof NumberLiteralExpression ? expr$1.getDecoded$() : (this$0$1 = expr$1, (this$0$0$1 = this$0$1._token, this$0$0$1._value) | 0)));
+	message$0 = "folding operator " + (this$0 = expr._token, "'" + this$0._value + "'" + " at " + (this$0._filename || "<<unknown>>") + ":" + (this$0._lineNumber + "") + ":" + (this$0._columnNumber + "")) + " to number: " + (value + "");
+	this$0$2 = $this._optimizer;
+	message$0$0 = "[" + $this._identifier + "] " + message$0;
+	this$0$2._log += message$0$0 + "\n";
+	replaceCb(new NumberLiteralExpression(new Token$3(value + "")));
+};
+
+_FoldConstantCommand._foldNumericBinaryExpressionAsNumber$L_FoldConstantCommand$LBinaryExpression$F$LExpression$V$F$NNN$ = _FoldConstantCommand$_foldNumericBinaryExpressionAsNumber$L_FoldConstantCommand$LBinaryExpression$F$LExpression$V$F$NNN$;
+
+_FoldConstantCommand.prototype._foldNumericBinaryExpressionAsBoolean$LBinaryExpression$F$LExpression$V$F$NNB$ = function (expr, replaceCb, calcCb) {
+	var value;
+	var expr$0;
+	var this$0$0;
+	var this$0$0$0;
+	var expr$1;
+	var this$0$1;
+	var this$0$0$1;
+	var message$0;
+	var this$0$2;
+	var message$0$0;
+	var this$0;
+	value = calcCb((expr$0 = expr._expr1, expr$0 instanceof NumberLiteralExpression ? expr$0.getDecoded$() : (this$0$0 = expr$0, (this$0$0$0 = this$0$0._token, this$0$0$0._value) | 0)), (expr$1 = expr._expr2, expr$1 instanceof NumberLiteralExpression ? expr$1.getDecoded$() : (this$0$1 = expr$1, (this$0$0$1 = this$0$1._token, this$0$0$1._value) | 0)));
+	message$0 = "folding operator " + (this$0 = expr._token, "'" + this$0._value + "'" + " at " + (this$0._filename || "<<unknown>>") + ":" + (this$0._lineNumber + "") + ":" + (this$0._columnNumber + "")) + " to boolean: " + (value + "");
+	this$0$2 = this._optimizer;
+	message$0$0 = "[" + this._identifier + "] " + message$0;
+	this$0$2._log += message$0$0 + "\n";
+	replaceCb(new BooleanLiteralExpression(new Token$3(value + "")));
+};
+
+
+function _FoldConstantCommand$_foldNumericBinaryExpressionAsBoolean$L_FoldConstantCommand$LBinaryExpression$F$LExpression$V$F$NNB$($this, expr, replaceCb, calcCb) {
+	var value;
+	var expr$0;
+	var this$0$0;
+	var this$0$0$0;
+	var expr$1;
+	var this$0$1;
+	var this$0$0$1;
+	var message$0;
+	var this$0$2;
+	var message$0$0;
+	var this$0;
+	value = calcCb((expr$0 = expr._expr1, expr$0 instanceof NumberLiteralExpression ? expr$0.getDecoded$() : (this$0$0 = expr$0, (this$0$0$0 = this$0$0._token, this$0$0$0._value) | 0)), (expr$1 = expr._expr2, expr$1 instanceof NumberLiteralExpression ? expr$1.getDecoded$() : (this$0$1 = expr$1, (this$0$0$1 = this$0$1._token, this$0$0$1._value) | 0)));
+	message$0 = "folding operator " + (this$0 = expr._token, "'" + this$0._value + "'" + " at " + (this$0._filename || "<<unknown>>") + ":" + (this$0._lineNumber + "") + ":" + (this$0._columnNumber + "")) + " to boolean: " + (value + "");
+	this$0$2 = $this._optimizer;
+	message$0$0 = "[" + $this._identifier + "] " + message$0;
+	this$0$2._log += message$0$0 + "\n";
+	replaceCb(new BooleanLiteralExpression(new Token$3(value + "")));
+};
+
+_FoldConstantCommand._foldNumericBinaryExpressionAsBoolean$L_FoldConstantCommand$LBinaryExpression$F$LExpression$V$F$NNB$ = _FoldConstantCommand$_foldNumericBinaryExpressionAsBoolean$L_FoldConstantCommand$LBinaryExpression$F$LExpression$V$F$NNB$;
+
+_FoldConstantCommand.prototype._isIntegerOrNumberLiteralExpression$LExpression$ = function (expr) {
+	return expr instanceof NumberLiteralExpression || expr instanceof IntegerLiteralExpression;
+};
+
+
+function _FoldConstantCommand$_isIntegerOrNumberLiteralExpression$L_FoldConstantCommand$LExpression$($this, expr) {
+	return expr instanceof NumberLiteralExpression || expr instanceof IntegerLiteralExpression;
+};
+
+_FoldConstantCommand._isIntegerOrNumberLiteralExpression$L_FoldConstantCommand$LExpression$ = _FoldConstantCommand$_isIntegerOrNumberLiteralExpression$L_FoldConstantCommand$LExpression$;
+
+_FoldConstantCommand.prototype._foldStaticConst$LMemberVariableDefinition$ = function (member) {
+	var $this = this;
+	var stash;
+	var initialValue;
+	var identifier$0;
+	var stash$0;
+	identifier$0 = this._identifier;
+	stash$0 = member.getStash$S(identifier$0);
+	if (stash$0 == null) {
+		stash$0 = new _FoldConstantCommand$x2EStash();
+		member.setStash$SLStash$(identifier$0, stash$0);
+	}
+	stash = stash$0;
+	if (stash$0.isOptimized) {
+		return;
+	}
+	stash.isOptimized = true;
+	initialValue = member._initialValue;
+	if (initialValue != null) {
+		_FoldConstantCommand$_optimizeExpression$L_FoldConstantCommand$LExpression$F$LExpression$V$(this, initialValue, (function (expr) {
+			member._initialValue = expr;
+		}));
+	}
+};
+
+
+function _FoldConstantCommand$_foldStaticConst$L_FoldConstantCommand$LMemberVariableDefinition$($this, member) {
+	var stash;
+	var initialValue;
+	var identifier$0;
+	var stash$0;
+	identifier$0 = $this._identifier;
+	stash$0 = member.getStash$S(identifier$0);
+	if (stash$0 == null) {
+		stash$0 = new _FoldConstantCommand$x2EStash();
+		member.setStash$SLStash$(identifier$0, stash$0);
+	}
+	stash = stash$0;
+	if (stash$0.isOptimized) {
+		return;
+	}
+	stash.isOptimized = true;
+	initialValue = member._initialValue;
+	if (initialValue != null) {
+		_FoldConstantCommand$_optimizeExpression$L_FoldConstantCommand$LExpression$F$LExpression$V$($this, initialValue, (function (expr) {
+			member._initialValue = expr;
+		}));
+	}
+};
+
+_FoldConstantCommand._foldStaticConst$L_FoldConstantCommand$LMemberVariableDefinition$ = _FoldConstantCommand$_foldStaticConst$L_FoldConstantCommand$LMemberVariableDefinition$;
+
+_FoldConstantCommand.prototype._toFoldedExpr$LExpression$LType$ = function (expr, type) {
+	var this$0$0;
+	if (expr instanceof NullExpression) {
+		return expr;
+	} else if (expr instanceof BooleanLiteralExpression) {
+		return expr;
+	} else if (expr instanceof IntegerLiteralExpression) {
+		return expr;
+	} else if (expr instanceof NumberLiteralExpression) {
+		if ((type instanceof NullableType ? (this$0$0 = type, this$0$0._baseType) : type).equals$LType$(Type.integerType)) {
+			return new IntegerLiteralExpression(new Token$3((expr.getDecoded$() | 0) + ""));
+		}
+		return expr;
+	} else if (expr instanceof StringLiteralExpression) {
+		return expr;
+	}
+	return null;
+};
+
+
+function _FoldConstantCommand$_toFoldedExpr$L_FoldConstantCommand$LExpression$LType$($this, expr, type) {
+	var this$0$0;
+	if (expr instanceof NullExpression) {
+		return expr;
+	} else if (expr instanceof BooleanLiteralExpression) {
+		return expr;
+	} else if (expr instanceof IntegerLiteralExpression) {
+		return expr;
+	} else if (expr instanceof NumberLiteralExpression) {
+		if ((type instanceof NullableType ? (this$0$0 = type, this$0$0._baseType) : type).equals$LType$(Type.integerType)) {
+			return new IntegerLiteralExpression(new Token$3((expr.getDecoded$() | 0) + ""));
+		}
+		return expr;
+	} else if (expr instanceof StringLiteralExpression) {
+		return expr;
+	}
+	return null;
+};
+
+_FoldConstantCommand._toFoldedExpr$L_FoldConstantCommand$LExpression$LType$ = _FoldConstantCommand$_toFoldedExpr$L_FoldConstantCommand$LExpression$LType$;
+
+_FoldConstantCommand.prototype._foldAsExpression$LAsExpression$F$LExpression$V$ = function (expr, replaceCb) {
+	var baseExpr;
+	var this$0$0;
+	var message$0$0;
+	var this$0$1;
+	var message$0$1;
+	var this$0$2;
+	var message$0$2;
+	var this$0$3;
+	var message$0$3;
+	var this$0$4;
+	var message$0$4;
+	var this$0$5;
+	var message$0$5;
+	var this$0$6;
+	var message$0$6;
+	var this$0$7;
+	var message$0$7;
+	var this$0$8;
+	var message$0$8;
+	var this$0$9;
+	var message$0$9;
+	var this$0$10;
+	var message$0$10;
+	var this$0$11;
+	var message$0$11;
+	var this$0;
+	var this$0$12;
+	baseExpr = expr._expr;
+	if (expr._type.equals$LType$(Type.stringType)) {
+		if (baseExpr.getType$().equals$LType$(Type.stringType)) {
+			this$0$0 = this._optimizer;
+			message$0$0 = "[" + this._identifier + "] " + "folding type cast: string as string";
+			this$0$0._log += message$0$0 + "\n";
+			replaceCb(baseExpr);
+		} else if (baseExpr instanceof PrimitiveLiteralExpression) {
+			this$0$1 = this._optimizer;
+			message$0$1 = "[" + this._identifier + "] " + "folding type cast: primitive literal as string";
+			this$0$1._log += message$0$1 + "\n";
+			replaceCb(new StringLiteralExpression(new Token$2(Util$encodeStringLiteral$S(baseExpr.toNormalizedString$()), false)));
+		}
+	} else if (expr._type.equals$LType$(Type.numberType)) {
+		if (baseExpr.getType$().equals$LType$(Type.numberType)) {
+			this$0$2 = this._optimizer;
+			message$0$2 = "[" + this._identifier + "] " + "folding type cast: number as number";
+			this$0$2._log += message$0$2 + "\n";
+			replaceCb(baseExpr);
+		} else if (baseExpr instanceof StringLiteralExpression) {
+			this$0$3 = this._optimizer;
+			message$0$3 = "[" + this._identifier + "] " + "folding type cast: string literal as number";
+			this$0$3._log += message$0$3 + "\n";
+			replaceCb(new NumberLiteralExpression(new Token$2(+baseExpr.getDecoded$() + "", false)));
+		} else if (baseExpr instanceof IntegerLiteralExpression) {
+			this$0$4 = this._optimizer;
+			message$0$4 = "[" + this._identifier + "] " + "folding type cast: int literal as number";
+			this$0$4._log += message$0$4 + "\n";
+			replaceCb(new NumberLiteralExpression(new Token$2(+baseExpr.getDecoded$() + "", false)));
+		}
+	} else if (expr._type.equals$LType$(Type.integerType)) {
+		if (baseExpr.getType$().equals$LType$(Type.integerType)) {
+			this$0$5 = this._optimizer;
+			message$0$5 = "[" + this._identifier + "] " + "folding type cast: int as int";
+			this$0$5._log += message$0$5 + "\n";
+			replaceCb(baseExpr);
+		} else if (baseExpr instanceof StringLiteralExpression) {
+			this$0$6 = this._optimizer;
+			message$0$6 = "[" + this._identifier + "] " + "folding type cast: string literal as int";
+			this$0$6._log += message$0$6 + "\n";
+			replaceCb(new IntegerLiteralExpression(new Token$2((baseExpr.getDecoded$() | 0) + "", false)));
+		} else if (baseExpr instanceof NumberLiteralExpression) {
+			this$0$7 = this._optimizer;
+			message$0$7 = "[" + this._identifier + "] " + "folding type cast: number literal as int";
+			this$0$7._log += message$0$7 + "\n";
+			replaceCb(new IntegerLiteralExpression(new Token$2((baseExpr.getDecoded$() | 0) + "", false)));
+		}
+	} else if (expr._type.equals$LType$(Type.booleanType)) {
+		if (baseExpr.getType$().equals$LType$(Type.booleanType)) {
+			this$0$8 = this._optimizer;
+			message$0$8 = "[" + this._identifier + "] " + "folding type cast: boolean as boolean";
+			this$0$8._log += message$0$8 + "\n";
+			replaceCb(baseExpr);
+		} else if (baseExpr instanceof StringLiteralExpression) {
+			this$0$9 = this._optimizer;
+			message$0$9 = "[" + this._identifier + "] " + "folding type cast: string literal as boolean";
+			this$0$9._log += message$0$9 + "\n";
+			replaceCb(new BooleanLiteralExpression(new Token$2(!! baseExpr.getDecoded$() + "", false)));
+		} else if (baseExpr instanceof NumberLiteralExpression) {
+			this$0$10 = this._optimizer;
+			message$0$10 = "[" + this._identifier + "] " + "folding type cast: number literal as boolean";
+			this$0$10._log += message$0$10 + "\n";
+			replaceCb(new BooleanLiteralExpression(new Token$2((baseExpr.getDecoded$() ? "true" : "false"), false)));
+		} else if (baseExpr instanceof IntegerLiteralExpression) {
+			this$0$11 = this._optimizer;
+			message$0$11 = "[" + this._identifier + "] " + "folding type cast: integer literal as boolean";
+			this$0$11._log += message$0$11 + "\n";
+			replaceCb(new BooleanLiteralExpression(new Token$2(((this$0 = baseExpr, (this$0$12 = this$0._token, this$0$12._value) | 0) ? "true" : "false"), false)));
+		}
+	}
+};
+
+
+function _FoldConstantCommand$_foldAsExpression$L_FoldConstantCommand$LAsExpression$F$LExpression$V$($this, expr, replaceCb) {
+	var baseExpr;
+	var this$0$0;
+	var message$0$0;
+	var this$0$1;
+	var message$0$1;
+	var this$0$2;
+	var message$0$2;
+	var this$0$3;
+	var message$0$3;
+	var this$0$4;
+	var message$0$4;
+	var this$0$5;
+	var message$0$5;
+	var this$0$6;
+	var message$0$6;
+	var this$0$7;
+	var message$0$7;
+	var this$0$8;
+	var message$0$8;
+	var this$0$9;
+	var message$0$9;
+	var this$0$10;
+	var message$0$10;
+	var this$0$11;
+	var message$0$11;
+	var this$0;
+	var this$0$12;
+	baseExpr = expr._expr;
+	if (expr._type.equals$LType$(Type.stringType)) {
+		if (baseExpr.getType$().equals$LType$(Type.stringType)) {
+			this$0$0 = $this._optimizer;
+			message$0$0 = "[" + $this._identifier + "] " + "folding type cast: string as string";
+			this$0$0._log += message$0$0 + "\n";
+			replaceCb(baseExpr);
+		} else if (baseExpr instanceof PrimitiveLiteralExpression) {
+			this$0$1 = $this._optimizer;
+			message$0$1 = "[" + $this._identifier + "] " + "folding type cast: primitive literal as string";
+			this$0$1._log += message$0$1 + "\n";
+			replaceCb(new StringLiteralExpression(new Token$2(Util$encodeStringLiteral$S(baseExpr.toNormalizedString$()), false)));
+		}
+	} else if (expr._type.equals$LType$(Type.numberType)) {
+		if (baseExpr.getType$().equals$LType$(Type.numberType)) {
+			this$0$2 = $this._optimizer;
+			message$0$2 = "[" + $this._identifier + "] " + "folding type cast: number as number";
+			this$0$2._log += message$0$2 + "\n";
+			replaceCb(baseExpr);
+		} else if (baseExpr instanceof StringLiteralExpression) {
+			this$0$3 = $this._optimizer;
+			message$0$3 = "[" + $this._identifier + "] " + "folding type cast: string literal as number";
+			this$0$3._log += message$0$3 + "\n";
+			replaceCb(new NumberLiteralExpression(new Token$2(+baseExpr.getDecoded$() + "", false)));
+		} else if (baseExpr instanceof IntegerLiteralExpression) {
+			this$0$4 = $this._optimizer;
+			message$0$4 = "[" + $this._identifier + "] " + "folding type cast: int literal as number";
+			this$0$4._log += message$0$4 + "\n";
+			replaceCb(new NumberLiteralExpression(new Token$2(+baseExpr.getDecoded$() + "", false)));
+		}
+	} else if (expr._type.equals$LType$(Type.integerType)) {
+		if (baseExpr.getType$().equals$LType$(Type.integerType)) {
+			this$0$5 = $this._optimizer;
+			message$0$5 = "[" + $this._identifier + "] " + "folding type cast: int as int";
+			this$0$5._log += message$0$5 + "\n";
+			replaceCb(baseExpr);
+		} else if (baseExpr instanceof StringLiteralExpression) {
+			this$0$6 = $this._optimizer;
+			message$0$6 = "[" + $this._identifier + "] " + "folding type cast: string literal as int";
+			this$0$6._log += message$0$6 + "\n";
+			replaceCb(new IntegerLiteralExpression(new Token$2((baseExpr.getDecoded$() | 0) + "", false)));
+		} else if (baseExpr instanceof NumberLiteralExpression) {
+			this$0$7 = $this._optimizer;
+			message$0$7 = "[" + $this._identifier + "] " + "folding type cast: number literal as int";
+			this$0$7._log += message$0$7 + "\n";
+			replaceCb(new IntegerLiteralExpression(new Token$2((baseExpr.getDecoded$() | 0) + "", false)));
+		}
+	} else if (expr._type.equals$LType$(Type.booleanType)) {
+		if (baseExpr.getType$().equals$LType$(Type.booleanType)) {
+			this$0$8 = $this._optimizer;
+			message$0$8 = "[" + $this._identifier + "] " + "folding type cast: boolean as boolean";
+			this$0$8._log += message$0$8 + "\n";
+			replaceCb(baseExpr);
+		} else if (baseExpr instanceof StringLiteralExpression) {
+			this$0$9 = $this._optimizer;
+			message$0$9 = "[" + $this._identifier + "] " + "folding type cast: string literal as boolean";
+			this$0$9._log += message$0$9 + "\n";
+			replaceCb(new BooleanLiteralExpression(new Token$2(!! baseExpr.getDecoded$() + "", false)));
+		} else if (baseExpr instanceof NumberLiteralExpression) {
+			this$0$10 = $this._optimizer;
+			message$0$10 = "[" + $this._identifier + "] " + "folding type cast: number literal as boolean";
+			this$0$10._log += message$0$10 + "\n";
+			replaceCb(new BooleanLiteralExpression(new Token$2((baseExpr.getDecoded$() ? "true" : "false"), false)));
+		} else if (baseExpr instanceof IntegerLiteralExpression) {
+			this$0$11 = $this._optimizer;
+			message$0$11 = "[" + $this._identifier + "] " + "folding type cast: integer literal as boolean";
+			this$0$11._log += message$0$11 + "\n";
+			replaceCb(new BooleanLiteralExpression(new Token$2(((this$0 = baseExpr, (this$0$12 = this$0._token, this$0$12._value) | 0) ? "true" : "false"), false)));
+		}
+	}
+};
+
+_FoldConstantCommand._foldAsExpression$L_FoldConstantCommand$LAsExpression$F$LExpression$V$ = _FoldConstantCommand$_foldAsExpression$L_FoldConstantCommand$LAsExpression$F$LExpression$V$;
+
+function _StructuredStashAccessor$x2E$x3CStash$x3E$4() {
+};
+
+$__jsx_extend([_StructuredStashAccessor$x2E$x3CStash$x3E$4], Object);
+_StructuredStashAccessor$x2E$x3CStash$x3E$4.prototype.$__jsx_implements__StructuredStashAccessor$x2E$x3CStash$x3E$4 = true;
+
+_StructuredStashAccessor$x2E$x3CStash$x3E$4.prototype.getStash$LStashable$ = function (stashable) {
+	var identifier;
+	var stash;
+	identifier = this._identifier;
+	stash = stashable.getStash$S(identifier);
+	if (stash == null) {
+		stash = new _InlineOptimizeCommand$x2EStash();
+		stashable.setStash$SLStash$(identifier, stash);
+	}
+	return stash;
+};
+
+
+_StructuredStashAccessor$x2E$x3CStash$x3E$4.prototype.resetStash$LStashable$ = function (stashable) {
+	var identifier;
+	identifier = this._identifier;
+	stashable.setStash$SLStash$(identifier, null);
+};
+
+
 function _InlineOptimizeCommand() {
 	this._identifier = "inline";
 	this._optimizer = null;
@@ -7533,19 +8917,24 @@ function _InlineOptimizeCommand() {
 };
 
 $__jsx_extend([_InlineOptimizeCommand], _FunctionOptimizeCommand);
-_InlineOptimizeCommand.prototype._createStash$ = function () {
-	return new _InlineOptimizeCommand$x2EStash();
-};
-
+$__jsx_merge_interface(_InlineOptimizeCommand, _StructuredStashAccessor$x2E$x3CStash$x3E$4);
 
 _InlineOptimizeCommand.prototype.optimizeFunction$LMemberFunctionDefinition$ = function (funcDef) {
 	var stash;
+	var identifier$0;
+	var stash$0;
 	var command$0;
 	var optimizer$0$0;
 	var command$1;
 	var optimizer$0$1;
-	stash = _OptimizeCommand$getStash$L_OptimizeCommand$LStashable$(this, funcDef);
-	if (stash.isOptimized) {
+	identifier$0 = this._identifier;
+	stash$0 = funcDef.getStash$S(identifier$0);
+	if (stash$0 == null) {
+		stash$0 = new _InlineOptimizeCommand$x2EStash();
+		funcDef.setStash$SLStash$(identifier$0, stash$0);
+	}
+	stash = stash$0;
+	if (stash$0.isOptimized) {
 		return true;
 	}
 	stash.isOptimized = true;
@@ -7873,7 +9262,7 @@ _InlineOptimizeCommand.prototype._expandStatementExpression$LMemberFunctionDefin
 			cb(stmtIndex);
 			return true;
 		}
-	} else if (expr instanceof AssignmentExpression && ! Util$lhsHasSideEffects$LExpression$((this$5 = expr, this$5._expr1)) && (this$6 = expr, this$6._expr2) instanceof CallExpression) {
+	} else if (expr instanceof AssignmentExpression && ! Expression$hasSideEffects$LExpression$((this$5 = expr, this$5._expr1)) && (this$6 = expr, this$6._expr2) instanceof CallExpression) {
 		args = _InlineOptimizeCommand$_getArgsAndThisIfCallExprIsInlineable$L_InlineOptimizeCommand$LCallExpression$(this, (this$0 = expr, this$0._expr2));
 		if (args != null) {
 			stmtIndex = _InlineOptimizeCommand$_expandCallingFunction$L_InlineOptimizeCommand$LMemberFunctionDefinition$ALStatement$NLMemberFunctionDefinition$ALExpression$(this, funcDef, statements, stmtIndex, _DetermineCalleeCommand$getCallingFuncDef$LStashable$((this$1 = expr, this$1._expr2)), args);
@@ -7916,7 +9305,7 @@ function _InlineOptimizeCommand$_expandStatementExpression$L_InlineOptimizeComma
 			cb(stmtIndex);
 			return true;
 		}
-	} else if (expr instanceof AssignmentExpression && ! Util$lhsHasSideEffects$LExpression$((this$5 = expr, this$5._expr1)) && (this$6 = expr, this$6._expr2) instanceof CallExpression) {
+	} else if (expr instanceof AssignmentExpression && ! Expression$hasSideEffects$LExpression$((this$5 = expr, this$5._expr1)) && (this$6 = expr, this$6._expr2) instanceof CallExpression) {
 		args = _InlineOptimizeCommand$_getArgsAndThisIfCallExprIsInlineable$L_InlineOptimizeCommand$LCallExpression$($this, (this$0 = expr, this$0._expr2));
 		if (args != null) {
 			stmtIndex = _InlineOptimizeCommand$_expandCallingFunction$L_InlineOptimizeCommand$LMemberFunctionDefinition$ALStatement$NLMemberFunctionDefinition$ALExpression$($this, funcDef, statements, stmtIndex, _DetermineCalleeCommand$getCallingFuncDef$LStashable$((this$1 = expr, this$1._expr2)), args);
@@ -8133,12 +9522,11 @@ _InlineOptimizeCommand._argIsInlineable$L_InlineOptimizeCommand$LType$LType$ = _
 _InlineOptimizeCommand.prototype._isWorthInline$LMemberFunctionDefinition$ = function (funcDef) {
 	var $this = this;
 	var n;
-	var cb$0;
 	if (funcDef._nameToken == null) {
 		return true;
 	}
 	n = 0;
-	cb$0 = (function onStatement(statement) {
+	Util$forEachStatement$F$LStatement$B$ALStatement$((function onStatement(statement) {
 		var cont;
 		cont = Statement$forEachExpression$LStatement$F$LExpression$B$(statement, (function onExpr(expr) {
 			if (++n >= _InlineOptimizeCommand.INLINE_THRESHOLD) {
@@ -8147,20 +9535,18 @@ _InlineOptimizeCommand.prototype._isWorthInline$LMemberFunctionDefinition$ = fun
 			return Expression$forEachExpression$LExpression$F$LExpression$B$(expr, onExpr);
 		}));
 		return (! cont ? false : statement.forEachStatement$F$LStatement$B$(onStatement));
-	});
-	Util$forEachStatement$F$LStatement$B$ALStatement$(cb$0, funcDef._statements);
+	}), funcDef._statements);
 	return n < 30;
 };
 
 
 function _InlineOptimizeCommand$_isWorthInline$L_InlineOptimizeCommand$LMemberFunctionDefinition$($this, funcDef) {
 	var n;
-	var cb$0;
 	if (funcDef._nameToken == null) {
 		return true;
 	}
 	n = 0;
-	cb$0 = (function onStatement(statement) {
+	Util$forEachStatement$F$LStatement$B$ALStatement$((function onStatement(statement) {
 		var cont;
 		cont = Statement$forEachExpression$LStatement$F$LExpression$B$(statement, (function onExpr(expr) {
 			if (++n >= _InlineOptimizeCommand.INLINE_THRESHOLD) {
@@ -8169,8 +9555,7 @@ function _InlineOptimizeCommand$_isWorthInline$L_InlineOptimizeCommand$LMemberFu
 			return Expression$forEachExpression$LExpression$F$LExpression$B$(expr, onExpr);
 		}));
 		return (! cont ? false : statement.forEachStatement$F$LStatement$B$(onStatement));
-	});
-	Util$forEachStatement$F$LStatement$B$ALStatement$(cb$0, funcDef._statements);
+	}), funcDef._statements);
 	return n < 30;
 };
 
@@ -8179,11 +9564,19 @@ _InlineOptimizeCommand._isWorthInline$L_InlineOptimizeCommand$LMemberFunctionDef
 _InlineOptimizeCommand.prototype._functionIsInlineable$LMemberFunctionDefinition$ = function (funcDef) {
 	var $this = this;
 	var stash;
+	var identifier$0;
+	var stash$0;
 	var message$0;
 	var this$0$0;
 	var message$0$0;
-	stash = _OptimizeCommand$getStash$L_OptimizeCommand$LStashable$(this, funcDef);
-	if (stash.isInlineable == null) {
+	identifier$0 = this._identifier;
+	stash$0 = funcDef.getStash$S(identifier$0);
+	if (stash$0 == null) {
+		stash$0 = new _InlineOptimizeCommand$x2EStash();
+		funcDef.setStash$SLStash$(identifier$0, stash$0);
+	}
+	stash = stash$0;
+	if (stash$0.isInlineable == null) {
 		stash.isInlineable = (function () {
 			var statements;
 			var requestsInline;
@@ -8232,11 +9625,19 @@ _InlineOptimizeCommand.prototype._functionIsInlineable$LMemberFunctionDefinition
 
 function _InlineOptimizeCommand$_functionIsInlineable$L_InlineOptimizeCommand$LMemberFunctionDefinition$($this, funcDef) {
 	var stash;
+	var identifier$0;
+	var stash$0;
 	var message$0;
 	var this$0$0;
 	var message$0$0;
-	stash = _OptimizeCommand$getStash$L_OptimizeCommand$LStashable$($this, funcDef);
-	if (stash.isInlineable == null) {
+	identifier$0 = $this._identifier;
+	stash$0 = funcDef.getStash$S(identifier$0);
+	if (stash$0 == null) {
+		stash$0 = new _InlineOptimizeCommand$x2EStash();
+		funcDef.setStash$SLStash$(identifier$0, stash$0);
+	}
+	stash = stash$0;
+	if (stash$0.isInlineable == null) {
 		stash.isInlineable = (function () {
 			var statements;
 			var requestsInline;
@@ -8546,6 +9947,7 @@ _InlineOptimizeCommand._expandCallAsExpression$L_InlineOptimizeCommand$LMemberFu
 
 _InlineOptimizeCommand.prototype._createVarsAndInit$LMemberFunctionDefinition$LMemberFunctionDefinition$ALExpression$F$LExpression$V$ = function (callerFuncDef, calleeFuncDef, argsAndThisAndLocals, initArgExpr) {
 	var $this = this;
+	var exprIsInlineableFor;
 	var createVarWithInit;
 	var argUsed;
 	var thisIdx;
@@ -8559,6 +9961,27 @@ _InlineOptimizeCommand.prototype._createVarsAndInit$LMemberFunctionDefinition$LM
 	var this$2;
 	var this$3;
 	var this$4;
+	function exprIsInlineableFor(expr) {
+		var min;
+		var this$0;
+		var this$1;
+		if (expr instanceof LocalExpression) {
+			return -1;
+		} else if (expr instanceof FunctionExpression) {
+			return 1;
+		} else if (expr instanceof PropertyExpression && (this$0 = expr, this$0._expr) instanceof ClassExpression && ! (this$1 = expr, this$1._type).isAssignable$()) {
+			return Infinity;
+		} else if (expr instanceof LeafExpression || expr instanceof LogicalNotExpression || expr instanceof BitwiseNotExpression || expr instanceof SignExpression || expr instanceof AdditiveExpression || expr instanceof EqualityExpression || expr instanceof ShiftExpression || expr instanceof MapLiteralExpression || expr instanceof ArrayLiteralExpression) {
+			min = 1;
+			Expression$forEachExpression$LExpression$F$LExpression$B$(expr, (function (expr) {
+				min = Math.min(min, exprIsInlineableFor(expr));
+				return min > 0;
+			}));
+			return min;
+		} else {
+			return -1;
+		}
+	}
 	function createVarWithInit(funcDef, type, baseName, initExpr) {
 		var tempVar;
 		tempVar = _OptimizeCommand$createVar$L_OptimizeCommand$LMemberFunctionDefinition$LType$S($this, funcDef, type, baseName);
@@ -8569,7 +9992,7 @@ _InlineOptimizeCommand.prototype._createVarsAndInit$LMemberFunctionDefinition$LM
 	if ((calleeFuncDef._flags & 8) === 0) {
 		thisIdx = argsAndThisAndLocals.length - 1;
 		recvExpr = argsAndThisAndLocals[thisIdx];
-		if (! (recvExpr instanceof LeafExpression || _Util$exprIsIndependent$LExpression$(recvExpr) && argUsed["this"] <= 1)) {
+		if (! (recvExpr instanceof LeafExpression || argUsed["this"] <= exprIsInlineableFor(recvExpr))) {
 			argsAndThisAndLocals[thisIdx] = createVarWithInit(callerFuncDef, new ObjectType(calleeFuncDef._classDef), "this", recvExpr);
 		}
 	}
@@ -8577,7 +10000,7 @@ _InlineOptimizeCommand.prototype._createVarsAndInit$LMemberFunctionDefinition$LM
 	for (i = 0; i < formalArgs.length; ++i) {
 		numberOfUsed = argUsed[(this$1 = (this$0 = formalArgs[i], this$0._name), this$1._value)];
 		argExpr = argsAndThisAndLocals[i];
-		if (! (argExpr instanceof LeafExpression || _Util$exprIsIndependent$LExpression$(argExpr) && numberOfUsed <= 1)) {
+		if (! (argExpr instanceof LeafExpression || numberOfUsed <= exprIsInlineableFor(argExpr))) {
 			argsAndThisAndLocals[i] = createVarWithInit(callerFuncDef, (this$2 = formalArgs[i], this$2._type), (this$4 = (this$3 = formalArgs[i], this$3._name), this$4._value), argExpr);
 		}
 	}
@@ -8591,6 +10014,7 @@ _InlineOptimizeCommand.prototype._createVarsAndInit$LMemberFunctionDefinition$LM
 
 
 function _InlineOptimizeCommand$_createVarsAndInit$L_InlineOptimizeCommand$LMemberFunctionDefinition$LMemberFunctionDefinition$ALExpression$F$LExpression$V$($this, callerFuncDef, calleeFuncDef, argsAndThisAndLocals, initArgExpr) {
+	var exprIsInlineableFor;
 	var createVarWithInit;
 	var argUsed;
 	var thisIdx;
@@ -8604,6 +10028,27 @@ function _InlineOptimizeCommand$_createVarsAndInit$L_InlineOptimizeCommand$LMemb
 	var this$2;
 	var this$3;
 	var this$4;
+	function exprIsInlineableFor(expr) {
+		var min;
+		var this$0;
+		var this$1;
+		if (expr instanceof LocalExpression) {
+			return -1;
+		} else if (expr instanceof FunctionExpression) {
+			return 1;
+		} else if (expr instanceof PropertyExpression && (this$0 = expr, this$0._expr) instanceof ClassExpression && ! (this$1 = expr, this$1._type).isAssignable$()) {
+			return Infinity;
+		} else if (expr instanceof LeafExpression || expr instanceof LogicalNotExpression || expr instanceof BitwiseNotExpression || expr instanceof SignExpression || expr instanceof AdditiveExpression || expr instanceof EqualityExpression || expr instanceof ShiftExpression || expr instanceof MapLiteralExpression || expr instanceof ArrayLiteralExpression) {
+			min = 1;
+			Expression$forEachExpression$LExpression$F$LExpression$B$(expr, (function (expr) {
+				min = Math.min(min, exprIsInlineableFor(expr));
+				return min > 0;
+			}));
+			return min;
+		} else {
+			return -1;
+		}
+	}
 	function createVarWithInit(funcDef, type, baseName, initExpr) {
 		var tempVar;
 		tempVar = _OptimizeCommand$createVar$L_OptimizeCommand$LMemberFunctionDefinition$LType$S($this, funcDef, type, baseName);
@@ -8614,7 +10059,7 @@ function _InlineOptimizeCommand$_createVarsAndInit$L_InlineOptimizeCommand$LMemb
 	if ((calleeFuncDef._flags & 8) === 0) {
 		thisIdx = argsAndThisAndLocals.length - 1;
 		recvExpr = argsAndThisAndLocals[thisIdx];
-		if (! (recvExpr instanceof LeafExpression || _Util$exprIsIndependent$LExpression$(recvExpr) && argUsed["this"] <= 1)) {
+		if (! (recvExpr instanceof LeafExpression || argUsed["this"] <= exprIsInlineableFor(recvExpr))) {
 			argsAndThisAndLocals[thisIdx] = createVarWithInit(callerFuncDef, new ObjectType(calleeFuncDef._classDef), "this", recvExpr);
 		}
 	}
@@ -8622,7 +10067,7 @@ function _InlineOptimizeCommand$_createVarsAndInit$L_InlineOptimizeCommand$LMemb
 	for (i = 0; i < formalArgs.length; ++i) {
 		numberOfUsed = argUsed[(this$1 = (this$0 = formalArgs[i], this$0._name), this$1._value)];
 		argExpr = argsAndThisAndLocals[i];
-		if (! (argExpr instanceof LeafExpression || _Util$exprIsIndependent$LExpression$(argExpr) && numberOfUsed <= 1)) {
+		if (! (argExpr instanceof LeafExpression || numberOfUsed <= exprIsInlineableFor(argExpr))) {
 			argsAndThisAndLocals[i] = createVarWithInit(callerFuncDef, (this$2 = formalArgs[i], this$2._type), (this$4 = (this$3 = formalArgs[i], this$3._name), this$4._value), argExpr);
 		}
 	}
@@ -8769,644 +10214,31 @@ function _InlineOptimizeCommand$_functionHasThis$L_InlineOptimizeCommand$LMember
 
 _InlineOptimizeCommand._functionHasThis$L_InlineOptimizeCommand$LMemberFunctionDefinition$ = _InlineOptimizeCommand$_functionHasThis$L_InlineOptimizeCommand$LMemberFunctionDefinition$;
 
-function _ReturnIfOptimizeCommand() {
-	this._identifier = "return-if";
-	this._optimizer = null;
-	this._excludeNative = false;
-	this._altered = false;
+function _StructuredStashAccessor$x2E$x3CStash$x3E$5() {
 };
 
-$__jsx_extend([_ReturnIfOptimizeCommand], _FunctionOptimizeCommand);
-_ReturnIfOptimizeCommand.prototype.optimizeFunction$LMemberFunctionDefinition$ = function (funcDef) {
-	var message$0;
-	var this$0$0;
-	var message$0$0;
-	if (funcDef._returnType == null || funcDef._returnType.equals$LType$(Type.voidType)) {
-		return false;
+$__jsx_extend([_StructuredStashAccessor$x2E$x3CStash$x3E$5], Object);
+_StructuredStashAccessor$x2E$x3CStash$x3E$5.prototype.$__jsx_implements__StructuredStashAccessor$x2E$x3CStash$x3E$5 = true;
+
+_StructuredStashAccessor$x2E$x3CStash$x3E$5.prototype.getStash$LStashable$ = function (stashable) {
+	var identifier;
+	var stash;
+	identifier = this._identifier;
+	stash = stashable.getStash$S(identifier);
+	if (stash == null) {
+		stash = new _UnboxOptimizeCommand$x2EStash();
+		stashable.setStash$SLStash$(identifier, stash);
 	}
-	this._altered = false;
-	_ReturnIfOptimizeCommand$_optimizeStatements$L_ReturnIfOptimizeCommand$ALStatement$(this, funcDef._statements);
-	message$0 = funcDef.getNotation$() + " " + (this._altered ? "Y" : "N");
-	this$0$0 = this._optimizer;
-	message$0$0 = "[" + this._identifier + "] " + message$0;
-	this$0$0._log += message$0$0 + "\n";
-	return this._altered;
+	return stash;
 };
 
 
-_ReturnIfOptimizeCommand.prototype._statementsCanBeReturnExpr$ALStatement$ = function (statements) {
-	if (statements.length === 1 && statements[0] instanceof ReturnStatement) {
-		return true;
-	}
-	_ReturnIfOptimizeCommand$_optimizeStatements$L_ReturnIfOptimizeCommand$ALStatement$(this, statements);
-	return (statements.length === 1 && statements[0] instanceof ReturnStatement ? true : false);
+_StructuredStashAccessor$x2E$x3CStash$x3E$5.prototype.resetStash$LStashable$ = function (stashable) {
+	var identifier;
+	identifier = this._identifier;
+	stashable.setStash$SLStash$(identifier, null);
 };
 
-
-function _ReturnIfOptimizeCommand$_statementsCanBeReturnExpr$L_ReturnIfOptimizeCommand$ALStatement$($this, statements) {
-	if (statements.length === 1 && statements[0] instanceof ReturnStatement) {
-		return true;
-	}
-	_ReturnIfOptimizeCommand$_optimizeStatements$L_ReturnIfOptimizeCommand$ALStatement$($this, statements);
-	return (statements.length === 1 && statements[0] instanceof ReturnStatement ? true : false);
-};
-
-_ReturnIfOptimizeCommand._statementsCanBeReturnExpr$L_ReturnIfOptimizeCommand$ALStatement$ = _ReturnIfOptimizeCommand$_statementsCanBeReturnExpr$L_ReturnIfOptimizeCommand$ALStatement$;
-
-_ReturnIfOptimizeCommand.prototype._optimizeStatements$ALStatement$ = function (statements) {
-	var ifStatement;
-	var onFalseStatements;
-	var this$0;
-	var this$1;
-	var token$0;
-	var condExpr$0;
-	var trueExpr$0;
-	var falseExpr$0;
-	var this$2;
-	var this$3;
-	var token$1;
-	var condExpr$1;
-	var trueExpr$1;
-	var falseExpr$1;
-	var this$4;
-	var this$5;
-	if (statements.length >= 1 && statements[statements.length - 1] instanceof IfStatement) {
-		ifStatement = statements[statements.length - 1];
-		if (_ReturnIfOptimizeCommand$_statementsCanBeReturnExpr$L_ReturnIfOptimizeCommand$ALStatement$(this, ifStatement._onTrueStatements) && _ReturnIfOptimizeCommand$_statementsCanBeReturnExpr$L_ReturnIfOptimizeCommand$ALStatement$(this, ifStatement._onFalseStatements)) {
-			statements[statements.length - 1] = (token$0 = ifStatement._token, condExpr$0 = ifStatement._expr, trueExpr$0 = (this$0 = ifStatement._onTrueStatements[0], this$0._expr), falseExpr$0 = (this$1 = ifStatement._onFalseStatements[0], this$1._expr), new ReturnStatement(token$0, new ConditionalExpression$0(new Token$2("?", false), condExpr$0, trueExpr$0, falseExpr$0, falseExpr$0.getType$())));
-			this._altered = true;
-			_ReturnIfOptimizeCommand$_optimizeStatements$L_ReturnIfOptimizeCommand$ALStatement$(this, statements);
-		}
-	} else if (statements.length >= 2 && statements[statements.length - 1] instanceof ReturnStatement && statements[statements.length - 2] instanceof IfStatement) {
-		ifStatement = statements[statements.length - 2];
-		if (_ReturnIfOptimizeCommand$_statementsCanBeReturnExpr$L_ReturnIfOptimizeCommand$ALStatement$(this, ifStatement._onTrueStatements)) {
-			onFalseStatements = ifStatement._onFalseStatements;
-			if (onFalseStatements.length === 0) {
-				statements.splice(statements.length - 2, 2, (token$1 = ifStatement._token, condExpr$1 = ifStatement._expr, trueExpr$1 = (this$2 = ifStatement._onTrueStatements[0], this$2._expr), falseExpr$1 = (this$3 = statements[statements.length - 1], this$3._expr), new ReturnStatement(token$1, new ConditionalExpression$0(new Token$2("?", false), condExpr$1, trueExpr$1, falseExpr$1, falseExpr$1.getType$()))));
-				this._altered = true;
-				_ReturnIfOptimizeCommand$_optimizeStatements$L_ReturnIfOptimizeCommand$ALStatement$(this, statements);
-			} else if (onFalseStatements.length === 1 && onFalseStatements[0] instanceof IfStatement && (this$5 = onFalseStatements[0], this$5._onFalseStatements).length === 0) {
-				(this$4 = onFalseStatements[0], this$4._onFalseStatements).push(statements[statements.length - 1]);
-				statements.pop();
-				this._altered = true;
-				_ReturnIfOptimizeCommand$_optimizeStatements$L_ReturnIfOptimizeCommand$ALStatement$(this, statements);
-			}
-		}
-	}
-};
-
-
-function _ReturnIfOptimizeCommand$_optimizeStatements$L_ReturnIfOptimizeCommand$ALStatement$($this, statements) {
-	var ifStatement;
-	var onFalseStatements;
-	var this$0;
-	var this$1;
-	var token$0;
-	var condExpr$0;
-	var trueExpr$0;
-	var falseExpr$0;
-	var this$2;
-	var this$3;
-	var token$1;
-	var condExpr$1;
-	var trueExpr$1;
-	var falseExpr$1;
-	var this$4;
-	var this$5;
-	if (statements.length >= 1 && statements[statements.length - 1] instanceof IfStatement) {
-		ifStatement = statements[statements.length - 1];
-		if (_ReturnIfOptimizeCommand$_statementsCanBeReturnExpr$L_ReturnIfOptimizeCommand$ALStatement$($this, ifStatement._onTrueStatements) && _ReturnIfOptimizeCommand$_statementsCanBeReturnExpr$L_ReturnIfOptimizeCommand$ALStatement$($this, ifStatement._onFalseStatements)) {
-			statements[statements.length - 1] = (token$0 = ifStatement._token, condExpr$0 = ifStatement._expr, trueExpr$0 = (this$0 = ifStatement._onTrueStatements[0], this$0._expr), falseExpr$0 = (this$1 = ifStatement._onFalseStatements[0], this$1._expr), new ReturnStatement(token$0, new ConditionalExpression$0(new Token$2("?", false), condExpr$0, trueExpr$0, falseExpr$0, falseExpr$0.getType$())));
-			$this._altered = true;
-			_ReturnIfOptimizeCommand$_optimizeStatements$L_ReturnIfOptimizeCommand$ALStatement$($this, statements);
-		}
-	} else if (statements.length >= 2 && statements[statements.length - 1] instanceof ReturnStatement && statements[statements.length - 2] instanceof IfStatement) {
-		ifStatement = statements[statements.length - 2];
-		if (_ReturnIfOptimizeCommand$_statementsCanBeReturnExpr$L_ReturnIfOptimizeCommand$ALStatement$($this, ifStatement._onTrueStatements)) {
-			onFalseStatements = ifStatement._onFalseStatements;
-			if (onFalseStatements.length === 0) {
-				statements.splice(statements.length - 2, 2, (token$1 = ifStatement._token, condExpr$1 = ifStatement._expr, trueExpr$1 = (this$2 = ifStatement._onTrueStatements[0], this$2._expr), falseExpr$1 = (this$3 = statements[statements.length - 1], this$3._expr), new ReturnStatement(token$1, new ConditionalExpression$0(new Token$2("?", false), condExpr$1, trueExpr$1, falseExpr$1, falseExpr$1.getType$()))));
-				$this._altered = true;
-				_ReturnIfOptimizeCommand$_optimizeStatements$L_ReturnIfOptimizeCommand$ALStatement$($this, statements);
-			} else if (onFalseStatements.length === 1 && onFalseStatements[0] instanceof IfStatement && (this$5 = onFalseStatements[0], this$5._onFalseStatements).length === 0) {
-				(this$4 = onFalseStatements[0], this$4._onFalseStatements).push(statements[statements.length - 1]);
-				statements.pop();
-				$this._altered = true;
-				_ReturnIfOptimizeCommand$_optimizeStatements$L_ReturnIfOptimizeCommand$ALStatement$($this, statements);
-			}
-		}
-	}
-};
-
-_ReturnIfOptimizeCommand._optimizeStatements$L_ReturnIfOptimizeCommand$ALStatement$ = _ReturnIfOptimizeCommand$_optimizeStatements$L_ReturnIfOptimizeCommand$ALStatement$;
-
-_ReturnIfOptimizeCommand.prototype._createReturnStatement$LToken$LExpression$LExpression$LExpression$ = function (token, condExpr, trueExpr, falseExpr) {
-	return new ReturnStatement(token, new ConditionalExpression$0(new Token$2("?", false), condExpr, trueExpr, falseExpr, falseExpr.getType$()));
-};
-
-
-function _ReturnIfOptimizeCommand$_createReturnStatement$L_ReturnIfOptimizeCommand$LToken$LExpression$LExpression$LExpression$($this, token, condExpr, trueExpr, falseExpr) {
-	return new ReturnStatement(token, new ConditionalExpression$0(new Token$2("?", false), condExpr, trueExpr, falseExpr, falseExpr.getType$()));
-};
-
-_ReturnIfOptimizeCommand._createReturnStatement$L_ReturnIfOptimizeCommand$LToken$LExpression$LExpression$LExpression$ = _ReturnIfOptimizeCommand$_createReturnStatement$L_ReturnIfOptimizeCommand$LToken$LExpression$LExpression$LExpression$;
-
-function _LCSECachedExpression(origExpr, replaceCb) {
-	this._origExpr = origExpr;
-	this._replaceCb = replaceCb;
-	this._localExpr = null;
-};
-
-$__jsx_extend([_LCSECachedExpression], Object);
-function _LCSECachedExpression$getOrigExpr$L_LCSECachedExpression$($this) {
-	return $this._origExpr;
-};
-
-_LCSECachedExpression.getOrigExpr$L_LCSECachedExpression$ = _LCSECachedExpression$getOrigExpr$L_LCSECachedExpression$;
-
-function _LCSECachedExpression$getLocalExpr$L_LCSECachedExpression$F$LType$SLLocalExpression$$($this, createVarCb) {
-	var this$0;
-	var this$1;
-	if ($this._localExpr == null) {
-		$this._localExpr = createVarCb($this._origExpr.getType$(), (this$1 = (this$0 = $this._origExpr, this$0._identifierToken), this$1._value));
-		$this._replaceCb(new AssignmentExpression(new Token$2("=", false), $this._localExpr, $this._origExpr));
-	}
-	return $this._localExpr;
-};
-
-_LCSECachedExpression.getLocalExpr$L_LCSECachedExpression$F$LType$SLLocalExpression$$ = _LCSECachedExpression$getLocalExpr$L_LCSECachedExpression$F$LType$SLLocalExpression$$;
-
-function _LCSEOptimizeCommand() {
-	this._identifier = "lcse";
-	this._optimizer = null;
-	this._excludeNative = false;
-};
-
-$__jsx_extend([_LCSEOptimizeCommand], _FunctionOptimizeCommand);
-_LCSEOptimizeCommand.prototype.optimizeFunction$LMemberFunctionDefinition$ = function (funcDef) {
-	var $this = this;
-	_Util$optimizeBasicBlock$LMemberFunctionDefinition$F$ALExpression$V$(funcDef, (function (exprs) {
-		_LCSEOptimizeCommand$_optimizeExpressions$L_LCSEOptimizeCommand$LMemberFunctionDefinition$ALExpression$($this, funcDef, exprs);
-	}));
-	return true;
-};
-
-
-_LCSEOptimizeCommand.prototype._optimizeExpressions$LMemberFunctionDefinition$ALExpression$ = function (funcDef, exprs) {
-	var $this = this;
-	var cachedExprs;
-	var getCacheKey;
-	var registerCacheable;
-	var clearCacheByLocalName;
-	var clearCache;
-	var this$0$0;
-	var message$0$0;
-	this$0$0 = this._optimizer;
-	message$0$0 = "[" + this._identifier + "] " + "optimizing expressions starting";
-	this$0$0._log += message$0$0 + "\n";
-	cachedExprs = {};
-	getCacheKey = (function (expr) {
-		var propertyExpr;
-		var receiverType;
-		var base;
-		var this$0;
-		var this$1;
-		var this$2;
-		var this$3;
-		if (expr instanceof PropertyExpression) {
-			propertyExpr = expr;
-			receiverType = propertyExpr._expr.getType$();
-			if (Util$isNativeClass$LType$(receiverType)) {
-				return null;
-			}
-			base = getCacheKey(propertyExpr._expr);
-			return (base == null ? null : base + "." + (this$0 = propertyExpr._identifierToken, this$0._value));
-		} else if (expr instanceof LocalExpression) {
-			this$3 = expr;
-			this$2 = this$3._local;
-			this$1 = this$2._name;
-			return this$1._value;
-		} else if (expr instanceof ThisExpression) {
-			return "this";
-		}
-		return null;
-	});
-	registerCacheable = (function (key, expr, replaceCb) {
-		var message$0;
-		var this$0$0;
-		var message$0$0;
-		message$0 = "registering lcse entry for: " + key;
-		this$0$0 = $this._optimizer;
-		message$0$0 = "[" + $this._identifier + "] " + message$0;
-		this$0$0._log += message$0$0 + "\n";
-		cachedExprs[key] = ({_origExpr: expr, _replaceCb: replaceCb, _localExpr: null});
-	});
-	clearCacheByLocalName = (function (name) {
-		var k;
-		var message$0;
-		var this$0$0;
-		var message$0$0;
-		var message$1;
-		var this$0$1;
-		var message$0$1;
-		message$0 = "clearing lcse entry for local name: " + name;
-		this$0$0 = $this._optimizer;
-		message$0$0 = "[" + $this._identifier + "] " + message$0;
-		this$0$0._log += message$0$0 + "\n";
-		for (k in cachedExprs) {
-			if (k.substring(0, name.length + 1) === name + ".") {
-				message$1 = "  removing: " + k;
-				this$0$1 = $this._optimizer;
-				message$0$1 = "[" + $this._identifier + "] " + message$1;
-				this$0$1._log += message$0$1 + "\n";
-				delete cachedExprs[k];
-			}
-		}
-	});
-	clearCache = (function () {
-		var this$0$0;
-		var message$0$0;
-		this$0$0 = $this._optimizer;
-		message$0$0 = "[" + $this._identifier + "] " + "clearing lcse cache";
-		this$0$0._log += message$0$0 + "\n";
-		cachedExprs = {};
-	});
-	Util$forEachExpression$F$LExpression$F$LExpression$V$B$ALExpression$((function onExpr(expr, replaceCb) {
-		var assignmentExpr;
-		var lhsExpr;
-		var lhsPropertyExpr;
-		var cacheKey;
-		var incrementExpr;
-		var propertyExpr;
-		var conditionalExpr;
-		var funcExpr;
-		var args;
-		var i;
-		var this$0;
-		var this$1;
-		var this$2;
-		var this$3;
-		var this$4;
-		var this$5;
-		var this$6;
-		var this$0$0;
-		var message$0$0;
-		var this$7;
-		var message$0;
-		var this$0$1;
-		var message$0$1;
-		var this$8;
-		var that$0;
-		var this$9;
-		var this$10;
-		if (expr instanceof AssignmentExpression || expr instanceof FusedAssignmentExpression) {
-			assignmentExpr = expr;
-			lhsExpr = assignmentExpr._expr1;
-			if (lhsExpr instanceof LocalExpression) {
-				onExpr(assignmentExpr._expr2, (function (expr) {
-					BinaryExpression$setSecondExpr$LBinaryExpression$LExpression$(assignmentExpr, expr);
-				}));
-				clearCacheByLocalName((this$2 = (this$1 = (this$0 = lhsExpr, this$0._local), this$1._name), this$2._value));
-			} else if (lhsExpr instanceof PropertyExpression) {
-				lhsPropertyExpr = lhsExpr;
-				onExpr((this$3 = lhsExpr, this$3._expr), (function (expr) {
-					UnaryExpression$setExpr$LUnaryExpression$LExpression$(lhsPropertyExpr, expr);
-				}));
-				onExpr(assignmentExpr._expr2, (function (expr) {
-					BinaryExpression$setSecondExpr$LBinaryExpression$LExpression$(assignmentExpr, expr);
-				}));
-				if ((this$4 = lhsPropertyExpr._identifierToken, this$4._value) === "length") {
-				} else {
-					cacheKey = getCacheKey(lhsExpr);
-					if (cacheKey) {
-						registerCacheable(cacheKey, lhsExpr, (function (expr) {
-							BinaryExpression$setFirstExpr$LBinaryExpression$LExpression$(assignmentExpr, expr);
-						}));
-					}
-				}
-			} else {
-				clearCache();
-			}
-			return true;
-		} else if (expr instanceof IncrementExpression) {
-			incrementExpr = expr;
-			if (incrementExpr._expr instanceof PropertyExpression) {
-				propertyExpr = incrementExpr._expr;
-				onExpr(propertyExpr._expr, (function (expr) {
-					UnaryExpression$setExpr$LUnaryExpression$LExpression$(propertyExpr, expr);
-				}));
-			}
-			clearCache();
-			return true;
-		} else if (expr instanceof ConditionalExpression) {
-			conditionalExpr = expr;
-			onExpr(conditionalExpr._condExpr, (function (expr) {
-				ConditionalExpression$setCondExpr$LConditionalExpression$LExpression$(conditionalExpr, expr);
-			}));
-			clearCache();
-			return true;
-		} else if (expr instanceof LogicalExpression) {
-			if (! Expression$forEachExpression$LExpression$F$LExpression$B$(expr, (function (expr) {
-				return ! _Util$exprHasSideEffects$LExpression$(expr);
-			}))) {
-				clearCache();
-				return true;
-			}
-		} else if (expr instanceof FunctionExpression) {
-			clearCache();
-			return true;
-		} else if (expr instanceof CallExpression) {
-			this$5 = expr;
-			funcExpr = this$5._expr;
-			if (funcExpr instanceof LocalExpression) {
-			} else if (funcExpr instanceof PropertyExpression) {
-				propertyExpr = funcExpr;
-				onExpr(propertyExpr._expr, (function (expr) {
-					UnaryExpression$setExpr$LUnaryExpression$LExpression$(propertyExpr, expr);
-				}));
-			} else {
-				clearCache();
-			}
-			this$6 = expr;
-			args = this$6._args;
-			for (i = 0; i < args.length; ++i) {
-				onExpr(args[i], (function (args, index) {
-					return (function (expr) {
-						args[index] = expr;
-					});
-				})(args, i));
-			}
-			clearCache();
-			return true;
-		} else if (expr instanceof NewExpression) {
-			this$0$0 = $this._optimizer;
-			message$0$0 = "[" + $this._identifier + "] " + "new expression";
-			this$0$0._log += message$0$0 + "\n";
-			this$7 = expr;
-			args = this$7._args;
-			for (i = 0; i < args.length; ++i) {
-				onExpr(args[i], (function (args, index) {
-					return (function (expr) {
-						args[index] = expr;
-					});
-				})(args, i));
-			}
-			clearCache();
-			return true;
-		}
-		if (expr instanceof PropertyExpression) {
-			if ((this$10 = (this$9 = expr, this$9._identifierToken), this$10._value) === "length") {
-			} else {
-				cacheKey = getCacheKey(expr);
-				if (cacheKey) {
-					message$0 = "rewriting cse for: " + cacheKey;
-					this$0$1 = $this._optimizer;
-					message$0$1 = "[" + $this._identifier + "] " + message$0;
-					this$0$1._log += message$0$1 + "\n";
-					if (cachedExprs[cacheKey]) {
-						replaceCb((this$8 = _LCSECachedExpression$getLocalExpr$L_LCSECachedExpression$F$LType$SLLocalExpression$$(cachedExprs[cacheKey], (function (type, baseName) {
-							var localVar;
-							localVar = _OptimizeCommand$createVar$L_OptimizeCommand$LMemberFunctionDefinition$LType$S($this, funcDef, type, baseName);
-							return new LocalExpression(LocalVariable$getName$LLocalVariable$(localVar), localVar);
-						})), that$0 = new LocalExpression(this$8._token, this$8._local), that$0._cloned = true, that$0));
-					} else {
-						registerCacheable(cacheKey, expr, replaceCb);
-					}
-				}
-			}
-		}
-		return expr.forEachExpression$F$LExpression$F$LExpression$V$B$(onExpr);
-	}), exprs);
-};
-
-
-function _LCSEOptimizeCommand$_optimizeExpressions$L_LCSEOptimizeCommand$LMemberFunctionDefinition$ALExpression$($this, funcDef, exprs) {
-	var cachedExprs;
-	var getCacheKey;
-	var registerCacheable;
-	var clearCacheByLocalName;
-	var clearCache;
-	var this$0$0;
-	var message$0$0;
-	this$0$0 = $this._optimizer;
-	message$0$0 = "[" + $this._identifier + "] " + "optimizing expressions starting";
-	this$0$0._log += message$0$0 + "\n";
-	cachedExprs = {};
-	getCacheKey = (function (expr) {
-		var propertyExpr;
-		var receiverType;
-		var base;
-		var this$0;
-		var this$1;
-		var this$2;
-		var this$3;
-		if (expr instanceof PropertyExpression) {
-			propertyExpr = expr;
-			receiverType = propertyExpr._expr.getType$();
-			if (Util$isNativeClass$LType$(receiverType)) {
-				return null;
-			}
-			base = getCacheKey(propertyExpr._expr);
-			return (base == null ? null : base + "." + (this$0 = propertyExpr._identifierToken, this$0._value));
-		} else if (expr instanceof LocalExpression) {
-			this$3 = expr;
-			this$2 = this$3._local;
-			this$1 = this$2._name;
-			return this$1._value;
-		} else if (expr instanceof ThisExpression) {
-			return "this";
-		}
-		return null;
-	});
-	registerCacheable = (function (key, expr, replaceCb) {
-		var message$0;
-		var this$0$0;
-		var message$0$0;
-		message$0 = "registering lcse entry for: " + key;
-		this$0$0 = $this._optimizer;
-		message$0$0 = "[" + $this._identifier + "] " + message$0;
-		this$0$0._log += message$0$0 + "\n";
-		cachedExprs[key] = ({_origExpr: expr, _replaceCb: replaceCb, _localExpr: null});
-	});
-	clearCacheByLocalName = (function (name) {
-		var k;
-		var message$0;
-		var this$0$0;
-		var message$0$0;
-		var message$1;
-		var this$0$1;
-		var message$0$1;
-		message$0 = "clearing lcse entry for local name: " + name;
-		this$0$0 = $this._optimizer;
-		message$0$0 = "[" + $this._identifier + "] " + message$0;
-		this$0$0._log += message$0$0 + "\n";
-		for (k in cachedExprs) {
-			if (k.substring(0, name.length + 1) === name + ".") {
-				message$1 = "  removing: " + k;
-				this$0$1 = $this._optimizer;
-				message$0$1 = "[" + $this._identifier + "] " + message$1;
-				this$0$1._log += message$0$1 + "\n";
-				delete cachedExprs[k];
-			}
-		}
-	});
-	clearCache = (function () {
-		var this$0$0;
-		var message$0$0;
-		this$0$0 = $this._optimizer;
-		message$0$0 = "[" + $this._identifier + "] " + "clearing lcse cache";
-		this$0$0._log += message$0$0 + "\n";
-		cachedExprs = {};
-	});
-	Util$forEachExpression$F$LExpression$F$LExpression$V$B$ALExpression$((function onExpr(expr, replaceCb) {
-		var assignmentExpr;
-		var lhsExpr;
-		var lhsPropertyExpr;
-		var cacheKey;
-		var incrementExpr;
-		var propertyExpr;
-		var conditionalExpr;
-		var funcExpr;
-		var args;
-		var i;
-		var this$0;
-		var this$1;
-		var this$2;
-		var this$3;
-		var this$4;
-		var this$5;
-		var this$6;
-		var this$0$0;
-		var message$0$0;
-		var this$7;
-		var message$0;
-		var this$0$1;
-		var message$0$1;
-		var this$8;
-		var that$0;
-		var this$9;
-		var this$10;
-		if (expr instanceof AssignmentExpression || expr instanceof FusedAssignmentExpression) {
-			assignmentExpr = expr;
-			lhsExpr = assignmentExpr._expr1;
-			if (lhsExpr instanceof LocalExpression) {
-				onExpr(assignmentExpr._expr2, (function (expr) {
-					BinaryExpression$setSecondExpr$LBinaryExpression$LExpression$(assignmentExpr, expr);
-				}));
-				clearCacheByLocalName((this$2 = (this$1 = (this$0 = lhsExpr, this$0._local), this$1._name), this$2._value));
-			} else if (lhsExpr instanceof PropertyExpression) {
-				lhsPropertyExpr = lhsExpr;
-				onExpr((this$3 = lhsExpr, this$3._expr), (function (expr) {
-					UnaryExpression$setExpr$LUnaryExpression$LExpression$(lhsPropertyExpr, expr);
-				}));
-				onExpr(assignmentExpr._expr2, (function (expr) {
-					BinaryExpression$setSecondExpr$LBinaryExpression$LExpression$(assignmentExpr, expr);
-				}));
-				if ((this$4 = lhsPropertyExpr._identifierToken, this$4._value) === "length") {
-				} else {
-					cacheKey = getCacheKey(lhsExpr);
-					if (cacheKey) {
-						registerCacheable(cacheKey, lhsExpr, (function (expr) {
-							BinaryExpression$setFirstExpr$LBinaryExpression$LExpression$(assignmentExpr, expr);
-						}));
-					}
-				}
-			} else {
-				clearCache();
-			}
-			return true;
-		} else if (expr instanceof IncrementExpression) {
-			incrementExpr = expr;
-			if (incrementExpr._expr instanceof PropertyExpression) {
-				propertyExpr = incrementExpr._expr;
-				onExpr(propertyExpr._expr, (function (expr) {
-					UnaryExpression$setExpr$LUnaryExpression$LExpression$(propertyExpr, expr);
-				}));
-			}
-			clearCache();
-			return true;
-		} else if (expr instanceof ConditionalExpression) {
-			conditionalExpr = expr;
-			onExpr(conditionalExpr._condExpr, (function (expr) {
-				ConditionalExpression$setCondExpr$LConditionalExpression$LExpression$(conditionalExpr, expr);
-			}));
-			clearCache();
-			return true;
-		} else if (expr instanceof LogicalExpression) {
-			if (! Expression$forEachExpression$LExpression$F$LExpression$B$(expr, (function (expr) {
-				return ! _Util$exprHasSideEffects$LExpression$(expr);
-			}))) {
-				clearCache();
-				return true;
-			}
-		} else if (expr instanceof FunctionExpression) {
-			clearCache();
-			return true;
-		} else if (expr instanceof CallExpression) {
-			this$5 = expr;
-			funcExpr = this$5._expr;
-			if (funcExpr instanceof LocalExpression) {
-			} else if (funcExpr instanceof PropertyExpression) {
-				propertyExpr = funcExpr;
-				onExpr(propertyExpr._expr, (function (expr) {
-					UnaryExpression$setExpr$LUnaryExpression$LExpression$(propertyExpr, expr);
-				}));
-			} else {
-				clearCache();
-			}
-			this$6 = expr;
-			args = this$6._args;
-			for (i = 0; i < args.length; ++i) {
-				onExpr(args[i], (function (args, index) {
-					return (function (expr) {
-						args[index] = expr;
-					});
-				})(args, i));
-			}
-			clearCache();
-			return true;
-		} else if (expr instanceof NewExpression) {
-			this$0$0 = $this._optimizer;
-			message$0$0 = "[" + $this._identifier + "] " + "new expression";
-			this$0$0._log += message$0$0 + "\n";
-			this$7 = expr;
-			args = this$7._args;
-			for (i = 0; i < args.length; ++i) {
-				onExpr(args[i], (function (args, index) {
-					return (function (expr) {
-						args[index] = expr;
-					});
-				})(args, i));
-			}
-			clearCache();
-			return true;
-		}
-		if (expr instanceof PropertyExpression) {
-			if ((this$10 = (this$9 = expr, this$9._identifierToken), this$10._value) === "length") {
-			} else {
-				cacheKey = getCacheKey(expr);
-				if (cacheKey) {
-					message$0 = "rewriting cse for: " + cacheKey;
-					this$0$1 = $this._optimizer;
-					message$0$1 = "[" + $this._identifier + "] " + message$0;
-					this$0$1._log += message$0$1 + "\n";
-					if (cachedExprs[cacheKey]) {
-						replaceCb((this$8 = _LCSECachedExpression$getLocalExpr$L_LCSECachedExpression$F$LType$SLLocalExpression$$(cachedExprs[cacheKey], (function (type, baseName) {
-							var localVar;
-							localVar = _OptimizeCommand$createVar$L_OptimizeCommand$LMemberFunctionDefinition$LType$S($this, funcDef, type, baseName);
-							return new LocalExpression(LocalVariable$getName$LLocalVariable$(localVar), localVar);
-						})), that$0 = new LocalExpression(this$8._token, this$8._local), that$0._cloned = true, that$0));
-					} else {
-						registerCacheable(cacheKey, expr, replaceCb);
-					}
-				}
-			}
-		}
-		return expr.forEachExpression$F$LExpression$F$LExpression$V$B$(onExpr);
-	}), exprs);
-};
-
-_LCSEOptimizeCommand._optimizeExpressions$L_LCSEOptimizeCommand$LMemberFunctionDefinition$ALExpression$ = _LCSEOptimizeCommand$_optimizeExpressions$L_LCSEOptimizeCommand$LMemberFunctionDefinition$ALExpression$;
 
 function _UnboxOptimizeCommand() {
 	this._identifier = "unbox";
@@ -9415,10 +10247,7 @@ function _UnboxOptimizeCommand() {
 };
 
 $__jsx_extend([_UnboxOptimizeCommand], _FunctionOptimizeCommand);
-_UnboxOptimizeCommand.prototype._createStash$ = function () {
-	return new _UnboxOptimizeCommand$x2EStash();
-};
-
+$__jsx_merge_interface(_UnboxOptimizeCommand, _StructuredStashAccessor$x2E$x3CStash$x3E$5);
 
 _UnboxOptimizeCommand.prototype.optimizeFunction$LMemberFunctionDefinition$ = function (funcDef) {
 	var locals;
@@ -9447,7 +10276,7 @@ _UnboxOptimizeCommand.prototype._optimizeLocal$LMemberFunctionDefinition$LLocalV
 	if (! (local._type instanceof ObjectType)) {
 		return false;
 	}
-	if (Util$isNativeClass$LType$(local._type)) {
+	if (Util$rootIsNativeClass$LType$(local._type)) {
 		return false;
 	}
 	foundNew = false;
@@ -9518,7 +10347,7 @@ function _UnboxOptimizeCommand$_optimizeLocal$L_UnboxOptimizeCommand$LMemberFunc
 	if (! (local._type instanceof ObjectType)) {
 		return false;
 	}
-	if (Util$isNativeClass$LType$(local._type)) {
+	if (Util$rootIsNativeClass$LType$(local._type)) {
 		return false;
 	}
 	foundNew = false;
@@ -9586,8 +10415,9 @@ _UnboxOptimizeCommand._optimizeLocal$L_UnboxOptimizeCommand$LMemberFunctionDefin
 _UnboxOptimizeCommand.prototype._newExpressionCanUnbox$LExpression$ = function (newExpr) {
 	var $this = this;
 	var ctor;
-	var stash;
 	var stash$0;
+	var identifier$0;
+	var stash$1;
 	if ((newExpr.getType$().getClassDef$().flags$() & 16) !== 0) {
 		return false;
 	}
@@ -9596,10 +10426,14 @@ _UnboxOptimizeCommand.prototype._newExpressionCanUnbox$LExpression$ = function (
 		throw new Error("callee not searched");
 	}
 	ctor = stash$0.callingFuncDef;
-	stash = _OptimizeCommand$getStash$L_OptimizeCommand$LStashable$(this, ctor);
-	return (stash.canUnbox != null ? stash.canUnbox : stash.canUnbox = (function () {
-		var cb$0;
-		return (ctor._locals.length !== 0 ? false : (cb$0 = (function (statement) {
+	identifier$0 = this._identifier;
+	stash$1 = ctor.getStash$S(identifier$0);
+	if (stash$1 == null) {
+		stash$1 = new _UnboxOptimizeCommand$x2EStash();
+		ctor.setStash$SLStash$(identifier$0, stash$1);
+	}
+	return (stash$1.canUnbox != null ? stash$1.canUnbox : stash$1.canUnbox = (function () {
+		return (ctor._locals.length !== 0 ? false : Util$forEachStatement$F$LStatement$B$ALStatement$((function (statement) {
 			var expr;
 			var lhsExpr;
 			if (! (statement instanceof ExpressionStatement)) {
@@ -9621,15 +10455,16 @@ _UnboxOptimizeCommand.prototype._newExpressionCanUnbox$LExpression$ = function (
 				}
 				return Expression$forEachExpression$LExpression$F$LExpression$B$(expr, onExpr);
 			})(BinaryExpression$getSecondExpr$LBinaryExpression$(expr));
-		}), Util$forEachStatement$F$LStatement$B$ALStatement$(cb$0, ctor._statements)));
+		}), ctor._statements));
 	})());
 };
 
 
 function _UnboxOptimizeCommand$_newExpressionCanUnbox$L_UnboxOptimizeCommand$LExpression$($this, newExpr) {
 	var ctor;
-	var stash;
 	var stash$0;
+	var identifier$0;
+	var stash$1;
 	if ((newExpr.getType$().getClassDef$().flags$() & 16) !== 0) {
 		return false;
 	}
@@ -9638,10 +10473,14 @@ function _UnboxOptimizeCommand$_newExpressionCanUnbox$L_UnboxOptimizeCommand$LEx
 		throw new Error("callee not searched");
 	}
 	ctor = stash$0.callingFuncDef;
-	stash = _OptimizeCommand$getStash$L_OptimizeCommand$LStashable$($this, ctor);
-	return (stash.canUnbox != null ? stash.canUnbox : stash.canUnbox = (function () {
-		var cb$0;
-		return (ctor._locals.length !== 0 ? false : (cb$0 = (function (statement) {
+	identifier$0 = $this._identifier;
+	stash$1 = ctor.getStash$S(identifier$0);
+	if (stash$1 == null) {
+		stash$1 = new _UnboxOptimizeCommand$x2EStash();
+		ctor.setStash$SLStash$(identifier$0, stash$1);
+	}
+	return (stash$1.canUnbox != null ? stash$1.canUnbox : stash$1.canUnbox = (function () {
+		return (ctor._locals.length !== 0 ? false : Util$forEachStatement$F$LStatement$B$ALStatement$((function (statement) {
 			var expr;
 			var lhsExpr;
 			if (! (statement instanceof ExpressionStatement)) {
@@ -9663,7 +10502,7 @@ function _UnboxOptimizeCommand$_newExpressionCanUnbox$L_UnboxOptimizeCommand$LEx
 				}
 				return Expression$forEachExpression$LExpression$F$LExpression$B$(expr, onExpr);
 			})(BinaryExpression$getSecondExpr$LBinaryExpression$(expr));
-		}), Util$forEachStatement$F$LStatement$B$ALStatement$(cb$0, ctor._statements)));
+		}), ctor._statements));
 	})());
 };
 
@@ -9703,13 +10542,12 @@ _UnboxOptimizeCommand.prototype._unboxVariable$LMemberFunctionDefinition$LLocalV
 	buildConstructingStatements = (function (dstStatements, dstStatementIndex, newExpr) {
 		var ctor;
 		var stash$0;
-		var cb$0;
 		stash$0 = newExpr.getStash$S("determine-callee");
 		if (stash$0 == null) {
 			throw new Error("callee not searched");
 		}
 		ctor = stash$0.callingFuncDef;
-		cb$0 = (function (statement) {
+		Util$forEachStatement$F$LStatement$B$ALStatement$((function (statement) {
 			var propertyName;
 			var rhsExpr;
 			var onExpr;
@@ -9735,8 +10573,7 @@ _UnboxOptimizeCommand.prototype._unboxVariable$LMemberFunctionDefinition$LLocalV
 			}));
 			dstStatements.splice(dstStatementIndex++, 0, new ExpressionStatement(new AssignmentExpression(new Token$2("=", false), createLocalExpressionFor(propertyName), rhsExpr)));
 			return true;
-		});
-		Util$forEachStatement$F$LStatement$B$ALStatement$(cb$0, ctor._statements);
+		}), ctor._statements);
 		return dstStatementIndex;
 	});
 	onStatements = (function (statements) {
@@ -9812,13 +10649,12 @@ function _UnboxOptimizeCommand$_unboxVariable$L_UnboxOptimizeCommand$LMemberFunc
 	buildConstructingStatements = (function (dstStatements, dstStatementIndex, newExpr) {
 		var ctor;
 		var stash$0;
-		var cb$0;
 		stash$0 = newExpr.getStash$S("determine-callee");
 		if (stash$0 == null) {
 			throw new Error("callee not searched");
 		}
 		ctor = stash$0.callingFuncDef;
-		cb$0 = (function (statement) {
+		Util$forEachStatement$F$LStatement$B$ALStatement$((function (statement) {
 			var propertyName;
 			var rhsExpr;
 			var onExpr;
@@ -9844,8 +10680,7 @@ function _UnboxOptimizeCommand$_unboxVariable$L_UnboxOptimizeCommand$LMemberFunc
 			}));
 			dstStatements.splice(dstStatementIndex++, 0, new ExpressionStatement(new AssignmentExpression(new Token$2("=", false), createLocalExpressionFor(propertyName), rhsExpr)));
 			return true;
-		});
-		Util$forEachStatement$F$LStatement$B$ALStatement$(cb$0, ctor._statements);
+		}), ctor._statements);
 		return dstStatementIndex;
 	});
 	onStatements = (function (statements) {
@@ -9950,308 +10785,31 @@ function _UnboxOptimizeCommand$_statementIsConstructingTheLocal$L_UnboxOptimizeC
 
 _UnboxOptimizeCommand._statementIsConstructingTheLocal$L_UnboxOptimizeCommand$LStatement$LLocalVariable$ = _UnboxOptimizeCommand$_statementIsConstructingTheLocal$L_UnboxOptimizeCommand$LStatement$LLocalVariable$;
 
-function _ArrayLengthOptimizeCommand() {
-	this._identifier = "array-length";
-	this._optimizer = null;
-	this._excludeNative = false;
+function _StructuredStashAccessor$x2E$x3CStash$x3E$6() {
 };
 
-$__jsx_extend([_ArrayLengthOptimizeCommand], _FunctionOptimizeCommand);
-_ArrayLengthOptimizeCommand.prototype.optimizeFunction$LMemberFunctionDefinition$ = function (funcDef) {
-	var $this = this;
-	var cb$0;
-	cb$0 = (function onStatement(statement) {
-		var condExpr;
-		var arrayLocal;
-		var this$0;
-		statement.forEachStatement$F$LStatement$B$(onStatement);
-		if (statement instanceof ForStatement) {
-			this$0 = statement;
-			condExpr = this$0._condExpr;
-			arrayLocal = (condExpr != null ? _ArrayLengthOptimizeCommand$_hasLengthExprOfLocalArray$L_ArrayLengthOptimizeCommand$LExpression$($this, condExpr) : null);
-			if (arrayLocal != null) {
-				_ArrayLengthOptimizeCommand$_optimizeArrayLength$L_ArrayLengthOptimizeCommand$LMemberFunctionDefinition$LForStatement$LLocalVariable$($this, funcDef, statement, arrayLocal);
-			}
-		}
-		return true;
-	});
-	Util$forEachStatement$F$LStatement$B$ALStatement$(cb$0, funcDef._statements);
-	return true;
-};
+$__jsx_extend([_StructuredStashAccessor$x2E$x3CStash$x3E$6], Object);
+_StructuredStashAccessor$x2E$x3CStash$x3E$6.prototype.$__jsx_implements__StructuredStashAccessor$x2E$x3CStash$x3E$6 = true;
 
-
-_ArrayLengthOptimizeCommand.prototype._optimizeArrayLength$LMemberFunctionDefinition$LForStatement$LLocalVariable$ = function (funcDef, statement, arrayLocal) {
-	var $this = this;
-	var lengthLocal;
-	var assignToLocal;
-	var onExpr;
-	var message$0;
-	var this$0$0;
-	var message$0$0;
-	var this$0;
-	var this$1;
-	var this$2;
-	var expr$0;
-	var this$3;
-	if (_ArrayLengthOptimizeCommand$_lengthIsUnmodifiedInExpr$L_ArrayLengthOptimizeCommand$LExpression$(this, statement._condExpr) && _ArrayLengthOptimizeCommand$_lengthIsUnmodifiedInExpr$L_ArrayLengthOptimizeCommand$LExpression$(this, statement._postExpr) && (! Util$forEachStatement$F$LStatement$B$ALStatement$((function (statement) {
-		return _ArrayLengthOptimizeCommand$_lengthIsUnmodifiedInStatement$L_ArrayLengthOptimizeCommand$LStatement$($this, statement);
-	}), statement._statements) ? false : true)) {
-		message$0 = funcDef.getNotation$() + " optimizing " + (this$3 = statement._token, "'" + this$3._value + "'" + " at " + (this$3._filename || "<<unknown>>") + ":" + (this$3._lineNumber + "") + ":" + (this$3._columnNumber + ""));
-		this$0$0 = this._optimizer;
-		message$0$0 = "[" + this._identifier + "] " + message$0;
-		this$0$0._log += message$0$0 + "\n";
-		lengthLocal = _OptimizeCommand$createVar$L_OptimizeCommand$LMemberFunctionDefinition$LType$S(this, funcDef, Type.integerType, (this$0 = arrayLocal._name, this$0._value) + "$len");
-		assignToLocal = new AssignmentExpression(new Token$3("="), new LocalExpression(new Token$2((this$1 = lengthLocal._name, this$1._value), true), lengthLocal), new PropertyExpression$0(new Token$3("."), new LocalExpression(new Token$2((this$2 = arrayLocal._name, this$2._value), true), arrayLocal), new Token$3("length"), [], lengthLocal._type));
-		if (statement._initExpr != null) {
-			expr$0 = new CommaExpression(new Token$3(","), statement._initExpr, assignToLocal);
-			statement._initExpr = expr$0;
-		} else {
-			statement._initExpr = assignToLocal;
-		}
-		onExpr = (function (expr, replaceCb) {
-			var this$0;
-			var this$1;
-			var this$2;
-			var this$3;
-			var this$4;
-			var this$5;
-			if (expr instanceof PropertyExpression && (this$2 = (this$1 = expr, this$1._identifierToken), this$2._value) === "length" && (this$3 = expr, this$3._expr) instanceof LocalExpression && (this$5 = (this$4 = expr, this$4._expr), this$5._local) == arrayLocal) {
-				replaceCb(new LocalExpression(new Token$2((this$0 = lengthLocal._name, this$0._value), true), lengthLocal));
-			} else {
-				expr.forEachExpression$F$LExpression$F$LExpression$V$B$(onExpr);
-			}
-			return true;
-		});
-		statement._condExpr.forEachExpression$F$LExpression$F$LExpression$V$B$(onExpr);
-		statement._postExpr.forEachExpression$F$LExpression$F$LExpression$V$B$(onExpr);
-		Util$forEachStatement$F$LStatement$B$ALStatement$((function onStatement2(statement) {
-			statement.forEachStatement$F$LStatement$B$(onStatement2);
-			statement.forEachExpression$F$LExpression$F$LExpression$V$B$(onExpr);
-			return true;
-		}), statement._statements);
+_StructuredStashAccessor$x2E$x3CStash$x3E$6.prototype.getStash$LStashable$ = function (stashable) {
+	var identifier;
+	var stash;
+	identifier = this._identifier;
+	stash = stashable.getStash$S(identifier);
+	if (stash == null) {
+		stash = new _NoDebugCommand$x2EStash();
+		stashable.setStash$SLStash$(identifier, stash);
 	}
+	return stash;
 };
 
 
-function _ArrayLengthOptimizeCommand$_optimizeArrayLength$L_ArrayLengthOptimizeCommand$LMemberFunctionDefinition$LForStatement$LLocalVariable$($this, funcDef, statement, arrayLocal) {
-	var lengthLocal;
-	var assignToLocal;
-	var onExpr;
-	var message$0;
-	var this$0$0;
-	var message$0$0;
-	var this$0;
-	var this$1;
-	var this$2;
-	var expr$0;
-	var this$3;
-	if (_ArrayLengthOptimizeCommand$_lengthIsUnmodifiedInExpr$L_ArrayLengthOptimizeCommand$LExpression$($this, statement._condExpr) && _ArrayLengthOptimizeCommand$_lengthIsUnmodifiedInExpr$L_ArrayLengthOptimizeCommand$LExpression$($this, statement._postExpr) && (! Util$forEachStatement$F$LStatement$B$ALStatement$((function (statement) {
-		return _ArrayLengthOptimizeCommand$_lengthIsUnmodifiedInStatement$L_ArrayLengthOptimizeCommand$LStatement$($this, statement);
-	}), statement._statements) ? false : true)) {
-		message$0 = funcDef.getNotation$() + " optimizing " + (this$3 = statement._token, "'" + this$3._value + "'" + " at " + (this$3._filename || "<<unknown>>") + ":" + (this$3._lineNumber + "") + ":" + (this$3._columnNumber + ""));
-		this$0$0 = $this._optimizer;
-		message$0$0 = "[" + $this._identifier + "] " + message$0;
-		this$0$0._log += message$0$0 + "\n";
-		lengthLocal = _OptimizeCommand$createVar$L_OptimizeCommand$LMemberFunctionDefinition$LType$S($this, funcDef, Type.integerType, (this$0 = arrayLocal._name, this$0._value) + "$len");
-		assignToLocal = new AssignmentExpression(new Token$3("="), new LocalExpression(new Token$2((this$1 = lengthLocal._name, this$1._value), true), lengthLocal), new PropertyExpression$0(new Token$3("."), new LocalExpression(new Token$2((this$2 = arrayLocal._name, this$2._value), true), arrayLocal), new Token$3("length"), [], lengthLocal._type));
-		if (statement._initExpr != null) {
-			expr$0 = new CommaExpression(new Token$3(","), statement._initExpr, assignToLocal);
-			statement._initExpr = expr$0;
-		} else {
-			statement._initExpr = assignToLocal;
-		}
-		onExpr = (function (expr, replaceCb) {
-			var this$0;
-			var this$1;
-			var this$2;
-			var this$3;
-			var this$4;
-			var this$5;
-			if (expr instanceof PropertyExpression && (this$2 = (this$1 = expr, this$1._identifierToken), this$2._value) === "length" && (this$3 = expr, this$3._expr) instanceof LocalExpression && (this$5 = (this$4 = expr, this$4._expr), this$5._local) == arrayLocal) {
-				replaceCb(new LocalExpression(new Token$2((this$0 = lengthLocal._name, this$0._value), true), lengthLocal));
-			} else {
-				expr.forEachExpression$F$LExpression$F$LExpression$V$B$(onExpr);
-			}
-			return true;
-		});
-		statement._condExpr.forEachExpression$F$LExpression$F$LExpression$V$B$(onExpr);
-		statement._postExpr.forEachExpression$F$LExpression$F$LExpression$V$B$(onExpr);
-		Util$forEachStatement$F$LStatement$B$ALStatement$((function onStatement2(statement) {
-			statement.forEachStatement$F$LStatement$B$(onStatement2);
-			statement.forEachExpression$F$LExpression$F$LExpression$V$B$(onExpr);
-			return true;
-		}), statement._statements);
-	}
+_StructuredStashAccessor$x2E$x3CStash$x3E$6.prototype.resetStash$LStashable$ = function (stashable) {
+	var identifier;
+	identifier = this._identifier;
+	stashable.setStash$SLStash$(identifier, null);
 };
 
-_ArrayLengthOptimizeCommand._optimizeArrayLength$L_ArrayLengthOptimizeCommand$LMemberFunctionDefinition$LForStatement$LLocalVariable$ = _ArrayLengthOptimizeCommand$_optimizeArrayLength$L_ArrayLengthOptimizeCommand$LMemberFunctionDefinition$LForStatement$LLocalVariable$;
-
-_ArrayLengthOptimizeCommand.prototype._hasLengthExprOfLocalArray$LExpression$ = function (expr) {
-	var $this = this;
-	var local;
-	local = null;
-	Expression$forEachExpression$LExpression$F$LExpression$B$(expr, (function onExpr(expr) {
-		var this$0;
-		var this$1;
-		var this$2;
-		var this$3;
-		var this$4;
-		var this$5;
-		var this$6;
-		var this$0$0;
-		if (expr instanceof PropertyExpression && (this$3 = (this$2 = expr, this$2._identifierToken), this$3._value) === "length" && (this$4 = expr, this$4._expr) instanceof LocalExpression && _ArrayLengthOptimizeCommand$_typeIsArray$L_ArrayLengthOptimizeCommand$LType$($this, (this$6 = (this$5 = expr, this$5._expr).getType$(), this$6 instanceof NullableType ? (this$0$0 = this$6, this$0$0._baseType) : this$6))) {
-			this$0 = (this$1 = expr, this$1._expr);
-			local = this$0._local;
-			return false;
-		}
-		return Expression$forEachExpression$LExpression$F$LExpression$B$(expr, onExpr);
-	}));
-	return local;
-};
-
-
-function _ArrayLengthOptimizeCommand$_hasLengthExprOfLocalArray$L_ArrayLengthOptimizeCommand$LExpression$($this, expr) {
-	var local;
-	local = null;
-	Expression$forEachExpression$LExpression$F$LExpression$B$(expr, (function onExpr(expr) {
-		var this$0;
-		var this$1;
-		var this$2;
-		var this$3;
-		var this$4;
-		var this$5;
-		var this$6;
-		var this$0$0;
-		if (expr instanceof PropertyExpression && (this$3 = (this$2 = expr, this$2._identifierToken), this$3._value) === "length" && (this$4 = expr, this$4._expr) instanceof LocalExpression && _ArrayLengthOptimizeCommand$_typeIsArray$L_ArrayLengthOptimizeCommand$LType$($this, (this$6 = (this$5 = expr, this$5._expr).getType$(), this$6 instanceof NullableType ? (this$0$0 = this$6, this$0$0._baseType) : this$6))) {
-			this$0 = (this$1 = expr, this$1._expr);
-			local = this$0._local;
-			return false;
-		}
-		return Expression$forEachExpression$LExpression$F$LExpression$B$(expr, onExpr);
-	}));
-	return local;
-};
-
-_ArrayLengthOptimizeCommand._hasLengthExprOfLocalArray$L_ArrayLengthOptimizeCommand$LExpression$ = _ArrayLengthOptimizeCommand$_hasLengthExprOfLocalArray$L_ArrayLengthOptimizeCommand$LExpression$;
-
-_ArrayLengthOptimizeCommand.prototype._lengthIsUnmodifiedInStatement$LStatement$ = function (statement) {
-	var $this = this;
-	return (! statement.forEachStatement$F$LStatement$B$((function (statement) {
-		return _ArrayLengthOptimizeCommand$_lengthIsUnmodifiedInStatement$L_ArrayLengthOptimizeCommand$LStatement$($this, statement);
-	})) ? false : Statement$forEachExpression$LStatement$F$LExpression$B$(statement, (function (expr) {
-		return _ArrayLengthOptimizeCommand$_lengthIsUnmodifiedInExpr$L_ArrayLengthOptimizeCommand$LExpression$($this, expr);
-	})));
-};
-
-
-function _ArrayLengthOptimizeCommand$_lengthIsUnmodifiedInStatement$L_ArrayLengthOptimizeCommand$LStatement$($this, statement) {
-	return (! statement.forEachStatement$F$LStatement$B$((function (statement) {
-		return _ArrayLengthOptimizeCommand$_lengthIsUnmodifiedInStatement$L_ArrayLengthOptimizeCommand$LStatement$($this, statement);
-	})) ? false : Statement$forEachExpression$LStatement$F$LExpression$B$(statement, (function (expr) {
-		return _ArrayLengthOptimizeCommand$_lengthIsUnmodifiedInExpr$L_ArrayLengthOptimizeCommand$LExpression$($this, expr);
-	})));
-};
-
-_ArrayLengthOptimizeCommand._lengthIsUnmodifiedInStatement$L_ArrayLengthOptimizeCommand$LStatement$ = _ArrayLengthOptimizeCommand$_lengthIsUnmodifiedInStatement$L_ArrayLengthOptimizeCommand$LStatement$;
-
-_ArrayLengthOptimizeCommand.prototype._lengthIsUnmodifiedInExpr$LExpression$ = function (expr) {
-	var this$0;
-	var this$1;
-	if (expr instanceof AssignmentExpression) {
-		if (_ArrayLengthOptimizeCommand$_lhsMayModifyLength$L_ArrayLengthOptimizeCommand$LExpression$(this, (this$0 = expr, this$0._expr1))) {
-			return false;
-		}
-	} else if (expr instanceof CallExpression || expr instanceof SuperExpression) {
-		return false;
-	} else if (expr instanceof IncrementExpression) {
-		if (_ArrayLengthOptimizeCommand$_lhsMayModifyLength$L_ArrayLengthOptimizeCommand$LExpression$(this, (this$1 = expr, this$1._expr))) {
-			return false;
-		}
-	}
-	return true;
-};
-
-
-function _ArrayLengthOptimizeCommand$_lengthIsUnmodifiedInExpr$L_ArrayLengthOptimizeCommand$LExpression$($this, expr) {
-	var this$0;
-	var this$1;
-	if (expr instanceof AssignmentExpression) {
-		if (_ArrayLengthOptimizeCommand$_lhsMayModifyLength$L_ArrayLengthOptimizeCommand$LExpression$($this, (this$0 = expr, this$0._expr1))) {
-			return false;
-		}
-	} else if (expr instanceof CallExpression || expr instanceof SuperExpression) {
-		return false;
-	} else if (expr instanceof IncrementExpression) {
-		if (_ArrayLengthOptimizeCommand$_lhsMayModifyLength$L_ArrayLengthOptimizeCommand$LExpression$($this, (this$1 = expr, this$1._expr))) {
-			return false;
-		}
-	}
-	return true;
-};
-
-_ArrayLengthOptimizeCommand._lengthIsUnmodifiedInExpr$L_ArrayLengthOptimizeCommand$LExpression$ = _ArrayLengthOptimizeCommand$_lengthIsUnmodifiedInExpr$L_ArrayLengthOptimizeCommand$LExpression$;
-
-_ArrayLengthOptimizeCommand.prototype._lhsMayModifyLength$LExpression$ = function (expr) {
-	var exprType;
-	var this$0;
-	var this$1;
-	var this$2;
-	var this$0$0;
-	if (expr instanceof PropertyExpression && (this$1 = (this$0 = expr, this$0._identifierToken), this$1._value) === "length") {
-		return true;
-	}
-	if (expr instanceof ArrayExpression) {
-		return true;
-	}
-	this$2 = expr.getType$();
-	exprType = (this$2 instanceof NullableType ? (this$0$0 = this$2, this$0$0._baseType) : this$2);
-	return (exprType.equals$LType$(Type.variantType) ? true : _ArrayLengthOptimizeCommand$_typeIsArray$L_ArrayLengthOptimizeCommand$LType$(this, exprType) ? true : false);
-};
-
-
-function _ArrayLengthOptimizeCommand$_lhsMayModifyLength$L_ArrayLengthOptimizeCommand$LExpression$($this, expr) {
-	var exprType;
-	var this$0;
-	var this$1;
-	var this$2;
-	var this$0$0;
-	if (expr instanceof PropertyExpression && (this$1 = (this$0 = expr, this$0._identifierToken), this$1._value) === "length") {
-		return true;
-	}
-	if (expr instanceof ArrayExpression) {
-		return true;
-	}
-	this$2 = expr.getType$();
-	exprType = (this$2 instanceof NullableType ? (this$0$0 = this$2, this$0$0._baseType) : this$2);
-	return (exprType.equals$LType$(Type.variantType) ? true : _ArrayLengthOptimizeCommand$_typeIsArray$L_ArrayLengthOptimizeCommand$LType$($this, exprType) ? true : false);
-};
-
-_ArrayLengthOptimizeCommand._lhsMayModifyLength$L_ArrayLengthOptimizeCommand$LExpression$ = _ArrayLengthOptimizeCommand$_lhsMayModifyLength$L_ArrayLengthOptimizeCommand$LExpression$;
-
-_ArrayLengthOptimizeCommand.prototype._typeIsArray$LType$ = function (type) {
-	var classDef;
-	var this$0;
-	var this$0$0;
-	if (! (type instanceof ObjectType)) {
-		return false;
-	}
-	classDef = type.getClassDef$();
-	return (! (classDef instanceof InstantiatedClassDefinition) ? false : (this$0 = classDef, this$0$0 = this$0._templateClassDef, this$0$0._className) === "Array");
-};
-
-
-function _ArrayLengthOptimizeCommand$_typeIsArray$L_ArrayLengthOptimizeCommand$LType$($this, type) {
-	var classDef;
-	var this$0;
-	var this$0$0;
-	if (! (type instanceof ObjectType)) {
-		return false;
-	}
-	classDef = type.getClassDef$();
-	return (! (classDef instanceof InstantiatedClassDefinition) ? false : (this$0 = classDef, this$0$0 = this$0._templateClassDef, this$0$0._className) === "Array");
-};
-
-_ArrayLengthOptimizeCommand._typeIsArray$L_ArrayLengthOptimizeCommand$LType$ = _ArrayLengthOptimizeCommand$_typeIsArray$L_ArrayLengthOptimizeCommand$LType$;
 
 function _NoDebugCommand() {
 	this._identifier = "no-debug";
@@ -10259,20 +10817,29 @@ function _NoDebugCommand() {
 };
 
 $__jsx_extend([_NoDebugCommand], _OptimizeCommand);
-_NoDebugCommand.prototype._createStash$ = function () {
-	return new _NoDebugCommand$x2EStash();
-};
-
+$__jsx_merge_interface(_NoDebugCommand, _StructuredStashAccessor$x2E$x3CStash$x3E$6);
 
 _NoDebugCommand.prototype.performOptimization$ = function () {
 	var $this = this;
 	var stash;
+	var stashable$0;
+	var identifier$0;
+	var stash$0;
 	var this$0$0;
 	var this$0;
 	var this$0$1;
-	stash = _OptimizeCommand$getStash$L_OptimizeCommand$LStashable$(this, (this$0 = (this$0$0 = this._optimizer, this$0$0._compiler), this$0._emitter));
-	stash.debugValue = false;
-	Compiler$forEachClassDef$LCompiler$F$LParser$LClassDefinition$B$((this$0$1 = this._optimizer, this$0$1._compiler), (function (parser, classDef) {
+	this$0$1 = this._optimizer;
+	this$0 = this$0$1._compiler;
+	stashable$0 = this$0._emitter;
+	identifier$0 = this._identifier;
+	stash$0 = stashable$0.getStash$S(identifier$0);
+	if (stash$0 == null) {
+		stash$0 = new _NoDebugCommand$x2EStash();
+		stashable$0.setStash$SLStash$(identifier$0, stash$0);
+	}
+	stash = stash$0;
+	stash$0.debugValue = false;
+	Compiler$forEachClassDef$LCompiler$F$LParser$LClassDefinition$B$((this$0$0 = this._optimizer, this$0$0._compiler), (function (parser, classDef) {
 		if (classDef.className$() === "JSX") {
 			ClassDefinition$forEachMemberVariable$LClassDefinition$F$LMemberVariableDefinition$B$(classDef, (function (memberVariable) {
 				var falseExpr;
@@ -10290,149 +10857,6 @@ _NoDebugCommand.prototype.performOptimization$ = function () {
 	}));
 };
 
-
-function _TailRecursionOptimizeCommand() {
-	this._identifier = "tail-rec";
-	this._optimizer = null;
-	this._excludeNative = false;
-};
-
-$__jsx_extend([_TailRecursionOptimizeCommand], _FunctionOptimizeCommand);
-_TailRecursionOptimizeCommand.prototype.optimizeFunction$LMemberFunctionDefinition$ = function (funcDef) {
-	var $this = this;
-	var altered;
-	var statements;
-	var body;
-	var message$0;
-	var this$0$0;
-	var message$0$0;
-	var statements$0;
-	var _flags$0;
-	if (((_flags$0 = funcDef._flags) & 50) !== 0 || (_flags$0 & 12) === 0) {
-		return false;
-	}
-	altered = false;
-	statements = funcDef._statements;
-	(function onStatements(statements) {
-		var i;
-		for (i = 0; i < statements.length; ++i) {
-			if (_TailRecursionOptimizeCommand$_isTailCall$L_TailRecursionOptimizeCommand$LMemberFunctionDefinition$LStatement$($this, funcDef, statements[i])) {
-				_TailRecursionOptimizeCommand$_replaceTailCallStatement$L_TailRecursionOptimizeCommand$LMemberFunctionDefinition$ALStatement$N($this, funcDef, statements, i);
-				altered = true;
-			}
-			statements[i].handleStatements$F$ALStatement$B$(onStatements);
-		}
-		return true;
-	})(statements);
-	if (altered) {
-		message$0 = "transform " + funcDef.getNotation$();
-		this$0$0 = this._optimizer;
-		message$0$0 = "[" + this._identifier + "] " + message$0;
-		this$0$0._log += message$0$0 + "\n";
-		body = new WhileStatement(new Token$3("while"), new Token$3("$TAIL_REC"), new BooleanLiteralExpression(new Token$3("true")), statements);
-		statements$0 = [ body ];
-		funcDef._statements = statements$0;
-	}
-	return true;
-};
-
-
-_TailRecursionOptimizeCommand.prototype._isTailCall$LMemberFunctionDefinition$LStatement$ = function (funcDef, statement) {
-	var returnStatement;
-	var _expr$0;
-	if (statement instanceof ReturnStatement) {
-		returnStatement = statement;
-		if ((_expr$0 = returnStatement._expr) != null && _expr$0 instanceof CallExpression) {
-			return funcDef == _DetermineCalleeCommand$getCallingFuncDef$LStashable$(returnStatement._expr);
-		}
-	}
-	return false;
-};
-
-
-function _TailRecursionOptimizeCommand$_isTailCall$L_TailRecursionOptimizeCommand$LMemberFunctionDefinition$LStatement$($this, funcDef, statement) {
-	var returnStatement;
-	var _expr$0;
-	if (statement instanceof ReturnStatement) {
-		returnStatement = statement;
-		if ((_expr$0 = returnStatement._expr) != null && _expr$0 instanceof CallExpression) {
-			return funcDef == _DetermineCalleeCommand$getCallingFuncDef$LStashable$(returnStatement._expr);
-		}
-	}
-	return false;
-};
-
-_TailRecursionOptimizeCommand._isTailCall$L_TailRecursionOptimizeCommand$LMemberFunctionDefinition$LStatement$ = _TailRecursionOptimizeCommand$_isTailCall$L_TailRecursionOptimizeCommand$LMemberFunctionDefinition$LStatement$;
-
-_TailRecursionOptimizeCommand.prototype._replaceTailCallStatement$LMemberFunctionDefinition$ALStatement$N = function (funcDef, statements, idx) {
-	var $this = this;
-	var callExpression;
-	var locals;
-	var setupArgs;
-	var retry;
-	var localsToArgs;
-	var this$0;
-	callExpression = (this$0 = statements[idx], this$0._expr);
-	locals = funcDef._args.map((function (argDecl) {
-		var this$0;
-		return _OptimizeCommand$createVar$L_OptimizeCommand$LMemberFunctionDefinition$LType$S($this, funcDef, argDecl._type, (this$0 = argDecl._name, this$0._value));
-	}));
-	setupArgs = callExpression._args.reduce((function (prevExpr, arg, i) {
-		var assignToArg;
-		var this$0;
-		assignToArg = new AssignmentExpression(new Token$3("="), new LocalExpression((this$0 = locals[i], this$0._name), locals[i]), arg);
-		return (prevExpr == null ? assignToArg : new CommaExpression(new Token$3(","), prevExpr, assignToArg));
-	}), null);
-	retry = new ContinueStatement(new Token$3("continue"), new Token$3("$TAIL_REC"));
-	if (setupArgs == null) {
-		statements.splice(idx, 1, retry);
-	} else {
-		localsToArgs = locals.reduce((function (prevExpr, local, i) {
-			var assignToArg;
-			var this$0;
-			var _args$0;
-			assignToArg = new AssignmentExpression(new Token$3("="), new LocalExpression((this$0 = (_args$0 = funcDef._args)[i], this$0._name), _args$0[i]), new LocalExpression(local._name, local));
-			return (prevExpr == null ? assignToArg : new CommaExpression(new Token$3(","), prevExpr, assignToArg));
-		}), null);
-		statements.splice(idx, 1, new ExpressionStatement(setupArgs), new ExpressionStatement(localsToArgs), retry);
-	}
-};
-
-
-function _TailRecursionOptimizeCommand$_replaceTailCallStatement$L_TailRecursionOptimizeCommand$LMemberFunctionDefinition$ALStatement$N($this, funcDef, statements, idx) {
-	var callExpression;
-	var locals;
-	var setupArgs;
-	var retry;
-	var localsToArgs;
-	var this$0;
-	callExpression = (this$0 = statements[idx], this$0._expr);
-	locals = funcDef._args.map((function (argDecl) {
-		var this$0;
-		return _OptimizeCommand$createVar$L_OptimizeCommand$LMemberFunctionDefinition$LType$S($this, funcDef, argDecl._type, (this$0 = argDecl._name, this$0._value));
-	}));
-	setupArgs = callExpression._args.reduce((function (prevExpr, arg, i) {
-		var assignToArg;
-		var this$0;
-		assignToArg = new AssignmentExpression(new Token$3("="), new LocalExpression((this$0 = locals[i], this$0._name), locals[i]), arg);
-		return (prevExpr == null ? assignToArg : new CommaExpression(new Token$3(","), prevExpr, assignToArg));
-	}), null);
-	retry = new ContinueStatement(new Token$3("continue"), new Token$3("$TAIL_REC"));
-	if (setupArgs == null) {
-		statements.splice(idx, 1, retry);
-	} else {
-		localsToArgs = locals.reduce((function (prevExpr, local, i) {
-			var assignToArg;
-			var this$0;
-			var _args$0;
-			assignToArg = new AssignmentExpression(new Token$3("="), new LocalExpression((this$0 = (_args$0 = funcDef._args)[i], this$0._name), _args$0[i]), new LocalExpression(local._name, local));
-			return (prevExpr == null ? assignToArg : new CommaExpression(new Token$3(","), prevExpr, assignToArg));
-		}), null);
-		statements.splice(idx, 1, new ExpressionStatement(setupArgs), new ExpressionStatement(localsToArgs), retry);
-	}
-};
-
-_TailRecursionOptimizeCommand._replaceTailCallStatement$L_TailRecursionOptimizeCommand$LMemberFunctionDefinition$ALStatement$N = _TailRecursionOptimizeCommand$_replaceTailCallStatement$L_TailRecursionOptimizeCommand$LMemberFunctionDefinition$ALStatement$N;
 
 function _Util$0() {
 };
@@ -10674,6 +11098,22 @@ function _Util$0$emitFusedIntOpWithSideEffects$LJavaScriptEmitter$SLExpression$F
 };
 
 _Util$0.emitFusedIntOpWithSideEffects$LJavaScriptEmitter$SLExpression$F$NV$N = _Util$0$emitFusedIntOpWithSideEffects$LJavaScriptEmitter$SLExpression$F$NV$N;
+
+function _Util$0$getNewExpressionInliner$LNewExpression$(expr) {
+	var classDef;
+	var ctor;
+	var argTypes;
+	var callingFuncDef;
+	var stash;
+	classDef = expr._type.getClassDef$();
+	ctor = expr._constructor;
+	argTypes = ctor._argTypes;
+	callingFuncDef = Util$findFunctionInClass$LClassDefinition$SALType$B(classDef, "constructor", argTypes, false);
+	stash = callingFuncDef.getStash$S("unclassify");
+	return (stash ? stash.inliner : null);
+};
+
+_Util$0.getNewExpressionInliner$LNewExpression$ = _Util$0$getNewExpressionInliner$LNewExpression$;
 
 function _TempVarLister() {
 	this._varNameMap = {};
@@ -11069,24 +11509,11 @@ function _Minifier(emitter, classDefs) {
 };
 
 $__jsx_extend([_Minifier], Object);
-_Minifier.prototype.getCountingNamer$ = function () {
-	return new _Minifier$x2E_MinifyingNamer().setup$L_Minifier$(this);
-};
-
-
 function _Minifier$getCountingNamer$L_Minifier$($this) {
 	return new _Minifier$x2E_MinifyingNamer().setup$L_Minifier$($this);
 };
 
 _Minifier.getCountingNamer$L_Minifier$ = _Minifier$getCountingNamer$L_Minifier$;
-
-_Minifier.prototype.getMinifyingNamer$ = function () {
-	_Minifier$_minifyProperties$L_Minifier$(this);
-	_Minifier$_minifyStaticVariables$L_Minifier$(this);
-	_Minifier$_minifyGlobals$L_Minifier$(this);
-	return new _Minifier$x2E_MinifyingNamer().setup$L_Minifier$(this);
-};
-
 
 function _Minifier$getMinifyingNamer$L_Minifier$($this) {
 	_Minifier$_minifyProperties$L_Minifier$($this);
@@ -11097,50 +11524,11 @@ function _Minifier$getMinifyingNamer$L_Minifier$($this) {
 
 _Minifier.getMinifyingNamer$L_Minifier$ = _Minifier$getMinifyingNamer$L_Minifier$;
 
-_Minifier.prototype._isCounting$ = function () {
-	return this._propertyConversionTable == null;
-};
-
-
 function _Minifier$_isCounting$L_Minifier$($this) {
 	return $this._propertyConversionTable == null;
 };
 
 _Minifier._isCounting$L_Minifier$ = _Minifier$_isCounting$L_Minifier$;
-
-_Minifier.prototype._recordUsedIdentifiers$LStashable$F$V$ = function (stashable, cb) {
-	var globalUseCountBackup;
-	var k;
-	var outerLocalUseCount;
-	var i;
-	var scopeStash;
-	var stash$0;
-	globalUseCountBackup = {};
-	for (k in this._globalUseCount) {
-		globalUseCountBackup[k] = this._globalUseCount[k];
-	}
-	outerLocalUseCount = [];
-	for (i in this._outerLocals) { i |= 0;
-		outerLocalUseCount[i] = _Minifier$_getLocalStash$LLocalVariable$(this._outerLocals[i]).useCount;
-	}
-	cb();
-	stash$0 = stashable.getStash$S("minifier.scope");
-	if (stash$0 == null) {
-		stash$0 = stashable.setStash$SLStash$("minifier.scope", new _Minifier$x2E_ScopeStash());
-	}
-	scopeStash = stash$0;
-	for (k in this._globalUseCount) {
-		if (this._globalUseCount[k] !== globalUseCountBackup[k]) {
-			scopeStash.usedGlobals[k] = true;
-		}
-	}
-	for (i in this._outerLocals) { i |= 0;
-		if (outerLocalUseCount[i] !== _Minifier$_getLocalStash$LLocalVariable$(this._outerLocals[i]).useCount) {
-			scopeStash.usedOuterLocals.push(this._outerLocals[i]);
-		}
-	}
-};
-
 
 function _Minifier$_recordUsedIdentifiers$L_Minifier$LStashable$F$V$($this, stashable, cb) {
 	var globalUseCountBackup;
@@ -11177,29 +11565,18 @@ function _Minifier$_recordUsedIdentifiers$L_Minifier$LStashable$F$V$($this, stas
 
 _Minifier._recordUsedIdentifiers$L_Minifier$LStashable$F$V$ = _Minifier$_recordUsedIdentifiers$L_Minifier$LStashable$F$V$;
 
-_Minifier.prototype._minifyProperties$ = function () {
-	var $this = this;
-	var k;
-	this._propertyConversionTable = _Minifier$_buildConversionTable$HNL_MinifiedNameGenerator$(this._propertyUseCount, new _MinifiedNameGenerator(Object.keys(_Util$0._ecma262reserved).concat((function () {
-		var nativePropertyNames;
-		nativePropertyNames = {};
-		$this._classDefs.forEach((function (classDef) {
-			ClassDefinition$forEachMember$LClassDefinition$F$LMemberDefinition$B$(classDef, (function (member) {
-				if ((MemberDefinition$flags$LMemberDefinition$(member) & ClassDefinition.IS_STATIC) === 0 && ((MemberDefinition$flags$LMemberDefinition$(member) | classDef.flags$()) & ClassDefinition.IS_NATIVE) !== 0) {
-					nativePropertyNames[MemberDefinition$name$LMemberDefinition$(member)] = true;
-				}
-				return true;
-			}));
-		}));
-		return Object.keys(nativePropertyNames);
-	})())));
-	for (k in this._propertyConversionTable) {
-	}
-};
-
-
 function _Minifier$_minifyProperties$L_Minifier$($this) {
+	var exportedPropertyNames;
 	var k;
+	exportedPropertyNames = [];
+	$this._classDefs.forEach((function (classDef) {
+		ClassDefinition$forEachMember$LClassDefinition$F$LMemberDefinition$B$(classDef, (function (member) {
+			if ((MemberDefinition$flags$LMemberDefinition$(member) & (ClassDefinition.IS_STATIC | ClassDefinition.IS_EXPORT)) === ClassDefinition.IS_EXPORT && ! (member instanceof MemberFunctionDefinition && MemberDefinition$name$LMemberDefinition$(member) === "constructor")) {
+				exportedPropertyNames.push(MemberDefinition$name$LMemberDefinition$(member));
+			}
+			return true;
+		}));
+	}));
 	$this._propertyConversionTable = _Minifier$_buildConversionTable$HNL_MinifiedNameGenerator$($this._propertyUseCount, new _MinifiedNameGenerator(Object.keys(_Util$0._ecma262reserved).concat((function () {
 		var nativePropertyNames;
 		nativePropertyNames = {};
@@ -11212,37 +11589,12 @@ function _Minifier$_minifyProperties$L_Minifier$($this) {
 			}));
 		}));
 		return Object.keys(nativePropertyNames);
-	})())));
+	})()).concat(exportedPropertyNames)));
 	for (k in $this._propertyConversionTable) {
 	}
 };
 
 _Minifier._minifyProperties$L_Minifier$ = _Minifier$_minifyProperties$L_Minifier$;
-
-_Minifier.prototype._minifyStaticVariables$ = function () {
-	var $this = this;
-	this._classDefs.forEach((function (classDef) {
-		var exportedStaticVarNames;
-		var stash;
-		var stash$0;
-		if ((classDef.flags$() & 272) === 0) {
-			exportedStaticVarNames = [];
-			ClassDefinition$forEachMemberVariable$LClassDefinition$F$LMemberVariableDefinition$B$(classDef, (function (member) {
-				if ((MemberDefinition$flags$LMemberDefinition$(member) & (ClassDefinition.IS_STATIC | ClassDefinition.IS_EXPORT)) === (ClassDefinition.IS_STATIC | ClassDefinition.IS_EXPORT)) {
-					exportedStaticVarNames.push(MemberDefinition$name$LMemberDefinition$(member));
-				}
-				return true;
-			}));
-			stash$0 = classDef.getStash$S("minifier.class");
-			if (stash$0 == null) {
-				stash$0 = classDef.setStash$SLStash$("minifier.class", new _Minifier$x2E_ClassStash());
-			}
-			stash = stash$0;
-			stash.staticVariableConversionTable = _Minifier$_buildConversionTable$HNL_MinifiedNameGenerator$(stash.staticVariableUseCount, new _MinifiedNameGenerator(Object.keys(_Util$0._ecma262reserved).concat(exportedStaticVarNames)));
-		}
-	}));
-};
-
 
 function _Minifier$_minifyStaticVariables$L_Minifier$($this) {
 	$this._classDefs.forEach((function (classDef) {
@@ -11268,34 +11620,6 @@ function _Minifier$_minifyStaticVariables$L_Minifier$($this) {
 };
 
 _Minifier._minifyStaticVariables$L_Minifier$ = _Minifier$_minifyStaticVariables$L_Minifier$;
-
-_Minifier.prototype._minifyGlobals$ = function () {
-	var $this = this;
-	var useCount;
-	var k;
-	useCount = {};
-	for (k in this._globalUseCount) {
-		useCount[k] = this._globalUseCount[k];
-	}
-	this._classDefs.forEach((function (classDef) {
-		if ((classDef.flags$() & 272) !== 0) {
-			delete useCount[classDef.className$()];
-		}
-	}));
-	this._globalConversionTable = _Minifier$_buildConversionTable$HNL_MinifiedNameGenerator$(useCount, new _MinifiedNameGenerator(Object.keys(_Util$0._ecma262reserved).concat(_MinifiedNameGenerator.GLOBALS, (function () {
-		var nativeClassNames;
-		nativeClassNames = [];
-		$this._classDefs.forEach((function (classDef) {
-			if ((classDef.flags$() & ClassDefinition.IS_NATIVE) !== 0) {
-				nativeClassNames.push(classDef.className$());
-			}
-		}));
-		return nativeClassNames;
-	})())));
-	for (k in this._globalConversionTable) {
-	}
-};
-
 
 function _Minifier$_minifyGlobals$L_Minifier$($this) {
 	var useCount;
@@ -11325,43 +11649,10 @@ function _Minifier$_minifyGlobals$L_Minifier$($this) {
 
 _Minifier._minifyGlobals$L_Minifier$ = _Minifier$_minifyGlobals$L_Minifier$;
 
-_Minifier.prototype._log$S = function (message) {
-};
-
-
 function _Minifier$_log$L_Minifier$S($this, message) {
 };
 
 _Minifier._log$L_Minifier$S = _Minifier$_log$L_Minifier$S;
-
-_Minifier.prototype._buildConversionTable$ALLocalVariable$L_Minifier$x2E_ScopeStash$ = function (locals, scopeStash) {
-	var $this = this;
-	var useCount;
-	var reserved;
-	var k;
-	var i;
-	var conversionTable;
-	useCount = {};
-	locals.forEach((function (local) {
-		var this$0;
-		useCount[(this$0 = local._name, this$0._value)] = _Minifier$_getLocalStash$LLocalVariable$(local).useCount;
-	}));
-	reserved = [  ];
-	for (k in scopeStash.usedGlobals) {
-		reserved.push($__jsx_ObjectHasOwnProperty.call(this._globalConversionTable, k) ? this._globalConversionTable[k] : k);
-	}
-	for (i in scopeStash.usedOuterLocals) { i |= 0;
-		reserved.push(_Minifier$_getLocalStash$LLocalVariable$(scopeStash.usedOuterLocals[i]).minifiedName);
-	}
-	"local minification, preserving: " + reserved.join(",");
-	reserved = reserved.concat(Object.keys(_Util$0._ecma262reserved));
-	conversionTable = _Minifier$_buildConversionTable$HNL_MinifiedNameGenerator$(useCount, new _MinifiedNameGenerator(reserved));
-	locals.forEach((function (local) {
-		var this$0;
-		_Minifier$_getLocalStash$LLocalVariable$(local).minifiedName = conversionTable[(this$0 = local._name, this$0._value)];
-	}));
-};
-
 
 function _Minifier$_buildConversionTable$L_Minifier$ALLocalVariable$L_Minifier$x2E_ScopeStash$($this, locals, scopeStash) {
 	var useCount;
@@ -12781,7 +13072,7 @@ _PreIncrementExpressionEmitter.prototype.emit$N = function (outerOpPrecedence) {
 	this$0 = _expr$0 = this._expr;
 	opToken = this$0._token;
 	if ((this$3 = _expr$0.getType$(), this$3 instanceof NullableType ? (this$0$1 = this$3, this$0$1._baseType) : this$3).equals$LType$(Type.integerType)) {
-		if (Util$lhsHasSideEffects$LExpression$((this$2 = this._expr, this$2._expr))) {
+		if (Expression$hasSideEffects$LExpression$((this$2 = this._expr, this$2._expr))) {
 			_Util$0$emitFusedIntOpWithSideEffects$LJavaScriptEmitter$SLExpression$F$NV$N(this._emitter, (opToken._value === "++" ? "$__jsx_ipadd" : "$__jsx_ipdec"), (this$1 = this._expr, this$1._expr), (function (outerPred) {
 				JavaScriptEmitter$_emit$LJavaScriptEmitter$SLToken$($this._emitter, "1", opToken);
 			}), 0);
@@ -12868,7 +13159,7 @@ _PostIncrementExpressionEmitter.prototype.emit$N = function (outerOpPrecedence) 
 	this$0 = _expr$0 = this._expr;
 	opToken = this$0._token;
 	if ((this$8 = _expr$0.getType$(), this$8 instanceof NullableType ? (this$0$1 = this$8, this$0$1._baseType) : this$8).equals$LType$(Type.integerType)) {
-		if (Util$lhsHasSideEffects$LExpression$((this$7 = this._expr, this$7._expr))) {
+		if (Expression$hasSideEffects$LExpression$((this$7 = this._expr, this$7._expr))) {
 			_Util$0$emitFusedIntOpWithSideEffects$LJavaScriptEmitter$SLExpression$F$NV$N(this._emitter, (opToken._value === "++" ? "$__jsx_ippostinc" : "$__jsx_ippostdec"), (this$1 = this._expr, this$1._expr), (function (outerPred) {
 				JavaScriptEmitter$_emit$LJavaScriptEmitter$SLToken$($this._emitter, "1", opToken);
 			}), 0);
@@ -12918,7 +13209,7 @@ function _PostIncrementExpressionEmitter$needsTempVarFor$LPostIncrementExpressio
 	var this$0$0$0;
 	var this$0;
 	var this$0$1;
-	return (this$0 = (this$0$0 = expr._expr.getType$(), this$0$0 instanceof NullableType ? (this$0$0$0 = this$0$0, this$0$0$0._baseType) : this$0$0), this$0 instanceof NullableType ? (this$0$1 = this$0, this$0$1._baseType) : this$0).equals$LType$(Type.integerType) && ! Util$lhsHasSideEffects$LExpression$(expr._expr);
+	return (this$0 = (this$0$0 = expr._expr.getType$(), this$0$0 instanceof NullableType ? (this$0$0$0 = this$0$0, this$0$0$0._baseType) : this$0$0), this$0 instanceof NullableType ? (this$0$1 = this$0, this$0$1._baseType) : this$0).equals$LType$(Type.integerType) && ! Expression$hasSideEffects$LExpression$(expr._expr);
 };
 
 _PostIncrementExpressionEmitter.needsTempVarFor$LPostIncrementExpression$ = _PostIncrementExpressionEmitter$needsTempVarFor$LPostIncrementExpression$;
@@ -13300,7 +13591,7 @@ _FusedAssignmentExpressionEmitter.prototype.emit$N = function (outerOpPrecedence
 	var this$0$0;
 	coreOp = (this$1 = (this$0 = this._expr, this$0._token), this$1._value).charAt(0);
 	if (_FusedAssignmentExpressionEmitter._fusedIntHelpers[coreOp] != null && (this$5 = (this$4 = this._expr, this$4._expr1).getType$(), this$5 instanceof NullableType ? (this$0$0 = this$5, this$0$0._baseType) : this$5).equals$LType$(Type.integerType)) {
-		if (Util$lhsHasSideEffects$LExpression$((this$3 = this._expr, this$3._expr1))) {
+		if (Expression$hasSideEffects$LExpression$((this$3 = this._expr, this$3._expr1))) {
 			_Util$0$emitFusedIntOpWithSideEffects$LJavaScriptEmitter$SLExpression$F$NV$N(this._emitter, _FusedAssignmentExpressionEmitter._fusedIntHelpers[coreOp], (this$2 = this._expr, this$2._expr1), (function (outerPred) {
 				var this$0;
 				JavaScriptEmitter$_emitWithNullableGuard$LJavaScriptEmitter$LExpression$N($this._emitter, (this$0 = $this._expr, this$0._expr2), outerPred);
@@ -13779,7 +14070,7 @@ _CallExpressionEmitter.prototype._emitSpecial$ = function () {
 	var this$0;
 	this$0 = this._expr;
 	calleeExpr = this$0._expr;
-	return (! (calleeExpr instanceof PropertyExpression) ? false : _CallExpressionEmitter$_emitIfJsInvoke$L_CallExpressionEmitter$LPropertyExpression$(this, calleeExpr) ? true : _CallExpressionEmitter$_emitIfJsEval$L_CallExpressionEmitter$LPropertyExpression$(this, calleeExpr) ? true : _CallExpressionEmitter$_emitCallsToMap$L_CallExpressionEmitter$LPropertyExpression$(this, calleeExpr) ? true : false);
+	return (! (calleeExpr instanceof PropertyExpression) ? false : _CallExpressionEmitter$_emitIfJsInvoke$L_CallExpressionEmitter$LPropertyExpression$(this, calleeExpr) ? true : _CallExpressionEmitter$_emitIfJsEval$L_CallExpressionEmitter$LPropertyExpression$(this, calleeExpr) ? true : _CallExpressionEmitter$_emitCallsToMap$L_CallExpressionEmitter$LPropertyExpression$(this, calleeExpr) ? true : _CallExpressionEmitter$_emitCallsToArray$L_CallExpressionEmitter$LPropertyExpression$(this, calleeExpr) ? true : false);
 };
 
 
@@ -13788,7 +14079,7 @@ function _CallExpressionEmitter$_emitSpecial$L_CallExpressionEmitter$($this) {
 	var this$0;
 	this$0 = $this._expr;
 	calleeExpr = this$0._expr;
-	return (! (calleeExpr instanceof PropertyExpression) ? false : _CallExpressionEmitter$_emitIfJsInvoke$L_CallExpressionEmitter$LPropertyExpression$($this, calleeExpr) ? true : _CallExpressionEmitter$_emitIfJsEval$L_CallExpressionEmitter$LPropertyExpression$($this, calleeExpr) ? true : _CallExpressionEmitter$_emitCallsToMap$L_CallExpressionEmitter$LPropertyExpression$($this, calleeExpr) ? true : false);
+	return (! (calleeExpr instanceof PropertyExpression) ? false : _CallExpressionEmitter$_emitIfJsInvoke$L_CallExpressionEmitter$LPropertyExpression$($this, calleeExpr) ? true : _CallExpressionEmitter$_emitIfJsEval$L_CallExpressionEmitter$LPropertyExpression$($this, calleeExpr) ? true : _CallExpressionEmitter$_emitCallsToMap$L_CallExpressionEmitter$LPropertyExpression$($this, calleeExpr) ? true : _CallExpressionEmitter$_emitCallsToArray$L_CallExpressionEmitter$LPropertyExpression$($this, calleeExpr) ? true : false);
 };
 
 _CallExpressionEmitter._emitSpecial$L_CallExpressionEmitter$ = _CallExpressionEmitter$_emitSpecial$L_CallExpressionEmitter$;
@@ -14004,6 +14295,59 @@ function _CallExpressionEmitter$_emitCallsToMap$L_CallExpressionEmitter$LPropert
 
 _CallExpressionEmitter._emitCallsToMap$L_CallExpressionEmitter$LPropertyExpression$ = _CallExpressionEmitter$_emitCallsToMap$L_CallExpressionEmitter$LPropertyExpression$;
 
+_CallExpressionEmitter.prototype._emitCallsToArray$LPropertyExpression$ = function (calleeExpr) {
+	var classDef;
+	var this$0;
+	var this$0$0;
+	var this$1;
+	var this$2;
+	if (calleeExpr._type instanceof StaticFunctionType) {
+		return false;
+	}
+	classDef = calleeExpr._expr.getType$().getClassDef$();
+	if (! (classDef instanceof InstantiatedClassDefinition)) {
+		return false;
+	}
+	if ((this$0 = classDef, this$0$0 = this$0._templateClassDef, this$0$0._className) !== "Array") {
+		return false;
+	}
+	switch ((this$2 = calleeExpr._identifierToken, this$2._value)) {
+	case "_forEach":
+		JavaScriptEmitter$_emitCallArguments$LJavaScriptEmitter$LToken$SALExpression$ALType$(this._emitter, calleeExpr._token, "$__jsx_forEach(", [ calleeExpr._expr, (this$1 = this._expr, this$1._args)[0] ], null);
+		return true;
+	default:
+		return false;
+	}
+};
+
+
+function _CallExpressionEmitter$_emitCallsToArray$L_CallExpressionEmitter$LPropertyExpression$($this, calleeExpr) {
+	var classDef;
+	var this$0;
+	var this$0$0;
+	var this$1;
+	var this$2;
+	if (calleeExpr._type instanceof StaticFunctionType) {
+		return false;
+	}
+	classDef = calleeExpr._expr.getType$().getClassDef$();
+	if (! (classDef instanceof InstantiatedClassDefinition)) {
+		return false;
+	}
+	if ((this$0 = classDef, this$0$0 = this$0._templateClassDef, this$0$0._className) !== "Array") {
+		return false;
+	}
+	switch ((this$2 = calleeExpr._identifierToken, this$2._value)) {
+	case "_forEach":
+		JavaScriptEmitter$_emitCallArguments$LJavaScriptEmitter$LToken$SALExpression$ALType$($this._emitter, calleeExpr._token, "$__jsx_forEach(", [ calleeExpr._expr, (this$1 = $this._expr, this$1._args)[0] ], null);
+		return true;
+	default:
+		return false;
+	}
+};
+
+_CallExpressionEmitter._emitCallsToArray$L_CallExpressionEmitter$LPropertyExpression$ = _CallExpressionEmitter$_emitCallsToArray$L_CallExpressionEmitter$LPropertyExpression$;
+
 function _SuperExpressionEmitter(emitter, expr) {
 	this._emitter = emitter;
 	this._expr = expr;
@@ -14056,13 +14400,9 @@ function _NewExpressionEmitter(emitter, expr) {
 
 $__jsx_extend([_NewExpressionEmitter], _OperatorExpressionEmitter);
 _NewExpressionEmitter.prototype.emit$N = function (outerOpPrecedence) {
-	var $this = this;
-	var getInliner;
-	var classDef;
-	var ctor;
-	var argTypes;
-	var callingFuncDef;
 	var inliner;
+	var classDef;
+	var argTypes;
 	var this$0;
 	var this$1;
 	var this$2;
@@ -14070,31 +14410,28 @@ _NewExpressionEmitter.prototype.emit$N = function (outerOpPrecedence) {
 	var this$4;
 	var this$6;
 	var this$7;
-	var this$0$0;
 	var this$8;
+	var this$0$0;
+	var this$9;
 	var type$0;
 	var this$0$1;
 	var this$0$0$0;
+	var this$10;
+	var _expr$0;
 	var _emitter$0;
-	function getInliner(funcDef) {
-		var stash;
-		stash = funcDef.getStash$S("unclassify");
-		return (stash ? stash.inliner : null);
-	}
+	inliner = _Util$0$getNewExpressionInliner$LNewExpression$(this._expr);
 	classDef = (this$0 = this._expr, this$0._type).getClassDef$();
-	this$1 = this._expr;
-	ctor = this$1._constructor;
-	argTypes = ctor._argTypes;
-	callingFuncDef = Util$findFunctionInClass$LClassDefinition$SALType$B(classDef, "constructor", argTypes, false);
-	inliner = getInliner(callingFuncDef);
 	if (inliner) {
 		_NewExpressionEmitter$_emitAsObjectLiteral$L_NewExpressionEmitter$LClassDefinition$ALExpression$(this, classDef, inliner(this._expr));
-	} else if ((type$0 = (this$8 = this._expr, this$8._type), type$0.getClassDef$() instanceof InstantiatedClassDefinition && (this$0$1 = type$0.getClassDef$(), this$0$0$0 = this$0$1._templateClassDef, this$0$0$0._className) === "Array") && argTypes.length === 0) {
-		JavaScriptEmitter$_emit$LJavaScriptEmitter$SLToken$(this._emitter, "[]", (this$2 = this._expr, this$2._token));
-	} else if (classDef instanceof InstantiatedClassDefinition && (this$7 = classDef, this$0$0 = this$7._templateClassDef, this$0$0._className) === "Map") {
-		JavaScriptEmitter$_emit$LJavaScriptEmitter$SLToken$(this._emitter, "{}", (this$3 = this._expr, this$3._token));
+	} else if ((type$0 = (this$9 = this._expr, this$9._type), type$0.getClassDef$() instanceof InstantiatedClassDefinition && (this$0$1 = type$0.getClassDef$(), this$0$0$0 = this$0$1._templateClassDef, this$0$0$0._className) === "Array") && (this$10 = this._expr, this$10._args).length === 0) {
+		JavaScriptEmitter$_emit$LJavaScriptEmitter$SLToken$(this._emitter, "[]", (this$1 = this._expr, this$1._token));
+	} else if (classDef instanceof InstantiatedClassDefinition && (this$8 = classDef, this$0$0 = this$8._templateClassDef, this$0$0._className) === "Map") {
+		JavaScriptEmitter$_emit$LJavaScriptEmitter$SLToken$(this._emitter, "{}", (this$2 = this._expr, this$2._token));
 	} else {
-		JavaScriptEmitter$_emitCallArguments$LJavaScriptEmitter$LToken$SALExpression$ALType$(_emitter$0 = this._emitter, (this$4 = this._expr, this$4._token), "new " + (_emitter$0, _emitter$0._namer).getNameOfConstructor$LClassDefinition$ALType$(classDef, argTypes) + "(", (this$6 = this._expr, this$6._args), argTypes);
+		this$7 = _expr$0 = this._expr;
+		this$3 = this$7._constructor;
+		argTypes = this$3._argTypes;
+		JavaScriptEmitter$_emitCallArguments$LJavaScriptEmitter$LToken$SALExpression$ALType$(_emitter$0 = this._emitter, (this$4 = _expr$0, this$4._token), "new " + (_emitter$0, _emitter$0._namer).getNameOfConstructor$LClassDefinition$ALType$(classDef, argTypes) + "(", (this$6 = this._expr, this$6._args), argTypes);
 	}
 };
 
@@ -14395,7 +14732,7 @@ function Util$_isBuiltInObjectType$LType$HB(type, classeSet) {
 
 Util._isBuiltInObjectType$LType$HB = Util$_isBuiltInObjectType$LType$HB;
 
-function Util$isNativeClass$LType$(type) {
+function Util$rootIsNativeClass$LType$(type) {
 	var classDef;
 	if (type instanceof ObjectType) {
 		classDef = type.getClassDef$();
@@ -14406,39 +14743,7 @@ function Util$isNativeClass$LType$(type) {
 	return false;
 };
 
-Util.isNativeClass$LType$ = Util$isNativeClass$LType$;
-
-function Util$lhsHasSideEffects$LExpression$(lhsExpr) {
-	var holderExpr;
-	var arrayExpr;
-	var this$0;
-	var type$0;
-	var type$1;
-	if (lhsExpr instanceof LocalExpression) {
-		return false;
-	}
-	if (lhsExpr instanceof PropertyExpression) {
-		this$0 = lhsExpr;
-		holderExpr = this$0._expr;
-		if (Util$isNativeClass$LType$(holderExpr.getType$()) && ! (type$0 = holderExpr.getType$(), Util$_isBuiltInObjectType$LType$HB(type$0, Util._builtInClass))) {
-			return true;
-		}
-		if (holderExpr instanceof ThisExpression || holderExpr instanceof LocalExpression || holderExpr.isClassSpecifier$()) {
-			return false;
-		}
-	} else if (lhsExpr instanceof ArrayExpression) {
-		arrayExpr = lhsExpr;
-		if (Util$isNativeClass$LType$(arrayExpr._expr1.getType$()) && ! (type$1 = arrayExpr._expr1.getType$(), Util$_isBuiltInObjectType$LType$HB(type$1, Util._builtInClass))) {
-			return true;
-		}
-		if (arrayExpr._expr1 instanceof LocalExpression && arrayExpr._expr2 instanceof LeafExpression) {
-			return false;
-		}
-	}
-	return true;
-};
-
-Util.lhsHasSideEffects$LExpression$ = Util$lhsHasSideEffects$LExpression$;
+Util.rootIsNativeClass$LType$ = Util$rootIsNativeClass$LType$;
 
 function Util$instantiateTemplate$LAnalysisContext$LToken$SALType$(context, token, className, typeArguments) {
 	return Parser$lookupTemplate$LParser$ALCompileError$LTemplateInstantiationRequest$F$LParser$LClassDefinition$LClassDefinition$$(context.parser, context.errors, ({_token: token, _className: className, _typeArgs: typeArguments}), context.postInstantiationCallback);
@@ -16604,7 +16909,7 @@ JavaScriptEmitter.prototype.emit$ALClassDefinition$ = function (classDefs) {
 	var this$0;
 	_Util$0$setOutputClassNames$ALClassDefinition$(classDefs);
 	if (this._enableMinifier) {
-		minifier = new _Minifier(this, classDefs);
+		minifier = ({_emitter: this, _classDefs: classDefs, _propertyUseCount: {}, _propertyConversionTable: null, _globalUseCount: {}, _globalConversionTable: null, _outerLocals: []});
 		this._namer = new _Minifier$x2E_MinifyingNamer().setup$L_Minifier$(minifier);
 		JavaScriptEmitter$_emitInit$LJavaScriptEmitter$(this);
 		JavaScriptEmitter$_emitCore$LJavaScriptEmitter$ALClassDefinition$(this, classDefs);
@@ -17665,6 +17970,7 @@ function JavaScriptEmitter$_emitFunctionBody$LJavaScriptEmitter$LMemberFunctionD
 JavaScriptEmitter._emitFunctionBody$LJavaScriptEmitter$LMemberFunctionDefinition$ = JavaScriptEmitter$_emitFunctionBody$LJavaScriptEmitter$LMemberFunctionDefinition$;
 
 JavaScriptEmitter.prototype._emitStaticMemberVariable$LMemberVariableDefinition$ = function (variable) {
+	var $this = this;
 	var initialValue;
 	var tempVars;
 	var i;
@@ -17673,8 +17979,26 @@ JavaScriptEmitter.prototype._emitStaticMemberVariable$LMemberVariableDefinition$
 	var varNames$0;
 	var k$0;
 	var this$0$1;
+	var preCheckCb$0;
+	var r$0;
 	initialValue = variable._initialValue;
-	if (initialValue != null && ! (initialValue instanceof NullExpression || initialValue instanceof BooleanLiteralExpression || initialValue instanceof IntegerLiteralExpression || initialValue instanceof NumberLiteralExpression || initialValue instanceof StringLiteralExpression || initialValue instanceof RegExpLiteralExpression)) {
+	if (initialValue != null && (preCheckCb$0 = (function (expr) {
+		var holderExpr;
+		var this$0;
+		var this$1;
+		if (expr instanceof PropertyExpression) {
+			this$0 = expr;
+			holderExpr = this$0._expr;
+			if (holderExpr instanceof ClassExpression || holderExpr instanceof PropertyExpression && (this$1 = holderExpr, this$1._isInner)) {
+				return true;
+			}
+		} else if (expr instanceof NewExpression) {
+			if (_Util$0$getNewExpressionInliner$LNewExpression$(expr) != null) {
+				return false;
+			}
+		}
+		return null;
+	}), r$0 = preCheckCb$0(initialValue), r$0 != null ? r$0 : initialValue._doHasSideEffects$F$LExpression$UB$(preCheckCb$0))) {
 		JavaScriptEmitter$_emit$LJavaScriptEmitter$SLToken$(this, "$__jsx_lazy_init(", variable._nameToken);
 		JavaScriptEmitter$_emit$LJavaScriptEmitter$SLToken$(this, this._namer.getNameOfClass$LClassDefinition$(variable._classDef) + ", \"" + this._namer.getNameOfStaticVariable$LClassDefinition$S(variable._classDef, (this$0$0 = variable._nameToken, this$0$0._value)) + "\", function () {\n", variable._nameToken);
 		++this._indent;
@@ -17711,8 +18035,26 @@ function JavaScriptEmitter$_emitStaticMemberVariable$LJavaScriptEmitter$LMemberV
 	var varNames$0;
 	var k$0;
 	var this$0$1;
+	var preCheckCb$0;
+	var r$0;
 	initialValue = variable._initialValue;
-	if (initialValue != null && ! (initialValue instanceof NullExpression || initialValue instanceof BooleanLiteralExpression || initialValue instanceof IntegerLiteralExpression || initialValue instanceof NumberLiteralExpression || initialValue instanceof StringLiteralExpression || initialValue instanceof RegExpLiteralExpression)) {
+	if (initialValue != null && (preCheckCb$0 = (function (expr) {
+		var holderExpr;
+		var this$0;
+		var this$1;
+		if (expr instanceof PropertyExpression) {
+			this$0 = expr;
+			holderExpr = this$0._expr;
+			if (holderExpr instanceof ClassExpression || holderExpr instanceof PropertyExpression && (this$1 = holderExpr, this$1._isInner)) {
+				return true;
+			}
+		} else if (expr instanceof NewExpression) {
+			if (_Util$0$getNewExpressionInliner$LNewExpression$(expr) != null) {
+				return false;
+			}
+		}
+		return null;
+	}), r$0 = preCheckCb$0(initialValue), r$0 != null ? r$0 : initialValue._doHasSideEffects$F$LExpression$UB$(preCheckCb$0))) {
 		JavaScriptEmitter$_emit$LJavaScriptEmitter$SLToken$($this, "$__jsx_lazy_init(", variable._nameToken);
 		JavaScriptEmitter$_emit$LJavaScriptEmitter$SLToken$($this, $this._namer.getNameOfClass$LClassDefinition$(variable._classDef) + ", \"" + $this._namer.getNameOfStaticVariable$LClassDefinition$S(variable._classDef, (this$0$0 = variable._nameToken, this$0$0._value)) + "\", function () {\n", variable._nameToken);
 		++$this._indent;
@@ -18446,17 +18788,7 @@ function LocalVariable(name, type, isConst) {
 	this._isConstant = isConst;
 };
 
-function LocalVariable$0(name, type) {
-	this._stash = {};
-	this._instantiated = [];
-	this.isInstantiated = false;
-	this._isUsedAsRHS = false;
-	this._name = name;
-	this._type = type;
-	this._isConstant = false;
-};
-
-$__jsx_extend([LocalVariable, LocalVariable$0], Object);
+$__jsx_extend([LocalVariable], Object);
 $__jsx_merge_interface(LocalVariable, Stashable);
 
 LocalVariable.prototype.serialize$ = function () {
@@ -18693,8 +19025,8 @@ LocalVariable.prototype.instantiateAndPush$LInstantiationContext$ = function (in
 
 LocalVariable.prototype._instantiate$LInstantiationContext$ = function (instantiationContext) {
 	var type;
-	type = (this._type != null ? this._type.instantiate$LInstantiationContext$(instantiationContext) : null);
-	return new LocalVariable$0(this._name, type);
+	type = (this._type != null ? this._type.instantiate$LInstantiationContext$B(instantiationContext, false) : null);
+	return new LocalVariable(this._name, type, this._isConstant);
 };
 
 
@@ -18726,7 +19058,7 @@ CaughtVariable.prototype.touchVariable$LAnalysisContext$LToken$B = function (con
 
 
 CaughtVariable.prototype._instantiate$LInstantiationContext$ = function (instantiationContext) {
-	return new CaughtVariable(this._name, this._type.instantiate$LInstantiationContext$(instantiationContext));
+	return new CaughtVariable(this._name, this._type.instantiate$LInstantiationContext$B(instantiationContext, false));
 };
 
 
@@ -18784,7 +19116,7 @@ ArgumentDeclaration.getDefaultValue$LArgumentDeclaration$ = ArgumentDeclaration$
 
 ArgumentDeclaration.prototype._instantiate$LInstantiationContext$ = function (instantiationContext) {
 	var type;
-	type = (this._type != null ? this._type.instantiate$LInstantiationContext$(instantiationContext) : null);
+	type = (this._type != null ? this._type.instantiate$LInstantiationContext$B(instantiationContext, false) : null);
 	return new ArgumentDeclaration$0(this._name, type, this._defaultValue);
 };
 
@@ -21369,7 +21701,7 @@ function Parser$_classDefinition$LParser$($this) {
 		}
 		for (i = 0; i < $this._outerClass.templateInners.length; ++i) {
 			if ((this$0 = $this._outerClass.templateInners[i], this$0._className) === className._value) {
-				$this._errors.push(new CompileError(className, "a non-template inner class with the same name has been already declared"));
+				$this._errors.push(new CompileError(className, "a template inner class with the same name has been already declared"));
 				success = false;
 				break;
 			}
@@ -21730,7 +22062,7 @@ function Parser$_actualTypeArguments$LParser$($this) {
 		return types;
 	}
 	do {
-		type = Parser$_typeDeclaration$LParser$B($this, false);
+		type = Parser$_typeDeclaration$LParser$B($this, true);
 		if (type == null) {
 			return null;
 		}
@@ -21941,12 +22273,20 @@ function Parser$_templateTypeDeclaration$LParser$LQualifiedName$ALType$($this, q
 	var objectType;
 	var this$0;
 	var message$0;
+	var message$1;
 	this$0 = qualifiedName._token;
 	className = this$0._value;
-	if ((className === "Array" || className === "Map") && typeArgs[0] instanceof NullableType) {
-		message$0 = "cannot declare " + className + ".<Nullable.<T>>, should be " + className + ".<T>";
-		$this._errors.push(new CompileError$0($this._filename, $this._lineNumber, $this._columnOffset, message$0));
-		return null;
+	if (className === "Array" || className === "Map") {
+		if (typeArgs[0] instanceof NullableType) {
+			message$0 = "cannot declare " + className + ".<Nullable.<T>>, should be " + className + ".<T>";
+			$this._errors.push(new CompileError$0($this._filename, $this._lineNumber, $this._columnOffset, message$0));
+			return null;
+		}
+		if (typeArgs[0].equals$LType$(Type.voidType)) {
+			message$1 = "cannot declare " + className + ".<T> with T=void";
+			$this._errors.push(new CompileError$0($this._filename, $this._lineNumber, $this._columnOffset, message$1));
+			return null;
+		}
 	}
 	objectType = new ParsedObjectType(qualifiedName, typeArgs);
 	$this._objectTypesUsed.push(objectType);
@@ -23383,7 +23723,7 @@ function Parser$_functionExpr$LParser$LToken$($this, token) {
 	}
 	funcLocal = null;
 	if (name != null) {
-		funcLocal = new LocalVariable$0(name, type);
+		funcLocal = new LocalVariable(name, type, true);
 	}
 	funcDef = Parser$_functionBody$LParser$LToken$LToken$LLocalVariable$ALArgumentDeclaration$LType$BB($this, token, name, funcLocal, args, returnType, true, isGenerator);
 	if (funcDef == null) {
@@ -24654,7 +24994,7 @@ ClassDefinition.prototype.instantiate$LInstantiationContext$ = function (instant
 	}
 	extendType = null;
 	if (this._extendType != null) {
-		type = this._extendType.instantiate$LInstantiationContext$(instantiationContext);
+		type = this._extendType.instantiate$LInstantiationContext$B(instantiationContext, false);
 		if (! (type instanceof ParsedObjectType)) {
 			instantiationContext.errors.push(new CompileError((this$0 = this._extendType, this$0$0 = this$0._qualifiedName, this$0$0._token), "non-object type is not extensible"));
 			return null;
@@ -24663,7 +25003,7 @@ ClassDefinition.prototype.instantiate$LInstantiationContext$ = function (instant
 	}
 	implementTypes = [];
 	for (i = 0; i < this._implementTypes.length; ++i) {
-		type = this._implementTypes[i].instantiate$LInstantiationContext$(instantiationContext);
+		type = this._implementTypes[i].instantiate$LInstantiationContext$B(instantiationContext, false);
 		if (! (type instanceof ParsedObjectType)) {
 			instantiationContext.errors.push(new CompileError((this$1 = this._implementTypes[i], this$0$1 = this$1._qualifiedName, this$0$1._token), "non-object type is not extensible"));
 			return null;
@@ -26322,7 +26662,7 @@ MemberVariableDefinition.prototype.instantiate$LInstantiationContext$ = function
 	var closures;
 	var closures$0;
 	var i$0;
-	type = (this._type != null ? this._type.instantiate$LInstantiationContext$(instantiationContext) : null);
+	type = (this._type != null ? this._type.instantiate$LInstantiationContext$B(instantiationContext, false) : null);
 	initialValue = null;
 	if (this._initialValue != null) {
 		initialValue = this._initialValue.clone$();
@@ -26692,7 +27032,7 @@ MemberFunctionDefinition.prototype.clone$ = function () {
 		if (funcLocal != null) {
 			if ((newFuncLocal = getStash(funcLocal).newLocal) != null) {
 			} else {
-				newFuncLocal = new LocalVariable$0(funcLocal._name, funcLocal._type);
+				newFuncLocal = new LocalVariable(funcLocal._name, funcLocal._type, funcLocal._isConstant);
 				getStash(funcLocal).newLocal = newFuncLocal;
 			}
 			funcLocal = newFuncLocal;
@@ -26708,7 +27048,7 @@ MemberFunctionDefinition.prototype.clone$ = function () {
 			if ((newLocal = getStash(local).newLocal) != null) {
 				return newLocal;
 			}
-			newLocal = new LocalVariable$0(LocalVariable$getName$LLocalVariable$(local), LocalVariable$getType$LLocalVariable$(local));
+			newLocal = new LocalVariable(LocalVariable$getName$LLocalVariable$(local), LocalVariable$getType$LLocalVariable$(local), LocalVariable$isConstant$LLocalVariable$(local));
 			getStash(local).newLocal = newLocal;
 			return newLocal;
 		}));
@@ -26840,7 +27180,7 @@ function MemberFunctionDefinition$clone$LMemberFunctionDefinition$($this) {
 		if (funcLocal != null) {
 			if ((newFuncLocal = getStash(funcLocal).newLocal) != null) {
 			} else {
-				newFuncLocal = new LocalVariable$0(funcLocal._name, funcLocal._type);
+				newFuncLocal = new LocalVariable(funcLocal._name, funcLocal._type, funcLocal._isConstant);
 				getStash(funcLocal).newLocal = newFuncLocal;
 			}
 			funcLocal = newFuncLocal;
@@ -26856,7 +27196,7 @@ function MemberFunctionDefinition$clone$LMemberFunctionDefinition$($this) {
 			if ((newLocal = getStash(local).newLocal) != null) {
 				return newLocal;
 			}
-			newLocal = new LocalVariable$0(LocalVariable$getName$LLocalVariable$(local), LocalVariable$getType$LLocalVariable$(local));
+			newLocal = new LocalVariable(LocalVariable$getName$LLocalVariable$(local), LocalVariable$getType$LLocalVariable$(local), LocalVariable$isConstant$LLocalVariable$(local));
 			getStash(local).newLocal = newLocal;
 			return newLocal;
 		}));
@@ -26966,7 +27306,7 @@ MemberFunctionDefinition.prototype._instantiateCore$LInstantiationContext$F$LTok
 				if (this$0._ctorFunctionType != null) {
 					throw new Error("instantiation after analysis?");
 				}
-				statements[i] = new ConstructorInvocationStatement$0(this$0._token, this$0._ctorClassType.instantiate$LInstantiationContext$(instantiationContext), Util$cloneArray$ALExpression$(this$0._args), null);
+				statements[i] = new ConstructorInvocationStatement$0(this$0._token, this$0._ctorClassType.instantiate$LInstantiationContext$B(instantiationContext, false), Util$cloneArray$ALExpression$(this$0._args), null);
 			} else {
 				statements[i] = this._statements[i].clone$();
 			}
@@ -27043,7 +27383,7 @@ MemberFunctionDefinition.prototype._instantiateCore$LInstantiationContext$F$LTok
 		this$2._instantiated.pop();
 	}
 	if (this._returnType != null) {
-		returnType = this._returnType.instantiate$LInstantiationContext$(instantiationContext);
+		returnType = this._returnType.instantiate$LInstantiationContext$B(instantiationContext, true);
 		if (returnType == null) {
 			return null;
 		}
@@ -27091,7 +27431,7 @@ function MemberFunctionDefinition$_instantiateCore$LMemberFunctionDefinition$LIn
 				if (this$0._ctorFunctionType != null) {
 					throw new Error("instantiation after analysis?");
 				}
-				statements[i] = new ConstructorInvocationStatement$0(this$0._token, this$0._ctorClassType.instantiate$LInstantiationContext$(instantiationContext), Util$cloneArray$ALExpression$(this$0._args), null);
+				statements[i] = new ConstructorInvocationStatement$0(this$0._token, this$0._ctorClassType.instantiate$LInstantiationContext$B(instantiationContext, false), Util$cloneArray$ALExpression$(this$0._args), null);
 			} else {
 				statements[i] = $this._statements[i].clone$();
 			}
@@ -27168,7 +27508,7 @@ function MemberFunctionDefinition$_instantiateCore$LMemberFunctionDefinition$LIn
 		this$2._instantiated.pop();
 	}
 	if ($this._returnType != null) {
-		returnType = $this._returnType.instantiate$LInstantiationContext$(instantiationContext);
+		returnType = $this._returnType.instantiate$LInstantiationContext$B(instantiationContext, true);
 		if (returnType == null) {
 			return null;
 		}
@@ -28787,7 +29127,7 @@ TemplateClassDefinition.prototype.instantiate$LInstantiationContext$ = function 
 	}
 	extendType = null;
 	if (this._extendType != null) {
-		type = this._extendType.instantiate$LInstantiationContext$(instantiationContext);
+		type = this._extendType.instantiate$LInstantiationContext$B(instantiationContext, false);
 		if (! (type instanceof ParsedObjectType)) {
 			instantiationContext.errors.push(new CompileError((this$1 = this._extendType, this$0$0 = this$1._qualifiedName, this$0$0._token), "non-object type is not extensible"));
 			return null;
@@ -28796,7 +29136,7 @@ TemplateClassDefinition.prototype.instantiate$LInstantiationContext$ = function 
 	}
 	implementTypes = [];
 	for (i = 0; i < this._implementTypes.length; ++i) {
-		type = this._implementTypes[i].instantiate$LInstantiationContext$(instantiationContext);
+		type = this._implementTypes[i].instantiate$LInstantiationContext$B(instantiationContext, false);
 		if (! (type instanceof ParsedObjectType)) {
 			instantiationContext.errors.push(new CompileError((this$2 = this._implementTypes[i], this$0$1 = this$2._qualifiedName, this$0$1._token), "non-object type is not extensible"));
 			return null;
@@ -28859,7 +29199,7 @@ TemplateClassDefinition.prototype.instantiateTemplateClass$ALCompileError$LTempl
 	}
 	extendType = null;
 	if (this._extendType != null) {
-		type = this._extendType.instantiate$LInstantiationContext$(instantiationContext);
+		type = this._extendType.instantiate$LInstantiationContext$B(instantiationContext, false);
 		if (! (type instanceof ParsedObjectType)) {
 			instantiationContext.errors.push(new CompileError((this$0 = this._extendType, this$0$0 = this$0._qualifiedName, this$0$0._token), "non-object type is not extensible"));
 			return null;
@@ -28868,7 +29208,7 @@ TemplateClassDefinition.prototype.instantiateTemplateClass$ALCompileError$LTempl
 	}
 	implementTypes = [];
 	for (i = 0; i < this._implementTypes.length; ++i) {
-		type = this._implementTypes[i].instantiate$LInstantiationContext$(instantiationContext);
+		type = this._implementTypes[i].instantiate$LInstantiationContext$B(instantiationContext, false);
 		if (! (type instanceof ParsedObjectType)) {
 			instantiationContext.errors.push(new CompileError((this$1 = this._implementTypes[i], this$0$1 = this$1._qualifiedName, this$0$1._token), "non-object type is not extensible"));
 			return null;
@@ -28932,7 +29272,7 @@ function TemplateClassDefinition$instantiateTemplateClass$LTemplateClassDefiniti
 	}
 	extendType = null;
 	if ($this._extendType != null) {
-		type = $this._extendType.instantiate$LInstantiationContext$(instantiationContext);
+		type = $this._extendType.instantiate$LInstantiationContext$B(instantiationContext, false);
 		if (! (type instanceof ParsedObjectType)) {
 			instantiationContext.errors.push(new CompileError((this$0 = $this._extendType, this$0$0 = this$0._qualifiedName, this$0$0._token), "non-object type is not extensible"));
 			return null;
@@ -28941,7 +29281,7 @@ function TemplateClassDefinition$instantiateTemplateClass$LTemplateClassDefiniti
 	}
 	implementTypes = [];
 	for (i = 0; i < $this._implementTypes.length; ++i) {
-		type = $this._implementTypes[i].instantiate$LInstantiationContext$(instantiationContext);
+		type = $this._implementTypes[i].instantiate$LInstantiationContext$B(instantiationContext, false);
 		if (! (type instanceof ParsedObjectType)) {
 			instantiationContext.errors.push(new CompileError((this$1 = $this._implementTypes[i], this$0$1 = this$1._qualifiedName, this$0$1._token), "non-object type is not extensible"));
 			return null;
@@ -29267,7 +29607,7 @@ function VoidType() {
 };
 
 $__jsx_extend([VoidType], Type);
-VoidType.prototype.instantiate$LInstantiationContext$ = function (instantiationContext) {
+VoidType.prototype.instantiate$LInstantiationContext$B = function (instantiationContext, allowVoid) {
 	return this;
 };
 
@@ -29296,7 +29636,7 @@ function NullType() {
 };
 
 $__jsx_extend([NullType], Type);
-NullType.prototype.instantiate$LInstantiationContext$ = function (instantiationContext) {
+NullType.prototype.instantiate$LInstantiationContext$B = function (instantiationContext, allowVoid) {
 	return this;
 };
 
@@ -29325,7 +29665,7 @@ function PrimitiveType() {
 };
 
 $__jsx_extend([PrimitiveType], Type);
-PrimitiveType.prototype.instantiate$LInstantiationContext$ = function (instantiationContext) {
+PrimitiveType.prototype.instantiate$LInstantiationContext$B = function (instantiationContext, allowVoid) {
 	return this;
 };
 
@@ -29423,7 +29763,7 @@ function VariantType() {
 };
 
 $__jsx_extend([VariantType], Type);
-VariantType.prototype.instantiate$LInstantiationContext$ = function (instantiationContext) {
+VariantType.prototype.instantiate$LInstantiationContext$B = function (instantiationContext, allowVoid) {
 	return this;
 };
 
@@ -29455,15 +29795,18 @@ function NullableType(type) {
 	if (type.equals$LType$(Type.variantType)) {
 		throw new Error("logic flaw, cannot create Nullable.<variant>");
 	}
+	if (type.equals$LType$(Type.voidType)) {
+		throw new Error("logic flaw, cannot create Nullable.<void>");
+	}
 	this._baseType = (type instanceof NullableType ? type._baseType : type);
 };
 
 $__jsx_extend([NullableType], Type);
-NullableType.prototype.instantiate$LInstantiationContext$ = function (instantiationContext) {
+NullableType.prototype.instantiate$LInstantiationContext$B = function (instantiationContext, allowVoid) {
 	var baseType;
 	var this$0;
 	var this$0$0;
-	baseType = (this$0 = this._baseType, this$0 instanceof NullableType ? (this$0$0 = this$0, this$0$0._baseType) : this$0).instantiate$LInstantiationContext$(instantiationContext);
+	baseType = (this$0 = this._baseType, this$0 instanceof NullableType ? (this$0$0 = this$0, this$0$0._baseType) : this$0).instantiate$LInstantiationContext$B(instantiationContext, allowVoid);
 	return (baseType instanceof PrimitiveType ? new NullableType(baseType) : baseType);
 };
 
@@ -29518,9 +29861,9 @@ function VariableLengthArgumentType(type) {
 };
 
 $__jsx_extend([VariableLengthArgumentType], Type);
-VariableLengthArgumentType.prototype.instantiate$LInstantiationContext$ = function (instantiationContext) {
+VariableLengthArgumentType.prototype.instantiate$LInstantiationContext$B = function (instantiationContext, allowVoid) {
 	var baseType;
-	baseType = this._baseType.instantiate$LInstantiationContext$(instantiationContext);
+	baseType = this._baseType.instantiate$LInstantiationContext$B(instantiationContext, allowVoid);
 	return new VariableLengthArgumentType(baseType);
 };
 
@@ -29571,7 +29914,7 @@ function ObjectType(classDef) {
 };
 
 $__jsx_extend([ObjectType], Type);
-ObjectType.prototype.instantiate$LInstantiationContext$ = function (instantiationContext) {
+ObjectType.prototype.instantiate$LInstantiationContext$B = function (instantiationContext, allowVoid) {
 	throw new Error("logic flaw; ObjectType is created during semantic analysis, after template instantiation");
 };
 
@@ -29671,7 +30014,7 @@ function ParsedObjectType$getTypeArguments$LParsedObjectType$($this) {
 
 ParsedObjectType.getTypeArguments$LParsedObjectType$ = ParsedObjectType$getTypeArguments$LParsedObjectType$;
 
-ParsedObjectType.prototype.instantiate$LInstantiationContext$ = function (instantiationContext) {
+ParsedObjectType.prototype.instantiate$LInstantiationContext$B = function (instantiationContext, allowVoid) {
 	var enclosingType;
 	var actualType;
 	var qualifiedName;
@@ -29683,17 +30026,22 @@ ParsedObjectType.prototype.instantiate$LInstantiationContext$ = function (instan
 	var this$0;
 	var this$1;
 	var this$2;
+	var this$0$0;
 	var this$3;
 	var this$4;
 	var this$5;
 	var this$6;
 	var this$7;
+	var this$0$1;
 	var this$8;
 	this$0 = this._qualifiedName;
 	enclosingType = this$0._enclosingType;
 	if (enclosingType == null && this._typeArguments.length === 0) {
 		actualType = instantiationContext.typemap[(this$2 = (this$1 = this._qualifiedName, this$1._token), this$2._value)];
 		if (actualType != null) {
+			if (! allowVoid && actualType.equals$LType$(Type.voidType)) {
+				instantiationContext.errors.push(new CompileError((this$0$0 = this._qualifiedName, this$0$0._token), "the type cannot be instantiated as void in this context"));
+			}
 			return actualType;
 		}
 		if (this._classDef == null) {
@@ -29703,7 +30051,7 @@ ParsedObjectType.prototype.instantiate$LInstantiationContext$ = function (instan
 	}
 	qualifiedName = this._qualifiedName;
 	if (enclosingType != null) {
-		actualEnclosingType = (this$3 = this._qualifiedName, this$3._enclosingType).instantiate$LInstantiationContext$(instantiationContext);
+		actualEnclosingType = (this$3 = this._qualifiedName, this$3._enclosingType).instantiate$LInstantiationContext$B(instantiationContext, true);
 		if (! (this$8 = this._qualifiedName, this$8._enclosingType).equals$LType$(actualEnclosingType)) {
 			qualifiedName = new QualifiedName$1((this$4 = this._qualifiedName, this$4._token), actualEnclosingType);
 		}
@@ -29711,17 +30059,19 @@ ParsedObjectType.prototype.instantiate$LInstantiationContext$ = function (instan
 	typeArgs = [];
 	for (i = 0; i < this._typeArguments.length; ++i) {
 		if (this._typeArguments[i] instanceof ParsedObjectType && (this$5 = this._typeArguments[i], this$5._typeArguments).length !== 0) {
-			actualType = this._typeArguments[i].instantiate$LInstantiationContext$(instantiationContext);
+			actualType = this._typeArguments[i].instantiate$LInstantiationContext$B(instantiationContext, true);
 		} else {
 			actualType = instantiationContext.typemap[this._typeArguments[i].toString()];
 		}
 		typeArgs[i] = (actualType != null ? actualType : this._typeArguments[i]);
-		if (typeArgs[i] instanceof NullableType) {
-			this$6 = qualifiedName._token;
-			templateClassName = this$6._value;
-			if (templateClassName === "Array" || templateClassName === "Map") {
+		this$6 = qualifiedName._token;
+		templateClassName = this$6._value;
+		if (templateClassName === "Array" || templateClassName === "Map") {
+			if (typeArgs[i] instanceof NullableType) {
 				this$7 = typeArgs[i];
 				typeArgs[i] = this$7._baseType;
+			} else if (typeArgs[i].equals$LType$(Type.voidType)) {
+				instantiationContext.errors.push(new CompileError((this$0$1 = this._qualifiedName, this$0$1._token), "cannot instantiate " + templateClassName + ".<T> with T=void"));
 			}
 		}
 	}
@@ -29777,7 +30127,7 @@ FunctionType.prototype.getClassDef$ = function () {
 };
 
 
-FunctionType.prototype.instantiate$LInstantiationContext$ = function (instantiationContext) {
+FunctionType.prototype.instantiate$LInstantiationContext$B = function (instantiationContext, allowVoid) {
 	throw new Error("logic flaw");
 };
 
@@ -30109,17 +30459,17 @@ function StaticFunctionType(token, returnType, argTypes, isAssignable) {
 };
 
 $__jsx_extend([StaticFunctionType], ResolvedFunctionType);
-StaticFunctionType.prototype.instantiate$LInstantiationContext$ = function (instantiationContext) {
+StaticFunctionType.prototype.instantiate$LInstantiationContext$B = function (instantiationContext, allowVoid) {
 	var returnType;
 	var argTypes;
 	var i;
-	returnType = this._returnType.instantiate$LInstantiationContext$(instantiationContext);
+	returnType = this._returnType.instantiate$LInstantiationContext$B(instantiationContext, true);
 	if (returnType == null) {
 		return null;
 	}
 	argTypes = [];
 	for (i = 0; i < this._argTypes.length; ++i) {
-		if ((argTypes[i] = this._argTypes[i].instantiate$LInstantiationContext$(instantiationContext)) == null) {
+		if ((argTypes[i] = this._argTypes[i].instantiate$LInstantiationContext$B(instantiationContext, true)) == null) {
 			return null;
 		}
 	}
@@ -30282,7 +30632,7 @@ TemplateFunctionType.prototype._getExpectedTypes$ALUtil$x2EArgumentTypeRequest$N
 	}
 	instantiationContext = ({errors: [  ], typemap: (this$2 = this._funcDef, this$2._resolvedTypemap), objectTypesUsed: []});
 	for (i = 0; i < numberOfArgs; ++i) {
-		argTypes[i] = argTypes[i].instantiate$LInstantiationContext$(instantiationContext);
+		argTypes[i] = argTypes[i].instantiate$LInstantiationContext$B(instantiationContext, true);
 	}
 	hasCallback = false;
 	callbackArgTypes = argTypes.map((function (argType) {
@@ -30691,7 +31041,7 @@ _Util$1._createFreshArgumentDeclaration$LType$ = _Util$1$_createFreshArgumentDec
 function _Util$1$_createFreshLocalVariable$LType$(type) {
 	var id;
 	id = _Util$1._numUniqVar++;
-	return new LocalVariable$0(new Token$2("$a" + (id + ""), true), type);
+	return new LocalVariable(new Token$2("$a" + (id + ""), true), type, false);
 };
 
 _Util$1._createFreshLocalVariable$LType$ = _Util$1$_createFreshLocalVariable$LType$;
@@ -30992,7 +31342,7 @@ _BreakStatementTransformer.prototype._replaceControlStructuresWithGotos$ = funct
 	var this$4;
 	var _labelStack$0;
 	if ((this$4 = this._statement, this$4._label) != null) {
-		label = _CPSTransformCommand$_getStatementTransformerByLabel$L_CPSTransformCommand$S(this._transformer, (this$1 = (this$0 = this._statement, this$0._label), this$1._value)).getBreakingLabel$();
+		label = CPSTransformCommand$_getStatementTransformerByLabel$LCPSTransformCommand$S(this._transformer, (this$1 = (this$0 = this._statement, this$0._label), this$1._value)).getBreakingLabel$();
 	} else {
 		label = (this$2 = this._transformer, (_labelStack$0 = this$2._labelStack)[_labelStack$0.length - 1]).getBreakingLabel$();
 	}
@@ -31028,7 +31378,7 @@ _ContinueStatementTransformer.prototype._replaceControlStructuresWithGotos$ = fu
 	var this$4;
 	var _labelStack$0;
 	if ((this$4 = this._statement, this$4._label) != null) {
-		label = _CPSTransformCommand$_getStatementTransformerByLabel$L_CPSTransformCommand$S(this._transformer, (this$1 = (this$0 = this._statement, this$0._label), this$1._value)).getContinuingLabel$();
+		label = CPSTransformCommand$_getStatementTransformerByLabel$LCPSTransformCommand$S(this._transformer, (this$1 = (this$0 = this._statement, this$0._label), this$1._value)).getContinuingLabel$();
 	} else {
 		label = (this$2 = this._transformer, (_labelStack$0 = this$2._labelStack)[_labelStack$0.length - 1]).getContinuingLabel$();
 	}
@@ -31096,7 +31446,7 @@ _DoWhileStatementTransformer.prototype._replaceControlStructuresWithGotos$ = fun
 	this$2._labelStack.push(this);
 	this._statement.getStatements$().forEach((function (statement) {
 		var this$0;
-		this$0 = _CPSTransformCommand$_getStatementTransformerFor$L_CPSTransformCommand$LStatement$($this._transformer, statement);
+		this$0 = CPSTransformCommand$_getStatementTransformerFor$LCPSTransformCommand$LStatement$($this._transformer, statement);
 		this$0._replaceControlStructuresWithGotos$();
 	}));
 	this$3 = this._transformer;
@@ -31266,7 +31616,7 @@ _ForStatementTransformer.prototype._replaceControlStructuresWithGotos$ = functio
 	this$8._labelStack.push(this);
 	(this$9 = this._statement, this$9._statements).forEach((function (statement) {
 		var this$0;
-		this$0 = _CPSTransformCommand$_getStatementTransformerFor$L_CPSTransformCommand$LStatement$($this._transformer, statement);
+		this$0 = CPSTransformCommand$_getStatementTransformerFor$LCPSTransformCommand$LStatement$($this._transformer, statement);
 		this$0._replaceControlStructuresWithGotos$();
 	}));
 	this$10 = this._transformer;
@@ -31366,7 +31716,7 @@ _IfStatementTransformer.prototype._replaceControlStructuresWithGotos$ = function
 	this$3._outputStatements.push(statement$2);
 	(this$4 = this._statement, this$4._onTrueStatements).forEach((function (statement) {
 		var this$0;
-		this$0 = _CPSTransformCommand$_getStatementTransformerFor$L_CPSTransformCommand$LStatement$($this._transformer, statement);
+		this$0 = CPSTransformCommand$_getStatementTransformerFor$LCPSTransformCommand$LStatement$($this._transformer, statement);
 		this$0._replaceControlStructuresWithGotos$();
 	}));
 	endLabel = "$L_end_if_" + (this._id + "");
@@ -31378,7 +31728,7 @@ _IfStatementTransformer.prototype._replaceControlStructuresWithGotos$ = function
 	this$6._outputStatements.push(statement$4);
 	(this$7 = this._statement, this$7._onFalseStatements).forEach((function (statement) {
 		var this$0;
-		this$0 = _CPSTransformCommand$_getStatementTransformerFor$L_CPSTransformCommand$LStatement$($this._transformer, statement);
+		this$0 = CPSTransformCommand$_getStatementTransformerFor$LCPSTransformCommand$LStatement$($this._transformer, statement);
 		this$0._replaceControlStructuresWithGotos$();
 	}));
 	this$8 = this._transformer;
@@ -31551,7 +31901,7 @@ _SwitchStatementTransformer.prototype._emitSwitchBodies$ = function () {
 			statement$3 = new LabelStatement(label);
 			this$5._outputStatements.push(statement$3);
 		} else {
-			this$6 = _CPSTransformCommand$_getStatementTransformerFor$L_CPSTransformCommand$LStatement$(this._transformer, stmt);
+			this$6 = CPSTransformCommand$_getStatementTransformerFor$LCPSTransformCommand$LStatement$(this._transformer, stmt);
 			this$6._replaceControlStructuresWithGotos$();
 		}
 	}
@@ -31602,7 +31952,7 @@ function _SwitchStatementTransformer$_emitSwitchBodies$L_SwitchStatementTransfor
 			statement$3 = new LabelStatement(label);
 			this$5._outputStatements.push(statement$3);
 		} else {
-			this$6 = _CPSTransformCommand$_getStatementTransformerFor$L_CPSTransformCommand$LStatement$($this._transformer, stmt);
+			this$6 = CPSTransformCommand$_getStatementTransformerFor$LCPSTransformCommand$LStatement$($this._transformer, stmt);
 			this$6._replaceControlStructuresWithGotos$();
 		}
 	}
@@ -31746,7 +32096,7 @@ _WhileStatementTransformer.prototype._replaceControlStructuresWithGotos$ = funct
 	this$4._labelStack.push(this);
 	(this$5 = this._statement, this$5._statements).forEach((function (statement) {
 		var this$0;
-		this$0 = _CPSTransformCommand$_getStatementTransformerFor$L_CPSTransformCommand$LStatement$($this._transformer, statement);
+		this$0 = CPSTransformCommand$_getStatementTransformerFor$LCPSTransformCommand$LStatement$($this._transformer, statement);
 		this$0._replaceControlStructuresWithGotos$();
 	}));
 	this$6 = this._transformer;
@@ -31912,909 +32262,6 @@ _DebuggerStatementTransformer.prototype._replaceControlStructuresWithGotos$ = fu
 };
 
 
-function _TransformCommand(identifier) {
-	this._identifier = identifier;
-	this._compiler = null;
-};
-
-$__jsx_extend([_TransformCommand], Object);
-_TransformCommand.prototype.setCompiler$LCompiler$ = function (compiler) {
-	this._compiler = compiler;
-};
-
-
-function _FunctionTransformCommand(identifier) {
-	this._identifier = identifier;
-	this._compiler = null;
-};
-
-$__jsx_extend([_FunctionTransformCommand], _TransformCommand);
-_FunctionTransformCommand.prototype.performTransformation$ = function () {
-	var $this = this;
-	_FunctionTransformCommand$_getAllClosures$L_FunctionTransformCommand$(this).forEach((function (funcDef) {
-		$this.transformFunction$LMemberFunctionDefinition$(funcDef);
-	}));
-};
-
-
-_FunctionTransformCommand.prototype._getAllClosures$ = function () {
-	var $this = this;
-	var closures;
-	closures = [];
-	Compiler$forEachClassDef$LCompiler$F$LParser$LClassDefinition$B$(this._compiler, (function (parser, classDef) {
-		return ClassDefinition$forEachMember$LClassDefinition$F$LMemberDefinition$B$(classDef, (function onMember(member) {
-			MemberDefinition$forEachClosure$LMemberDefinition$F$LMemberFunctionDefinition$B$(member, (function (funcDef) {
-				return onMember(funcDef);
-			}));
-			if (member instanceof MemberFunctionDefinition) {
-				closures.push(member);
-			}
-			return true;
-		}));
-	}));
-	return closures;
-};
-
-
-function _FunctionTransformCommand$_getAllClosures$L_FunctionTransformCommand$($this) {
-	var closures;
-	closures = [];
-	Compiler$forEachClassDef$LCompiler$F$LParser$LClassDefinition$B$($this._compiler, (function (parser, classDef) {
-		return ClassDefinition$forEachMember$LClassDefinition$F$LMemberDefinition$B$(classDef, (function onMember(member) {
-			MemberDefinition$forEachClosure$LMemberDefinition$F$LMemberFunctionDefinition$B$(member, (function (funcDef) {
-				return onMember(funcDef);
-			}));
-			if (member instanceof MemberFunctionDefinition) {
-				closures.push(member);
-			}
-			return true;
-		}));
-	}));
-	return closures;
-};
-
-_FunctionTransformCommand._getAllClosures$L_FunctionTransformCommand$ = _FunctionTransformCommand$_getAllClosures$L_FunctionTransformCommand$;
-
-function _CPSTransformCommand() {
-	this._identifier = "cps";
-	this._compiler = null;
-	this._transformingFuncDef = null;
-	this._outputStatements = null;
-	this._labelStack = [];
-	this._returnLocals = [];
-	this._transformYield = false;
-};
-
-$__jsx_extend([_CPSTransformCommand], _FunctionTransformCommand);
-_CPSTransformCommand.prototype.setTransformYield$B = function (flag) {
-	this._transformYield = flag;
-};
-
-
-function _CPSTransformCommand$setTransformYield$L_CPSTransformCommand$B($this, flag) {
-	$this._transformYield = flag;
-};
-
-_CPSTransformCommand.setTransformYield$L_CPSTransformCommand$B = _CPSTransformCommand$setTransformYield$L_CPSTransformCommand$B;
-
-_CPSTransformCommand.prototype._functionIsTransformable$LMemberFunctionDefinition$ = function (funcDef) {
-	var $this = this;
-	var this$0$0;
-	return (funcDef instanceof TemplateFunctionDefinition ? false : funcDef._statements == null ? false : funcDef._nameToken != null && (this$0$0 = funcDef._nameToken, this$0$0._value) === "constructor" ? false : Util$forEachStatement$F$LStatement$B$ALStatement$((function onStatement(statement) {
-		return (! $this._transformYield && statement instanceof YieldStatement ? false : statement instanceof ForInStatement ? false : statement instanceof TryStatement ? false : statement.forEachStatement$F$LStatement$B$(onStatement));
-	}), funcDef._statements));
-};
-
-
-function _CPSTransformCommand$_functionIsTransformable$L_CPSTransformCommand$LMemberFunctionDefinition$($this, funcDef) {
-	var this$0$0;
-	return (funcDef instanceof TemplateFunctionDefinition ? false : funcDef._statements == null ? false : funcDef._nameToken != null && (this$0$0 = funcDef._nameToken, this$0$0._value) === "constructor" ? false : Util$forEachStatement$F$LStatement$B$ALStatement$((function onStatement(statement) {
-		return (! $this._transformYield && statement instanceof YieldStatement ? false : statement instanceof ForInStatement ? false : statement instanceof TryStatement ? false : statement.forEachStatement$F$LStatement$B$(onStatement));
-	}), funcDef._statements));
-};
-
-_CPSTransformCommand._functionIsTransformable$L_CPSTransformCommand$LMemberFunctionDefinition$ = _CPSTransformCommand$_functionIsTransformable$L_CPSTransformCommand$LMemberFunctionDefinition$;
-
-_CPSTransformCommand.prototype.transformFunction$LMemberFunctionDefinition$ = function (funcDef) {
-	if (! _CPSTransformCommand$_functionIsTransformable$L_CPSTransformCommand$LMemberFunctionDefinition$(this, funcDef)) {
-		return;
-	}
-	_CPSTransformCommand$_doCPSTransform$L_CPSTransformCommand$LMemberFunctionDefinition$(this, funcDef);
-};
-
-
-_CPSTransformCommand.prototype._doCPSTransform$LMemberFunctionDefinition$ = function (funcDef) {
-	var returnLocal;
-	var statements;
-	var i;
-	var this$0;
-	this._transformingFuncDef = funcDef;
-	returnLocal = null;
-	if (! Type.voidType.equals$LType$(funcDef._returnType)) {
-		returnLocal = new LocalVariable$0(new Token$2("$return", false), funcDef._returnType);
-		funcDef._locals.push(returnLocal);
-		this._returnLocals.push(returnLocal);
-	}
-	statements = [];
-	this._outputStatements = statements;
-	for (i = 0; i < funcDef._statements.length; ++i) {
-		this$0 = _CPSTransformCommand$_getStatementTransformerFor$L_CPSTransformCommand$LStatement$(this, funcDef._statements[i]);
-		this$0._replaceControlStructuresWithGotos$();
-	}
-	statements.unshift(new LabelStatement("$L_enter"));
-	statements.push(new GotoStatement("$L_exit"), new LabelStatement("$L_exit"), new ReturnStatement(new Token$2("return", false), null));
-	funcDef._statements = statements;
-	_CPSTransformCommand$_eliminateGotos$L_CPSTransformCommand$LMemberFunctionDefinition$(this, funcDef);
-	if (! Type.voidType.equals$LType$(funcDef._returnType)) {
-		funcDef._statements.push(new ReturnStatement(new Token$2("return", false), new LocalExpression(returnLocal._name, returnLocal)));
-		this._returnLocals.pop();
-	}
-};
-
-
-function _CPSTransformCommand$_doCPSTransform$L_CPSTransformCommand$LMemberFunctionDefinition$($this, funcDef) {
-	var returnLocal;
-	var statements;
-	var i;
-	var this$0;
-	$this._transformingFuncDef = funcDef;
-	returnLocal = null;
-	if (! Type.voidType.equals$LType$(funcDef._returnType)) {
-		returnLocal = new LocalVariable$0(new Token$2("$return", false), funcDef._returnType);
-		funcDef._locals.push(returnLocal);
-		$this._returnLocals.push(returnLocal);
-	}
-	statements = [];
-	$this._outputStatements = statements;
-	for (i = 0; i < funcDef._statements.length; ++i) {
-		this$0 = _CPSTransformCommand$_getStatementTransformerFor$L_CPSTransformCommand$LStatement$($this, funcDef._statements[i]);
-		this$0._replaceControlStructuresWithGotos$();
-	}
-	statements.unshift(new LabelStatement("$L_enter"));
-	statements.push(new GotoStatement("$L_exit"), new LabelStatement("$L_exit"), new ReturnStatement(new Token$2("return", false), null));
-	funcDef._statements = statements;
-	_CPSTransformCommand$_eliminateGotos$L_CPSTransformCommand$LMemberFunctionDefinition$($this, funcDef);
-	if (! Type.voidType.equals$LType$(funcDef._returnType)) {
-		funcDef._statements.push(new ReturnStatement(new Token$2("return", false), new LocalExpression(returnLocal._name, returnLocal)));
-		$this._returnLocals.pop();
-	}
-};
-
-_CPSTransformCommand._doCPSTransform$L_CPSTransformCommand$LMemberFunctionDefinition$ = _CPSTransformCommand$_doCPSTransform$L_CPSTransformCommand$LMemberFunctionDefinition$;
-
-_CPSTransformCommand.prototype._eliminateGotos$LMemberFunctionDefinition$ = function (funcDef) {
-	var $this = this;
-	var statements;
-	var loopVar;
-	var nextVar;
-	var executor;
-	var labelIndeces;
-	var i;
-	var c;
-	var name;
-	var makeJump;
-	var makeBreak;
-	var replaceGoto;
-	var stmt;
-	var ifStmt;
-	var switchStmt;
-	var j;
-	var makeBasicBlock;
-	var basicBlocks;
-	var currentLabel;
-	var body;
-	var whileStmt;
-	var this$0;
-	var _statements$0;
-	statements = funcDef._statements;
-	loopVar = new LocalVariable$0(new Token$2("$loop", true), new StaticFunctionType(null, Type.voidType, [ Type.integerType ], true));
-	funcDef._locals.push(loopVar);
-	nextVar = new ArgumentDeclaration(new Token$2("$next", true), Type.integerType);
-	executor = _Util$1$_createNamedFunction$LMemberFunctionDefinition$LToken$LToken$ALArgumentDeclaration$LType$(funcDef, null, new Token$2("$loop", true), [ nextVar ], Type.voidType);
-	executor._funcLocal = loopVar;
-	labelIndeces = {};
-	for ((i = 0, c = 0); i < statements.length; ++i) {
-		if (statements[i] instanceof LabelStatement) {
-			this$0 = statements[i];
-			name = this$0._name;
-			labelIndeces[name] = (c++ | 0);
-		}
-	}
-	function makeJump(gotoStmt) {
-		var name;
-		var index;
-		name = gotoStmt.label;
-		if ((index = labelIndeces[name]) == null) {
-			throw new Error("logic flaw! label not found");
-		}
-		return new ExpressionStatement(new AssignmentExpression(new Token$2("=", false), new LocalExpression(new Token$2("$next", true), nextVar), new IntegerLiteralExpression(new Token$2("" + (index + ""), false))));
-	}
-	function makeBreak() {
-		return new BreakStatement(new Token$2("break", false), null);
-	}
-	function replaceGoto(statements, index) {
-		var gotoStmt;
-		gotoStmt = statements[index];
-		statements.splice(index, 1, makeJump(gotoStmt), makeBreak());
-		return (index + 1 | 0);
-	}
-	for (i = 0; i < statements.length; ++i) {
-		stmt = statements[i];
-		if (stmt instanceof GotoStatement) {
-			i = replaceGoto(statements, (i | 0));
-		} else if (stmt instanceof IfStatement) {
-			ifStmt = stmt;
-			replaceGoto(ifStmt._onTrueStatements, 0);
-			replaceGoto(ifStmt._onFalseStatements, 0);
-		} else if (stmt instanceof SwitchStatement) {
-			switchStmt = stmt;
-			for (j = 0; j < switchStmt._statements.length; ++j) {
-				if (switchStmt._statements[j] instanceof GotoStatement) {
-					j = replaceGoto(switchStmt._statements, (j | 0));
-				}
-			}
-			statements.splice(i + 1, 0, makeBreak());
-			i = i + 1;
-		}
-	}
-	function makeBasicBlock(label, body) {
-		var statements;
-		statements = body.concat([  ]);
-		statements.unshift(new CaseStatement(new Token$2("case", false), new IntegerLiteralExpression(new Token$2("" + (labelIndeces[label] + ""), false))));
-		return statements;
-	}
-	basicBlocks = [];
-	for (i = 0; i < statements.length; ) {
-		currentLabel = statements[i];
-		++i;
-		body = [];
-		for (; i < statements.length; ++i) {
-			if (statements[i] instanceof LabelStatement) {
-				break;
-			}
-			body.push(statements[i]);
-		}
-		basicBlocks = basicBlocks.concat(makeBasicBlock(currentLabel._name, body));
-	}
-	switchStmt = new SwitchStatement(new Token$2("switch", false), null, new LocalExpression(new Token$2("$next", true), nextVar), basicBlocks);
-	whileStmt = new WhileStatement(new Token$2("while", false), null, new BooleanLiteralExpression(new Token$2("true", false)), [ switchStmt ]);
-	executor._statements = [ whileStmt ];
-	(_statements$0 = funcDef._statements).length = 0;
-	_statements$0.push(new FunctionStatement(new Token$2("function", false), executor));
-	funcDef._statements.push(new ExpressionStatement(new CallExpression(new Token$2("(", false), new LocalExpression(new Token$2("$loop", true), loopVar), [ new IntegerLiteralExpression(new Token$2("0", false)) ])));
-};
-
-
-function _CPSTransformCommand$_eliminateGotos$L_CPSTransformCommand$LMemberFunctionDefinition$($this, funcDef) {
-	var statements;
-	var loopVar;
-	var nextVar;
-	var executor;
-	var labelIndeces;
-	var i;
-	var c;
-	var name;
-	var makeJump;
-	var makeBreak;
-	var replaceGoto;
-	var stmt;
-	var ifStmt;
-	var switchStmt;
-	var j;
-	var makeBasicBlock;
-	var basicBlocks;
-	var currentLabel;
-	var body;
-	var whileStmt;
-	var this$0;
-	var _statements$0;
-	statements = funcDef._statements;
-	loopVar = new LocalVariable$0(new Token$2("$loop", true), new StaticFunctionType(null, Type.voidType, [ Type.integerType ], true));
-	funcDef._locals.push(loopVar);
-	nextVar = new ArgumentDeclaration(new Token$2("$next", true), Type.integerType);
-	executor = _Util$1$_createNamedFunction$LMemberFunctionDefinition$LToken$LToken$ALArgumentDeclaration$LType$(funcDef, null, new Token$2("$loop", true), [ nextVar ], Type.voidType);
-	executor._funcLocal = loopVar;
-	labelIndeces = {};
-	for ((i = 0, c = 0); i < statements.length; ++i) {
-		if (statements[i] instanceof LabelStatement) {
-			this$0 = statements[i];
-			name = this$0._name;
-			labelIndeces[name] = (c++ | 0);
-		}
-	}
-	function makeJump(gotoStmt) {
-		var name;
-		var index;
-		name = gotoStmt.label;
-		if ((index = labelIndeces[name]) == null) {
-			throw new Error("logic flaw! label not found");
-		}
-		return new ExpressionStatement(new AssignmentExpression(new Token$2("=", false), new LocalExpression(new Token$2("$next", true), nextVar), new IntegerLiteralExpression(new Token$2("" + (index + ""), false))));
-	}
-	function makeBreak() {
-		return new BreakStatement(new Token$2("break", false), null);
-	}
-	function replaceGoto(statements, index) {
-		var gotoStmt;
-		gotoStmt = statements[index];
-		statements.splice(index, 1, makeJump(gotoStmt), makeBreak());
-		return (index + 1 | 0);
-	}
-	for (i = 0; i < statements.length; ++i) {
-		stmt = statements[i];
-		if (stmt instanceof GotoStatement) {
-			i = replaceGoto(statements, (i | 0));
-		} else if (stmt instanceof IfStatement) {
-			ifStmt = stmt;
-			replaceGoto(ifStmt._onTrueStatements, 0);
-			replaceGoto(ifStmt._onFalseStatements, 0);
-		} else if (stmt instanceof SwitchStatement) {
-			switchStmt = stmt;
-			for (j = 0; j < switchStmt._statements.length; ++j) {
-				if (switchStmt._statements[j] instanceof GotoStatement) {
-					j = replaceGoto(switchStmt._statements, (j | 0));
-				}
-			}
-			statements.splice(i + 1, 0, makeBreak());
-			i = i + 1;
-		}
-	}
-	function makeBasicBlock(label, body) {
-		var statements;
-		statements = body.concat([  ]);
-		statements.unshift(new CaseStatement(new Token$2("case", false), new IntegerLiteralExpression(new Token$2("" + (labelIndeces[label] + ""), false))));
-		return statements;
-	}
-	basicBlocks = [];
-	for (i = 0; i < statements.length; ) {
-		currentLabel = statements[i];
-		++i;
-		body = [];
-		for (; i < statements.length; ++i) {
-			if (statements[i] instanceof LabelStatement) {
-				break;
-			}
-			body.push(statements[i]);
-		}
-		basicBlocks = basicBlocks.concat(makeBasicBlock(currentLabel._name, body));
-	}
-	switchStmt = new SwitchStatement(new Token$2("switch", false), null, new LocalExpression(new Token$2("$next", true), nextVar), basicBlocks);
-	whileStmt = new WhileStatement(new Token$2("while", false), null, new BooleanLiteralExpression(new Token$2("true", false)), [ switchStmt ]);
-	executor._statements = [ whileStmt ];
-	(_statements$0 = funcDef._statements).length = 0;
-	_statements$0.push(new FunctionStatement(new Token$2("function", false), executor));
-	funcDef._statements.push(new ExpressionStatement(new CallExpression(new Token$2("(", false), new LocalExpression(new Token$2("$loop", true), loopVar), [ new IntegerLiteralExpression(new Token$2("0", false)) ])));
-};
-
-_CPSTransformCommand._eliminateGotos$L_CPSTransformCommand$LMemberFunctionDefinition$ = _CPSTransformCommand$_eliminateGotos$L_CPSTransformCommand$LMemberFunctionDefinition$;
-
-_CPSTransformCommand.prototype.getTransformingFuncDef$ = function () {
-	return this._transformingFuncDef;
-};
-
-
-function _CPSTransformCommand$getTransformingFuncDef$L_CPSTransformCommand$($this) {
-	return $this._transformingFuncDef;
-};
-
-_CPSTransformCommand.getTransformingFuncDef$L_CPSTransformCommand$ = _CPSTransformCommand$getTransformingFuncDef$L_CPSTransformCommand$;
-
-_CPSTransformCommand.prototype._setOutputStatements$ALStatement$ = function (statements) {
-	this._outputStatements = statements;
-};
-
-
-function _CPSTransformCommand$_setOutputStatements$L_CPSTransformCommand$ALStatement$($this, statements) {
-	$this._outputStatements = statements;
-};
-
-_CPSTransformCommand._setOutputStatements$L_CPSTransformCommand$ALStatement$ = _CPSTransformCommand$_setOutputStatements$L_CPSTransformCommand$ALStatement$;
-
-_CPSTransformCommand.prototype._emit$LStatement$ = function (statement) {
-	this._outputStatements.push(statement);
-};
-
-
-function _CPSTransformCommand$_emit$L_CPSTransformCommand$LStatement$($this, statement) {
-	$this._outputStatements.push(statement);
-};
-
-_CPSTransformCommand._emit$L_CPSTransformCommand$LStatement$ = _CPSTransformCommand$_emit$L_CPSTransformCommand$LStatement$;
-
-_CPSTransformCommand.prototype._emitExpressionStatement$LExpression$ = function (expr) {
-	var statement$0;
-	statement$0 = new ExpressionStatement(expr);
-	this._outputStatements.push(statement$0);
-};
-
-
-function _CPSTransformCommand$_emitExpressionStatement$L_CPSTransformCommand$LExpression$($this, expr) {
-	var statement$0;
-	statement$0 = new ExpressionStatement(expr);
-	$this._outputStatements.push(statement$0);
-};
-
-_CPSTransformCommand._emitExpressionStatement$L_CPSTransformCommand$LExpression$ = _CPSTransformCommand$_emitExpressionStatement$L_CPSTransformCommand$LExpression$;
-
-_CPSTransformCommand.prototype._emitConditionalBranch$LExpression$SS = function (expr, succLabel, failLabel) {
-	var statement$0;
-	statement$0 = new IfStatement(new Token$2("if", false), expr, [ new GotoStatement(succLabel) ], [ new GotoStatement(failLabel) ]);
-	this._outputStatements.push(statement$0);
-};
-
-
-function _CPSTransformCommand$_emitConditionalBranch$L_CPSTransformCommand$LExpression$SS($this, expr, succLabel, failLabel) {
-	var statement$0;
-	statement$0 = new IfStatement(new Token$2("if", false), expr, [ new GotoStatement(succLabel) ], [ new GotoStatement(failLabel) ]);
-	$this._outputStatements.push(statement$0);
-};
-
-_CPSTransformCommand._emitConditionalBranch$L_CPSTransformCommand$LExpression$SS = _CPSTransformCommand$_emitConditionalBranch$L_CPSTransformCommand$LExpression$SS;
-
-_CPSTransformCommand.prototype._getStatementTransformerByLabel$S = function (label) {
-	var i;
-	var trans;
-	var this$0;
-	var this$1;
-	for (i = 0; this._labelStack.length; ++i) {
-		trans = this._labelStack[i];
-		if ((this$1 = (this$0 = trans.getStatement$(), this$0._label), this$1._value) === label) {
-			return trans;
-		}
-	}
-	throw new Error("fatal error: no corresponding transformer for label \"" + label + "\"");
-};
-
-
-function _CPSTransformCommand$_getStatementTransformerByLabel$L_CPSTransformCommand$S($this, label) {
-	var i;
-	var trans;
-	var this$0;
-	var this$1;
-	for (i = 0; $this._labelStack.length; ++i) {
-		trans = $this._labelStack[i];
-		if ((this$1 = (this$0 = trans.getStatement$(), this$0._label), this$1._value) === label) {
-			return trans;
-		}
-	}
-	throw new Error("fatal error: no corresponding transformer for label \"" + label + "\"");
-};
-
-_CPSTransformCommand._getStatementTransformerByLabel$L_CPSTransformCommand$S = _CPSTransformCommand$_getStatementTransformerByLabel$L_CPSTransformCommand$S;
-
-_CPSTransformCommand.prototype._getTopLabelledBlock$ = function () {
-	var _labelStack$0;
-	return (_labelStack$0 = this._labelStack)[_labelStack$0.length - 1];
-};
-
-
-function _CPSTransformCommand$_getTopLabelledBlock$L_CPSTransformCommand$($this) {
-	var _labelStack$0;
-	return (_labelStack$0 = $this._labelStack)[_labelStack$0.length - 1];
-};
-
-_CPSTransformCommand._getTopLabelledBlock$L_CPSTransformCommand$ = _CPSTransformCommand$_getTopLabelledBlock$L_CPSTransformCommand$;
-
-_CPSTransformCommand.prototype._enterLabelledBlock$L_LabellableStatementTransformer$ = function (transformer) {
-	this._labelStack.push(transformer);
-};
-
-
-function _CPSTransformCommand$_enterLabelledBlock$L_CPSTransformCommand$L_LabellableStatementTransformer$($this, transformer) {
-	$this._labelStack.push(transformer);
-};
-
-_CPSTransformCommand._enterLabelledBlock$L_CPSTransformCommand$L_LabellableStatementTransformer$ = _CPSTransformCommand$_enterLabelledBlock$L_CPSTransformCommand$L_LabellableStatementTransformer$;
-
-_CPSTransformCommand.prototype._leaveLabelledBlock$ = function () {
-	this._labelStack.pop();
-};
-
-
-function _CPSTransformCommand$_leaveLabelledBlock$L_CPSTransformCommand$($this) {
-	$this._labelStack.pop();
-};
-
-_CPSTransformCommand._leaveLabelledBlock$L_CPSTransformCommand$ = _CPSTransformCommand$_leaveLabelledBlock$L_CPSTransformCommand$;
-
-_CPSTransformCommand.prototype._getTopReturnLocal$ = function () {
-	var _returnLocals$0;
-	return (_returnLocals$0 = this._returnLocals)[_returnLocals$0.length - 1];
-};
-
-
-function _CPSTransformCommand$_getTopReturnLocal$L_CPSTransformCommand$($this) {
-	var _returnLocals$0;
-	return (_returnLocals$0 = $this._returnLocals)[_returnLocals$0.length - 1];
-};
-
-_CPSTransformCommand._getTopReturnLocal$L_CPSTransformCommand$ = _CPSTransformCommand$_getTopReturnLocal$L_CPSTransformCommand$;
-
-_CPSTransformCommand.prototype._enterFunction$LLocalVariable$ = function (returnLocal) {
-	this._returnLocals.push(returnLocal);
-};
-
-
-function _CPSTransformCommand$_enterFunction$L_CPSTransformCommand$LLocalVariable$($this, returnLocal) {
-	$this._returnLocals.push(returnLocal);
-};
-
-_CPSTransformCommand._enterFunction$L_CPSTransformCommand$LLocalVariable$ = _CPSTransformCommand$_enterFunction$L_CPSTransformCommand$LLocalVariable$;
-
-_CPSTransformCommand.prototype._leaveFunction$ = function () {
-	this._returnLocals.pop();
-};
-
-
-function _CPSTransformCommand$_leaveFunction$L_CPSTransformCommand$($this) {
-	$this._returnLocals.pop();
-};
-
-_CPSTransformCommand._leaveFunction$L_CPSTransformCommand$ = _CPSTransformCommand$_leaveFunction$L_CPSTransformCommand$;
-
-_CPSTransformCommand.prototype._getStatementTransformerFor$LStatement$ = function (statement) {
-	if (statement instanceof ConstructorInvocationStatement) {
-		return new _ConstructorInvocationStatementTransformer(this, statement);
-	} else if (statement instanceof ExpressionStatement) {
-		return new _ExpressionStatementTransformer(this, statement);
-	} else if (statement instanceof FunctionStatement) {
-		return new _FunctionStatementTransformer(this, statement);
-	} else if (statement instanceof ReturnStatement) {
-		return new _ReturnStatementTransformer(this, statement);
-	} else if (statement instanceof YieldStatement) {
-		return new _YieldStatementTransformer(this, statement);
-	} else if (statement instanceof DeleteStatement) {
-		return new _DeleteStatementTransformer(this, statement);
-	} else if (statement instanceof BreakStatement) {
-		return new _BreakStatementTransformer(this, statement);
-	} else if (statement instanceof ContinueStatement) {
-		return new _ContinueStatementTransformer(this, statement);
-	} else if (statement instanceof DoWhileStatement) {
-		return new _DoWhileStatementTransformer(this, statement);
-	} else if (statement instanceof ForInStatement) {
-		return new _ForInStatementTransformer(this, statement);
-	} else if (statement instanceof ForStatement) {
-		return new _ForStatementTransformer(this, statement);
-	} else if (statement instanceof IfStatement) {
-		return new _IfStatementTransformer(this, statement);
-	} else if (statement instanceof SwitchStatement) {
-		return new _SwitchStatementTransformer(this, statement);
-	} else if (statement instanceof CaseStatement) {
-		return new _CaseStatementTransformer(this, statement);
-	} else if (statement instanceof DefaultStatement) {
-		return new _DefaultStatementTransformer(this, statement);
-	} else if (statement instanceof WhileStatement) {
-		return new _WhileStatementTransformer(this, statement);
-	} else if (statement instanceof TryStatement) {
-		return new _TryStatementTransformer(this, statement);
-	} else if (statement instanceof CatchStatement) {
-		return new _CatchStatementTransformer(this, statement);
-	} else if (statement instanceof ThrowStatement) {
-		return new _ThrowStatementTransformer(this, statement);
-	} else if (statement instanceof AssertStatement) {
-		return new _AssertStatementTransformer(this, statement);
-	} else if (statement instanceof LogStatement) {
-		return new _LogStatementTransformer(this, statement);
-	} else if (statement instanceof DebuggerStatement) {
-		return new _DebuggerStatementTransformer(this, statement);
-	}
-	throw new Error("got unexpected type of statement: " + JSON.stringify(statement.serialize$()));
-};
-
-
-function _CPSTransformCommand$_getStatementTransformerFor$L_CPSTransformCommand$LStatement$($this, statement) {
-	if (statement instanceof ConstructorInvocationStatement) {
-		return new _ConstructorInvocationStatementTransformer($this, statement);
-	} else if (statement instanceof ExpressionStatement) {
-		return new _ExpressionStatementTransformer($this, statement);
-	} else if (statement instanceof FunctionStatement) {
-		return new _FunctionStatementTransformer($this, statement);
-	} else if (statement instanceof ReturnStatement) {
-		return new _ReturnStatementTransformer($this, statement);
-	} else if (statement instanceof YieldStatement) {
-		return new _YieldStatementTransformer($this, statement);
-	} else if (statement instanceof DeleteStatement) {
-		return new _DeleteStatementTransformer($this, statement);
-	} else if (statement instanceof BreakStatement) {
-		return new _BreakStatementTransformer($this, statement);
-	} else if (statement instanceof ContinueStatement) {
-		return new _ContinueStatementTransformer($this, statement);
-	} else if (statement instanceof DoWhileStatement) {
-		return new _DoWhileStatementTransformer($this, statement);
-	} else if (statement instanceof ForInStatement) {
-		return new _ForInStatementTransformer($this, statement);
-	} else if (statement instanceof ForStatement) {
-		return new _ForStatementTransformer($this, statement);
-	} else if (statement instanceof IfStatement) {
-		return new _IfStatementTransformer($this, statement);
-	} else if (statement instanceof SwitchStatement) {
-		return new _SwitchStatementTransformer($this, statement);
-	} else if (statement instanceof CaseStatement) {
-		return new _CaseStatementTransformer($this, statement);
-	} else if (statement instanceof DefaultStatement) {
-		return new _DefaultStatementTransformer($this, statement);
-	} else if (statement instanceof WhileStatement) {
-		return new _WhileStatementTransformer($this, statement);
-	} else if (statement instanceof TryStatement) {
-		return new _TryStatementTransformer($this, statement);
-	} else if (statement instanceof CatchStatement) {
-		return new _CatchStatementTransformer($this, statement);
-	} else if (statement instanceof ThrowStatement) {
-		return new _ThrowStatementTransformer($this, statement);
-	} else if (statement instanceof AssertStatement) {
-		return new _AssertStatementTransformer($this, statement);
-	} else if (statement instanceof LogStatement) {
-		return new _LogStatementTransformer($this, statement);
-	} else if (statement instanceof DebuggerStatement) {
-		return new _DebuggerStatementTransformer($this, statement);
-	}
-	throw new Error("got unexpected type of statement: " + JSON.stringify(statement.serialize$()));
-};
-
-_CPSTransformCommand._getStatementTransformerFor$L_CPSTransformCommand$LStatement$ = _CPSTransformCommand$_getStatementTransformerFor$L_CPSTransformCommand$LStatement$;
-
-function _GeneratorTransformCommand() {
-	this._identifier = "generator";
-	this._compiler = null;
-	this._jsxGeneratorObject = null;
-};
-
-$__jsx_extend([_GeneratorTransformCommand], _FunctionTransformCommand);
-_GeneratorTransformCommand.prototype.setCompiler$LCompiler$ = function (compiler) {
-	var builtins;
-	var i;
-	var this$0;
-	_TransformCommand.prototype.setCompiler$LCompiler$.call(this, compiler);
-	builtins = compiler._builtinParsers[0];
-	for (i = 0; i < builtins._templateClassDefs.length; ++i) {
-		if ((this$0 = builtins._templateClassDefs[i], this$0._className) === "__jsx_generator_object") {
-			this._jsxGeneratorObject = builtins._templateClassDefs[i];
-			break;
-		}
-	}
-};
-
-
-_GeneratorTransformCommand.prototype.transformFunction$LMemberFunctionDefinition$ = function (funcDef) {
-	if (! ((funcDef._flags & 8192) !== 0)) {
-		return;
-	}
-	_GeneratorTransformCommand$_transformGeneratorCore$L_GeneratorTransformCommand$LMemberFunctionDefinition$(this, funcDef);
-	MemberDefinition$setFlags$LMemberDefinition$N(funcDef, funcDef._flags & -8193);
-};
-
-
-_GeneratorTransformCommand.prototype._transformGeneratorCore$LMemberFunctionDefinition$ = function (funcDef) {
-	var $this = this;
-	var yieldingType;
-	var genType;
-	var genLocal;
-	var getGlobalDispatchBody;
-	var findReturnLocal;
-	var cpsTransformer;
-	var statements;
-	var i;
-	var newExpr;
-	var this$0;
-	var this$1;
-	var this$2;
-	var this$3;
-	var this$4;
-	var this$5;
-	var _locals$0;
-	yieldingType = (this$0 = funcDef._returnType.getClassDef$(), this$0._typeArguments)[0];
-	genType = _GeneratorTransformCommand$_instantiateGeneratorType$L_GeneratorTransformCommand$LType$(this, yieldingType);
-	genLocal = new LocalVariable$0(new Token$2("$generator", false), genType);
-	funcDef._locals.push(genLocal);
-	function getGlobalDispatchBody(funcDef) {
-		var funcStmt;
-		var whileStmt;
-		var switchStmt;
-		var this$0;
-		funcStmt = funcDef._statements[0];
-		whileStmt = (this$0 = funcStmt._funcDef, this$0._statements)[0];
-		switchStmt = whileStmt._statements[0];
-		return switchStmt._statements;
-	}
-	function findReturnLocal(funcDef) {
-		var locals;
-		var i;
-		var this$0;
-		var this$1;
-		var locals$len$0;
-		locals = funcDef._locals;
-		for ((i = 0, locals$len$0 = locals.length); i < locals$len$0; ++i) {
-			if ((this$1 = (this$0 = locals[i], this$0._name), this$1._value) === "$return") {
-				return locals[i];
-			}
-		}
-		return null;
-	}
-	cpsTransformer = new _CPSTransformCommand();
-	cpsTransformer.setCompiler$LCompiler$(this._compiler);
-	cpsTransformer._transformYield = true;
-	cpsTransformer.transformFunction$LMemberFunctionDefinition$(funcDef);
-	statements = getGlobalDispatchBody(funcDef);
-	for (i = 0; i < statements.length; ++i) {
-		if (statements[i] instanceof YieldStatement) {
-			statements.splice(i, 3, new ExpressionStatement(new AssignmentExpression(new Token$2("=", false), new PropertyExpression$0(new Token$2(".", false), new LocalExpression(new Token$2("$generator", false), genLocal), new Token$2("__value", false), [  ], yieldingType instanceof PrimitiveType ? new NullableType(yieldingType) : yieldingType), (this$1 = statements[i], this$1._expr))), new ExpressionStatement(new AssignmentExpression(new Token$2("=", false), new PropertyExpression$0(new Token$2(".", false), new LocalExpression(new Token$2("$generator", false), genLocal), new Token$2("__next", true), [  ], (this$2 = Type.integerType, this$2 instanceof PrimitiveType ? new NullableType(this$2) : this$2)), (this$3 = statements[i + 1], this$3._expr))), new ReturnStatement(new Token$2("return", false), null));
-			i += 2;
-		} else if (statements[i] instanceof ReturnStatement) {
-			statements.splice(i, 0, new ExpressionStatement(new AssignmentExpression(new Token$2("=", false), new PropertyExpression$0(new Token$2(".", false), new LocalExpression(new Token$2("$generator", false), genLocal), new Token$2("__value", false), [  ], yieldingType), new LocalExpression(new Token$2("$return", true), findReturnLocal(funcDef)))), new ExpressionStatement(new AssignmentExpression(new Token$2("=", false), new PropertyExpression$0(new Token$2(".", false), new LocalExpression(new Token$2("$generator", false), genLocal), new Token$2("__next", true), [  ], (this$4 = Type.integerType, this$4 instanceof PrimitiveType ? new NullableType(this$4) : this$4)), new IntegerLiteralExpression(new Token$2("-1", false)))));
-			i += 2;
-		}
-	}
-	newExpr = new NewExpression(new Token$2("new", false), genType, [  ]);
-	newExpr.analyze$LAnalysisContext$LExpression$(({errors: [  ], parser: null, postInstantiationCallback: null, funcDef: null, blockStack: null, statement: null}), null);
-	funcDef._statements.unshift(new ExpressionStatement(new AssignmentExpression(new Token$2("=", false), new LocalExpression(new Token$2("$generator", false), genLocal), newExpr)));
-	statements = funcDef._statements;
-	statements.splice(statements.length - 2, 2, new ExpressionStatement(new AssignmentExpression(new Token$2("=", false), new PropertyExpression$0(new Token$2(".", false), new LocalExpression(new Token$2("$generator", false), genLocal), new Token$2("__next", true), [  ], (this$5 = Type.integerType, this$5 instanceof PrimitiveType ? new NullableType(this$5) : this$5)), new IntegerLiteralExpression(new Token$2("0", false)))), new ExpressionStatement(new AssignmentExpression(new Token$2("=", false), new PropertyExpression$0(new Token$2(".", false), new LocalExpression(new Token$2("$generator", false), genLocal), new Token$2("__loop", true), [  ], new StaticFunctionType(null, Type.voidType, [ Type.integerType ], true)), new LocalExpression(new Token$2("$loop", true), (_locals$0 = funcDef._locals)[_locals$0.length - 1]))));
-	statements.push(new ReturnStatement(new Token$2("return", false), new LocalExpression(new Token$2("$generator", false), genLocal)));
-};
-
-
-function _GeneratorTransformCommand$_transformGeneratorCore$L_GeneratorTransformCommand$LMemberFunctionDefinition$($this, funcDef) {
-	var yieldingType;
-	var genType;
-	var genLocal;
-	var getGlobalDispatchBody;
-	var findReturnLocal;
-	var cpsTransformer;
-	var statements;
-	var i;
-	var newExpr;
-	var this$0;
-	var this$1;
-	var this$2;
-	var this$3;
-	var this$4;
-	var this$5;
-	var _locals$0;
-	yieldingType = (this$0 = funcDef._returnType.getClassDef$(), this$0._typeArguments)[0];
-	genType = _GeneratorTransformCommand$_instantiateGeneratorType$L_GeneratorTransformCommand$LType$($this, yieldingType);
-	genLocal = new LocalVariable$0(new Token$2("$generator", false), genType);
-	funcDef._locals.push(genLocal);
-	function getGlobalDispatchBody(funcDef) {
-		var funcStmt;
-		var whileStmt;
-		var switchStmt;
-		var this$0;
-		funcStmt = funcDef._statements[0];
-		whileStmt = (this$0 = funcStmt._funcDef, this$0._statements)[0];
-		switchStmt = whileStmt._statements[0];
-		return switchStmt._statements;
-	}
-	function findReturnLocal(funcDef) {
-		var locals;
-		var i;
-		var this$0;
-		var this$1;
-		var locals$len$0;
-		locals = funcDef._locals;
-		for ((i = 0, locals$len$0 = locals.length); i < locals$len$0; ++i) {
-			if ((this$1 = (this$0 = locals[i], this$0._name), this$1._value) === "$return") {
-				return locals[i];
-			}
-		}
-		return null;
-	}
-	cpsTransformer = new _CPSTransformCommand();
-	cpsTransformer.setCompiler$LCompiler$($this._compiler);
-	cpsTransformer._transformYield = true;
-	cpsTransformer.transformFunction$LMemberFunctionDefinition$(funcDef);
-	statements = getGlobalDispatchBody(funcDef);
-	for (i = 0; i < statements.length; ++i) {
-		if (statements[i] instanceof YieldStatement) {
-			statements.splice(i, 3, new ExpressionStatement(new AssignmentExpression(new Token$2("=", false), new PropertyExpression$0(new Token$2(".", false), new LocalExpression(new Token$2("$generator", false), genLocal), new Token$2("__value", false), [  ], yieldingType instanceof PrimitiveType ? new NullableType(yieldingType) : yieldingType), (this$1 = statements[i], this$1._expr))), new ExpressionStatement(new AssignmentExpression(new Token$2("=", false), new PropertyExpression$0(new Token$2(".", false), new LocalExpression(new Token$2("$generator", false), genLocal), new Token$2("__next", true), [  ], (this$2 = Type.integerType, this$2 instanceof PrimitiveType ? new NullableType(this$2) : this$2)), (this$3 = statements[i + 1], this$3._expr))), new ReturnStatement(new Token$2("return", false), null));
-			i += 2;
-		} else if (statements[i] instanceof ReturnStatement) {
-			statements.splice(i, 0, new ExpressionStatement(new AssignmentExpression(new Token$2("=", false), new PropertyExpression$0(new Token$2(".", false), new LocalExpression(new Token$2("$generator", false), genLocal), new Token$2("__value", false), [  ], yieldingType), new LocalExpression(new Token$2("$return", true), findReturnLocal(funcDef)))), new ExpressionStatement(new AssignmentExpression(new Token$2("=", false), new PropertyExpression$0(new Token$2(".", false), new LocalExpression(new Token$2("$generator", false), genLocal), new Token$2("__next", true), [  ], (this$4 = Type.integerType, this$4 instanceof PrimitiveType ? new NullableType(this$4) : this$4)), new IntegerLiteralExpression(new Token$2("-1", false)))));
-			i += 2;
-		}
-	}
-	newExpr = new NewExpression(new Token$2("new", false), genType, [  ]);
-	newExpr.analyze$LAnalysisContext$LExpression$(({errors: [  ], parser: null, postInstantiationCallback: null, funcDef: null, blockStack: null, statement: null}), null);
-	funcDef._statements.unshift(new ExpressionStatement(new AssignmentExpression(new Token$2("=", false), new LocalExpression(new Token$2("$generator", false), genLocal), newExpr)));
-	statements = funcDef._statements;
-	statements.splice(statements.length - 2, 2, new ExpressionStatement(new AssignmentExpression(new Token$2("=", false), new PropertyExpression$0(new Token$2(".", false), new LocalExpression(new Token$2("$generator", false), genLocal), new Token$2("__next", true), [  ], (this$5 = Type.integerType, this$5 instanceof PrimitiveType ? new NullableType(this$5) : this$5)), new IntegerLiteralExpression(new Token$2("0", false)))), new ExpressionStatement(new AssignmentExpression(new Token$2("=", false), new PropertyExpression$0(new Token$2(".", false), new LocalExpression(new Token$2("$generator", false), genLocal), new Token$2("__loop", true), [  ], new StaticFunctionType(null, Type.voidType, [ Type.integerType ], true)), new LocalExpression(new Token$2("$loop", true), (_locals$0 = funcDef._locals)[_locals$0.length - 1]))));
-	statements.push(new ReturnStatement(new Token$2("return", false), new LocalExpression(new Token$2("$generator", false), genLocal)));
-};
-
-_GeneratorTransformCommand._transformGeneratorCore$L_GeneratorTransformCommand$LMemberFunctionDefinition$ = _GeneratorTransformCommand$_transformGeneratorCore$L_GeneratorTransformCommand$LMemberFunctionDefinition$;
-
-_GeneratorTransformCommand.prototype._instantiateGeneratorType$LType$ = function (yieldingType) {
-	var $this = this;
-	var genClassDef;
-	var createContext;
-	var parser;
-	var this$0;
-	var this$1;
-	genClassDef = Parser$lookupTemplate$LParser$ALCompileError$LTemplateInstantiationRequest$F$LParser$LClassDefinition$LClassDefinition$$((this$0 = this._jsxGeneratorObject, this$0._parser), [  ], ({_token: null, _className: "__jsx_generator_object", _typeArgs: [ yieldingType ]}), (function (parser, classDef) {
-		return null;
-	}));
-	createContext = (function (parser) {
-		return ({errors: [  ], parser: parser, postInstantiationCallback: (function (parser, classDef) {
-			ClassDefinition$setAnalysisContextOfVariables$LClassDefinition$LAnalysisContext$(classDef, createContext(parser));
-			ClassDefinition$analyze$LClassDefinition$LAnalysisContext$(classDef, createContext(parser));
-			return classDef;
-		}), funcDef: null, blockStack: null, statement: null});
-	});
-	this$1 = this._jsxGeneratorObject;
-	parser = this$1._parser;
-	ClassDefinition$resolveTypes$LClassDefinition$LAnalysisContext$(genClassDef, createContext(parser));
-	ClassDefinition$analyze$LClassDefinition$LAnalysisContext$(genClassDef, createContext(parser));
-	return new ObjectType(genClassDef);
-};
-
-
-function _GeneratorTransformCommand$_instantiateGeneratorType$L_GeneratorTransformCommand$LType$($this, yieldingType) {
-	var genClassDef;
-	var createContext;
-	var parser;
-	var this$0;
-	var this$1;
-	genClassDef = Parser$lookupTemplate$LParser$ALCompileError$LTemplateInstantiationRequest$F$LParser$LClassDefinition$LClassDefinition$$((this$0 = $this._jsxGeneratorObject, this$0._parser), [  ], ({_token: null, _className: "__jsx_generator_object", _typeArgs: [ yieldingType ]}), (function (parser, classDef) {
-		return null;
-	}));
-	createContext = (function (parser) {
-		return ({errors: [  ], parser: parser, postInstantiationCallback: (function (parser, classDef) {
-			ClassDefinition$setAnalysisContextOfVariables$LClassDefinition$LAnalysisContext$(classDef, createContext(parser));
-			ClassDefinition$analyze$LClassDefinition$LAnalysisContext$(classDef, createContext(parser));
-			return classDef;
-		}), funcDef: null, blockStack: null, statement: null});
-	});
-	this$1 = $this._jsxGeneratorObject;
-	parser = this$1._parser;
-	ClassDefinition$resolveTypes$LClassDefinition$LAnalysisContext$(genClassDef, createContext(parser));
-	ClassDefinition$analyze$LClassDefinition$LAnalysisContext$(genClassDef, createContext(parser));
-	return new ObjectType(genClassDef);
-};
-
-_GeneratorTransformCommand._instantiateGeneratorType$L_GeneratorTransformCommand$LType$ = _GeneratorTransformCommand$_instantiateGeneratorType$L_GeneratorTransformCommand$LType$;
-
-function CodeTransformer() {
-	this._commands = [];
-};
-
-$__jsx_extend([CodeTransformer], Object);
-function CodeTransformer$setup$LCodeTransformer$AS($this, cmds) {
-	var i;
-	var cmd;
-	for (i = 0; i < cmds.length; ++i) {
-		cmd = cmds[i];
-		switch (cmd) {
-		case "generator":
-			$this._commands.push(new _GeneratorTransformCommand());
-			break;
-		case "cps":
-			$this._commands.push(new _CPSTransformCommand());
-			break;
-		default:
-			return "unknown transformation command: " + cmd;
-		}
-	}
-	return null;
-};
-
-CodeTransformer.setup$LCodeTransformer$AS = CodeTransformer$setup$LCodeTransformer$AS;
-
-function CodeTransformer$setCompiler$LCodeTransformer$LCompiler$($this, compiler) {
-	$this._commands.forEach((function (cmd) {
-		cmd.setCompiler$LCompiler$(compiler);
-	}));
-	return $this;
-};
-
-CodeTransformer.setCompiler$LCodeTransformer$LCompiler$ = CodeTransformer$setCompiler$LCodeTransformer$LCompiler$;
-
-function CodeTransformer$performTransformation$LCodeTransformer$($this) {
-	$this._commands.forEach((function (cmd) {
-		cmd.performTransformation$();
-	}));
-};
-
-CodeTransformer.performTransformation$LCodeTransformer$ = CodeTransformer$performTransformation$LCodeTransformer$;
-
 function Statement() {
 	this._stash = {};
 };
@@ -32961,7 +32408,7 @@ ConstructorInvocationStatement.prototype.instantiate$LInstantiationContext$ = fu
 	if (this._ctorFunctionType != null) {
 		throw new Error("instantiation after analysis?");
 	}
-	return new ConstructorInvocationStatement$0(this._token, this._ctorClassType.instantiate$LInstantiationContext$(instantiationContext), Util$cloneArray$ALExpression$(this._args), null);
+	return new ConstructorInvocationStatement$0(this._token, this._ctorClassType.instantiate$LInstantiationContext$B(instantiationContext, false), Util$cloneArray$ALExpression$(this._args), null);
 };
 
 
@@ -32969,7 +32416,7 @@ function ConstructorInvocationStatement$instantiate$LConstructorInvocationStatem
 	if ($this._ctorFunctionType != null) {
 		throw new Error("instantiation after analysis?");
 	}
-	return new ConstructorInvocationStatement$0($this._token, $this._ctorClassType.instantiate$LInstantiationContext$(instantiationContext), Util$cloneArray$ALExpression$($this._args), null);
+	return new ConstructorInvocationStatement$0($this._token, $this._ctorClassType.instantiate$LInstantiationContext$B(instantiationContext, false), Util$cloneArray$ALExpression$($this._args), null);
 };
 
 ConstructorInvocationStatement.instantiate$LConstructorInvocationStatement$LInstantiationContext$ = ConstructorInvocationStatement$instantiate$LConstructorInvocationStatement$LInstantiationContext$;
@@ -35276,6 +34723,17 @@ function GotoStatement$getLabel$LGotoStatement$($this) {
 
 GotoStatement.getLabel$LGotoStatement$ = GotoStatement$getLabel$LGotoStatement$;
 
+GotoStatement.prototype.setLabel$S = function (label) {
+	this.label = label;
+};
+
+
+function GotoStatement$setLabel$LGotoStatement$S($this, label) {
+	$this.label = label;
+};
+
+GotoStatement.setLabel$LGotoStatement$S = GotoStatement$setLabel$LGotoStatement$S;
+
 GotoStatement.prototype.getToken$ = function () {
 	return null;
 };
@@ -35343,6 +34801,1217 @@ LabelStatement.prototype.forEachExpression$F$LExpression$F$LExpression$V$B$ = fu
 };
 
 
+function TransformCommand(compiler, identifier) {
+	this.errors = null;
+	this._compiler = compiler;
+	this._identifier = identifier;
+};
+
+$__jsx_extend([TransformCommand], Object);
+TransformCommand.prototype.setup$ALCompileError$ = function (errors) {
+	this.errors = errors;
+};
+
+
+TransformCommand.prototype.getCompiler$ = function () {
+	return this._compiler;
+};
+
+
+function TransformCommand$getCompiler$LTransformCommand$($this) {
+	return $this._compiler;
+};
+
+TransformCommand.getCompiler$LTransformCommand$ = TransformCommand$getCompiler$LTransformCommand$;
+
+function FunctionTransformCommand(compiler, identifier) {
+	this.errors = null;
+	this._compiler = compiler;
+	this._identifier = identifier;
+};
+
+$__jsx_extend([FunctionTransformCommand], TransformCommand);
+FunctionTransformCommand.prototype.performTransformation$ = function () {
+	var $this = this;
+	FunctionTransformCommand$_getAllClosures$LFunctionTransformCommand$(this).forEach((function (funcDef) {
+		$this.transformFunction$LMemberFunctionDefinition$(funcDef);
+	}));
+};
+
+
+FunctionTransformCommand.prototype._getAllClosures$ = function () {
+	var $this = this;
+	var closures;
+	closures = [];
+	Compiler$forEachClassDef$LCompiler$F$LParser$LClassDefinition$B$(this._compiler, (function (parser, classDef) {
+		return ClassDefinition$forEachMember$LClassDefinition$F$LMemberDefinition$B$(classDef, (function onMember(member) {
+			MemberDefinition$forEachClosure$LMemberDefinition$F$LMemberFunctionDefinition$B$(member, (function (funcDef) {
+				return onMember(funcDef);
+			}));
+			if (member instanceof MemberFunctionDefinition) {
+				closures.push(member);
+			}
+			return true;
+		}));
+	}));
+	return closures;
+};
+
+
+function FunctionTransformCommand$_getAllClosures$LFunctionTransformCommand$($this) {
+	var closures;
+	closures = [];
+	Compiler$forEachClassDef$LCompiler$F$LParser$LClassDefinition$B$($this._compiler, (function (parser, classDef) {
+		return ClassDefinition$forEachMember$LClassDefinition$F$LMemberDefinition$B$(classDef, (function onMember(member) {
+			MemberDefinition$forEachClosure$LMemberDefinition$F$LMemberFunctionDefinition$B$(member, (function (funcDef) {
+				return onMember(funcDef);
+			}));
+			if (member instanceof MemberFunctionDefinition) {
+				closures.push(member);
+			}
+			return true;
+		}));
+	}));
+	return closures;
+};
+
+FunctionTransformCommand._getAllClosures$LFunctionTransformCommand$ = FunctionTransformCommand$_getAllClosures$LFunctionTransformCommand$;
+
+function GeneratorTransformCommand(compiler) {
+	this.errors = null;
+	this._compiler = compiler;
+	this._identifier = "generator";
+	this._jsxGeneratorObject = null;
+};
+
+$__jsx_extend([GeneratorTransformCommand], FunctionTransformCommand);
+GeneratorTransformCommand.prototype.setup$ALCompileError$ = function (errors) {
+	var builtins;
+	var i;
+	var this$0;
+	var this$1;
+	TransformCommand.prototype.setup$ALCompileError$.call(this, errors);
+	builtins = (this$0 = this._compiler, this$0._builtinParsers)[0];
+	for (i = 0; i < builtins._templateClassDefs.length; ++i) {
+		if ((this$1 = builtins._templateClassDefs[i], this$1._className) === "__jsx_generator_object") {
+			this._jsxGeneratorObject = builtins._templateClassDefs[i];
+			break;
+		}
+	}
+};
+
+
+GeneratorTransformCommand.prototype.transformFunction$LMemberFunctionDefinition$ = function (funcDef) {
+	if (! ((funcDef._flags & 8192) !== 0)) {
+		return;
+	}
+	GeneratorTransformCommand$_transformGeneratorCore$LGeneratorTransformCommand$LMemberFunctionDefinition$(this, funcDef);
+	MemberDefinition$setFlags$LMemberDefinition$N(funcDef, funcDef._flags & -8193);
+};
+
+
+GeneratorTransformCommand.prototype._transformGeneratorCore$LMemberFunctionDefinition$ = function (funcDef) {
+	var $this = this;
+	var yieldingType;
+	var genType;
+	var genLocal;
+	var getGlobalDispatchBody;
+	var findReturnLocal;
+	var cpsTransformer;
+	var statements;
+	var i;
+	var newExpr;
+	var this$0;
+	var this$1;
+	var this$2;
+	var this$3;
+	var this$4;
+	var this$5;
+	var _locals$0;
+	yieldingType = (this$0 = funcDef._returnType.getClassDef$(), this$0._typeArguments)[0];
+	genType = GeneratorTransformCommand$_instantiateGeneratorType$LGeneratorTransformCommand$LType$(this, yieldingType);
+	genLocal = new LocalVariable(new Token$2("$generator", false), genType, false);
+	funcDef._locals.push(genLocal);
+	function getGlobalDispatchBody(funcDef) {
+		var funcStmt;
+		var whileStmt;
+		var switchStmt;
+		var this$0;
+		funcStmt = funcDef._statements[0];
+		whileStmt = (this$0 = funcStmt._funcDef, this$0._statements)[0];
+		switchStmt = whileStmt._statements[0];
+		return switchStmt._statements;
+	}
+	function findReturnLocal(funcDef) {
+		var locals;
+		var i;
+		var this$0;
+		var this$1;
+		var locals$len$0;
+		locals = funcDef._locals;
+		for ((i = 0, locals$len$0 = locals.length); i < locals$len$0; ++i) {
+			if ((this$1 = (this$0 = locals[i], this$0._name), this$1._value) === "$return") {
+				return locals[i];
+			}
+		}
+		return null;
+	}
+	cpsTransformer = new CPSTransformCommand(this._compiler);
+	cpsTransformer._transformYield = true;
+	cpsTransformer.transformFunction$LMemberFunctionDefinition$(funcDef);
+	statements = getGlobalDispatchBody(funcDef);
+	for (i = 0; i < statements.length; ++i) {
+		if (statements[i] instanceof YieldStatement) {
+			statements.splice(i, 3, new ExpressionStatement(new AssignmentExpression(new Token$2("=", false), new PropertyExpression$0(new Token$2(".", false), new LocalExpression(new Token$2("$generator", false), genLocal), new Token$2("__value", false), [  ], yieldingType instanceof PrimitiveType ? new NullableType(yieldingType) : yieldingType), (this$1 = statements[i], this$1._expr))), new ExpressionStatement(new AssignmentExpression(new Token$2("=", false), new PropertyExpression$0(new Token$2(".", false), new LocalExpression(new Token$2("$generator", false), genLocal), new Token$2("__next", true), [  ], (this$2 = Type.integerType, this$2 instanceof PrimitiveType ? new NullableType(this$2) : this$2)), (this$3 = statements[i + 1], this$3._expr))), new ReturnStatement(new Token$2("return", false), null));
+			i += 2;
+		} else if (statements[i] instanceof ReturnStatement) {
+			statements.splice(i, 0, new ExpressionStatement(new AssignmentExpression(new Token$2("=", false), new PropertyExpression$0(new Token$2(".", false), new LocalExpression(new Token$2("$generator", false), genLocal), new Token$2("__value", false), [  ], yieldingType), new LocalExpression(new Token$2("$return", true), findReturnLocal(funcDef)))), new ExpressionStatement(new AssignmentExpression(new Token$2("=", false), new PropertyExpression$0(new Token$2(".", false), new LocalExpression(new Token$2("$generator", false), genLocal), new Token$2("__next", true), [  ], (this$4 = Type.integerType, this$4 instanceof PrimitiveType ? new NullableType(this$4) : this$4)), new IntegerLiteralExpression(new Token$2("-1", false)))));
+			i += 2;
+		}
+	}
+	newExpr = new NewExpression(new Token$2("new", false), genType, [  ]);
+	newExpr.analyze$LAnalysisContext$LExpression$(({errors: [  ], parser: null, postInstantiationCallback: null, funcDef: null, blockStack: null, statement: null}), null);
+	funcDef._statements.unshift(new ExpressionStatement(new AssignmentExpression(new Token$2("=", false), new LocalExpression(new Token$2("$generator", false), genLocal), newExpr)));
+	statements = funcDef._statements;
+	statements.splice(statements.length - 2, 2, new ExpressionStatement(new AssignmentExpression(new Token$2("=", false), new PropertyExpression$0(new Token$2(".", false), new LocalExpression(new Token$2("$generator", false), genLocal), new Token$2("__next", true), [  ], (this$5 = Type.integerType, this$5 instanceof PrimitiveType ? new NullableType(this$5) : this$5)), new IntegerLiteralExpression(new Token$2("0", false)))), new ExpressionStatement(new AssignmentExpression(new Token$2("=", false), new PropertyExpression$0(new Token$2(".", false), new LocalExpression(new Token$2("$generator", false), genLocal), new Token$2("__loop", true), [  ], new StaticFunctionType(null, Type.voidType, [ Type.integerType ], true)), new LocalExpression(new Token$2("$loop", true), (_locals$0 = funcDef._locals)[_locals$0.length - 1]))));
+	statements.push(new ReturnStatement(new Token$2("return", false), new LocalExpression(new Token$2("$generator", false), genLocal)));
+};
+
+
+function GeneratorTransformCommand$_transformGeneratorCore$LGeneratorTransformCommand$LMemberFunctionDefinition$($this, funcDef) {
+	var yieldingType;
+	var genType;
+	var genLocal;
+	var getGlobalDispatchBody;
+	var findReturnLocal;
+	var cpsTransformer;
+	var statements;
+	var i;
+	var newExpr;
+	var this$0;
+	var this$1;
+	var this$2;
+	var this$3;
+	var this$4;
+	var this$5;
+	var _locals$0;
+	yieldingType = (this$0 = funcDef._returnType.getClassDef$(), this$0._typeArguments)[0];
+	genType = GeneratorTransformCommand$_instantiateGeneratorType$LGeneratorTransformCommand$LType$($this, yieldingType);
+	genLocal = new LocalVariable(new Token$2("$generator", false), genType, false);
+	funcDef._locals.push(genLocal);
+	function getGlobalDispatchBody(funcDef) {
+		var funcStmt;
+		var whileStmt;
+		var switchStmt;
+		var this$0;
+		funcStmt = funcDef._statements[0];
+		whileStmt = (this$0 = funcStmt._funcDef, this$0._statements)[0];
+		switchStmt = whileStmt._statements[0];
+		return switchStmt._statements;
+	}
+	function findReturnLocal(funcDef) {
+		var locals;
+		var i;
+		var this$0;
+		var this$1;
+		var locals$len$0;
+		locals = funcDef._locals;
+		for ((i = 0, locals$len$0 = locals.length); i < locals$len$0; ++i) {
+			if ((this$1 = (this$0 = locals[i], this$0._name), this$1._value) === "$return") {
+				return locals[i];
+			}
+		}
+		return null;
+	}
+	cpsTransformer = new CPSTransformCommand($this._compiler);
+	cpsTransformer._transformYield = true;
+	cpsTransformer.transformFunction$LMemberFunctionDefinition$(funcDef);
+	statements = getGlobalDispatchBody(funcDef);
+	for (i = 0; i < statements.length; ++i) {
+		if (statements[i] instanceof YieldStatement) {
+			statements.splice(i, 3, new ExpressionStatement(new AssignmentExpression(new Token$2("=", false), new PropertyExpression$0(new Token$2(".", false), new LocalExpression(new Token$2("$generator", false), genLocal), new Token$2("__value", false), [  ], yieldingType instanceof PrimitiveType ? new NullableType(yieldingType) : yieldingType), (this$1 = statements[i], this$1._expr))), new ExpressionStatement(new AssignmentExpression(new Token$2("=", false), new PropertyExpression$0(new Token$2(".", false), new LocalExpression(new Token$2("$generator", false), genLocal), new Token$2("__next", true), [  ], (this$2 = Type.integerType, this$2 instanceof PrimitiveType ? new NullableType(this$2) : this$2)), (this$3 = statements[i + 1], this$3._expr))), new ReturnStatement(new Token$2("return", false), null));
+			i += 2;
+		} else if (statements[i] instanceof ReturnStatement) {
+			statements.splice(i, 0, new ExpressionStatement(new AssignmentExpression(new Token$2("=", false), new PropertyExpression$0(new Token$2(".", false), new LocalExpression(new Token$2("$generator", false), genLocal), new Token$2("__value", false), [  ], yieldingType), new LocalExpression(new Token$2("$return", true), findReturnLocal(funcDef)))), new ExpressionStatement(new AssignmentExpression(new Token$2("=", false), new PropertyExpression$0(new Token$2(".", false), new LocalExpression(new Token$2("$generator", false), genLocal), new Token$2("__next", true), [  ], (this$4 = Type.integerType, this$4 instanceof PrimitiveType ? new NullableType(this$4) : this$4)), new IntegerLiteralExpression(new Token$2("-1", false)))));
+			i += 2;
+		}
+	}
+	newExpr = new NewExpression(new Token$2("new", false), genType, [  ]);
+	newExpr.analyze$LAnalysisContext$LExpression$(({errors: [  ], parser: null, postInstantiationCallback: null, funcDef: null, blockStack: null, statement: null}), null);
+	funcDef._statements.unshift(new ExpressionStatement(new AssignmentExpression(new Token$2("=", false), new LocalExpression(new Token$2("$generator", false), genLocal), newExpr)));
+	statements = funcDef._statements;
+	statements.splice(statements.length - 2, 2, new ExpressionStatement(new AssignmentExpression(new Token$2("=", false), new PropertyExpression$0(new Token$2(".", false), new LocalExpression(new Token$2("$generator", false), genLocal), new Token$2("__next", true), [  ], (this$5 = Type.integerType, this$5 instanceof PrimitiveType ? new NullableType(this$5) : this$5)), new IntegerLiteralExpression(new Token$2("0", false)))), new ExpressionStatement(new AssignmentExpression(new Token$2("=", false), new PropertyExpression$0(new Token$2(".", false), new LocalExpression(new Token$2("$generator", false), genLocal), new Token$2("__loop", true), [  ], new StaticFunctionType(null, Type.voidType, [ Type.integerType ], true)), new LocalExpression(new Token$2("$loop", true), (_locals$0 = funcDef._locals)[_locals$0.length - 1]))));
+	statements.push(new ReturnStatement(new Token$2("return", false), new LocalExpression(new Token$2("$generator", false), genLocal)));
+};
+
+GeneratorTransformCommand._transformGeneratorCore$LGeneratorTransformCommand$LMemberFunctionDefinition$ = GeneratorTransformCommand$_transformGeneratorCore$LGeneratorTransformCommand$LMemberFunctionDefinition$;
+
+GeneratorTransformCommand.prototype._instantiateGeneratorType$LType$ = function (yieldingType) {
+	var $this = this;
+	var genClassDef;
+	var createContext;
+	var parser;
+	var this$0;
+	var this$1;
+	genClassDef = Parser$lookupTemplate$LParser$ALCompileError$LTemplateInstantiationRequest$F$LParser$LClassDefinition$LClassDefinition$$((this$0 = this._jsxGeneratorObject, this$0._parser), [  ], ({_token: null, _className: "__jsx_generator_object", _typeArgs: [ yieldingType ]}), (function (parser, classDef) {
+		return null;
+	}));
+	createContext = (function (parser) {
+		return ({errors: [  ], parser: parser, postInstantiationCallback: (function (parser, classDef) {
+			ClassDefinition$setAnalysisContextOfVariables$LClassDefinition$LAnalysisContext$(classDef, createContext(parser));
+			ClassDefinition$analyze$LClassDefinition$LAnalysisContext$(classDef, createContext(parser));
+			return classDef;
+		}), funcDef: null, blockStack: null, statement: null});
+	});
+	this$1 = this._jsxGeneratorObject;
+	parser = this$1._parser;
+	ClassDefinition$resolveTypes$LClassDefinition$LAnalysisContext$(genClassDef, createContext(parser));
+	ClassDefinition$analyze$LClassDefinition$LAnalysisContext$(genClassDef, createContext(parser));
+	return new ObjectType(genClassDef);
+};
+
+
+function GeneratorTransformCommand$_instantiateGeneratorType$LGeneratorTransformCommand$LType$($this, yieldingType) {
+	var genClassDef;
+	var createContext;
+	var parser;
+	var this$0;
+	var this$1;
+	genClassDef = Parser$lookupTemplate$LParser$ALCompileError$LTemplateInstantiationRequest$F$LParser$LClassDefinition$LClassDefinition$$((this$0 = $this._jsxGeneratorObject, this$0._parser), [  ], ({_token: null, _className: "__jsx_generator_object", _typeArgs: [ yieldingType ]}), (function (parser, classDef) {
+		return null;
+	}));
+	createContext = (function (parser) {
+		return ({errors: [  ], parser: parser, postInstantiationCallback: (function (parser, classDef) {
+			ClassDefinition$setAnalysisContextOfVariables$LClassDefinition$LAnalysisContext$(classDef, createContext(parser));
+			ClassDefinition$analyze$LClassDefinition$LAnalysisContext$(classDef, createContext(parser));
+			return classDef;
+		}), funcDef: null, blockStack: null, statement: null});
+	});
+	this$1 = $this._jsxGeneratorObject;
+	parser = this$1._parser;
+	ClassDefinition$resolveTypes$LClassDefinition$LAnalysisContext$(genClassDef, createContext(parser));
+	ClassDefinition$analyze$LClassDefinition$LAnalysisContext$(genClassDef, createContext(parser));
+	return new ObjectType(genClassDef);
+};
+
+GeneratorTransformCommand._instantiateGeneratorType$LGeneratorTransformCommand$LType$ = GeneratorTransformCommand$_instantiateGeneratorType$LGeneratorTransformCommand$LType$;
+
+function CPSTransformCommand(compiler) {
+	this.errors = null;
+	this._compiler = compiler;
+	this._identifier = "cps";
+	this._transformingFuncDef = null;
+	this._outputStatements = null;
+	this._labelStack = [];
+	this._returnLocals = [];
+	this._transformYield = false;
+};
+
+$__jsx_extend([CPSTransformCommand], FunctionTransformCommand);
+CPSTransformCommand.prototype.setTransformYield$B = function (flag) {
+	this._transformYield = flag;
+};
+
+
+function CPSTransformCommand$setTransformYield$LCPSTransformCommand$B($this, flag) {
+	$this._transformYield = flag;
+};
+
+CPSTransformCommand.setTransformYield$LCPSTransformCommand$B = CPSTransformCommand$setTransformYield$LCPSTransformCommand$B;
+
+CPSTransformCommand.prototype._functionIsTransformable$LMemberFunctionDefinition$ = function (funcDef) {
+	var $this = this;
+	var this$0$0;
+	return (funcDef instanceof TemplateFunctionDefinition ? false : funcDef._statements == null ? false : funcDef._nameToken != null && (this$0$0 = funcDef._nameToken, this$0$0._value) === "constructor" ? false : Util$forEachStatement$F$LStatement$B$ALStatement$((function onStatement(statement) {
+		return (! $this._transformYield && statement instanceof YieldStatement ? false : statement instanceof ForInStatement ? false : statement instanceof TryStatement ? false : statement.forEachStatement$F$LStatement$B$(onStatement));
+	}), funcDef._statements));
+};
+
+
+function CPSTransformCommand$_functionIsTransformable$LCPSTransformCommand$LMemberFunctionDefinition$($this, funcDef) {
+	var this$0$0;
+	return (funcDef instanceof TemplateFunctionDefinition ? false : funcDef._statements == null ? false : funcDef._nameToken != null && (this$0$0 = funcDef._nameToken, this$0$0._value) === "constructor" ? false : Util$forEachStatement$F$LStatement$B$ALStatement$((function onStatement(statement) {
+		return (! $this._transformYield && statement instanceof YieldStatement ? false : statement instanceof ForInStatement ? false : statement instanceof TryStatement ? false : statement.forEachStatement$F$LStatement$B$(onStatement));
+	}), funcDef._statements));
+};
+
+CPSTransformCommand._functionIsTransformable$LCPSTransformCommand$LMemberFunctionDefinition$ = CPSTransformCommand$_functionIsTransformable$LCPSTransformCommand$LMemberFunctionDefinition$;
+
+CPSTransformCommand.prototype.transformFunction$LMemberFunctionDefinition$ = function (funcDef) {
+	if (! CPSTransformCommand$_functionIsTransformable$LCPSTransformCommand$LMemberFunctionDefinition$(this, funcDef)) {
+		return;
+	}
+	CPSTransformCommand$_doCPSTransform$LCPSTransformCommand$LMemberFunctionDefinition$(this, funcDef);
+};
+
+
+CPSTransformCommand.prototype._doCPSTransform$LMemberFunctionDefinition$ = function (funcDef) {
+	var returnLocal;
+	var statements;
+	var i;
+	var this$0;
+	this._transformingFuncDef = funcDef;
+	returnLocal = null;
+	if (! Type.voidType.equals$LType$(funcDef._returnType)) {
+		returnLocal = new LocalVariable(new Token$2("$return", false), funcDef._returnType, false);
+		funcDef._locals.push(returnLocal);
+		this._returnLocals.push(returnLocal);
+	}
+	statements = [];
+	this._outputStatements = statements;
+	for (i = 0; i < funcDef._statements.length; ++i) {
+		this$0 = CPSTransformCommand$_getStatementTransformerFor$LCPSTransformCommand$LStatement$(this, funcDef._statements[i]);
+		this$0._replaceControlStructuresWithGotos$();
+	}
+	statements.unshift(new LabelStatement("$L_enter"));
+	statements.push(new GotoStatement("$L_exit"), new LabelStatement("$L_exit"), new ReturnStatement(new Token$2("return", false), null));
+	funcDef._statements = statements;
+	CPSTransformCommand$_eliminateDeadBranches$LCPSTransformCommand$ALStatement$(this, statements);
+	CPSTransformCommand$_eliminateGotos$LCPSTransformCommand$LMemberFunctionDefinition$(this, funcDef);
+	if (! Type.voidType.equals$LType$(funcDef._returnType)) {
+		funcDef._statements.push(new ReturnStatement(new Token$2("return", false), new LocalExpression(returnLocal._name, returnLocal)));
+		this._returnLocals.pop();
+	}
+};
+
+
+function CPSTransformCommand$_doCPSTransform$LCPSTransformCommand$LMemberFunctionDefinition$($this, funcDef) {
+	var returnLocal;
+	var statements;
+	var i;
+	var this$0;
+	$this._transformingFuncDef = funcDef;
+	returnLocal = null;
+	if (! Type.voidType.equals$LType$(funcDef._returnType)) {
+		returnLocal = new LocalVariable(new Token$2("$return", false), funcDef._returnType, false);
+		funcDef._locals.push(returnLocal);
+		$this._returnLocals.push(returnLocal);
+	}
+	statements = [];
+	$this._outputStatements = statements;
+	for (i = 0; i < funcDef._statements.length; ++i) {
+		this$0 = CPSTransformCommand$_getStatementTransformerFor$LCPSTransformCommand$LStatement$($this, funcDef._statements[i]);
+		this$0._replaceControlStructuresWithGotos$();
+	}
+	statements.unshift(new LabelStatement("$L_enter"));
+	statements.push(new GotoStatement("$L_exit"), new LabelStatement("$L_exit"), new ReturnStatement(new Token$2("return", false), null));
+	funcDef._statements = statements;
+	CPSTransformCommand$_eliminateDeadBranches$LCPSTransformCommand$ALStatement$($this, statements);
+	CPSTransformCommand$_eliminateGotos$LCPSTransformCommand$LMemberFunctionDefinition$($this, funcDef);
+	if (! Type.voidType.equals$LType$(funcDef._returnType)) {
+		funcDef._statements.push(new ReturnStatement(new Token$2("return", false), new LocalExpression(returnLocal._name, returnLocal)));
+		$this._returnLocals.pop();
+	}
+};
+
+CPSTransformCommand._doCPSTransform$LCPSTransformCommand$LMemberFunctionDefinition$ = CPSTransformCommand$_doCPSTransform$LCPSTransformCommand$LMemberFunctionDefinition$;
+
+CPSTransformCommand.prototype._eliminateDeadBranches$ALStatement$ = function (statements) {
+	var $this = this;
+	var i;
+	var j;
+	var getLabelOffset;
+	var srcLabel;
+	var destLabel;
+	var destOffset;
+	var labelRenames;
+	var labels;
+	var fusedLabel;
+	var this$0;
+	var statements$len$0;
+	for (i = 0; i < statements.length; ++i) {
+		if (statements[i] instanceof GotoStatement) {
+			for ((j = i, statements$len$0 = statements.length); j < statements$len$0; ++j) {
+				if (statements[j] instanceof LabelStatement) {
+					break;
+				}
+			}
+			statements.splice(i + 1, j - i - 1);
+		}
+	}
+	function getLabelOffset(label) {
+		var i;
+		var this$0;
+		var statements$len$0;
+		for ((i = 0, statements$len$0 = statements.length); i < statements$len$0; ++i) {
+			if (statements[i] instanceof LabelStatement && (this$0 = statements[i], this$0._name) === label) {
+				return (i | 0);
+			}
+		}
+		return -1;
+	}
+	for (i = 0; i < statements.length - 1; ++i) {
+		if (statements[i] instanceof LabelStatement && statements[i + 1] instanceof GotoStatement) {
+			srcLabel = statements[i];
+			this$0 = statements[i + 1];
+			destLabel = this$0.label;
+			statements.splice(i, 2);
+			destOffset = getLabelOffset(destLabel);
+			if (destOffset === -1) {
+				throw new Error("logic flaw");
+			}
+			statements.splice(destOffset, 0, srcLabel);
+			if (! (destOffset < i)) {
+				i--;
+			}
+		}
+	}
+	labelRenames = {};
+	for (i = 0; i < statements.length; ++i) {
+		if (statements[i] instanceof LabelStatement) {
+			labels = [];
+			for (j = i; statements[j] instanceof LabelStatement; ++j) {
+				labels.push(statements[j]);
+			}
+			fusedLabel = labels.reduce((function (fuse, label) {
+				if (fuse !== "") {
+					fuse += "_";
+				}
+				return fuse + label._name;
+			}), "");
+			labels.forEach((function (label) {
+				labelRenames[label._name] = fusedLabel;
+			}));
+			statements.splice(i, labels.length, new LabelStatement(fusedLabel));
+		}
+	}
+	Util$forEachStatement$F$LStatement$B$ALStatement$((function onStatement(statement) {
+		var gotoStmt;
+		var label$0;
+		if (statement instanceof GotoStatement) {
+			gotoStmt = statement;
+			label$0 = labelRenames[gotoStmt.label];
+			gotoStmt.label = label$0;
+		}
+		return statement.forEachStatement$F$LStatement$B$(onStatement);
+	}), statements);
+};
+
+
+function CPSTransformCommand$_eliminateDeadBranches$LCPSTransformCommand$ALStatement$($this, statements) {
+	var i;
+	var j;
+	var getLabelOffset;
+	var srcLabel;
+	var destLabel;
+	var destOffset;
+	var labelRenames;
+	var labels;
+	var fusedLabel;
+	var this$0;
+	var statements$len$0;
+	for (i = 0; i < statements.length; ++i) {
+		if (statements[i] instanceof GotoStatement) {
+			for ((j = i, statements$len$0 = statements.length); j < statements$len$0; ++j) {
+				if (statements[j] instanceof LabelStatement) {
+					break;
+				}
+			}
+			statements.splice(i + 1, j - i - 1);
+		}
+	}
+	function getLabelOffset(label) {
+		var i;
+		var this$0;
+		var statements$len$0;
+		for ((i = 0, statements$len$0 = statements.length); i < statements$len$0; ++i) {
+			if (statements[i] instanceof LabelStatement && (this$0 = statements[i], this$0._name) === label) {
+				return (i | 0);
+			}
+		}
+		return -1;
+	}
+	for (i = 0; i < statements.length - 1; ++i) {
+		if (statements[i] instanceof LabelStatement && statements[i + 1] instanceof GotoStatement) {
+			srcLabel = statements[i];
+			this$0 = statements[i + 1];
+			destLabel = this$0.label;
+			statements.splice(i, 2);
+			destOffset = getLabelOffset(destLabel);
+			if (destOffset === -1) {
+				throw new Error("logic flaw");
+			}
+			statements.splice(destOffset, 0, srcLabel);
+			if (! (destOffset < i)) {
+				i--;
+			}
+		}
+	}
+	labelRenames = {};
+	for (i = 0; i < statements.length; ++i) {
+		if (statements[i] instanceof LabelStatement) {
+			labels = [];
+			for (j = i; statements[j] instanceof LabelStatement; ++j) {
+				labels.push(statements[j]);
+			}
+			fusedLabel = labels.reduce((function (fuse, label) {
+				if (fuse !== "") {
+					fuse += "_";
+				}
+				return fuse + label._name;
+			}), "");
+			labels.forEach((function (label) {
+				labelRenames[label._name] = fusedLabel;
+			}));
+			statements.splice(i, labels.length, new LabelStatement(fusedLabel));
+		}
+	}
+	Util$forEachStatement$F$LStatement$B$ALStatement$((function onStatement(statement) {
+		var gotoStmt;
+		var label$0;
+		if (statement instanceof GotoStatement) {
+			gotoStmt = statement;
+			label$0 = labelRenames[gotoStmt.label];
+			gotoStmt.label = label$0;
+		}
+		return statement.forEachStatement$F$LStatement$B$(onStatement);
+	}), statements);
+};
+
+CPSTransformCommand._eliminateDeadBranches$LCPSTransformCommand$ALStatement$ = CPSTransformCommand$_eliminateDeadBranches$LCPSTransformCommand$ALStatement$;
+
+CPSTransformCommand.prototype._eliminateGotos$LMemberFunctionDefinition$ = function (funcDef) {
+	var $this = this;
+	var statements;
+	var loopVar;
+	var nextVar;
+	var executor;
+	var labelIndeces;
+	var i;
+	var c;
+	var name;
+	var makeJump;
+	var makeBreak;
+	var replaceGoto;
+	var stmt;
+	var ifStmt;
+	var trueBranch;
+	var falseBranch;
+	var switchStmt;
+	var j;
+	var makeBasicBlock;
+	var basicBlocks;
+	var currentLabel;
+	var body;
+	var whileStmt;
+	var this$0;
+	var this$1;
+	var this$2;
+	var _statements$0;
+	statements = funcDef._statements;
+	loopVar = new LocalVariable(new Token$2("$loop", true), new StaticFunctionType(null, Type.voidType, [ Type.integerType ], true), false);
+	funcDef._locals.push(loopVar);
+	nextVar = new ArgumentDeclaration(new Token$2("$next", true), Type.integerType);
+	executor = _Util$1$_createNamedFunction$LMemberFunctionDefinition$LToken$LToken$ALArgumentDeclaration$LType$(funcDef, null, new Token$2("$loop", true), [ nextVar ], Type.voidType);
+	executor._funcLocal = loopVar;
+	labelIndeces = {};
+	for ((i = 0, c = 0); i < statements.length; ++i) {
+		if (statements[i] instanceof LabelStatement) {
+			this$0 = statements[i];
+			name = this$0._name;
+			labelIndeces[name] = (c++ | 0);
+		}
+	}
+	function makeJump(gotoStmt) {
+		var name;
+		var index;
+		name = gotoStmt.label;
+		if ((index = labelIndeces[name]) == null) {
+			throw new Error("logic flaw! label not found");
+		}
+		return new ExpressionStatement(new AssignmentExpression(new Token$2("=", false), new LocalExpression(new Token$2("$next", true), nextVar), new IntegerLiteralExpression(new Token$2("" + (index + ""), false))));
+	}
+	function makeBreak() {
+		return new BreakStatement(new Token$2("break", false), null);
+	}
+	function replaceGoto(statements, index) {
+		var gotoStmt;
+		gotoStmt = statements[index];
+		statements.splice(index, 1, makeJump(gotoStmt), makeBreak());
+		return (index + 1 | 0);
+	}
+	for (i = 0; i < statements.length; ++i) {
+		stmt = statements[i];
+		if (stmt instanceof GotoStatement) {
+			i = replaceGoto(statements, (i | 0));
+		} else if (stmt instanceof IfStatement) {
+			ifStmt = stmt;
+			this$1 = ifStmt._onTrueStatements[0];
+			trueBranch = this$1.label;
+			this$2 = ifStmt._onFalseStatements[0];
+			falseBranch = this$2.label;
+			statements.splice(i, 1, new ExpressionStatement(new AssignmentExpression(new Token$2("=", false), new LocalExpression(new Token$2("$next", true), nextVar), new ConditionalExpression$0(new Token$2("?", false), ifStmt._expr, new IntegerLiteralExpression(new Token$2("" + (labelIndeces[trueBranch] + ""), false)), new IntegerLiteralExpression(new Token$2("" + (labelIndeces[falseBranch] + ""), false)), Type.integerType))), makeBreak());
+			i++;
+		} else if (stmt instanceof SwitchStatement) {
+			switchStmt = stmt;
+			for (j = 0; j < switchStmt._statements.length; ++j) {
+				if (switchStmt._statements[j] instanceof GotoStatement) {
+					j = replaceGoto(switchStmt._statements, (j | 0));
+				}
+			}
+			statements.splice(i + 1, 0, makeBreak());
+			i++;
+		}
+	}
+	function makeBasicBlock(label, body) {
+		var statements;
+		statements = body.concat([  ]);
+		statements.unshift(new CaseStatement(new Token$2("case", false), new IntegerLiteralExpression(new Token$2("" + (labelIndeces[label] + ""), false))));
+		return statements;
+	}
+	basicBlocks = [];
+	for (i = 0; i < statements.length; ) {
+		currentLabel = statements[i];
+		++i;
+		body = [];
+		for (; i < statements.length; ++i) {
+			if (statements[i] instanceof LabelStatement) {
+				break;
+			}
+			body.push(statements[i]);
+		}
+		basicBlocks = basicBlocks.concat(makeBasicBlock(currentLabel._name, body));
+	}
+	switchStmt = new SwitchStatement(new Token$2("switch", false), null, new LocalExpression(new Token$2("$next", true), nextVar), basicBlocks);
+	whileStmt = new WhileStatement(new Token$2("while", false), null, new BooleanLiteralExpression(new Token$2("true", false)), [ switchStmt ]);
+	executor._statements = [ whileStmt ];
+	(_statements$0 = funcDef._statements).length = 0;
+	_statements$0.push(new FunctionStatement(new Token$2("function", false), executor));
+	funcDef._statements.push(new ExpressionStatement(new CallExpression(new Token$2("(", false), new LocalExpression(new Token$2("$loop", true), loopVar), [ new IntegerLiteralExpression(new Token$2("0", false)) ])));
+};
+
+
+function CPSTransformCommand$_eliminateGotos$LCPSTransformCommand$LMemberFunctionDefinition$($this, funcDef) {
+	var statements;
+	var loopVar;
+	var nextVar;
+	var executor;
+	var labelIndeces;
+	var i;
+	var c;
+	var name;
+	var makeJump;
+	var makeBreak;
+	var replaceGoto;
+	var stmt;
+	var ifStmt;
+	var trueBranch;
+	var falseBranch;
+	var switchStmt;
+	var j;
+	var makeBasicBlock;
+	var basicBlocks;
+	var currentLabel;
+	var body;
+	var whileStmt;
+	var this$0;
+	var this$1;
+	var this$2;
+	var _statements$0;
+	statements = funcDef._statements;
+	loopVar = new LocalVariable(new Token$2("$loop", true), new StaticFunctionType(null, Type.voidType, [ Type.integerType ], true), false);
+	funcDef._locals.push(loopVar);
+	nextVar = new ArgumentDeclaration(new Token$2("$next", true), Type.integerType);
+	executor = _Util$1$_createNamedFunction$LMemberFunctionDefinition$LToken$LToken$ALArgumentDeclaration$LType$(funcDef, null, new Token$2("$loop", true), [ nextVar ], Type.voidType);
+	executor._funcLocal = loopVar;
+	labelIndeces = {};
+	for ((i = 0, c = 0); i < statements.length; ++i) {
+		if (statements[i] instanceof LabelStatement) {
+			this$0 = statements[i];
+			name = this$0._name;
+			labelIndeces[name] = (c++ | 0);
+		}
+	}
+	function makeJump(gotoStmt) {
+		var name;
+		var index;
+		name = gotoStmt.label;
+		if ((index = labelIndeces[name]) == null) {
+			throw new Error("logic flaw! label not found");
+		}
+		return new ExpressionStatement(new AssignmentExpression(new Token$2("=", false), new LocalExpression(new Token$2("$next", true), nextVar), new IntegerLiteralExpression(new Token$2("" + (index + ""), false))));
+	}
+	function makeBreak() {
+		return new BreakStatement(new Token$2("break", false), null);
+	}
+	function replaceGoto(statements, index) {
+		var gotoStmt;
+		gotoStmt = statements[index];
+		statements.splice(index, 1, makeJump(gotoStmt), makeBreak());
+		return (index + 1 | 0);
+	}
+	for (i = 0; i < statements.length; ++i) {
+		stmt = statements[i];
+		if (stmt instanceof GotoStatement) {
+			i = replaceGoto(statements, (i | 0));
+		} else if (stmt instanceof IfStatement) {
+			ifStmt = stmt;
+			this$1 = ifStmt._onTrueStatements[0];
+			trueBranch = this$1.label;
+			this$2 = ifStmt._onFalseStatements[0];
+			falseBranch = this$2.label;
+			statements.splice(i, 1, new ExpressionStatement(new AssignmentExpression(new Token$2("=", false), new LocalExpression(new Token$2("$next", true), nextVar), new ConditionalExpression$0(new Token$2("?", false), ifStmt._expr, new IntegerLiteralExpression(new Token$2("" + (labelIndeces[trueBranch] + ""), false)), new IntegerLiteralExpression(new Token$2("" + (labelIndeces[falseBranch] + ""), false)), Type.integerType))), makeBreak());
+			i++;
+		} else if (stmt instanceof SwitchStatement) {
+			switchStmt = stmt;
+			for (j = 0; j < switchStmt._statements.length; ++j) {
+				if (switchStmt._statements[j] instanceof GotoStatement) {
+					j = replaceGoto(switchStmt._statements, (j | 0));
+				}
+			}
+			statements.splice(i + 1, 0, makeBreak());
+			i++;
+		}
+	}
+	function makeBasicBlock(label, body) {
+		var statements;
+		statements = body.concat([  ]);
+		statements.unshift(new CaseStatement(new Token$2("case", false), new IntegerLiteralExpression(new Token$2("" + (labelIndeces[label] + ""), false))));
+		return statements;
+	}
+	basicBlocks = [];
+	for (i = 0; i < statements.length; ) {
+		currentLabel = statements[i];
+		++i;
+		body = [];
+		for (; i < statements.length; ++i) {
+			if (statements[i] instanceof LabelStatement) {
+				break;
+			}
+			body.push(statements[i]);
+		}
+		basicBlocks = basicBlocks.concat(makeBasicBlock(currentLabel._name, body));
+	}
+	switchStmt = new SwitchStatement(new Token$2("switch", false), null, new LocalExpression(new Token$2("$next", true), nextVar), basicBlocks);
+	whileStmt = new WhileStatement(new Token$2("while", false), null, new BooleanLiteralExpression(new Token$2("true", false)), [ switchStmt ]);
+	executor._statements = [ whileStmt ];
+	(_statements$0 = funcDef._statements).length = 0;
+	_statements$0.push(new FunctionStatement(new Token$2("function", false), executor));
+	funcDef._statements.push(new ExpressionStatement(new CallExpression(new Token$2("(", false), new LocalExpression(new Token$2("$loop", true), loopVar), [ new IntegerLiteralExpression(new Token$2("0", false)) ])));
+};
+
+CPSTransformCommand._eliminateGotos$LCPSTransformCommand$LMemberFunctionDefinition$ = CPSTransformCommand$_eliminateGotos$LCPSTransformCommand$LMemberFunctionDefinition$;
+
+CPSTransformCommand.prototype.getTransformingFuncDef$ = function () {
+	return this._transformingFuncDef;
+};
+
+
+function CPSTransformCommand$getTransformingFuncDef$LCPSTransformCommand$($this) {
+	return $this._transformingFuncDef;
+};
+
+CPSTransformCommand.getTransformingFuncDef$LCPSTransformCommand$ = CPSTransformCommand$getTransformingFuncDef$LCPSTransformCommand$;
+
+CPSTransformCommand.prototype._setOutputStatements$ALStatement$ = function (statements) {
+	this._outputStatements = statements;
+};
+
+
+function CPSTransformCommand$_setOutputStatements$LCPSTransformCommand$ALStatement$($this, statements) {
+	$this._outputStatements = statements;
+};
+
+CPSTransformCommand._setOutputStatements$LCPSTransformCommand$ALStatement$ = CPSTransformCommand$_setOutputStatements$LCPSTransformCommand$ALStatement$;
+
+CPSTransformCommand.prototype._emit$LStatement$ = function (statement) {
+	this._outputStatements.push(statement);
+};
+
+
+function CPSTransformCommand$_emit$LCPSTransformCommand$LStatement$($this, statement) {
+	$this._outputStatements.push(statement);
+};
+
+CPSTransformCommand._emit$LCPSTransformCommand$LStatement$ = CPSTransformCommand$_emit$LCPSTransformCommand$LStatement$;
+
+CPSTransformCommand.prototype._emitExpressionStatement$LExpression$ = function (expr) {
+	var statement$0;
+	statement$0 = new ExpressionStatement(expr);
+	this._outputStatements.push(statement$0);
+};
+
+
+function CPSTransformCommand$_emitExpressionStatement$LCPSTransformCommand$LExpression$($this, expr) {
+	var statement$0;
+	statement$0 = new ExpressionStatement(expr);
+	$this._outputStatements.push(statement$0);
+};
+
+CPSTransformCommand._emitExpressionStatement$LCPSTransformCommand$LExpression$ = CPSTransformCommand$_emitExpressionStatement$LCPSTransformCommand$LExpression$;
+
+CPSTransformCommand.prototype._emitConditionalBranch$LExpression$SS = function (expr, succLabel, failLabel) {
+	var statement$0;
+	statement$0 = new IfStatement(new Token$2("if", false), expr, [ new GotoStatement(succLabel) ], [ new GotoStatement(failLabel) ]);
+	this._outputStatements.push(statement$0);
+};
+
+
+function CPSTransformCommand$_emitConditionalBranch$LCPSTransformCommand$LExpression$SS($this, expr, succLabel, failLabel) {
+	var statement$0;
+	statement$0 = new IfStatement(new Token$2("if", false), expr, [ new GotoStatement(succLabel) ], [ new GotoStatement(failLabel) ]);
+	$this._outputStatements.push(statement$0);
+};
+
+CPSTransformCommand._emitConditionalBranch$LCPSTransformCommand$LExpression$SS = CPSTransformCommand$_emitConditionalBranch$LCPSTransformCommand$LExpression$SS;
+
+CPSTransformCommand.prototype._getStatementTransformerByLabel$S = function (label) {
+	var i;
+	var trans;
+	var this$0;
+	var this$1;
+	for (i = 0; this._labelStack.length; ++i) {
+		trans = this._labelStack[i];
+		if ((this$1 = (this$0 = trans.getStatement$(), this$0._label), this$1._value) === label) {
+			return trans;
+		}
+	}
+	throw new Error("fatal error: no corresponding transformer for label \"" + label + "\"");
+};
+
+
+function CPSTransformCommand$_getStatementTransformerByLabel$LCPSTransformCommand$S($this, label) {
+	var i;
+	var trans;
+	var this$0;
+	var this$1;
+	for (i = 0; $this._labelStack.length; ++i) {
+		trans = $this._labelStack[i];
+		if ((this$1 = (this$0 = trans.getStatement$(), this$0._label), this$1._value) === label) {
+			return trans;
+		}
+	}
+	throw new Error("fatal error: no corresponding transformer for label \"" + label + "\"");
+};
+
+CPSTransformCommand._getStatementTransformerByLabel$LCPSTransformCommand$S = CPSTransformCommand$_getStatementTransformerByLabel$LCPSTransformCommand$S;
+
+CPSTransformCommand.prototype._getTopLabelledBlock$ = function () {
+	var _labelStack$0;
+	return (_labelStack$0 = this._labelStack)[_labelStack$0.length - 1];
+};
+
+
+function CPSTransformCommand$_getTopLabelledBlock$LCPSTransformCommand$($this) {
+	var _labelStack$0;
+	return (_labelStack$0 = $this._labelStack)[_labelStack$0.length - 1];
+};
+
+CPSTransformCommand._getTopLabelledBlock$LCPSTransformCommand$ = CPSTransformCommand$_getTopLabelledBlock$LCPSTransformCommand$;
+
+CPSTransformCommand.prototype._enterLabelledBlock$L_LabellableStatementTransformer$ = function (transformer) {
+	this._labelStack.push(transformer);
+};
+
+
+function CPSTransformCommand$_enterLabelledBlock$LCPSTransformCommand$L_LabellableStatementTransformer$($this, transformer) {
+	$this._labelStack.push(transformer);
+};
+
+CPSTransformCommand._enterLabelledBlock$LCPSTransformCommand$L_LabellableStatementTransformer$ = CPSTransformCommand$_enterLabelledBlock$LCPSTransformCommand$L_LabellableStatementTransformer$;
+
+CPSTransformCommand.prototype._leaveLabelledBlock$ = function () {
+	this._labelStack.pop();
+};
+
+
+function CPSTransformCommand$_leaveLabelledBlock$LCPSTransformCommand$($this) {
+	$this._labelStack.pop();
+};
+
+CPSTransformCommand._leaveLabelledBlock$LCPSTransformCommand$ = CPSTransformCommand$_leaveLabelledBlock$LCPSTransformCommand$;
+
+CPSTransformCommand.prototype._getTopReturnLocal$ = function () {
+	var _returnLocals$0;
+	return (_returnLocals$0 = this._returnLocals)[_returnLocals$0.length - 1];
+};
+
+
+function CPSTransformCommand$_getTopReturnLocal$LCPSTransformCommand$($this) {
+	var _returnLocals$0;
+	return (_returnLocals$0 = $this._returnLocals)[_returnLocals$0.length - 1];
+};
+
+CPSTransformCommand._getTopReturnLocal$LCPSTransformCommand$ = CPSTransformCommand$_getTopReturnLocal$LCPSTransformCommand$;
+
+CPSTransformCommand.prototype._enterFunction$LLocalVariable$ = function (returnLocal) {
+	this._returnLocals.push(returnLocal);
+};
+
+
+function CPSTransformCommand$_enterFunction$LCPSTransformCommand$LLocalVariable$($this, returnLocal) {
+	$this._returnLocals.push(returnLocal);
+};
+
+CPSTransformCommand._enterFunction$LCPSTransformCommand$LLocalVariable$ = CPSTransformCommand$_enterFunction$LCPSTransformCommand$LLocalVariable$;
+
+CPSTransformCommand.prototype._leaveFunction$ = function () {
+	this._returnLocals.pop();
+};
+
+
+function CPSTransformCommand$_leaveFunction$LCPSTransformCommand$($this) {
+	$this._returnLocals.pop();
+};
+
+CPSTransformCommand._leaveFunction$LCPSTransformCommand$ = CPSTransformCommand$_leaveFunction$LCPSTransformCommand$;
+
+CPSTransformCommand.prototype._getStatementTransformerFor$LStatement$ = function (statement) {
+	if (statement instanceof ConstructorInvocationStatement) {
+		return new _ConstructorInvocationStatementTransformer(this, statement);
+	} else if (statement instanceof ExpressionStatement) {
+		return new _ExpressionStatementTransformer(this, statement);
+	} else if (statement instanceof FunctionStatement) {
+		return new _FunctionStatementTransformer(this, statement);
+	} else if (statement instanceof ReturnStatement) {
+		return new _ReturnStatementTransformer(this, statement);
+	} else if (statement instanceof YieldStatement) {
+		return new _YieldStatementTransformer(this, statement);
+	} else if (statement instanceof DeleteStatement) {
+		return new _DeleteStatementTransformer(this, statement);
+	} else if (statement instanceof BreakStatement) {
+		return new _BreakStatementTransformer(this, statement);
+	} else if (statement instanceof ContinueStatement) {
+		return new _ContinueStatementTransformer(this, statement);
+	} else if (statement instanceof DoWhileStatement) {
+		return new _DoWhileStatementTransformer(this, statement);
+	} else if (statement instanceof ForInStatement) {
+		return new _ForInStatementTransformer(this, statement);
+	} else if (statement instanceof ForStatement) {
+		return new _ForStatementTransformer(this, statement);
+	} else if (statement instanceof IfStatement) {
+		return new _IfStatementTransformer(this, statement);
+	} else if (statement instanceof SwitchStatement) {
+		return new _SwitchStatementTransformer(this, statement);
+	} else if (statement instanceof CaseStatement) {
+		return new _CaseStatementTransformer(this, statement);
+	} else if (statement instanceof DefaultStatement) {
+		return new _DefaultStatementTransformer(this, statement);
+	} else if (statement instanceof WhileStatement) {
+		return new _WhileStatementTransformer(this, statement);
+	} else if (statement instanceof TryStatement) {
+		return new _TryStatementTransformer(this, statement);
+	} else if (statement instanceof CatchStatement) {
+		return new _CatchStatementTransformer(this, statement);
+	} else if (statement instanceof ThrowStatement) {
+		return new _ThrowStatementTransformer(this, statement);
+	} else if (statement instanceof AssertStatement) {
+		return new _AssertStatementTransformer(this, statement);
+	} else if (statement instanceof LogStatement) {
+		return new _LogStatementTransformer(this, statement);
+	} else if (statement instanceof DebuggerStatement) {
+		return new _DebuggerStatementTransformer(this, statement);
+	}
+	throw new Error("got unexpected type of statement: " + JSON.stringify(statement.serialize$()));
+};
+
+
+function CPSTransformCommand$_getStatementTransformerFor$LCPSTransformCommand$LStatement$($this, statement) {
+	if (statement instanceof ConstructorInvocationStatement) {
+		return new _ConstructorInvocationStatementTransformer($this, statement);
+	} else if (statement instanceof ExpressionStatement) {
+		return new _ExpressionStatementTransformer($this, statement);
+	} else if (statement instanceof FunctionStatement) {
+		return new _FunctionStatementTransformer($this, statement);
+	} else if (statement instanceof ReturnStatement) {
+		return new _ReturnStatementTransformer($this, statement);
+	} else if (statement instanceof YieldStatement) {
+		return new _YieldStatementTransformer($this, statement);
+	} else if (statement instanceof DeleteStatement) {
+		return new _DeleteStatementTransformer($this, statement);
+	} else if (statement instanceof BreakStatement) {
+		return new _BreakStatementTransformer($this, statement);
+	} else if (statement instanceof ContinueStatement) {
+		return new _ContinueStatementTransformer($this, statement);
+	} else if (statement instanceof DoWhileStatement) {
+		return new _DoWhileStatementTransformer($this, statement);
+	} else if (statement instanceof ForInStatement) {
+		return new _ForInStatementTransformer($this, statement);
+	} else if (statement instanceof ForStatement) {
+		return new _ForStatementTransformer($this, statement);
+	} else if (statement instanceof IfStatement) {
+		return new _IfStatementTransformer($this, statement);
+	} else if (statement instanceof SwitchStatement) {
+		return new _SwitchStatementTransformer($this, statement);
+	} else if (statement instanceof CaseStatement) {
+		return new _CaseStatementTransformer($this, statement);
+	} else if (statement instanceof DefaultStatement) {
+		return new _DefaultStatementTransformer($this, statement);
+	} else if (statement instanceof WhileStatement) {
+		return new _WhileStatementTransformer($this, statement);
+	} else if (statement instanceof TryStatement) {
+		return new _TryStatementTransformer($this, statement);
+	} else if (statement instanceof CatchStatement) {
+		return new _CatchStatementTransformer($this, statement);
+	} else if (statement instanceof ThrowStatement) {
+		return new _ThrowStatementTransformer($this, statement);
+	} else if (statement instanceof AssertStatement) {
+		return new _AssertStatementTransformer($this, statement);
+	} else if (statement instanceof LogStatement) {
+		return new _LogStatementTransformer($this, statement);
+	} else if (statement instanceof DebuggerStatement) {
+		return new _DebuggerStatementTransformer($this, statement);
+	}
+	throw new Error("got unexpected type of statement: " + JSON.stringify(statement.serialize$()));
+};
+
+CPSTransformCommand._getStatementTransformerFor$LCPSTransformCommand$LStatement$ = CPSTransformCommand$_getStatementTransformerFor$LCPSTransformCommand$LStatement$;
+
+function ExpressionTransformCommand(compiler, identifier) {
+	this.errors = null;
+	this._compiler = compiler;
+	this._identifier = identifier;
+};
+
+$__jsx_extend([ExpressionTransformCommand], TransformCommand);
+ExpressionTransformCommand.prototype.performTransformation$ = function () {
+	var $this = this;
+	var touchMemberFunction;
+	var touchMemberVariable;
+	function touchMemberFunction(member) {
+		Util$forEachStatement$F$LStatement$B$ALStatement$((function (stmt) {
+			return ExpressionTransformCommand$touchStatement$LExpressionTransformCommand$LStatement$($this, stmt);
+		}), member._statements);
+	}
+	function touchMemberVariable(member) {
+		var expr;
+		expr = member._initialValue;
+		if (expr != null) {
+			$this.touchExpression$LExpression$F$LExpression$V$(expr, (function (expr) {
+				return MemberVariableDefinition$setInitialValue$LMemberVariableDefinition$LExpression$(member, expr);
+			}));
+		}
+	}
+	Compiler$forEachClassDef$LCompiler$F$LParser$LClassDefinition$B$(this._compiler, (function (parser, classDef) {
+		if (! (classDef instanceof TemplateClassDefinition)) {
+			ClassDefinition$forEachMember$LClassDefinition$F$LMemberDefinition$B$(classDef, (function (member) {
+				if (! (classDef instanceof TemplateFunctionDefinition)) {
+					if (member instanceof MemberFunctionDefinition) {
+						touchMemberFunction(member);
+					} else {
+						if (! (member instanceof MemberVariableDefinition)) {
+							debugger;
+							throw new Error("[/Users/gfx/repo/try-on-web/JSX/src/transformer.jsx:113:42] assertion failure\n                            assert member instanceof MemberVariableDefinition;\n                                          ^^^^^^^^^^\n");
+						}
+						touchMemberVariable(member);
+					}
+				}
+				return true;
+			}));
+		}
+		return true;
+	}));
+};
+
+
+ExpressionTransformCommand.prototype.touchStatement$LStatement$ = function (stmt) {
+	var $this = this;
+	var this$0;
+	var this$1;
+	if (stmt instanceof FunctionStatement) {
+		this$1 = stmt;
+		this$0 = this$1._funcDef;
+		Util$forEachStatement$F$LStatement$B$ALStatement$((function (stmt) {
+			return ExpressionTransformCommand$touchStatement$LExpressionTransformCommand$LStatement$($this, stmt);
+		}), this$0._statements);
+	}
+	stmt.forEachStatement$F$LStatement$B$((function (stmt) {
+		return ExpressionTransformCommand$touchStatement$LExpressionTransformCommand$LStatement$($this, stmt);
+	}));
+	stmt.forEachExpression$F$LExpression$F$LExpression$V$B$((function (expr, replaceCb) {
+		return $this.touchExpression$LExpression$F$LExpression$V$(expr, replaceCb);
+	}));
+	return true;
+};
+
+
+function ExpressionTransformCommand$touchStatement$LExpressionTransformCommand$LStatement$($this, stmt) {
+	var this$0;
+	var this$1;
+	if (stmt instanceof FunctionStatement) {
+		this$1 = stmt;
+		this$0 = this$1._funcDef;
+		Util$forEachStatement$F$LStatement$B$ALStatement$((function (stmt) {
+			return ExpressionTransformCommand$touchStatement$LExpressionTransformCommand$LStatement$($this, stmt);
+		}), this$0._statements);
+	}
+	stmt.forEachStatement$F$LStatement$B$((function (stmt) {
+		return ExpressionTransformCommand$touchStatement$LExpressionTransformCommand$LStatement$($this, stmt);
+	}));
+	stmt.forEachExpression$F$LExpression$F$LExpression$V$B$((function (expr, replaceCb) {
+		return $this.touchExpression$LExpression$F$LExpression$V$(expr, replaceCb);
+	}));
+	return true;
+};
+
+ExpressionTransformCommand.touchStatement$LExpressionTransformCommand$LStatement$ = ExpressionTransformCommand$touchStatement$LExpressionTransformCommand$LStatement$;
+
+ExpressionTransformCommand.prototype.touchExpression$LExpression$F$LExpression$V$ = function (expr, replaceCb) {
+	var $this = this;
+	var this$0;
+	var this$1;
+	if (expr instanceof FunctionExpression) {
+		this$1 = expr;
+		this$0 = this$1._funcDef;
+		Util$forEachStatement$F$LStatement$B$ALStatement$((function (stmt) {
+			return ExpressionTransformCommand$touchStatement$LExpressionTransformCommand$LStatement$($this, stmt);
+		}), this$0._statements);
+	}
+	expr.forEachExpression$F$LExpression$F$LExpression$V$B$((function (expr, replaceCb) {
+		return $this.touchExpression$LExpression$F$LExpression$V$(expr, replaceCb);
+	}));
+	return true;
+};
+
+
+function FixedExpressionTransformCommand(compiler) {
+	this.errors = null;
+	this._compiler = compiler;
+	this._identifier = "fixed";
+};
+
+$__jsx_extend([FixedExpressionTransformCommand], ExpressionTransformCommand);
+FixedExpressionTransformCommand.prototype.touchExpression$LExpression$F$LExpression$V$ = function (expr, replaceCb) {
+	var envName;
+	var envVar;
+	var this$0;
+	var this$1;
+	var expr$0;
+	var this$0$0;
+	var this$1$0;
+	var this$2$0;
+	var this$2;
+	var this$3;
+	var expr$1;
+	var this$0$1;
+	var this$1$1;
+	var this$2$1;
+	var this$4;
+	if (expr instanceof ArrayExpression && (this$2 = expr, this$2._expr1) instanceof PropertyExpression && (expr$1 = (this$3 = expr, this$3._expr1), expr$1._expr instanceof ClassExpression && (this$1$1 = (this$0$1 = expr$1._expr, this$0$1._token), this$1$1._value) === "JSX" && (this$2$1 = expr$1._identifierToken, this$2$1._value) === "ENV") && (this$4 = expr, this$4._expr2) instanceof StringLiteralExpression) {
+		envName = (this$0 = expr, this$0._expr2).getDecoded$();
+		envVar = (this$1 = this._compiler, this$1._userEnvironment)[envName];
+		if (envVar != null) {
+			replaceCb(new StringLiteralExpression(new Token$2(Util$encodeStringLiteral$S(envVar), false)));
+		} else {
+			replaceCb(new NullExpression(new Token$2("null", false), new NullableType(Type.stringType)));
+		}
+		return true;
+	} else if (expr instanceof PropertyExpression && (expr$0 = expr, expr$0._expr instanceof ClassExpression && (this$1$0 = (this$0$0 = expr$0._expr, this$0$0._token), this$1$0._value) === "JSX" && (this$2$0 = expr$0._identifierToken, this$2$0._value) === "ENV")) {
+		this.errors.push(new CompileError(expr._token, "JSX.ENV can only be accessed via: JSX.ENV[\"string-literal\"]"));
+	}
+	return ExpressionTransformCommand.prototype.touchExpression$LExpression$F$LExpression$V$.call(this, expr, replaceCb);
+};
+
+
+function FixedExpressionTransformCommand$_refersToJSXENV$LPropertyExpression$(expr) {
+	var this$0;
+	var this$1;
+	var this$2;
+	return expr._expr instanceof ClassExpression && (this$1 = (this$0 = expr._expr, this$0._token), this$1._value) === "JSX" && (this$2 = expr._identifierToken, this$2._value) === "ENV";
+};
+
+FixedExpressionTransformCommand._refersToJSXENV$LPropertyExpression$ = FixedExpressionTransformCommand$_refersToJSXENV$LPropertyExpression$;
+
 function Expression(token) {
 	this._stash = {};
 	this._token = token;
@@ -35395,27 +36064,27 @@ Expression.prototype.instantiate$LInstantiationContext$ = function (instantiatio
 			srcType = expr.getType$();
 			if (srcType != null) {
 				this$0 = expr;
-				type$0 = srcType.instantiate$LInstantiationContext$(instantiationContext);
+				type$0 = srcType.instantiate$LInstantiationContext$B(instantiationContext, false);
 				this$0._type = type$0;
 			}
 		} else if (expr instanceof NewExpression) {
 			srcType = expr.getType$();
 			if (srcType != null) {
 				this$1 = expr;
-				type$1 = srcType.instantiate$LInstantiationContext$(instantiationContext);
+				type$1 = srcType.instantiate$LInstantiationContext$B(instantiationContext, false);
 				this$1._type = type$1;
 			}
 		} else if (expr instanceof PropertyExpression) {
 			propertyExpr = expr;
 			srcType = expr.getType$();
 			if (srcType != null) {
-				type$2 = srcType.instantiate$LInstantiationContext$(instantiationContext);
+				type$2 = srcType.instantiate$LInstantiationContext$B(instantiationContext, false);
 				propertyExpr._type = type$2;
 			}
 			srcTypes = propertyExpr._typeArgs;
 			if (srcTypes != null) {
 				types$0 = srcTypes.map((function (type) {
-					return type.instantiate$LInstantiationContext$(instantiationContext);
+					return type.instantiate$LInstantiationContext$B(instantiationContext, false);
 				}));
 				propertyExpr._typeArgs = types$0;
 			}
@@ -35423,35 +36092,35 @@ Expression.prototype.instantiate$LInstantiationContext$ = function (instantiatio
 			srcType = expr.getType$();
 			if (srcType != null) {
 				this$2 = expr;
-				type$3 = srcType.instantiate$LInstantiationContext$(instantiationContext);
+				type$3 = srcType.instantiate$LInstantiationContext$B(instantiationContext, false);
 				this$2._type = type$3;
 			}
 		} else if (expr instanceof MapLiteralExpression) {
 			srcType = expr.getType$();
 			if (srcType != null) {
 				this$3 = expr;
-				type$4 = srcType.instantiate$LInstantiationContext$(instantiationContext);
+				type$4 = srcType.instantiate$LInstantiationContext$B(instantiationContext, false);
 				this$3._type = type$4;
 			}
 		} else if (expr instanceof AsExpression) {
 			srcType = expr.getType$();
 			if (srcType != null) {
 				this$4 = expr;
-				type$5 = srcType.instantiate$LInstantiationContext$(instantiationContext);
+				type$5 = srcType.instantiate$LInstantiationContext$B(instantiationContext, false);
 				this$4._type = type$5;
 			}
 		} else if (expr instanceof AsNoConvertExpression) {
 			srcType = expr.getType$();
 			if (srcType != null) {
 				this$5 = expr;
-				type$6 = srcType.instantiate$LInstantiationContext$(instantiationContext);
+				type$6 = srcType.instantiate$LInstantiationContext$B(instantiationContext, false);
 				this$5._type = type$6;
 			}
 		} else if (expr instanceof ClassExpression) {
 			srcType = expr.getType$();
 			if (srcType != null) {
 				this$6 = expr;
-				type$7 = srcType.instantiate$LInstantiationContext$(instantiationContext);
+				type$7 = srcType.instantiate$LInstantiationContext$B(instantiationContext, false);
 				this$6._parsedType = type$7;
 			}
 		} else if (expr instanceof LocalExpression) {
@@ -35465,7 +36134,7 @@ Expression.prototype.instantiate$LInstantiationContext$ = function (instantiatio
 			this$7._local = local$0;
 		} else if (expr instanceof InstanceofExpression) {
 			instanceofExpr = expr;
-			type$8 = instanceofExpr._expectedType.instantiate$LInstantiationContext$(instantiationContext);
+			type$8 = instanceofExpr._expectedType.instantiate$LInstantiationContext$B(instantiationContext, false);
 			instanceofExpr._expectedType = type$8;
 		}
 		return Expression$forEachExpression$LExpression$F$LExpression$B$(expr, onExpr);
@@ -35508,27 +36177,27 @@ function Expression$instantiate$LExpression$LInstantiationContext$($this, instan
 			srcType = expr.getType$();
 			if (srcType != null) {
 				this$0 = expr;
-				type$0 = srcType.instantiate$LInstantiationContext$(instantiationContext);
+				type$0 = srcType.instantiate$LInstantiationContext$B(instantiationContext, false);
 				this$0._type = type$0;
 			}
 		} else if (expr instanceof NewExpression) {
 			srcType = expr.getType$();
 			if (srcType != null) {
 				this$1 = expr;
-				type$1 = srcType.instantiate$LInstantiationContext$(instantiationContext);
+				type$1 = srcType.instantiate$LInstantiationContext$B(instantiationContext, false);
 				this$1._type = type$1;
 			}
 		} else if (expr instanceof PropertyExpression) {
 			propertyExpr = expr;
 			srcType = expr.getType$();
 			if (srcType != null) {
-				type$2 = srcType.instantiate$LInstantiationContext$(instantiationContext);
+				type$2 = srcType.instantiate$LInstantiationContext$B(instantiationContext, false);
 				propertyExpr._type = type$2;
 			}
 			srcTypes = propertyExpr._typeArgs;
 			if (srcTypes != null) {
 				types$0 = srcTypes.map((function (type) {
-					return type.instantiate$LInstantiationContext$(instantiationContext);
+					return type.instantiate$LInstantiationContext$B(instantiationContext, false);
 				}));
 				propertyExpr._typeArgs = types$0;
 			}
@@ -35536,35 +36205,35 @@ function Expression$instantiate$LExpression$LInstantiationContext$($this, instan
 			srcType = expr.getType$();
 			if (srcType != null) {
 				this$2 = expr;
-				type$3 = srcType.instantiate$LInstantiationContext$(instantiationContext);
+				type$3 = srcType.instantiate$LInstantiationContext$B(instantiationContext, false);
 				this$2._type = type$3;
 			}
 		} else if (expr instanceof MapLiteralExpression) {
 			srcType = expr.getType$();
 			if (srcType != null) {
 				this$3 = expr;
-				type$4 = srcType.instantiate$LInstantiationContext$(instantiationContext);
+				type$4 = srcType.instantiate$LInstantiationContext$B(instantiationContext, false);
 				this$3._type = type$4;
 			}
 		} else if (expr instanceof AsExpression) {
 			srcType = expr.getType$();
 			if (srcType != null) {
 				this$4 = expr;
-				type$5 = srcType.instantiate$LInstantiationContext$(instantiationContext);
+				type$5 = srcType.instantiate$LInstantiationContext$B(instantiationContext, false);
 				this$4._type = type$5;
 			}
 		} else if (expr instanceof AsNoConvertExpression) {
 			srcType = expr.getType$();
 			if (srcType != null) {
 				this$5 = expr;
-				type$6 = srcType.instantiate$LInstantiationContext$(instantiationContext);
+				type$6 = srcType.instantiate$LInstantiationContext$B(instantiationContext, false);
 				this$5._type = type$6;
 			}
 		} else if (expr instanceof ClassExpression) {
 			srcType = expr.getType$();
 			if (srcType != null) {
 				this$6 = expr;
-				type$7 = srcType.instantiate$LInstantiationContext$(instantiationContext);
+				type$7 = srcType.instantiate$LInstantiationContext$B(instantiationContext, false);
 				this$6._parsedType = type$7;
 			}
 		} else if (expr instanceof LocalExpression) {
@@ -35578,7 +36247,7 @@ function Expression$instantiate$LExpression$LInstantiationContext$($this, instan
 			this$7._local = local$0;
 		} else if (expr instanceof InstanceofExpression) {
 			instanceofExpr = expr;
-			type$8 = instanceofExpr._expectedType.instantiate$LInstantiationContext$(instantiationContext);
+			type$8 = instanceofExpr._expectedType.instantiate$LInstantiationContext$B(instantiationContext, false);
 			instanceofExpr._expectedType = type$8;
 		}
 		return Expression$forEachExpression$LExpression$F$LExpression$B$(expr, onExpr);
@@ -35644,6 +36313,54 @@ function Expression$assertIsAssignable$LAnalysisContext$LToken$LType$LType$(cont
 };
 
 Expression.assertIsAssignable$LAnalysisContext$LToken$LType$LType$ = Expression$assertIsAssignable$LAnalysisContext$LToken$LType$LType$;
+
+Expression.prototype.hasSideEffects$ = function () {
+	var $this = this;
+	var preCheckCb$0;
+	var r$0;
+	preCheckCb$0 = (function (expr) {
+		return null;
+	});
+	r$0 = preCheckCb$0(this);
+	return (r$0 != null ? r$0 : this._doHasSideEffects$F$LExpression$UB$(preCheckCb$0));
+};
+
+
+function Expression$hasSideEffects$LExpression$($this) {
+	var preCheckCb$0;
+	var r$0;
+	preCheckCb$0 = (function (expr) {
+		return null;
+	});
+	r$0 = preCheckCb$0($this);
+	return (r$0 != null ? r$0 : $this._doHasSideEffects$F$LExpression$UB$(preCheckCb$0));
+};
+
+Expression.hasSideEffects$LExpression$ = Expression$hasSideEffects$LExpression$;
+
+Expression.prototype.hasSideEffects$F$LExpression$UB$ = function (preCheckCb) {
+	var r;
+	r = preCheckCb(this);
+	return (r != null ? r : this._doHasSideEffects$F$LExpression$UB$(preCheckCb));
+};
+
+
+function Expression$hasSideEffects$LExpression$F$LExpression$UB$($this, preCheckCb) {
+	var r;
+	r = preCheckCb($this);
+	return (r != null ? r : $this._doHasSideEffects$F$LExpression$UB$(preCheckCb));
+};
+
+Expression.hasSideEffects$LExpression$F$LExpression$UB$ = Expression$hasSideEffects$LExpression$F$LExpression$UB$;
+
+Expression.prototype._doHasSideEffects$F$LExpression$UB$ = function (preCheckCb) {
+	var $this = this;
+	return ! Expression$forEachExpression$LExpression$F$LExpression$B$(this, (function (expr) {
+		var r$0;
+		return ! (r$0 = preCheckCb(expr), r$0 != null ? r$0 : expr._doHasSideEffects$F$LExpression$UB$(preCheckCb));
+	}));
+};
+
 
 function Expression$getDefaultValueExpressionOf$LType$(type) {
 	return (type.equals$LType$(Type.booleanType) ? new BooleanLiteralExpression(new Token$2("false", false)) : type.equals$LType$(Type.integerType) ? new IntegerLiteralExpression(new Token$2("0", false)) : type.equals$LType$(Type.numberType) ? new NumberLiteralExpression(new Token$2("0", false)) : type.equals$LType$(Type.stringType) ? new StringLiteralExpression(new Token$2("\"\"", false)) : new NullExpression(new Token$2("null", false), type));
@@ -37005,6 +37722,11 @@ IncrementExpression.prototype.getType$ = function () {
 };
 
 
+IncrementExpression.prototype._doHasSideEffects$F$LExpression$UB$ = function (preCheckCb) {
+	return true;
+};
+
+
 function PostIncrementExpression(operatorToken, expr) {
 	this._stash = {};
 	this._token = operatorToken;
@@ -37245,6 +37967,12 @@ PropertyExpression.prototype.assertIsAssignable$LAnalysisContext$LToken$LType$ =
 		return false;
 	}
 	return true;
+};
+
+
+PropertyExpression.prototype._doHasSideEffects$F$LExpression$UB$ = function (preCheckCb) {
+	var type$0;
+	return (this._isInner ? false : ! (type$0 = this._expr.getType$(), Util$_isBuiltInObjectType$LType$HB(type$0, Util._builtInClass)) && Util$rootIsNativeClass$LType$(this._expr.getType$()) ? true : Expression.prototype._doHasSideEffects$F$LExpression$UB$.call(this, preCheckCb));
 };
 
 
@@ -37608,6 +38336,12 @@ ArrayExpression.prototype.assertIsAssignable$LAnalysisContext$LToken$LType$ = fu
 };
 
 
+ArrayExpression.prototype._doHasSideEffects$F$LExpression$UB$ = function (preCheckCb) {
+	var type$0;
+	return (! (type$0 = this._expr1.getType$(), Util$_isBuiltInObjectType$LType$HB(type$0, Util._builtInClass)) && Util$rootIsNativeClass$LType$(this._expr1.getType$()) ? true : Expression.prototype._doHasSideEffects$F$LExpression$UB$.call(this, preCheckCb));
+};
+
+
 function AssignmentExpression(operatorToken, expr1, expr2) {
 	this._stash = {};
 	this._token = operatorToken;
@@ -37780,6 +38514,11 @@ AssignmentExpression.prototype.getType$ = function () {
 };
 
 
+AssignmentExpression.prototype._doHasSideEffects$F$LExpression$UB$ = function (preCheckCb) {
+	return true;
+};
+
+
 function FusedAssignmentExpression(operatorToken, expr1, expr2) {
 	this._stash = {};
 	this._token = operatorToken;
@@ -37825,6 +38564,11 @@ FusedAssignmentExpression.prototype.analyze$LAnalysisContext$LExpression$ = func
 
 FusedAssignmentExpression.prototype.getType$ = function () {
 	return this._expr1.getType$();
+};
+
+
+FusedAssignmentExpression.prototype._doHasSideEffects$F$LExpression$UB$ = function (preCheckCb) {
+	return true;
 };
 
 
@@ -38303,6 +39047,11 @@ CallExpression.prototype.forEachExpression$F$LExpression$F$LExpression$V$B$ = fu
 };
 
 
+CallExpression.prototype._doHasSideEffects$F$LExpression$UB$ = function (preCheckCb) {
+	return true;
+};
+
+
 function SuperExpression(token, name, args) {
 	this._stash = {};
 	this._token = token;
@@ -38417,6 +39166,11 @@ SuperExpression.prototype.getType$ = function () {
 
 SuperExpression.prototype.forEachExpression$F$LExpression$F$LExpression$V$B$ = function (cb) {
 	return (! Util$forEachExpression$F$LExpression$F$LExpression$V$B$ALExpression$(cb, this._args) ? false : true);
+};
+
+
+SuperExpression.prototype._doHasSideEffects$F$LExpression$UB$ = function (preCheckCb) {
+	return true;
 };
 
 
@@ -38539,6 +39293,22 @@ NewExpression.getConstructor$LNewExpression$ = NewExpression$getConstructor$LNew
 
 NewExpression.prototype.forEachExpression$F$LExpression$F$LExpression$V$B$ = function (cb) {
 	return (! Util$forEachExpression$F$LExpression$F$LExpression$V$B$ALExpression$(cb, this._args) ? false : true);
+};
+
+
+NewExpression.prototype._doHasSideEffects$F$LExpression$UB$ = function (preCheckCb) {
+	var classDef;
+	var className;
+	classDef = this._type.getClassDef$();
+	className = classDef.className$().replace(/\.<.*/, "");
+	switch (className) {
+	case "Object":
+	case "Map":
+		return false;
+	case "Array":
+		return false;
+	}
+	return true;
 };
 
 
@@ -39170,7 +39940,7 @@ DocumentGenerator.prototype._buildFooterOfFile$LParser$ = function (parser) {
 		}
 	}
 	_ += "<p class=\"jsxdoc-notice\">This document was automatically generated by <a href=\"http://jsx.github.io/\">JSX</a> ";
-	_ += "0.9.78".replace(/\n$/, "");
+	_ += "0.9.84".replace(/\n$/, "");
 	_ += "<br />\n";
 	_ += "at ";
 	_ += DocumentGenerator$_escape$LDocumentGenerator$S(this, new Date().toISOString()).replace(/\n$/, "");
@@ -39207,7 +39977,7 @@ function DocumentGenerator$_buildFooterOfFile$LDocumentGenerator$LParser$($this,
 		}
 	}
 	_ += "<p class=\"jsxdoc-notice\">This document was automatically generated by <a href=\"http://jsx.github.io/\">JSX</a> ";
-	_ += "0.9.78".replace(/\n$/, "");
+	_ += "0.9.84".replace(/\n$/, "");
 	_ += "<br />\n";
 	_ += "at ";
 	_ += DocumentGenerator$_escape$LDocumentGenerator$S($this, new Date().toISOString()).replace(/\n$/, "");
@@ -40626,9 +41396,7 @@ _SwitchStatementTransformer$x2ECaseStash.prototype.clone$ = function () {
 };
 
 
-$__jsx_lazy_init(ScriptLoader, "seen", function () {
-	return {};
-});
+ScriptLoader.seen = {};
 ScriptLoader.optimizationLevel = 0;
 $__jsx_lazy_init(dom, "window", function () {
 	return js$0.global.window;
@@ -40640,25 +41408,25 @@ Compiler.MODE_COMPILE = 0;
 Compiler.MODE_PARSE = 1;
 Compiler.MODE_COMPLETE = 2;
 Compiler.MODE_DOC = 3;
-_LinkTimeOptimizationCommand.IDENTIFIER = "lto";
-_StripOptimizeCommand.IDENTIFIER = "strip";
 _NoAssertCommand.IDENTIFIER = "no-assert";
 _NoLogCommand.IDENTIFIER = "no-log";
+_DeadCodeEliminationOptimizeCommand.IDENTIFIER = "dce";
+_ReturnIfOptimizeCommand.IDENTIFIER = "return-if";
+_LCSEOptimizeCommand.IDENTIFIER = "lcse";
+_ArrayLengthOptimizeCommand.IDENTIFIER = "array-length";
+_TailRecursionOptimizeCommand.IDENTIFIER = "tail-rec";
+_TailRecursionOptimizeCommand.LABEL = "$TAIL_REC";
+_LinkTimeOptimizationCommand.IDENTIFIER = "lto";
+_StripOptimizeCommand.IDENTIFIER = "strip";
 _DetermineCalleeCommand.IDENTIFIER = "determine-callee";
 _StaticizeOptimizeCommand.IDENTIFIER = "staticize";
 _UnclassifyOptimizationCommand.IDENTIFIER = "unclassify";
 _FoldConstantCommand.IDENTIFIER = "fold-const";
 _FoldConstantCommand.LONG_STRING_LITERAL = 64;
-_DeadCodeEliminationOptimizeCommand.IDENTIFIER = "dce";
 _InlineOptimizeCommand.IDENTIFIER = "inline";
 _InlineOptimizeCommand.INLINE_THRESHOLD = 30;
-_ReturnIfOptimizeCommand.IDENTIFIER = "return-if";
-_LCSEOptimizeCommand.IDENTIFIER = "lcse";
 _UnboxOptimizeCommand.IDENTIFIER = "unbox";
-_ArrayLengthOptimizeCommand.IDENTIFIER = "array-length";
 _NoDebugCommand.IDENTIFIER = "no-debug";
-_TailRecursionOptimizeCommand.IDENTIFIER = "tail-rec";
-_TailRecursionOptimizeCommand.LABEL = "$TAIL_REC";
 _Util$0.OUTPUTNAME_IDENTIFIER = "emitter.outputname";
 $__jsx_lazy_init(_Util$0, "_ecma262reserved", function () {
 	return Util$asSet$AS([ "break", "do", "instanceof", "typeof", "case", "else", "new", "var", "catch", "finally", "return", "void", "continue", "for", "switch", "while", "debugger", "function", "this", "with", "default", "if", "throw", "delete", "in", "try", "class", "enum", "extends", "super", "const", "export", "import", "implements", "let", "private", "public", "yield", "interface", "package", "protected", "static", "null", "true", "false" ]);
@@ -40671,45 +41439,23 @@ $__jsx_lazy_init(_MinifiedNameGenerator, "GLOBALS", function () {
 _Minifier.CLASSSTASH_IDENTIFIER = "minifier.class";
 _Minifier.SCOPESTASH_IDENTIFIER = "minifier.scope";
 _Minifier.LOCALSTASH_IDENTIFIER = "minifier.local";
-$__jsx_lazy_init(_UnaryExpressionEmitter, "_operatorPrecedence", function () {
-	return {};
-});
-$__jsx_lazy_init(_PreIncrementExpressionEmitter, "_operatorPrecedence", function () {
-	return {};
-});
-$__jsx_lazy_init(_PostIncrementExpressionEmitter, "_operatorPrecedence", function () {
-	return {};
-});
+_UnaryExpressionEmitter._operatorPrecedence = {};
+_PreIncrementExpressionEmitter._operatorPrecedence = {};
+_PostIncrementExpressionEmitter._operatorPrecedence = {};
 _PostIncrementExpressionEmitter.TEMP_VAR_NAME = "$__jsx_postinc_t";
 _InstanceofExpressionEmitter._operatorPrecedence = 0;
 _PropertyExpressionEmitter._operatorPrecedence = 0;
 _FunctionExpressionEmitter._operatorPrecedence = 0;
 _AdditiveExpressionEmitter._operatorPrecedence = 0;
-$__jsx_lazy_init(_AssignmentExpressionEmitter, "_operatorPrecedence", function () {
-	return {};
-});
-$__jsx_lazy_init(_FusedAssignmentExpressionEmitter, "_fusedIntHelpers", function () {
-	return ({ "+": "$__jsx_ipadd", "-": "$__jsx_ipsub", "*": "$__jsx_ipmul", "/": "$__jsx_ipdiv", "%": "$__jsx_ipmod" });
-});
-$__jsx_lazy_init(_FusedAssignmentExpressionEmitter, "_operatorPrecedence", function () {
-	return {};
-});
-$__jsx_lazy_init(_EqualityExpressionEmitter, "_operatorPrecedence", function () {
-	return {};
-});
+_AssignmentExpressionEmitter._operatorPrecedence = {};
+_FusedAssignmentExpressionEmitter._fusedIntHelpers = ({ "+": "$__jsx_ipadd", "-": "$__jsx_ipsub", "*": "$__jsx_ipmul", "/": "$__jsx_ipdiv", "%": "$__jsx_ipmod" });
+_FusedAssignmentExpressionEmitter._operatorPrecedence = {};
+_EqualityExpressionEmitter._operatorPrecedence = {};
 _InExpressionEmitter._operatorPrecedence = 0;
-$__jsx_lazy_init(_LogicalExpressionEmitter, "_operatorPrecedence", function () {
-	return {};
-});
-$__jsx_lazy_init(_ShiftExpressionEmitter, "_operatorPrecedence", function () {
-	return {};
-});
-$__jsx_lazy_init(_BinaryNumberExpressionEmitter, "_OPS_RETURNING_INT", function () {
-	return ({ '&': true, '|': true, '^': true });
-});
-$__jsx_lazy_init(_BinaryNumberExpressionEmitter, "_operatorPrecedence", function () {
-	return {};
-});
+_LogicalExpressionEmitter._operatorPrecedence = {};
+_ShiftExpressionEmitter._operatorPrecedence = {};
+_BinaryNumberExpressionEmitter._OPS_RETURNING_INT = ({ '&': true, '|': true, '^': true });
+_BinaryNumberExpressionEmitter._operatorPrecedence = {};
 _ArrayExpressionEmitter._operatorPrecedence = 0;
 _ConditionalExpressionEmitter._operatorPrecedence = 0;
 _CallExpressionEmitter._operatorPrecedence = 0;
@@ -40722,9 +41468,7 @@ $__jsx_lazy_init(Util, "_builtInClass", function () {
 $__jsx_lazy_init(Util, "_builtInContainer", function () {
 	return Util$asSet$AS([ "Array", "Map", "Int8Array", "Uint8Array", "Uint8ClampedArray", "Int16Array", "Uint16Array", "Int32Array", "Uint32Array", "Float32Array", "Float64Array" ]);
 });
-$__jsx_lazy_init(Util, "_stringLiteralEncodingMap", function () {
-	return ({ "\0": "\\0", "\r": "\\r", "\n": "\\n", "\t": "\\t", "\"": "\\\"", "\'": "\\\'", "\\": "\\\\" });
-});
+Util._stringLiteralEncodingMap = ({ "\0": "\\0", "\r": "\\r", "\n": "\\n", "\t": "\\t", "\"": "\\\"", "\'": "\\\'", "\\": "\\\\" });
 $__jsx_lazy_init(BrowserPlatform, "debug", function () {
 	return dom.window.location.hash === "#debug";
 });
@@ -40842,16 +41586,15 @@ NumberType._classDef = null;
 StringType._classDef = null;
 FunctionType._classDef = null;
 _Util$1._numUniqVar = 0;
-$__jsx_lazy_init(_StatementTransformer, "_statementCountMap", function () {
-	return {};
-});
-_CPSTransformCommand.IDENTIFIER = "cps";
-_GeneratorTransformCommand.IDENTIFIER = "generator";
-Meta.VERSION_STRING = "0.9.78";
-Meta.VERSION_NUMBER = 0.009078;
-Meta.LAST_COMMIT_HASH = "da141e9a5ca211f770bca3f618109d2c443a1b72";
-Meta.LAST_COMMIT_DATE = "2014-02-20 16:35:31 +0900";
-Meta.IDENTIFIER = "0.9.78 (2014-02-20 16:35:31 +0900; da141e9a5ca211f770bca3f618109d2c443a1b72)";
+_StatementTransformer._statementCountMap = {};
+GeneratorTransformCommand.IDENTIFIER = "generator";
+CPSTransformCommand.IDENTIFIER = "cps";
+FixedExpressionTransformCommand.IDENTIFIER = "fixed";
+Meta.VERSION_STRING = "0.9.84";
+Meta.VERSION_NUMBER = 0.009084;
+Meta.LAST_COMMIT_HASH = "1e07252cc54a2d7c6b4ab95268995c6656833a80";
+Meta.LAST_COMMIT_DATE = "2014-03-25 11:22:27 +0900";
+Meta.IDENTIFIER = "0.9.84 (2014-03-25 11:22:27 +0900; 1e07252cc54a2d7c6b4ab95268995c6656833a80)";
 SourceMapper.NODE_SOURCE_MAP_HEADER = "require('source-map-support').install();\n\n";
 SourceMapper.WEB_SOURCE_MAP_HEADER = "";
 $__jsx_lazy_init(node, "__dirname", function () {
@@ -41000,14 +41743,26 @@ var $__jsx_classMap = {
 		_OptimizeCommand$S: _OptimizeCommand,
 		_FunctionOptimizeCommand: _FunctionOptimizeCommand,
 		_FunctionOptimizeCommand$S: _FunctionOptimizeCommand,
-		_LinkTimeOptimizationCommand: _LinkTimeOptimizationCommand,
-		_LinkTimeOptimizationCommand$: _LinkTimeOptimizationCommand,
-		_StripOptimizeCommand: _StripOptimizeCommand,
-		_StripOptimizeCommand$: _StripOptimizeCommand,
 		_NoAssertCommand: _NoAssertCommand,
 		_NoAssertCommand$: _NoAssertCommand,
 		_NoLogCommand: _NoLogCommand,
 		_NoLogCommand$: _NoLogCommand,
+		_DeadCodeEliminationOptimizeCommand: _DeadCodeEliminationOptimizeCommand,
+		_DeadCodeEliminationOptimizeCommand$: _DeadCodeEliminationOptimizeCommand,
+		_ReturnIfOptimizeCommand: _ReturnIfOptimizeCommand,
+		_ReturnIfOptimizeCommand$: _ReturnIfOptimizeCommand,
+		_LCSECachedExpression: _LCSECachedExpression,
+		_LCSECachedExpression$LExpression$F$LExpression$V$: _LCSECachedExpression,
+		_LCSEOptimizeCommand: _LCSEOptimizeCommand,
+		_LCSEOptimizeCommand$: _LCSEOptimizeCommand,
+		_ArrayLengthOptimizeCommand: _ArrayLengthOptimizeCommand,
+		_ArrayLengthOptimizeCommand$: _ArrayLengthOptimizeCommand,
+		_TailRecursionOptimizeCommand: _TailRecursionOptimizeCommand,
+		_TailRecursionOptimizeCommand$: _TailRecursionOptimizeCommand,
+		_LinkTimeOptimizationCommand: _LinkTimeOptimizationCommand,
+		_LinkTimeOptimizationCommand$: _LinkTimeOptimizationCommand,
+		_StripOptimizeCommand: _StripOptimizeCommand,
+		_StripOptimizeCommand$: _StripOptimizeCommand,
 		_DetermineCalleeCommand: _DetermineCalleeCommand,
 		_DetermineCalleeCommand$: _DetermineCalleeCommand,
 		_StaticizeOptimizeCommand: _StaticizeOptimizeCommand,
@@ -41016,24 +41771,12 @@ var $__jsx_classMap = {
 		_UnclassifyOptimizationCommand$: _UnclassifyOptimizationCommand,
 		_FoldConstantCommand: _FoldConstantCommand,
 		_FoldConstantCommand$: _FoldConstantCommand,
-		_DeadCodeEliminationOptimizeCommand: _DeadCodeEliminationOptimizeCommand,
-		_DeadCodeEliminationOptimizeCommand$: _DeadCodeEliminationOptimizeCommand,
 		_InlineOptimizeCommand: _InlineOptimizeCommand,
 		_InlineOptimizeCommand$: _InlineOptimizeCommand,
-		_ReturnIfOptimizeCommand: _ReturnIfOptimizeCommand,
-		_ReturnIfOptimizeCommand$: _ReturnIfOptimizeCommand,
-		_LCSECachedExpression: _LCSECachedExpression,
-		_LCSECachedExpression$LExpression$F$LExpression$V$: _LCSECachedExpression,
-		_LCSEOptimizeCommand: _LCSEOptimizeCommand,
-		_LCSEOptimizeCommand$: _LCSEOptimizeCommand,
 		_UnboxOptimizeCommand: _UnboxOptimizeCommand,
 		_UnboxOptimizeCommand$: _UnboxOptimizeCommand,
-		_ArrayLengthOptimizeCommand: _ArrayLengthOptimizeCommand,
-		_ArrayLengthOptimizeCommand$: _ArrayLengthOptimizeCommand,
 		_NoDebugCommand: _NoDebugCommand,
 		_NoDebugCommand$: _NoDebugCommand,
-		_TailRecursionOptimizeCommand: _TailRecursionOptimizeCommand,
-		_TailRecursionOptimizeCommand$: _TailRecursionOptimizeCommand,
 		"_LinkTimeOptimizationCommand.Stash": _LinkTimeOptimizationCommand$x2EStash,
 		"_LinkTimeOptimizationCommand.Stash$": _LinkTimeOptimizationCommand$x2EStash,
 		"_StripOptimizeCommand._Stash": _StripOptimizeCommand$x2E_Stash,
@@ -41243,7 +41986,6 @@ var $__jsx_classMap = {
 		Stashable$: Stashable,
 		LocalVariable: LocalVariable,
 		LocalVariable$LToken$LType$B: LocalVariable,
-		LocalVariable$LToken$LType$: LocalVariable$0,
 		CaughtVariable: CaughtVariable,
 		CaughtVariable$LToken$LType$: CaughtVariable,
 		ArgumentDeclaration: ArgumentDeclaration,
@@ -41388,63 +42130,57 @@ var $__jsx_classMap = {
 		_Util: _Util$1,
 		_Util$: _Util$1,
 		_StatementTransformer: _StatementTransformer,
-		_StatementTransformer$L_CPSTransformCommand$S: _StatementTransformer,
+		_StatementTransformer$LCPSTransformCommand$S: _StatementTransformer,
 		_ConstructorInvocationStatementTransformer: _ConstructorInvocationStatementTransformer,
-		_ConstructorInvocationStatementTransformer$L_CPSTransformCommand$LConstructorInvocationStatement$: _ConstructorInvocationStatementTransformer,
+		_ConstructorInvocationStatementTransformer$LCPSTransformCommand$LConstructorInvocationStatement$: _ConstructorInvocationStatementTransformer,
 		_ExpressionStatementTransformer: _ExpressionStatementTransformer,
-		_ExpressionStatementTransformer$L_CPSTransformCommand$LExpressionStatement$: _ExpressionStatementTransformer,
+		_ExpressionStatementTransformer$LCPSTransformCommand$LExpressionStatement$: _ExpressionStatementTransformer,
 		_FunctionStatementTransformer: _FunctionStatementTransformer,
-		_FunctionStatementTransformer$L_CPSTransformCommand$LFunctionStatement$: _FunctionStatementTransformer,
+		_FunctionStatementTransformer$LCPSTransformCommand$LFunctionStatement$: _FunctionStatementTransformer,
 		_ReturnStatementTransformer: _ReturnStatementTransformer,
-		_ReturnStatementTransformer$L_CPSTransformCommand$LReturnStatement$: _ReturnStatementTransformer,
+		_ReturnStatementTransformer$LCPSTransformCommand$LReturnStatement$: _ReturnStatementTransformer,
 		_YieldStatementTransformer: _YieldStatementTransformer,
-		_YieldStatementTransformer$L_CPSTransformCommand$LYieldStatement$: _YieldStatementTransformer,
+		_YieldStatementTransformer$LCPSTransformCommand$LYieldStatement$: _YieldStatementTransformer,
 		_DeleteStatementTransformer: _DeleteStatementTransformer,
-		_DeleteStatementTransformer$L_CPSTransformCommand$LDeleteStatement$: _DeleteStatementTransformer,
+		_DeleteStatementTransformer$LCPSTransformCommand$LDeleteStatement$: _DeleteStatementTransformer,
 		_BreakStatementTransformer: _BreakStatementTransformer,
-		_BreakStatementTransformer$L_CPSTransformCommand$LBreakStatement$: _BreakStatementTransformer,
+		_BreakStatementTransformer$LCPSTransformCommand$LBreakStatement$: _BreakStatementTransformer,
 		_ContinueStatementTransformer: _ContinueStatementTransformer,
-		_ContinueStatementTransformer$L_CPSTransformCommand$LContinueStatement$: _ContinueStatementTransformer,
+		_ContinueStatementTransformer$LCPSTransformCommand$LContinueStatement$: _ContinueStatementTransformer,
 		_LabellableStatementTransformer: _LabellableStatementTransformer,
-		_LabellableStatementTransformer$L_CPSTransformCommand$S: _LabellableStatementTransformer,
+		_LabellableStatementTransformer$LCPSTransformCommand$S: _LabellableStatementTransformer,
 		_DoWhileStatementTransformer: _DoWhileStatementTransformer,
-		_DoWhileStatementTransformer$L_CPSTransformCommand$LDoWhileStatement$: _DoWhileStatementTransformer,
+		_DoWhileStatementTransformer$LCPSTransformCommand$LDoWhileStatement$: _DoWhileStatementTransformer,
 		_ForInStatementTransformer: _ForInStatementTransformer,
-		_ForInStatementTransformer$L_CPSTransformCommand$LForInStatement$: _ForInStatementTransformer,
+		_ForInStatementTransformer$LCPSTransformCommand$LForInStatement$: _ForInStatementTransformer,
 		_ForStatementTransformer: _ForStatementTransformer,
-		_ForStatementTransformer$L_CPSTransformCommand$LForStatement$: _ForStatementTransformer,
+		_ForStatementTransformer$LCPSTransformCommand$LForStatement$: _ForStatementTransformer,
 		_IfStatementTransformer: _IfStatementTransformer,
-		_IfStatementTransformer$L_CPSTransformCommand$LIfStatement$: _IfStatementTransformer,
+		_IfStatementTransformer$LCPSTransformCommand$LIfStatement$: _IfStatementTransformer,
 		_SwitchStatementTransformer: _SwitchStatementTransformer,
-		_SwitchStatementTransformer$L_CPSTransformCommand$LSwitchStatement$: _SwitchStatementTransformer,
+		_SwitchStatementTransformer$LCPSTransformCommand$LSwitchStatement$: _SwitchStatementTransformer,
 		_CaseStatementTransformer: _CaseStatementTransformer,
-		_CaseStatementTransformer$L_CPSTransformCommand$LCaseStatement$: _CaseStatementTransformer,
+		_CaseStatementTransformer$LCPSTransformCommand$LCaseStatement$: _CaseStatementTransformer,
 		_DefaultStatementTransformer: _DefaultStatementTransformer,
-		_DefaultStatementTransformer$L_CPSTransformCommand$LDefaultStatement$: _DefaultStatementTransformer,
+		_DefaultStatementTransformer$LCPSTransformCommand$LDefaultStatement$: _DefaultStatementTransformer,
 		_WhileStatementTransformer: _WhileStatementTransformer,
-		_WhileStatementTransformer$L_CPSTransformCommand$LWhileStatement$: _WhileStatementTransformer,
+		_WhileStatementTransformer$LCPSTransformCommand$LWhileStatement$: _WhileStatementTransformer,
 		_TryStatementTransformer: _TryStatementTransformer,
-		_TryStatementTransformer$L_CPSTransformCommand$LTryStatement$: _TryStatementTransformer,
+		_TryStatementTransformer$LCPSTransformCommand$LTryStatement$: _TryStatementTransformer,
 		_CatchStatementTransformer: _CatchStatementTransformer,
-		_CatchStatementTransformer$L_CPSTransformCommand$LCatchStatement$: _CatchStatementTransformer,
+		_CatchStatementTransformer$LCPSTransformCommand$LCatchStatement$: _CatchStatementTransformer,
 		_ThrowStatementTransformer: _ThrowStatementTransformer,
-		_ThrowStatementTransformer$L_CPSTransformCommand$LThrowStatement$: _ThrowStatementTransformer,
+		_ThrowStatementTransformer$LCPSTransformCommand$LThrowStatement$: _ThrowStatementTransformer,
 		_AssertStatementTransformer: _AssertStatementTransformer,
-		_AssertStatementTransformer$L_CPSTransformCommand$LAssertStatement$: _AssertStatementTransformer,
+		_AssertStatementTransformer$LCPSTransformCommand$LAssertStatement$: _AssertStatementTransformer,
 		_LogStatementTransformer: _LogStatementTransformer,
-		_LogStatementTransformer$L_CPSTransformCommand$LLogStatement$: _LogStatementTransformer,
+		_LogStatementTransformer$LCPSTransformCommand$LLogStatement$: _LogStatementTransformer,
 		_DebuggerStatementTransformer: _DebuggerStatementTransformer,
-		_DebuggerStatementTransformer$L_CPSTransformCommand$LDebuggerStatement$: _DebuggerStatementTransformer,
-		_TransformCommand: _TransformCommand,
-		_TransformCommand$S: _TransformCommand,
-		_FunctionTransformCommand: _FunctionTransformCommand,
-		_FunctionTransformCommand$S: _FunctionTransformCommand,
-		_CPSTransformCommand: _CPSTransformCommand,
-		_CPSTransformCommand$: _CPSTransformCommand,
-		_GeneratorTransformCommand: _GeneratorTransformCommand,
-		_GeneratorTransformCommand$: _GeneratorTransformCommand,
-		CodeTransformer: CodeTransformer,
-		CodeTransformer$: CodeTransformer,
+		_DebuggerStatementTransformer$LCPSTransformCommand$LDebuggerStatement$: _DebuggerStatementTransformer,
+		GeneratorTransformCommand: GeneratorTransformCommand,
+		GeneratorTransformCommand$LCompiler$: GeneratorTransformCommand,
+		CPSTransformCommand: CPSTransformCommand,
+		CPSTransformCommand$LCompiler$: CPSTransformCommand,
 		"_SwitchStatementTransformer.CaseStash": _SwitchStatementTransformer$x2ECaseStash,
 		"_SwitchStatementTransformer.CaseStash$": _SwitchStatementTransformer$x2ECaseStash
 	},
@@ -41510,6 +42246,16 @@ var $__jsx_classMap = {
 		GotoStatement$S: GotoStatement,
 		LabelStatement: LabelStatement,
 		LabelStatement$S: LabelStatement
+	},
+	"system:src/transformer.jsx": {
+		TransformCommand: TransformCommand,
+		TransformCommand$LCompiler$S: TransformCommand,
+		FunctionTransformCommand: FunctionTransformCommand,
+		FunctionTransformCommand$LCompiler$S: FunctionTransformCommand,
+		ExpressionTransformCommand: ExpressionTransformCommand,
+		ExpressionTransformCommand$LCompiler$S: ExpressionTransformCommand,
+		FixedExpressionTransformCommand: FixedExpressionTransformCommand,
+		FixedExpressionTransformCommand$LCompiler$: FixedExpressionTransformCommand
 	},
 	"system:src/expression.jsx": {
 		Expression: Expression,

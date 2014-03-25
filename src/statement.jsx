@@ -120,7 +120,7 @@ class ConstructorInvocationStatement extends Statement {
 		}
 		return new ConstructorInvocationStatement(
 			this._token,
-			this._ctorClassType.instantiate(instantiationContext),
+			this._ctorClassType.instantiate(instantiationContext, false),
 			Util.cloneArray(this._args),
 			null);
 	}
@@ -1766,6 +1766,10 @@ class GotoStatement extends Statement {
 
 	function getLabel () : string {
 		return this.label;
+	}
+
+	function setLabel (label : string) : void {
+		this.label = label;
 	}
 
 	override function getToken() : Token {

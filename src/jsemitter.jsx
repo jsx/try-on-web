@@ -278,6 +278,17 @@ class _Util {
 		emitter._emit(")", expr.getToken());
 	}
 
+	static function getNewExpressionInliner(expr : NewExpression) : function(:NewExpression):Expression[] {
+		var classDef = expr.getType().getClassDef();
+		var ctor = expr.getConstructor();
+		var argTypes = ctor.getArgumentTypes();
+		var callingFuncDef = Util.findFunctionInClass(classDef, "constructor", argTypes, false);
+		assert callingFuncDef != null, "logic flow for " + expr.getType().toString();
+
+		var stash = callingFuncDef.getStash("unclassify");
+		return stash ? (stash as _UnclassifyOptimizationCommand.Stash).inliner : null;
+	}
+
 }
 
 class _TempVarLister {
@@ -765,6 +776,17 @@ class _Minifier {
 
 	function _minifyProperties() : void {
 		this._log("minifying properties");
+		var exportedPropertyNames = new string[];
+		this._classDefs.forEach(function (classDef) {
+			classDef.forEachMember(function (member) {
+				// check if it is an exported property (or member function)
+				if ((member.flags() & (ClassDefinition.IS_STATIC | ClassDefinition.IS_EXPORT)) == ClassDefinition.IS_EXPORT
+					&& ! (member instanceof MemberFunctionDefinition && member.name() == "constructor")) {
+					exportedPropertyNames.push(member.name());
+				}
+				return true;
+			});
+		});
 		this._propertyConversionTable = _Minifier._buildConversionTable(
 			this._propertyUseCount,
 			new _MinifiedNameGenerator(
@@ -782,7 +804,7 @@ class _Minifier {
 						});
 						return nativePropertyNames.keys();
 					})()
-				)));
+				).concat(exportedPropertyNames)));
 		for (var k in this._propertyConversionTable) {
 			this._log(" " + k + " => " + this._propertyConversionTable[k]);
 		}
@@ -2056,7 +2078,7 @@ class _PreIncrementExpressionEmitter extends _UnaryExpressionEmitter {
 	override function emit(outerOpPrecedence : number) : void {
 		var opToken = this._expr.getToken();
 		if (this._expr.getType().resolveIfNullable().equals(Type.integerType)) {
-			if (Util.lhsHasSideEffects(this._expr.getExpr())) {
+			if (this._expr.getExpr().hasSideEffects()) {
 				_Util.emitFusedIntOpWithSideEffects(this._emitter, opToken.getValue() == "++" ? "$__jsx_ipadd" : "$__jsx_ipdec", this._expr.getExpr(), function (outerPred) {
 					this._emitter._emit("1", opToken);
 				}, 0);
@@ -2097,7 +2119,7 @@ class _PostIncrementExpressionEmitter extends _UnaryExpressionEmitter {
 	override function emit (outerOpPrecedence : number) : void {
 		var opToken = this._expr.getToken();
 		if (this._expr.getType().resolveIfNullable().equals(Type.integerType)) {
-			if (Util.lhsHasSideEffects(this._expr.getExpr())) {
+			if (this._expr.getExpr().hasSideEffects()) {
 				_Util.emitFusedIntOpWithSideEffects(this._emitter, opToken.getValue() == "++" ? "$__jsx_ippostinc" : "$__jsx_ippostdec", this._expr.getExpr(), function (outerPred) {
 					this._emitter._emit("1", opToken);
 				}, 0);
@@ -2130,7 +2152,7 @@ class _PostIncrementExpressionEmitter extends _UnaryExpressionEmitter {
 
 	static function needsTempVarFor(expr : PostIncrementExpression) : boolean {
 		return expr.getType().resolveIfNullable().equals(Type.integerType)
-			&& ! Util.lhsHasSideEffects(expr.getExpr());
+			&& ! expr.getExpr().hasSideEffects();
 	}
 
 }
@@ -2388,7 +2410,7 @@ class _FusedAssignmentExpressionEmitter extends _OperatorExpressionEmitter {
 		var coreOp = this._expr.getToken().getValue().charAt(0);
 		if (_FusedAssignmentExpressionEmitter._fusedIntHelpers[coreOp] != null
 			&& this._expr.getFirstExpr().getType().resolveIfNullable().equals(Type.integerType)) {
-			if (Util.lhsHasSideEffects(this._expr.getFirstExpr())) {
+			if (this._expr.getFirstExpr().hasSideEffects()) {
 				_Util.emitFusedIntOpWithSideEffects(this._emitter, _FusedAssignmentExpressionEmitter._fusedIntHelpers[coreOp], this._expr.getFirstExpr(), function (outerPred) {
 					this._emitter._emitWithNullableGuard(this._expr.getSecondExpr(), outerPred);
 				}, outerOpPrecedence);
@@ -2749,7 +2771,9 @@ class _CallExpressionEmitter extends _OperatorExpressionEmitter {
 			return true;
 		if (this._emitIfJsEval(calleeExpr as PropertyExpression))
 			return true;
-		else if (this._emitCallsToMap(calleeExpr as PropertyExpression))
+		if (this._emitCallsToMap(calleeExpr as PropertyExpression))
+			return true;
+		if (this._emitCallsToArray(calleeExpr as PropertyExpression))
 			return true;
 		return false;
 	}
@@ -2840,6 +2864,25 @@ class _CallExpressionEmitter extends _OperatorExpressionEmitter {
 		}
 	}
 
+	function _emitCallsToArray(calleeExpr : PropertyExpression) : boolean {
+		if (calleeExpr.getType() instanceof StaticFunctionType)
+			return false;
+		var classDef = calleeExpr.getExpr().getType().getClassDef();
+		if (! (classDef instanceof InstantiatedClassDefinition))
+			return false;
+		if ((classDef as InstantiatedClassDefinition).getTemplateClassName() != "Array")
+			return false;
+		switch (calleeExpr.getIdentifierToken().getValue()) {
+		case "_forEach":
+			assert this._expr.getArguments().length == 1;
+			this._emitter._emitCallArguments(
+				calleeExpr.getToken(), "$__jsx_forEach(", [ calleeExpr.getExpr(), this._expr.getArguments()[0] ], null);
+			return true;
+		default:
+			return false;
+		}
+	}
+
 }
 
 class _SuperExpressionEmitter extends _OperatorExpressionEmitter {
@@ -2883,29 +2926,20 @@ class _NewExpressionEmitter extends _OperatorExpressionEmitter {
 	}
 
 	override function emit (outerOpPrecedence : number) : void {
-		function getInliner(funcDef : MemberFunctionDefinition) : function(:NewExpression):Expression[] {
-			var stash = funcDef.getStash("unclassify");
-			return stash ? (stash as _UnclassifyOptimizationCommand.Stash).inliner : null;
-		}
-
 		assert this._expr.getConstructor() != null, "logic flow: new " + this._expr.getType().toString(); // didn't call analize()?
-
+		var inliner = _Util.getNewExpressionInliner(this._expr);
 		var classDef = this._expr.getType().getClassDef();
-		var ctor = this._expr.getConstructor();
-		var argTypes = ctor.getArgumentTypes();
-		var callingFuncDef = Util.findFunctionInClass(classDef, "constructor", argTypes, false);
-		assert callingFuncDef != null, "logic flow for " + this._expr.getType().toString();
-		var inliner = getInliner(callingFuncDef);
 		if (inliner) {
 			this._emitAsObjectLiteral(classDef, inliner(this._expr));
 		} else if (_Util.isArrayType(this._expr.getType())
-			&& argTypes.length == 0) {
+			&& this._expr.getArguments().length == 0) {
 			this._emitter._emit("[]", this._expr.getToken());
 		} else if (
 			classDef instanceof InstantiatedClassDefinition
 			&& (classDef as InstantiatedClassDefinition).getTemplateClassName() == "Map") {
 			this._emitter._emit("{}", this._expr.getToken());
 		} else {
+			var argTypes = this._expr.getConstructor().getArgumentTypes();
 			this._emitter._emitCallArguments(
 				this._expr.getToken(),
 				"new " + this._emitter.getNamer().getNameOfConstructor(classDef, argTypes) + "(",
@@ -3709,13 +3743,21 @@ class JavaScriptEmitter implements Emitter {
 
 	function _emitStaticMemberVariable (variable : MemberVariableDefinition) : void {
 		var initialValue = variable.getInitialValue();
-		if (initialValue != null
-			&& ! (initialValue instanceof NullExpression
-				|| initialValue instanceof BooleanLiteralExpression
-				|| initialValue instanceof IntegerLiteralExpression
-				|| initialValue instanceof NumberLiteralExpression
-				|| initialValue instanceof StringLiteralExpression
-				|| initialValue instanceof RegExpLiteralExpression)) {
+		// static vars that refer to other static vars should be initialized lazily
+		if (initialValue != null && initialValue.hasSideEffects(function (expr) {
+			if (expr instanceof PropertyExpression) {
+				var holderExpr = (expr as PropertyExpression).getExpr();
+				if (holderExpr instanceof ClassExpression
+					|| (holderExpr instanceof PropertyExpression && (holderExpr as PropertyExpression).isClassSpecifier())) {
+					return true;
+				}
+			} else if (expr instanceof NewExpression) {
+				if (_Util.getNewExpressionInliner(expr as NewExpression) != null) {
+					return false;
+				}
+			}
+			return null;
+		})) {
 			// use deferred initialization
 			this._emit("$__jsx_lazy_init(", variable.getNameToken());
 			this._emit(this._namer.getNameOfClass(variable.getClassDef()) + ", \"" + this._namer.getNameOfStaticVariable(variable.getClassDef(), variable.name()) + "\", function () {\n", variable.getNameToken());

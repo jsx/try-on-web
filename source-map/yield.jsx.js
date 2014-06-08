@@ -1,4 +1,4 @@
-// generatedy by JSX compiler 0.9.84 (2014-03-25 11:22:27 +0900; 1e07252cc54a2d7c6b4ab95268995c6656833a80)
+// generatedy by JSX compiler 0.9.89 (2014-06-08 12:56:00 +0900; 422392d7c9d17e919d31f446e1626c0aba14858e)
 var JSX = {};
 (function (JSX) {
 /**
@@ -156,14 +156,16 @@ var __jsx_generator_object$0 =
   function __jsx_generator_object() {
   	this.__next = 0;
   	this.__loop = null;
+	this.__seed = null;
   	this.__value = undefined;
   	this.__status = 0;	// SUSPENDED: 0, ACTIVE: 1, DEAD: 2
   }
 
-  __jsx_generator_object.prototype.next = function () {
+  __jsx_generator_object.prototype.next = function (seed) {
   	switch (this.__status) {
   	case 0:
   		this.__status = 1;
+  		this.__seed = seed;
 
   		// go next!
   		this.__loop(this.__next);
@@ -201,11 +203,11 @@ function Async$sleep$N(durationMS) {
 
 Async.sleep$N = Async$sleep$N;
 
-function Async$run$F$LGenerator$x2E$x3Cfunction$x20$x28$x3A$x20variant$x29$x20$x3A$x20void$x3E$$(coro) {
+function Async$run$F$LGenerator$x2E$x3Cvoid$x2Cfunction$x20$x28$x3A$x20variant$x29$x20$x3A$x20void$x3E$$(coro) {
 	Async$go$X(coro());
 };
 
-Async.run$F$LGenerator$x2E$x3Cfunction$x20$x28$x3A$x20variant$x29$x20$x3A$x20void$x3E$$ = Async$run$F$LGenerator$x2E$x3Cfunction$x20$x28$x3A$x20variant$x29$x20$x3A$x20void$x3E$$;
+Async.run$F$LGenerator$x2E$x3Cvoid$x2Cfunction$x20$x28$x3A$x20variant$x29$x20$x3A$x20void$x3E$$ = Async$run$F$LGenerator$x2E$x3Cvoid$x2Cfunction$x20$x28$x3A$x20variant$x29$x20$x3A$x20void$x3E$$;
 
 function Async$go$X(v) {
 	var g;
@@ -226,7 +228,7 @@ function _Main() {
 
 $__jsx_extend([_Main], Object);
 function _Main$main$AS(args) {
-	Async$run$F$LGenerator$x2E$x3Cfunction$x20$x28$x3A$x20variant$x29$x20$x3A$x20void$x3E$$((function * () {
+	Async$run$F$LGenerator$x2E$x3Cvoid$x2Cfunction$x20$x28$x3A$x20variant$x29$x20$x3A$x20void$x3E$$((function * () {
 		console.log("H");
 		yield Async$sleep$N(100);
 		console.log("e");
@@ -391,7 +393,7 @@ Timer._getCancelAnimationFrameImpl$B = Timer$_getCancelAnimationFrameImpl$B;
 function TimerHandle() {}
 $__jsx_extend([TimerHandle], Object);
 var js$0 = (function () {
-	var global = (function () { return this; }());
+	var global = Function("return this")();
 	return {
 		global: global,
 		eval: global.eval,

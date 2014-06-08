@@ -49,6 +49,12 @@ abstract class Statement implements Stashable {
 	}
 
 	function forEachStatement (cb : function(:Statement):boolean) : boolean {
+		return this.forEachStatement(function(stmt,_) {
+			return cb(stmt);
+		});
+	}
+
+	function forEachStatement (cb : function(:Statement,:function(:Statement):void):boolean) : boolean {
 		return true;
 	}
 
@@ -281,6 +287,15 @@ class FunctionStatement extends Statement {
 			context.errors.push(new CompileError(this._token, "argument / return types were not automatically deductable, please specify them by hand"));
 			return false;
 		}
+		var returnType = this._funcDef.getReturnType();
+		if (this._funcDef.isGenerator()) {
+			var classDef;
+			if (! (returnType instanceof ObjectType
+				&& (classDef = returnType.getClassDef()) instanceof InstantiatedClassDefinition
+				&& (classDef as InstantiatedClassDefinition).getTemplateClassName() == "Generator")) {
+					this._funcDef.setReturnType(new ObjectType(Util.instantiateTemplate(context, this._token, "Generator", [ Type.voidType, returnType ])));
+			}
+		}
 		this._funcDef.analyze(context);
 		// the function can be used from the scope of the same level
 		context.getTopBlock().localVariableStatuses.setStatus(this._funcDef.getFuncLocal());
@@ -390,76 +405,6 @@ class ReturnStatement extends Statement {
 			}
 		}
 		context.getTopBlock().localVariableStatuses.setIsReachable(false);
-		return true;
-	}
-
-	override function forEachExpression (cb : function(:Expression,:function(:Expression):void):boolean) : boolean {
-		if (this._expr != null && ! cb(this._expr, function (expr) { this._expr = expr; }))
-			return false;
-		return true;
-	}
-
-}
-
-class YieldStatement extends Statement {
-
-	var _token : Token;
-	var _expr : Expression;
-
-	function constructor (token : Token, expr : Expression) {
-		super();
-		this._token = token;
-		this._expr = expr;
-	}
-
-	override function clone () : Statement {
-		return new YieldStatement(this._token, Util.cloneNullable(this._expr));
-	}
-
-	override function getToken () : Token {
-		return this._token;
-	}
-
-	function getExpr () : Expression {
-		return this._expr;
-	}
-
-	function setExpr (expr : Expression) : void {
-		this._expr = expr;
-	}
-
-	override function serialize () : variant {
-		return [
-			"YieldStatement",
-			Util.serializeNullable(this._expr)
-		] : variant[];
-	}
-
-	override function doAnalyze (context : AnalysisContext) : boolean {
-		// handle yield of values
-		if (! this._analyzeExpr(context, this._expr))
-			return true;
-		if (this._expr.getType() == null)
-			return true;
-		var returnType = context.funcDef.getReturnType();
-		if (returnType == null) {
-			var yieldType = this._expr.getType();
-			context.funcDef.setReturnType(new ObjectType(Util.instantiateTemplate(context, this._token, "Generator", [ yieldType ])));
-		} else {
-			if (returnType instanceof ObjectType
-				&& returnType.getClassDef() instanceof InstantiatedClassDefinition
-				&& (returnType.getClassDef() as InstantiatedClassDefinition).getTemplateClassName() == "Generator") {
-					yieldType = (returnType.getClassDef() as InstantiatedClassDefinition).getTypeArguments()[0];
-			} else {
-				// return type is not an instance of Enumerable. the error will be reported by MemberFuncitonDefinition#analyze.
-				context.errors.push(new CompileError(this._token, "cannot convert 'Generator.<" + this._expr.getType().toString() + ">' to return type '" + returnType.toString() + "'"));
-				return false;
-			}
-		}
-		if (! this._expr.getType().isConvertibleTo(yieldType)) {
-			context.errors.push(new CompileError(this._token, "cannot convert '" + this._expr.getType().toString() + "' to yield type '" + yieldType.toString() + "'"));
-			return false;
-		}
 		return true;
 	}
 
@@ -721,7 +666,7 @@ abstract class ContinuableStatement extends LabellableStatement {
 		return this._statements;
 	}
 
-	override function forEachStatement (cb : function(:Statement):boolean) : boolean {
+	override function forEachStatement (cb : function(:Statement,:function(:Statement):void):boolean) : boolean {
 		if (! Util.forEachStatement(cb, this._statements))
 			return false;
 		return true;
@@ -1064,7 +1009,7 @@ class IfStatement extends Statement implements Block {
 		return true;
 	}
 
-	override function forEachStatement (cb : function(:Statement):boolean) : boolean {
+	override function forEachStatement (cb : function(:Statement,:function(:Statement):void):boolean) : boolean {
 		if (! Util.forEachStatement(cb, this._onTrueStatements))
 			return false;
 		if (! Util.forEachStatement(cb, this._onFalseStatements))
@@ -1177,7 +1122,7 @@ class SwitchStatement extends LabellableStatement {
 		return true;
 	}
 
-	override function forEachStatement (cb : function(:Statement):boolean) : boolean {
+	override function forEachStatement (cb : function(:Statement,:function(:Statement):void):boolean) : boolean {
 		if (! Util.forEachStatement(cb, this._statements))
 			return false;
 		return true;
@@ -1402,10 +1347,6 @@ class TryStatement extends Statement implements Block {
 	}
 
 	override function doAnalyze (context : AnalysisContext) : boolean {
-		if ((context.funcDef.flags() & ClassDefinition.IS_GENERATOR) != 0) {
-			context.errors.push(new CompileError(this._token, "invalid use of try block inside generator"));
-			return false;
-		}
 		// try
 		context.blockStack.push(new BlockContext(context.getTopBlock().localVariableStatuses.clone(), this));
 		var lvStatusesAfterTryCatch = null : LocalVariableStatuses;
@@ -1455,7 +1396,7 @@ class TryStatement extends Statement implements Block {
 		return true;
 	}
 
-	override function forEachStatement (cb : function(:Statement):boolean) : boolean {
+	override function forEachStatement (cb : function(:Statement,:function(:Statement):void):boolean) : boolean {
 		if (! Util.forEachStatement(cb, this._tryStatements))
 			return false;
 		if (! Util.forEachStatement(cb, this._catchStatements.map.<Statement>((s) -> { return s; })))
@@ -1539,7 +1480,7 @@ class CatchStatement extends Statement implements Block {
 		return true;
 	}
 
-	override function forEachStatement (cb : function(:Statement):boolean) : boolean {
+	override function forEachStatement (cb : function(:Statement,:function(:Statement):void):boolean) : boolean {
 		return Util.forEachStatement(cb, this._statements);
 	}
 
@@ -1758,18 +1699,28 @@ class DebuggerStatement extends InformationStatement {
 
 class GotoStatement extends Statement {
 
-	var label : string;
+	var _label : string;
+	var _id : int;
 
 	function constructor(label : string) {
-		this.label = label;
+		this._label = label;
+		this._id = -1;
 	}
 
 	function getLabel () : string {
-		return this.label;
+		return this._label;
 	}
 
 	function setLabel (label : string) : void {
-		this.label = label;
+		this._label = label;
+	}
+
+	function getID () : int {
+		return this._id;
+	}
+
+	function setID (id : int) : void {
+		this._id = id;
 	}
 
 	override function getToken() : Token {
@@ -1777,7 +1728,7 @@ class GotoStatement extends Statement {
 	}
 
 	override function clone() : Statement {
-		return new GotoStatement(this.label);
+		return new GotoStatement(this._label);
 	}
 
 	override function serialize():variant {
@@ -1797,13 +1748,23 @@ class GotoStatement extends Statement {
 class LabelStatement extends Statement {
 
 	var _name : string;
+	var _id : int;
 
 	function constructor(name : string) {
 		this._name = name;
+		this._id = -1;
 	}
 
 	function getName () : string {
 		return this._name;
+	}
+
+	function getID () : int {
+		return this._id;
+	}
+
+	function setID (id : int) : void {
+		this._id = id;
 	}
 
 	override function getToken() : Token {

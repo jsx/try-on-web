@@ -289,6 +289,15 @@ class _Util {
 		return stash ? (stash as _UnclassifyOptimizationCommand.Stash).inliner : null;
 	}
 
+	static function getElementTypeOfCompoundType(type : Type) : Type {
+		if (type.equals(Type.variantType)) {
+			return Type.variantType;
+		}
+		var classDef = type.getClassDef();
+		assert ! classDef.className().match(/^(Array|Map)\.$/);
+		return (classDef as InstantiatedClassDefinition).getTypeArguments()[0];
+	}
+
 }
 
 class _TempVarLister {
@@ -1131,38 +1140,6 @@ class _ReturnStatementEmitter extends _StatementEmitter {
 
 }
 
-class _YieldStatementEmitter extends _StatementEmitter {
-
-	var _statement : YieldStatement;
-
-	function constructor (emitter : JavaScriptEmitter, statement : YieldStatement) {
-		super(emitter);
-		this._statement = statement;
-	}
-
-	override function emit () : void {
-		var expr = this._statement.getExpr();
-		if (expr != null) {
-			this._emitter._emit("yield ", null);
-			if (this._emitter._enableProfiler) {
-				this._emitter._emit("$__jsx_profiler.exit(", null);
-			}
-			this._emitter._emitRHSOfAssignment(this._statement.getExpr(), this._emitter._emittingFunction.getReturnType());
-			if (this._emitter._enableProfiler) {
-				this._emitter._emit(")", null);
-			}
-			this._emitter._emit(";\n", null);
-		} else {
-			if (this._emitter._enableProfiler) {
-				this._emitter._emit("yield $__jsx_profiler.exit();\n", this._statement.getToken());
-			} else {
-				this._emitter._emit("yield;\n", this._statement.getToken());
-			}
-		}
-	}
-
-}
-
 class _DeleteStatementEmitter extends _StatementEmitter {
 
 	var _statement : DeleteStatement;
@@ -1715,10 +1692,11 @@ class _ArrayLiteralExpressionEmitter extends _ExpressionEmitter {
 	override function emit (outerOpPrecedence : number) : void {
 		this._emitter._emit("[ ", null);
 		var exprs = this._expr.getExprs();
+		var exprType = _Util.getElementTypeOfCompoundType(this._expr.getType());
 		for (var i = 0; i < exprs.length; ++i) {
 			if (i != 0)
 				this._emitter._emit(", ", null);
-			this._emitter._getExpressionEmitterFor(exprs[i]).emit(0);
+			this._emitter._emitRHSOfAssignment(exprs[i], exprType);
 		}
 		this._emitter._emit(" ]", null);
 	}
@@ -1737,13 +1715,14 @@ class _MapLiteralExpressionEmitter extends _ExpressionEmitter {
 	override function emit (outerOpPrecedence : number) : void {
 		this._emitter._emit("({ ", null);
 		var elements = this._expr.getElements();
+		var elementType = _Util.getElementTypeOfCompoundType(this._expr.getType());
 		for (var i = 0; i < elements.length; ++i) {
 			var element = elements[i];
 			if (i != 0)
 				this._emitter._emit(", ", null);
 			this._emitter._emit(element.getKey().getValue(), element.getKey());
 			this._emitter._emit(": ", null);
-			this._emitter._getExpressionEmitterFor(element.getExpr()).emit(0);
+			this._emitter._emitRHSOfAssignment(element.getExpr(), elementType);
 		}
 		this._emitter._emit(" })", null);
 	}
@@ -2079,7 +2058,7 @@ class _PreIncrementExpressionEmitter extends _UnaryExpressionEmitter {
 		var opToken = this._expr.getToken();
 		if (this._expr.getType().resolveIfNullable().equals(Type.integerType)) {
 			if (this._expr.getExpr().hasSideEffects()) {
-				_Util.emitFusedIntOpWithSideEffects(this._emitter, opToken.getValue() == "++" ? "$__jsx_ipadd" : "$__jsx_ipdec", this._expr.getExpr(), function (outerPred) {
+				_Util.emitFusedIntOpWithSideEffects(this._emitter, opToken.getValue() == "++" ? "$__jsx_ipadd" : "$__jsx_ipsub", this._expr.getExpr(), function (outerPred) {
 					this._emitter._emit("1", opToken);
 				}, 0);
 			} else {
@@ -3027,7 +3006,7 @@ abstract class _BootstrapBuilder {
 	}
 
 	function addBootstrap(code : string) : string {
-		code += this._emitter._platform.load(this._emitter._platform.getRoot() + "/src/js/launcher.js");
+		code += this._emitter._platform.load(this._emitter._platform.getRoot() + "/lib/js/rt/launcher.js");
 
 		var args;
 		switch (this._executableFor) {
@@ -3054,7 +3033,7 @@ abstract class _BootstrapBuilder {
 	abstract function _getLauncher() : string;
 
 	function _wrapOnLoad(code : string) : string {
-		var wrapper = this._emitter._platform.load(this._emitter._platform.getRoot() + "/src/js/web-launcher.js");
+		var wrapper = this._emitter._platform.load(this._emitter._platform.getRoot() + "/lib/js/rt/web-launcher.js");
 		return wrapper.replace(/\/\/--CODE--\/\//, code);
 	}
 
@@ -3097,6 +3076,7 @@ class JavaScriptEmitter implements Emitter {
 	var _indent : number;
 	var _emittingClass : ClassDefinition;
 	var _emittingFunction : MemberFunctionDefinition;
+	var _usesGenerator = false;
 
 	// modes
 	var _enableProfiler : boolean;
@@ -3268,7 +3248,7 @@ class JavaScriptEmitter implements Emitter {
 		// headers
 		this._output += "// generatedy by JSX compiler " + Meta.IDENTIFIER + "\n";
 		this._output += this._fileHeader;
-		this._output += this._platform.load(this._platform.getRoot() + "/src/js/bootstrap.js");
+		this._output += this._platform.load(this._platform.getRoot() + "/lib/js/rt/bootstrap.js");
 
 		var stash = (this.getStash(_NoDebugCommand.IDENTIFIER) as _NoDebugCommand.Stash);
 		this._emit("JSX.DEBUG = "+(stash == null || stash.debugValue ? "true" : "false")+";\n", null);
@@ -3278,6 +3258,9 @@ class JavaScriptEmitter implements Emitter {
 		for (var i = 0; i < classDefs.length; ++i) {
 			classDefs[i].forEachMemberFunction(function onFuncDef(funcDef) {
 				funcDef.forEachClosure(onFuncDef);
+				if (funcDef.isGenerator()) {
+					this._usesGenerator = true;
+				}
 				this._setupBooleanizeFlags(funcDef);
 				return true;
 			});
@@ -3529,7 +3512,7 @@ class JavaScriptEmitter implements Emitter {
 		}
 		output += this._output + "\n";
 		if (this._enableProfiler) {
-			output += this._platform.load(this._platform.getRoot() + "/src/js/profiler.js");
+			output += this._platform.load(this._platform.getRoot() + "/lib/js/rt/profiler.js");
 		}
 		if (this._bootstrapBuilder != null) {
 			output = this._bootstrapBuilder.addBootstrap(output);
@@ -3539,7 +3522,9 @@ class JavaScriptEmitter implements Emitter {
 			output += this._sourceMapper.getSourceMapFooter();
 		}
 		if (this._enableMinifier) {
-			output = _Minifier.minifyJavaScript(output);
+			if (! this._usesGenerator) { // TODO: disabling js minifier components until they support es6 generators.
+				output = _Minifier.minifyJavaScript(output);
+			}
 		}
 		return output;
 	}
@@ -3839,8 +3824,6 @@ class JavaScriptEmitter implements Emitter {
 			return new _FunctionStatementEmitter(this, statement as FunctionStatement);
 		else if (statement instanceof ReturnStatement)
 			return new _ReturnStatementEmitter(this, statement as ReturnStatement);
-		else if (statement instanceof YieldStatement)
-			return new _YieldStatementEmitter(this, statement as YieldStatement);
 		else if (statement instanceof DeleteStatement)
 			return new _DeleteStatementEmitter(this, statement as DeleteStatement);
 		else if (statement instanceof BreakStatement)
@@ -3921,6 +3904,8 @@ class JavaScriptEmitter implements Emitter {
 			return new _PropertyExpressionEmitter(this, expr as PropertyExpression);
 		else if (expr instanceof SignExpression)
 			return new _UnaryExpressionEmitter(this, expr as SignExpression);
+		else if (expr instanceof YieldExpression)
+			return new _UnaryExpressionEmitter(this, expr as YieldExpression);
 		else if (expr instanceof AdditiveExpression)
 			return new _AdditiveExpressionEmitter(this, expr as AdditiveExpression);
 		else if (expr instanceof ArrayExpression)
@@ -4138,6 +4123,8 @@ class JavaScriptEmitter implements Emitter {
 				{ "|=":         _FusedAssignmentExpressionEmitter._setOperatorPrecedence }
 			], [
 				{ "?":          _ConditionalExpressionEmitter._setOperatorPrecedence }
+			], [
+				{ "yield":	_UnaryExpressionEmitter._setOperatorPrecedence }
 			], [
 				{ ",":          _CommaExpressionEmitter._setOperatorPrecedence }
 			]

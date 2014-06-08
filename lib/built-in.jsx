@@ -290,13 +290,13 @@ native final class Array.<T> {
 	 * Apply a function simultaneously against two values of the array
 	 * (from right-to-left) as to reduce it to a single value.
 	 */
-	function reduceRight.<U>(callbackfn : function(previousValue : Nullable.<T>, currentValue : Nullable.<T>) : U) : U;
-	function reduceRight.<U>(callbackfn : function(previousValue : Nullable.<T>, currentValue : Nullable.<T>, currentIndex : number) : U) : U;
-	function reduceRight.<U>(callbackfn : function(previousValue : Nullable.<T>, currentValue : Nullable.<T>, currentIndex : number, array : Array.<T>) : U) : U;
+	function reduceRight.<U>(callbackfn : function(previousValue : Nullable.<U>, currentValue : Nullable.<T>) : U) : U;
+	function reduceRight.<U>(callbackfn : function(previousValue : Nullable.<U>, currentValue : Nullable.<T>, currentIndex : number) : U) : U;
+	function reduceRight.<U>(callbackfn : function(previousValue : Nullable.<U>, currentValue : Nullable.<T>, currentIndex : number, array : Array.<T>) : U) : U;
 	/* with initial value; won't throw exception. */
-	function reduceRight.<U>(callbackfn : function(previousValue : Nullable.<T>, currentValue : Nullable.<T>) : U, initialValue : T) : U;
-	function reduceRight.<U>(callbackfn : function(previousValue : Nullable.<T>, currentValue : Nullable.<T>, currentIndex : number) : U, initialValue : T) : U;
-	function reduceRight.<U>(callbackfn : function(previousValue : Nullable.<T>, currentValue : Nullable.<T>, currentIndex : number, array : Array.<T>) : U, initialValue : T) : U;
+	function reduceRight.<U>(callbackfn : function(previousValue : Nullable.<U>, currentValue : Nullable.<T>) : U, initialValue : U) : U;
+	function reduceRight.<U>(callbackfn : function(previousValue : Nullable.<U>, currentValue : Nullable.<T>, currentIndex : number) : U, initialValue : U) : U;
+	function reduceRight.<U>(callbackfn : function(previousValue : Nullable.<U>, currentValue : Nullable.<T>, currentIndex : number, array : Array.<T>) : U, initialValue : U) : U;
 
 	/**
 	 * <p>A positive integer between 0 and a value less than 2<sup>32</sup> that specifies the number of elements in an array.</p>
@@ -1016,27 +1016,31 @@ native final class GeneratorFunction {
   }
 })()""";
 
-native __fake__ class Generator.<T> {
-	function next () : IteratorResult.<T>;
+native __fake__ class Generator.<SeedT,GenT> {
+	function next () : IteratorResult.<GenT>;
+	function next (seed : Nullable.<SeedT>) : IteratorResult.<GenT>;
 }
 
-native class __jsx_generator_object.<T> extends Generator.<T> {
+native class __jsx_generator_object.<SeedT,GenT> extends Generator.<SeedT,GenT> {
 	var __next : int;
 	var __loop : (int) -> void;
-	var __value : Nullable.<T>;
+	var __seed : Nullable.<SeedT>;
+	var __value : Nullable.<GenT>;
 } = """
 (function () {
   function __jsx_generator_object() {
   	this.__next = 0;
   	this.__loop = null;
+	this.__seed = null;
   	this.__value = undefined;
   	this.__status = 0;	// SUSPENDED: 0, ACTIVE: 1, DEAD: 2
   }
 
-  __jsx_generator_object.prototype.next = function () {
+  __jsx_generator_object.prototype.next = function (seed) {
   	switch (this.__status) {
   	case 0:
   		this.__status = 1;
+  		this.__seed = seed;
 
   		// go next!
   		this.__loop(this.__next);

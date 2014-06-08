@@ -917,6 +917,20 @@ class FunctionExpression extends Expression {
 			context.errors.push(new CompileError(this._token, "argument types were not automatically deductable, please specify them by hand"));
 			return false;
 		}
+		var returnType = this._funcDef.getReturnType();
+		if (this._funcDef.isGenerator()) {
+			if (returnType == null) {
+				context.errors.push(new CompileError(this._token, "return type was not automatically deductable, please specify them by hand"));
+				return false;
+			} else {
+				var classDef;
+				if (! (returnType instanceof ObjectType
+					&& (classDef = returnType.getClassDef()) instanceof InstantiatedClassDefinition
+					&& (classDef as InstantiatedClassDefinition).getTemplateClassName() == "Generator")) {
+						this._funcDef.setReturnType(new ObjectType(Util.instantiateTemplate(context, this._token, "Generator", [ Type.voidType, returnType ])));
+				}
+			}
+		}
 		this._funcDef.analyze(context);
 		return true; // return true since everything is resolved correctly even if analysis of the function definition failed
 	}
@@ -1544,6 +1558,70 @@ class SignExpression extends UnaryExpression {
 
 }
 
+class YieldExpression extends UnaryExpression {
+
+	var _seedType : Type;
+	var _genType : Type;
+
+	function constructor (operatorToken : Token, expr : Expression) {
+		this(operatorToken, expr, null, null);
+	}
+
+	function constructor (operatorToken : Token, expr : Expression, seedType : Type, genType : Type) {
+		super(operatorToken, expr);
+		this._seedType = seedType;
+		this._genType = genType;
+	}
+
+	override function clone () : YieldExpression {
+		return new YieldExpression(this._token, this._expr.clone(), this._seedType, this._genType);
+	}
+
+	override function analyze (context : AnalysisContext, parentExpr : Expression) : boolean {
+		if (! this._analyze(context))
+			return false;
+		var returnType = context.funcDef.getReturnType();
+		if (returnType == null) {
+			context.errors.push(new CompileError(this._token, "cannot deduce yield expression type"));
+			return false;
+		} else {
+			if (returnType instanceof ObjectType
+				&& returnType.getClassDef() instanceof InstantiatedClassDefinition
+				&& (returnType.getClassDef() as InstantiatedClassDefinition).getTemplateClassName() == "Generator") {
+					this._seedType = (returnType.getClassDef() as InstantiatedClassDefinition).getTypeArguments()[0];
+					var genType = (returnType.getClassDef() as InstantiatedClassDefinition).getTypeArguments()[1];
+			} else {
+				// return type is not an instance of 'Generator'. the error will be reported by MemberFuncitonDefinition#analyze.
+				context.errors.push(new CompileError(this._token, "cannot convert 'Generator' to return type '" + returnType.toString() + "'"));
+				return false;
+			}
+		}
+		if (! this._expr.getType().isConvertibleTo(genType)) {
+			context.errors.push(new CompileError(this._token, "cannot convert '" + this._expr.getType().toString() + "' to yield type '" + genType.toString() + "'"));
+			return false;
+		}
+		this._genType = genType;
+		return true;
+	}
+
+	override function getType () : Type {
+		return this._seedType.toNullableType();
+	}
+
+	function getSeedType () : Type {
+		return this._seedType;
+	}
+
+	function getGenType () : Type {
+		return this._genType;
+	}
+
+	override function _doHasSideEffects(preCheckCb : (Expression) -> Nullable.<boolean>) : boolean {
+		return true;
+	}
+
+}
+
 // binary expressions
 
 abstract class BinaryExpression extends OperatorExpression {
@@ -1661,14 +1739,16 @@ class ArrayExpression extends BinaryExpression {
 	var _type : Type;
 
 	function constructor (operatorToken : Token, expr1 : Expression, expr2 : Expression) {
+		this(operatorToken, expr1, expr2, null);
+	}
+
+	function constructor (operatorToken : Token, expr1 : Expression, expr2 : Expression, type : Type) {
 		super(operatorToken, expr1, expr2);
-		this._type = null;
+		this._type = type;
 	}
 
 	override function clone () : ArrayExpression {
-		var ret = new ArrayExpression(this._token, this._expr1.clone(), this._expr2.clone());
-		ret._type = this._type;
-		return ret;
+		return new ArrayExpression(this._token, this._expr1.clone(), this._expr2.clone(), this._type);
 	}
 
 	override function analyze (context : AnalysisContext, parentExpr : Expression) : boolean {

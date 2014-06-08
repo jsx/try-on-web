@@ -2738,6 +2738,7 @@ class _InlineOptimizeCommand extends _FunctionOptimizeCommand implements _Struct
 		return altered;
 	}
 
+	// returns a map containing the use count for each formal argument (and "this"), or -Infinity if the arg is used as LHS
 	function _countNumberOfArgsUsed(funcDef : MemberFunctionDefinition) : Map.<number> {
 		var formalArgs = new TypedMap.<LocalVariable, boolean>;
 		var map = new Map.<number>;
@@ -2748,14 +2749,30 @@ class _InlineOptimizeCommand extends _FunctionOptimizeCommand implements _Struct
 		});
 		map["this"] = 0;
 
+		function updateCountOfLocal(local : LocalVariable, delta : number) : void {
+			if (formalArgs.has(local)) {
+				map[local.getName().getValue()] += delta;
+			}
+		}
+
 		funcDef.forEachStatement(function onStatement(statement : Statement) : boolean {
 			statement.forEachStatement(onStatement);
 			statement.forEachExpression(function onExpr(expr : Expression) : boolean {
 				expr.forEachExpression(onExpr);
-				if (expr instanceof LocalExpression && formalArgs.has((expr as LocalExpression).getLocal())) {
-					map[(expr as LocalExpression).getLocal().getName().getValue()]++;
-				}
-				else if (expr instanceof ThisExpression) {
+				if (expr instanceof LocalExpression) {
+					updateCountOfLocal((expr as LocalExpression).getLocal(), 1);
+				} else if (expr instanceof AssignmentExpression
+					|| expr instanceof FusedAssignmentExpression) {
+					var assignExpr = expr as BinaryExpression;
+					if (assignExpr.getFirstExpr() instanceof LocalExpression) {
+						updateCountOfLocal((assignExpr.getFirstExpr() as LocalExpression).getLocal(), -Infinity);
+					}
+				} else if (expr instanceof IncrementExpression) {
+					var incrExpr = expr as IncrementExpression;
+					if (incrExpr.getExpr() instanceof LocalExpression) {
+						updateCountOfLocal((incrExpr.getExpr() as LocalExpression).getLocal(), -Infinity);
+					}
+				} else if (expr instanceof ThisExpression) {
 					map["this"]++;
 				}
 				return true;
@@ -3144,7 +3161,7 @@ class _InlineOptimizeCommand extends _FunctionOptimizeCommand implements _Struct
 		for (var i = 0; i < formalArgs.length; ++i) {
 			var numberOfUsed = argUsed[formalArgs[i].getName().getValue()];
 			var argExpr = argsAndThisAndLocals[i];
-			if (! (argExpr instanceof LeafExpression || (numberOfUsed <= exprIsInlineableFor(argExpr)))) {
+			if (numberOfUsed == -Infinity || ! (argExpr instanceof LeafExpression || (numberOfUsed <= exprIsInlineableFor(argExpr)))) {
 				argsAndThisAndLocals[i] = createVarWithInit(callerFuncDef, formalArgs[i].getType(), formalArgs[i].getName().getValue(), argExpr);
 			}
 		}
@@ -3888,8 +3905,12 @@ class _ArrayLengthOptimizeCommand extends _FunctionOptimizeCommand {
 					}
 				return true;
 			};
-			statement.getCondExpr().forEachExpression(onExpr);
-			statement.getPostExpr().forEachExpression(onExpr);
+			if (statement.getCondExpr() != null) {
+				statement.getCondExpr().forEachExpression(onExpr);
+			}
+			if (statement.getPostExpr() != null) {
+				statement.getPostExpr().forEachExpression(onExpr);
+			}
 			statement.forEachStatement(function onStatement2(statement : Statement) : boolean {
 				statement.forEachStatement(onStatement2);
 				statement.forEachExpression(onExpr);
